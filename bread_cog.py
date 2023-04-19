@@ -2331,18 +2331,13 @@ anarchy - 1000% of your wager.
             message = await utility.smart_reply(ctx, Bread_cog.show_grid(grid))
             await asyncio.sleep(2)
 
-            steps = 0
             open_squares = grid_size ** 2
-            while (open_squares > 1) and steps < 100:
-                steps += 1
+            while (open_squares > 1):
                 updated = False
                 if random.randint(1,2) == 1: #do row
-
-                    y = random.randint(0,grid_size-1)
-
-                    if y == winning_y:
-                        continue # we'll just try again
-                    #otherwise, clear the row
+                    
+                    #choose a row to remove that's not the winning row
+                    y = random.choice(tuple(range(grid_size)[:winning_y])+tuple(range(grid_size)[winning_y+1:]))
 
                     for x in range(0,grid_size):
                         if grid[x][y] is not None:
@@ -2350,18 +2345,18 @@ anarchy - 1000% of your wager.
                         grid[x][y] = None
                     
                 else: #do column
-                    x = random.randint(0,grid_size-1)
 
-                    if x == winning_x:
-                        continue # we'll just try again
-                    #otherwise, clear the column
+                    #choose a column to remove that's not the winning column
+                    x = random.choice(tuple(range(grid_size)[:winning_x])+tuple(range(grid_size)[winning_x+1:]))
 
                     for y in range(0,grid_size):
                         if grid[x][y] is not None:
                             updated = True # this means we'll have changed something and should show it
                         grid[x][y] = None
-
-                    pass
+                
+                if updated:
+                    await message.edit(content= Bread_cog.show_grid(grid))
+                    await asyncio.sleep(1.5)
                 
                 if updated:
                     await message.edit(content= Bread_cog.show_grid(grid))
