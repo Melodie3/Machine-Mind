@@ -4,3 +4,4 @@ __pycache__
 backup
 .vscode/settings.json
 database.json
+bread/stonks.py
