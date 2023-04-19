@@ -2358,9 +2358,6 @@ anarchy - 1000% of your wager.
                     await message.edit(content= Bread_cog.show_grid(grid))
                     await asyncio.sleep(1.5)
                 
-                if updated:
-                    await message.edit(content= Bread_cog.show_grid(grid))
-                    await asyncio.sleep(1.5)
         except: 
             pass
         try: #try block because of potential messsage deletion.
