@@ -2948,6 +2948,7 @@ anarchy - 1000% of your wager.
     
     def stonk_fluctuate_internal(self):
         stonks.stonk_fluctuate(self) # this will forever remain a secret
+        # auto split code here?
         
     
 
