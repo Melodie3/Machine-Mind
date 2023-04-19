@@ -2948,10 +2948,14 @@ anarchy - 1000% of your wager.
 
     
     def stonk_fluctuate_internal(self):
-        stonks.stonk_fluctuate(self) # this will forever remain a secret
+        # it's in a try block so that it won't crash if running on a server without the stonks file
+        try:
+            stonks.stonk_fluctuate(self) # this will forever remain a secret
+        except:
+            print("stonk fluctuate failed")
+        
         # auto split code here?
-        # test comment
-        # test comment 2
+
         
     
 
