@@ -2337,7 +2337,12 @@ anarchy - 1000% of your wager.
                 if random.randint(1,2) == 1: #do row
                     
                     #choose a row to remove that's not the winning row
-                    y = random.choice(tuple(range(grid_size)[:winning_y])+tuple(range(grid_size)[winning_y+1:]))
+                    rows_before_winning_y = range(grid_size)[:winning_y]
+                    rows_after_winning_y = range(grid_size)[winning_y+1:]
+
+                    losing_rows = tuple(rows_before_winning_y) + tuple(rows_after_winning_y)
+
+                    y = random.choice(losing_rows)
 
                     for x in range(0,grid_size):
                         if grid[x][y] is not None:
@@ -2347,7 +2352,12 @@ anarchy - 1000% of your wager.
                 else: #do column
 
                     #choose a column to remove that's not the winning column
-                    x = random.choice(tuple(range(grid_size)[:winning_x])+tuple(range(grid_size)[winning_x+1:]))
+                    columns_before_winning_x = range(grid_size)[:winning_x]
+                    columns_after_winning_x = range(grid_size)[winning_x+1:]
+
+                    losing_columns = tuple(columns_before_winning_x) + tuple(columns_after_winning_x)
+
+                    x = random.choice(losing_columns)
 
                     for y in range(0,grid_size):
                         if grid[x][y] is not None:
