@@ -2956,6 +2956,8 @@ anarchy - 1000% of your wager.
         
         # auto split code here?
 
+        # dividend code here?
+
         
     
 
