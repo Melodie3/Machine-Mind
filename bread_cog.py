@@ -2331,18 +2331,18 @@ anarchy - 1000% of your wager.
             message = await utility.smart_reply(ctx, Bread_cog.show_grid(grid))
             await asyncio.sleep(2)
 
-            steps = 0
             open_squares = grid_size ** 2
-            while (open_squares > 1) and steps < 100:
-                steps += 1
+            while (open_squares > 1):
                 updated = False
                 if random.randint(1,2) == 1: #do row
+                    
+                    #choose a row to remove that's not the winning row
+                    rows_before_winning_y = range(grid_size)[:winning_y]
+                    rows_after_winning_y = range(grid_size)[winning_y+1:]
 
-                    y = random.randint(0,grid_size-1)
+                    losing_rows = tuple(rows_before_winning_y) + tuple(rows_after_winning_y)
 
-                    if y == winning_y:
-                        continue # we'll just try again
-                    #otherwise, clear the row
+                    y = random.choice(losing_rows)
 
                     for x in range(0,grid_size):
                         if grid[x][y] is not None:
@@ -2350,22 +2350,24 @@ anarchy - 1000% of your wager.
                         grid[x][y] = None
                     
                 else: #do column
-                    x = random.randint(0,grid_size-1)
 
-                    if x == winning_x:
-                        continue # we'll just try again
-                    #otherwise, clear the column
+                    #choose a column to remove that's not the winning column
+                    columns_before_winning_x = range(grid_size)[:winning_x]
+                    columns_after_winning_x = range(grid_size)[winning_x+1:]
+
+                    losing_columns = tuple(columns_before_winning_x) + tuple(columns_after_winning_x)
+
+                    x = random.choice(losing_columns)
 
                     for y in range(0,grid_size):
                         if grid[x][y] is not None:
                             updated = True # this means we'll have changed something and should show it
                         grid[x][y] = None
-
-                    pass
                 
                 if updated:
                     await message.edit(content= Bread_cog.show_grid(grid))
                     await asyncio.sleep(1.5)
+                
         except: 
             pass
         try: #try block because of potential messsage deletion.
