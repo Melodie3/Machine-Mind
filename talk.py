@@ -184,7 +184,7 @@ async def dayum(ctx):
     hidden= True,
 )
 async def bingo(ctx):
-    text = "You can find the current bingo board at https://mrsquirreldeduck.github.io/bingo/"
+    text = "You can find the current bingo board by running \"%board\""
     await ctx.send(text)
 
 # require proper punctuation for echo command
