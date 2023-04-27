@@ -550,6 +550,12 @@ class Bread_cog(commands.Cog, name="Bread"):
                 await ctx.send("That is not a recognized command. Use `$help bread` for some things you could call. If you wish to roll, use `$bread` on its own.")
 
         pass
+    
+    @bread.command(
+        hidden=True,
+    )
+    async def help(self, ctx):
+        await ctx.send_help(Bread_cog.bread)
 
     ########################################################################################################################
     #####      BREAD WIKI
