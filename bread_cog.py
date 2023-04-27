@@ -2303,21 +2303,26 @@ anarchy - 1000% of your wager.
         #make grid
         grid = list()
         grid_size = 4
-        for x in range(0,grid_size):
-            templist = []
-            grid.append(templist)
-            for y in range(0,grid_size):
-                templist.append(None)
+        for x in range(grid_size):
+            grid.append([None] * grid_size)
 
         # grid.append([None, None, None])
         # grid.append([None, None, None])
         # grid.append([None, None, None])
+
         winning_x = random.randint(0,grid_size-1)
         winning_y = random.randint(0,grid_size-1)
         winning_text = result['result'].text
 
         # add winning result to grid
         grid[winning_x][winning_y] = winning_text
+
+        # losing rows/columns that will get deleted
+        rows_to_remove = list(range(grid_size))
+        rows_to_remove.remove(winning_y)
+
+        columns_to_remove = list(range(grid_size))
+        columns_to_remove.remove(winning_x)
 
         # fill grid with other stuff
         for i in range(grid_size):
@@ -2331,42 +2336,24 @@ anarchy - 1000% of your wager.
             message = await utility.smart_reply(ctx, Bread_cog.show_grid(grid))
             await asyncio.sleep(2)
 
-            open_squares = grid_size ** 2
-            while (open_squares > 1):
-                updated = False
-                if random.randint(1,2) == 1: #do row
-                    
-                    #choose a row to remove that's not the winning row
-                    rows_before_winning_y = range(grid_size)[:winning_y]
-                    rows_after_winning_y = range(grid_size)[winning_y+1:]
+            #runs as often as rows/columns need to be removed
+            for snips_left in range(grid_size*2 - 2, 0, -1):
 
-                    losing_rows = tuple(rows_before_winning_y) + tuple(rows_after_winning_y)
+                # pick a random row/column
+                what_to_snip = random.randint(0, snips_left - 1)
 
-                    y = random.choice(losing_rows)
-
-                    for x in range(0,grid_size):
-                        if grid[x][y] is not None:
-                            updated = True # this means we'll have changed something and should show it
+                if what_to_snip < len(rows_to_remove): #do row
+                    y = rows_to_remove.pop(what_to_snip)
+                    for x in range(grid_size):
                         grid[x][y] = None
                     
                 else: #do column
-
-                    #choose a column to remove that's not the winning column
-                    columns_before_winning_x = range(grid_size)[:winning_x]
-                    columns_after_winning_x = range(grid_size)[winning_x+1:]
-
-                    losing_columns = tuple(columns_before_winning_x) + tuple(columns_after_winning_x)
-
-                    x = random.choice(losing_columns)
-
-                    for y in range(0,grid_size):
-                        if grid[x][y] is not None:
-                            updated = True # this means we'll have changed something and should show it
+                    x = columns_to_remove.pop(what_to_snip - len(rows_to_remove))
+                    for y in range(grid_size):
                         grid[x][y] = None
                 
-                if updated:
-                    await message.edit(content= Bread_cog.show_grid(grid))
-                    await asyncio.sleep(1.5)
+                await message.edit(content= Bread_cog.show_grid(grid))
+                await asyncio.sleep(1.5)
                 
         except: 
             pass
