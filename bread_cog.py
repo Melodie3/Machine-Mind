@@ -1952,20 +1952,17 @@ loaf_converter""",
 
         # now we check if the item is in the list
 
-        # this should be a more compact and possibly faster alternative to the previous code. I hope it is still suff-
-        # iciently readable.
-        # yes, i know this can be simplified. I also know mel likes things being more readable so i'm leaving it as-is
+        item_name = item_name.lower()
 
-        # gets the name attribute of all items in all_items, and checks if item_name.item() is in them.
-        if item_name.title() in map(lambda x : x.name, all_items):
-            item = item_name.title()
-
-        # gets the display_name attribute of all items in all_items, and checks if item_name.item() is in them.    
-        elif item_name.title() in map(lambda x : x.display_name, all_items):
-            item = item_name.title()
-
-        else:
-            # no need to check for item is None! this else statement should catch what that bit of code did previously.
+        item = None
+        for i in all_items:
+            if i.name.lower() == item_name or i.display_name.lower() == item_name:
+                item = i
+                break
+            if i.name.lower() == item_name_2 or i.display_name.lower() == item_name_2:
+                item = i
+                break
+        else: # if the for loop doesn't break, run this. This should run the same as an 'if item is None' check.
             await ctx.reply("Sorry, but I don't recognize that item's name.")
             return
 
@@ -2015,14 +2012,14 @@ loaf_converter""",
 
             for i in buyable_items:
                 # check if the current class has the purchase_upper method
-                if 'purchase_upper' in dir(i):
-                    max_purchaseable = i.purchase_upper(user_account)
+                if 'find_max_purchasable_count' in dir(i):
+                    max_purchasable = i.find_max_purchasable_count(user_account)
 
                     # what's cool about this is all the price checks are done WITHIN purchase_upper
                     # so we don't even have to check. purchase_num *should* be a valid purchase amount.
-                    # if item_count is larger than the amount you can afford, max_purchaseable should be lower.
+                    # if item_count is larger than the amount you can afford, max_purchasable should be lower.
                     # if you don't want to buy as much as you can, item_count will be lower.
-                    purchase_num = min(item_count,max_purchaseable)
+                    purchase_num = min(item_count,max_purchasable)
 
                     # purchase the item! do_purchase modified to allow for item counts.
                     # only items with the purchase_upper method should have the modified code.
@@ -2031,7 +2028,7 @@ loaf_converter""",
                     purchased_count = purchase_num
 
                 else:
-                    # old code, for use with items that don't have purchase_other
+                    # old code, for use with items that don't have find_max_purchasable_count
                     purchased_count = 0
                     for i in range(item_count):
                         if item not in buyable_items:
