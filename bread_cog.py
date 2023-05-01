@@ -555,7 +555,7 @@ class Bread_cog(commands.Cog, name="Bread"):
     #####      BREAD WIKI
 
     @bread.command(
-        brief="Links to the wiki"
+        brief="Links to the wiki."
     )
     async def wiki(self, ctx):
         await ctx.send("The bread wiki is a repository of all information so far collected about the bread game. It can be found here:\nhttps://the-bread-game.fandom.com/wiki/The_Bread_Game_Wiki")
@@ -906,7 +906,7 @@ class Bread_cog(commands.Cog, name="Bread"):
     ######## BREAD LEADERBOARD
 
     @bread.command(
-        brief="Shows the top earners",
+        brief="Shows the top earners.",
         help = 
 """Used to see the rankings for any stat or emoji that is tracked. 
 
@@ -1155,7 +1155,7 @@ loaf_converter""",
     # the following code will total up the value of a given emote across all users
     @bread.command(
         hidden = True,
-        brief= "Totals up a stat",
+        brief= "Totals up a stat.",
     )
     @commands.is_owner() # depreciated
     async def total(self, ctx, value: typing.Optional[str]):
@@ -1182,7 +1182,7 @@ loaf_converter""",
 
     @bread.command(
         hidden = False,
-        brief= "Toggles the black hole",
+        brief= "Toggles the black hole.",
         aliases = ["blackhole"]
     )
     async def black_hole(self, ctx, state: typing.Optional[str]):
@@ -1219,7 +1219,7 @@ loaf_converter""",
 
     @bread.command(
         hidden= False,
-        brief="A tasty bread roll",
+        brief="A tasty bread roll.",
     )
     async def roll(self, ctx):
 
@@ -1480,7 +1480,7 @@ loaf_converter""",
     ########################################################################################################################
     #####      do CHESSBOARD COMPLETION
 
-    async def do_chessboard_completion(self, ctx, force = False):
+    async def do_chessboard_completion(self, ctx, force: bool = False, amount = None):
 
         user_account = self.json_interface.get_account(ctx.author)
 
@@ -1497,7 +1497,15 @@ loaf_converter""",
         summary = False
         summary_count = 0
 
-        while len(leftover_pieces) == 0:
+        # pointwise integer division between the full chess set and the set of the user's pieces.
+        valid_trons = min([x // full_chess_set[i] for i,x in enumerate(user_chess_pieces)])
+
+        # iteration ends at the minimum value, make sure amount is never the minimum. 'amount is None' should mean no max ...
+        # ... has been specified, so make as many trons as possible.
+        if amount is None: amount = valid_trons + 1
+
+        # stop iteration when you can't make any more trons, or have hit the limit of specified trons; whichever comes first.
+        for _ in range(min(valid_trons, amount)):
 
             board = Bread_cog.format_chess_pieces(user_account.values)
 
@@ -1514,8 +1522,6 @@ loaf_converter""",
             omega_count = user_account.get(values.omega_chessatron.text)
             chessatron_value += omega_count * 250
 
-
-            
             # finally add the dough and chessatron
             chessatron_result_value = user_account.add_dough_intelligent(chessatron_value)
             user_account.add_item_attributes(values.chessatron)
@@ -1583,27 +1589,28 @@ loaf_converter""",
         brief="Toggle auto chessatron on or off."
 
     )
-    async def chessatron(self, ctx, toggle: typing.Optional[str] = None):
+    async def chessatron(self, ctx, arg: typing.Optional[str] = None) -> None:
         """Toggle auto chessatron on or off."""
-
-        
         
         user_account = self.json_interface.get_account(ctx.author)
 
-        if toggle is None:
-            toggle = ""
+        if arg is None:
+            arg = ""
         
-        if toggle.lower() == "on":
+        if arg.lower() == "on":
             user_account.set("auto_chessatron", True)
             await utility.smart_reply(ctx, f"Auto chessatron is now on.")
-        elif toggle.lower() == "off":
+        elif arg.lower() == "off":
             user_account.set("auto_chessatron", False)
             await utility.smart_reply(ctx, f"Auto chessatron is now off.")
         else:
             if channel_permission_levels.get(ctx.channel.name, 0) < PERMISSION_LEVEL_ACTIVITIES:
                 await utility.smart_reply(ctx, f"Thank you for your interest in creating chessatrons! You can do so over in <#967544442468843560>.")
                 return
-            await self.do_chessboard_completion(ctx, True)
+            if arg.isnumeric():
+                await self.do_chessboard_completion(ctx, True, amount = int(arg))
+            else:
+                await self.do_chessboard_completion(ctx, True)
 
         self.json_interface.set_account(ctx.author, user_account)
         
@@ -1614,7 +1621,7 @@ loaf_converter""",
     @bread.command(
         help="Create a chessatron from red gems.",
     )
-    async def gem_chessatron(self, ctx):
+    async def gem_chessatron(self, ctx, arg = None):
 
         user_account = self.json_interface.get_account(ctx.author)
         gem_count = user_account.get(values.gem_red.text)
@@ -1644,7 +1651,12 @@ loaf_converter""",
         self.json_interface.set_account(ctx.author, user_account)
 
         await utility.smart_reply(ctx, f"You have used {32*number_of_chessatrons} red gems to make chessatrons.")
-        await self.do_chessboard_completion(ctx, True)
+
+        if arg.isnumeric():
+            arg = int(arg)
+        else: arg = None
+
+        await self.do_chessboard_completion(ctx, True, amount = int(arg))
 
     ########################################################################################################################
     #####      BREAD SPELLCHECK
@@ -1900,7 +1912,7 @@ loaf_converter""",
         hidden=False,
         aliases=["purchase"],
         help= "Usage: $bread buy [item name]\n\nBuys an item from the bread store. Only works in #bread-rolls.",
-        brief= "Buy an item from the bread shop",
+        brief= "Buy an item from the bread shop.",
     )
     async def buy(self, ctx, *, item_name: typing.Optional[str]):
 
@@ -2067,7 +2079,7 @@ Special stats, such as special_bread, cannot be gifted or transferred.
 """
 
     @bread.command(
-        brief="Gives bread away",
+        brief="Gives bread away.",
         help="Usage: $bread gift [person] [amount] [item]\n"+bread_gift_text,
         aliases=["pay"]
     )
