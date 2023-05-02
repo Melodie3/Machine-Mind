@@ -1944,9 +1944,6 @@ loaf_converter""",
             await ctx.reply("You can't buy zero of an item.")
             return
 
-        #make it lower case for easier matching
-        item_name = item_name.lower()
-
         # first we get the account of the user who called it
         user_account = self.json_interface.get_account(ctx.author)
 
@@ -1958,7 +1955,11 @@ loaf_converter""",
             buyable_items = self.get_buyable_items(user_account, store.all_store_items)
         all_items = store.all_store_items
 
+
         # now we check if the item is in the list
+
+        item_name = item_name.lower()
+
         item = None
         for i in all_items:
             if i.name.lower() == item_name or i.display_name.lower() == item_name:
@@ -1967,15 +1968,16 @@ loaf_converter""",
             if i.name.lower() == item_name_2 or i.display_name.lower() == item_name_2:
                 item = i
                 break
-
-        if item is None:
+        else: # if the for loop doesn't break, run this. This should run the same as an 'if item is None' check.
             await ctx.reply("Sorry, but I don't recognize that item's name.")
             return
+
 
         if item_count == 1:
 
             # if it exists but can't be bought, we say so
-            if item is not None and item not in buyable_items:
+            if item not in buyable_items:
+                # removed item is None check, as item will never be None. see above.
                 await ctx.reply("Sorry, but you've already purchased as many of that as you can.")
                 return
 
@@ -2009,19 +2011,43 @@ loaf_converter""",
 
         else: # item count above 1
 
-            purchased_count = 0
-            for i in range(item_count):
-                buyable_items = self.get_buyable_items(user_account, store.all_store_items)
-                if item not in buyable_items: #if we've bought as many as we can legally
-                    break
-                    
-                if not item.is_affordable_for(user_account):
-                    break #if we've spent all our dough
+            # why make a new reference to store.all_store_items? all_items is already set to that.
+            buyable_items = self.get_buyable_items(user_account, all_items)
 
-                text = item.do_purchase(user_account)
-                #user_account.increment(item.name, 1)
-                
-                purchased_count += 1
+            # revised buying code
+
+            for i in buyable_items:
+                # check if the current class has the purchase_upper method
+                if 'find_max_purchasable_count' in dir(i):
+                    max_purchasable = i.find_max_purchasable_count(user_account)
+
+                    # what's cool about this is all the price checks are done WITHIN purchase_upper
+                    # so we don't even have to check. purchase_num *should* be a valid purchase amount.
+                    # if item_count is larger than the amount you can afford, max_purchasable should be lower.
+                    # if you don't want to buy as much as you can, item_count will be lower.
+                    purchase_num = min(item_count,max_purchasable)
+
+                    # purchase the item! do_purchase modified to allow for item counts.
+                    # only items with the purchase_upper method should have the modified code.
+                    text = item.do_purchase(user_account,amount = purchase_num)
+
+                    purchased_count = purchase_num
+
+                else:
+                    # old code, for use with items that don't have find_max_purchasable_count
+                    purchased_count = 0
+                    for i in range(item_count):
+                        if item not in buyable_items:
+                            break # if we've bought as many as we can legally
+
+                        if not item.is_affordable_for(user_account):
+                            break # if we've spent all our dough
+
+                        text = item.do_purchase(user_account)
+                        #user_account.increment(item.name, 1)
+
+                        purchased_count += 1
+
 
             self.json_interface.set_account(ctx.author,user_account)
 
@@ -2045,7 +2071,7 @@ loaf_converter""",
 
 
     # this function finds all the items the user is allowed to purchase
-    def get_buyable_items(self, user_account: account.Bread_Account, item_list: list[store.Store_Item]) -> list[store.Store_Item]:
+    def get_buyable_items(self, user_account: account.Bread_Account, item_list: "list[store.Store_Item]") -> "list[store.Store_Item]":
         # user_account = self.json_interface.get_account(ctx.author)
         output = []
         #for item in store.all_store_items:
