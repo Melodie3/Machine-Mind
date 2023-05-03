@@ -32,6 +32,7 @@ intents = discord.Intents.default()
 intents.members = True
 intents.messages = True
 intents.guilds = True
+intents.message_content = True
 
 bot = commands.Bot(command_prefix=COMMAND_PREFIX, intents=intents, owner_id=OWNER_ID)
 

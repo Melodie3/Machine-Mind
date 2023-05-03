@@ -1,10 +1,10 @@
-
-# test commit please ignore
-
 """
 Patch Notes: 
 - Fixed bug where getting a multiple of 55 chessatrons would ping you for no reason
 - Added alchemy recipe to turn a gold gem into a green gem
+- You can now use `$bread chessatron <number>` to make a specific number of chessatrons. Also works with `gem_chessatron`. Thanks to Aloe for this patch
+- Gambling now has less of a chance of failing internally. Thanks to Malte for this patch.
+- Added `$bread help`, finally. Thanks to Duck for this patch.
 
 TODO:
 
