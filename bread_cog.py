@@ -1504,7 +1504,7 @@ loaf_converter""",
         summary_count = 0
 
         # pointwise integer division between the full chess set and the set of the user's pieces.
-        valid_trons = min([x // full_chess_set[i] for i,x in enumerate(user_chess_pieces)])
+        valid_trons = min([user_account.get(x.name) // full_chess_set.count(x) for x in user_chess_pieces])
 
         # iteration ends at the minimum value, make sure amount is never the minimum. 'amount is None' should mean no max ...
         # ... has been specified, so make as many trons as possible.
