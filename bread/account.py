@@ -191,10 +191,10 @@ class Bread_Account:
             self.increment(attribute, 1)
         return dough_value
 
-    def add_item_attributes(self, item: Emote):
-        self.increment(item.text, 1)
+    def add_item_attributes(self, item: Emote, amount: int = 1):
+        self.increment(item.text, amount)
         for attribute in item.attributes:
-            self.increment(attribute, 1)
+            self.increment(attribute, amount)
 
     ##############################################################
 
