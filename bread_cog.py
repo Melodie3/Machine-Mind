@@ -550,12 +550,18 @@ class Bread_cog(commands.Cog, name="Bread"):
                 await ctx.send("That is not a recognized command. Use `$help bread` for some things you could call. If you wish to roll, use `$bread` on its own.")
 
         pass
+    
+    @bread.command(
+        hidden=True,
+    )
+    async def help(self, ctx):
+        await ctx.send_help(Bread_cog.bread)
 
     ########################################################################################################################
     #####      BREAD WIKI
 
     @bread.command(
-        brief="Links to the wiki"
+        brief="Links to the wiki."
     )
     async def wiki(self, ctx):
         await ctx.send("The bread wiki is a repository of all information so far collected about the bread game. It can be found here:\nhttps://the-bread-game.fandom.com/wiki/The_Bread_Game_Wiki")
@@ -906,7 +912,7 @@ class Bread_cog(commands.Cog, name="Bread"):
     ######## BREAD LEADERBOARD
 
     @bread.command(
-        brief="Shows the top earners",
+        brief="Shows the top earners.",
         help = 
 """Used to see the rankings for any stat or emoji that is tracked. 
 
@@ -1155,7 +1161,7 @@ loaf_converter""",
     # the following code will total up the value of a given emote across all users
     @bread.command(
         hidden = True,
-        brief= "Totals up a stat",
+        brief= "Totals up a stat.",
     )
     @commands.is_owner() # depreciated
     async def total(self, ctx, value: typing.Optional[str]):
@@ -1182,7 +1188,7 @@ loaf_converter""",
 
     @bread.command(
         hidden = False,
-        brief= "Toggles the black hole",
+        brief= "Toggles the black hole.",
         aliases = ["blackhole"]
     )
     async def black_hole(self, ctx, state: typing.Optional[str]):
@@ -1219,7 +1225,7 @@ loaf_converter""",
 
     @bread.command(
         hidden= False,
-        brief="A tasty bread roll",
+        brief="A tasty bread roll.",
     )
     async def roll(self, ctx):
 
@@ -1480,7 +1486,7 @@ loaf_converter""",
     ########################################################################################################################
     #####      do CHESSBOARD COMPLETION
 
-    async def do_chessboard_completion(self, ctx, force = False):
+    async def do_chessboard_completion(self, ctx, force: bool = False, amount = None):
 
         user_account = self.json_interface.get_account(ctx.author)
 
@@ -1497,7 +1503,15 @@ loaf_converter""",
         summary = False
         summary_count = 0
 
-        while len(leftover_pieces) == 0:
+        # pointwise integer division between the full chess set and the set of the user's pieces.
+        valid_trons = min([x // full_chess_set[i] for i,x in enumerate(user_chess_pieces)])
+
+        # iteration ends at the minimum value, make sure amount is never the minimum. 'amount is None' should mean no max ...
+        # ... has been specified, so make as many trons as possible.
+        if amount is None: amount = valid_trons + 1
+
+        # stop iteration when you can't make any more trons, or have hit the limit of specified trons; whichever comes first.
+        for _ in range(min(valid_trons, amount)):
 
             board = Bread_cog.format_chess_pieces(user_account.values)
 
@@ -1514,8 +1528,6 @@ loaf_converter""",
             omega_count = user_account.get(values.omega_chessatron.text)
             chessatron_value += omega_count * 250
 
-
-            
             # finally add the dough and chessatron
             chessatron_result_value = user_account.add_dough_intelligent(chessatron_value)
             user_account.add_item_attributes(values.chessatron)
@@ -1583,27 +1595,28 @@ loaf_converter""",
         brief="Toggle auto chessatron on or off."
 
     )
-    async def chessatron(self, ctx, toggle: typing.Optional[str] = None):
+    async def chessatron(self, ctx, arg: typing.Optional[str] = None) -> None:
         """Toggle auto chessatron on or off."""
-
-        
         
         user_account = self.json_interface.get_account(ctx.author)
 
-        if toggle is None:
-            toggle = ""
+        if arg is None:
+            arg = ""
         
-        if toggle.lower() == "on":
+        if arg.lower() == "on":
             user_account.set("auto_chessatron", True)
             await utility.smart_reply(ctx, f"Auto chessatron is now on.")
-        elif toggle.lower() == "off":
+        elif arg.lower() == "off":
             user_account.set("auto_chessatron", False)
             await utility.smart_reply(ctx, f"Auto chessatron is now off.")
         else:
             if channel_permission_levels.get(ctx.channel.name, 0) < PERMISSION_LEVEL_ACTIVITIES:
                 await utility.smart_reply(ctx, f"Thank you for your interest in creating chessatrons! You can do so over in <#967544442468843560>.")
                 return
-            await self.do_chessboard_completion(ctx, True)
+            if arg.isnumeric():
+                await self.do_chessboard_completion(ctx, True, amount = int(arg))
+            else:
+                await self.do_chessboard_completion(ctx, True)
 
         self.json_interface.set_account(ctx.author, user_account)
         
@@ -1614,7 +1627,7 @@ loaf_converter""",
     @bread.command(
         help="Create a chessatron from red gems.",
     )
-    async def gem_chessatron(self, ctx):
+    async def gem_chessatron(self, ctx, arg = None):
 
         user_account = self.json_interface.get_account(ctx.author)
         gem_count = user_account.get(values.gem_red.text)
@@ -1644,7 +1657,12 @@ loaf_converter""",
         self.json_interface.set_account(ctx.author, user_account)
 
         await utility.smart_reply(ctx, f"You have used {32*number_of_chessatrons} red gems to make chessatrons.")
-        await self.do_chessboard_completion(ctx, True)
+
+        if arg.isnumeric():
+            arg = int(arg)
+        else: arg = None
+
+        await self.do_chessboard_completion(ctx, True, amount = int(arg))
 
     ########################################################################################################################
     #####      BREAD SPELLCHECK
@@ -1900,7 +1918,7 @@ loaf_converter""",
         hidden=False,
         aliases=["purchase"],
         help= "Usage: $bread buy [item name]\n\nBuys an item from the bread store. Only works in #bread-rolls.",
-        brief= "Buy an item from the bread shop",
+        brief= "Buy an item from the bread shop.",
     )
     async def buy(self, ctx, *, item_name: typing.Optional[str]):
 
@@ -1938,9 +1956,6 @@ loaf_converter""",
             await ctx.reply("You can't buy zero of an item.")
             return
 
-        #make it lower case for easier matching
-        item_name = item_name.lower()
-
         # first we get the account of the user who called it
         user_account = self.json_interface.get_account(ctx.author)
 
@@ -1952,7 +1967,11 @@ loaf_converter""",
             buyable_items = self.get_buyable_items(user_account, store.all_store_items)
         all_items = store.all_store_items
 
+
         # now we check if the item is in the list
+
+        item_name = item_name.lower()
+
         item = None
         for i in all_items:
             if i.name.lower() == item_name or i.display_name.lower() == item_name:
@@ -1961,15 +1980,16 @@ loaf_converter""",
             if i.name.lower() == item_name_2 or i.display_name.lower() == item_name_2:
                 item = i
                 break
-
-        if item is None:
+        else: # if the for loop doesn't break, run this. This should run the same as an 'if item is None' check.
             await ctx.reply("Sorry, but I don't recognize that item's name.")
             return
+
 
         if item_count == 1:
 
             # if it exists but can't be bought, we say so
-            if item is not None and item not in buyable_items:
+            if item not in buyable_items:
+                # removed item is None check, as item will never be None. see above.
                 await ctx.reply("Sorry, but you've already purchased as many of that as you can.")
                 return
 
@@ -2003,19 +2023,43 @@ loaf_converter""",
 
         else: # item count above 1
 
-            purchased_count = 0
-            for i in range(item_count):
-                buyable_items = self.get_buyable_items(user_account, store.all_store_items)
-                if item not in buyable_items: #if we've bought as many as we can legally
-                    break
-                    
-                if not item.is_affordable_for(user_account):
-                    break #if we've spent all our dough
+            # why make a new reference to store.all_store_items? all_items is already set to that.
+            buyable_items = self.get_buyable_items(user_account, all_items)
 
-                text = item.do_purchase(user_account)
-                #user_account.increment(item.name, 1)
-                
-                purchased_count += 1
+            # revised buying code
+
+            for i in buyable_items:
+                # check if the current class has the purchase_upper method
+                if 'find_max_purchasable_count' in dir(i):
+                    max_purchasable = i.find_max_purchasable_count(user_account)
+
+                    # what's cool about this is all the price checks are done WITHIN purchase_upper
+                    # so we don't even have to check. purchase_num *should* be a valid purchase amount.
+                    # if item_count is larger than the amount you can afford, max_purchasable should be lower.
+                    # if you don't want to buy as much as you can, item_count will be lower.
+                    purchase_num = min(item_count,max_purchasable)
+
+                    # purchase the item! do_purchase modified to allow for item counts.
+                    # only items with the purchase_upper method should have the modified code.
+                    text = item.do_purchase(user_account,amount = purchase_num)
+
+                    purchased_count = purchase_num
+
+                else:
+                    # old code, for use with items that don't have find_max_purchasable_count
+                    purchased_count = 0
+                    for i in range(item_count):
+                        if item not in buyable_items:
+                            break # if we've bought as many as we can legally
+
+                        if not item.is_affordable_for(user_account):
+                            break # if we've spent all our dough
+
+                        text = item.do_purchase(user_account)
+                        #user_account.increment(item.name, 1)
+
+                        purchased_count += 1
+
 
             self.json_interface.set_account(ctx.author,user_account)
 
@@ -2039,7 +2083,7 @@ loaf_converter""",
 
 
     # this function finds all the items the user is allowed to purchase
-    def get_buyable_items(self, user_account: account.Bread_Account, item_list: list[store.Store_Item]) -> list[store.Store_Item]:
+    def get_buyable_items(self, user_account: account.Bread_Account, item_list: "list[store.Store_Item]") -> "list[store.Store_Item]":
         # user_account = self.json_interface.get_account(ctx.author)
         output = []
         #for item in store.all_store_items:
@@ -2067,7 +2111,7 @@ Special stats, such as special_bread, cannot be gifted or transferred.
 """
 
     @bread.command(
-        brief="Gives bread away",
+        brief="Gives bread away.",
         help="Usage: $bread gift [person] [amount] [item]\n"+bread_gift_text,
         aliases=["pay"]
     )
@@ -2336,6 +2380,7 @@ anarchy - 1000% of your wager.
             message = await utility.smart_reply(ctx, Bread_cog.show_grid(grid))
             await asyncio.sleep(2)
 
+
             #runs as often as rows/columns need to be removed
             for snips_left in range(grid_size*2 - 2, 0, -1):
 
@@ -2354,6 +2399,7 @@ anarchy - 1000% of your wager.
                 
                 await message.edit(content= Bread_cog.show_grid(grid))
                 await asyncio.sleep(1.5)
+
                 
         except: 
             pass
@@ -2944,6 +2990,8 @@ anarchy - 1000% of your wager.
             print("stonk fluctuate failed")
         
         # auto split code here?
+
+        # dividend code here?
 
         
     
