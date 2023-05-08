@@ -6,10 +6,16 @@ Patch Notes:
 - Gambling now has less of a chance of failing internally. Thanks to Malte for this patch.
 - Added `$bread help`, finally. Thanks to Duck for this patch.
 
-TODO:
+TODO: Do not die to the plague
+
+for server:
+    update discord.py
+    install numpy
+    *possibly* run `python3 -m pip update`
 
 
 Possible future stuff:
+
 V portfolio shows your gain/loss over last tick
 - alchemy profits
 V each ascension lets you have 100 additional daily rolls
@@ -4146,10 +4152,10 @@ anarchy - 1000% of your wager.
 bread_cog_ref = None
 bot_ref = None
 
-def setup(bot):
+async def setup(bot):
     
     bread_cog = Bread_cog(bot)
-    bot.add_cog(bread_cog)
+    await bot.add_cog(bread_cog)
 
     global bread_cog_ref 
     bread_cog_ref = bread_cog

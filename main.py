@@ -44,9 +44,12 @@ bot = commands.Bot(command_prefix=COMMAND_PREFIX, intents=intents, owner_id=OWNE
 
 @bot.event
 async def on_ready():
+    for i in range(10):
+        print()
     print('We have logged in as {0.user}'.format(bot))
     try:
-        bot.load_extension('bootstrap_cog')
+        #print(f"bot is {bot}") # for some stupid reason this is required or else the await statement throws an error
+        await bot.load_extension('bootstrap_cog')
     except commands.ExtensionAlreadyLoaded:
         pass
     except:
@@ -62,7 +65,10 @@ async def on_ready():
 @commands.is_owner()
 async def bootstrap(ctx):
     importlib.reload(verification)
-    bot.reload_extension('bootstrap_cog')
+    try:
+        await bot.load_extension('bootstrap_cog')
+    except commands.ExtensionAlreadyLoaded:
+        await bot.reload_extension('bootstrap_cog')
     await ctx.send("Done.")
 
 

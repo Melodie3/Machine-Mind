@@ -1297,7 +1297,7 @@ class Chess_bot(commands.Cog, name="Chess"):
 bot_ref = None
 cog_ref = None
 
-def setup(bot):
+async def setup(bot):
 
     global bot_ref
     global cog_ref
@@ -1309,7 +1309,7 @@ def setup(bot):
     importlib.reload(emoji)
     importlib.reload(utility)
 
-    bot.add_cog(cog_ref)
+    await bot.add_cog(cog_ref)
 
     cog_ref.internal_load()
     #bot.add_cog(Chess_game(bot)) #do we want to actually have this be a *cog*, or just a helper class?
