@@ -11,20 +11,20 @@ class Bootstrap_cog(commands.Cog, name="Bootstrap"):
 
     bot_ref = None
 
-    def _load_all_modules(self):
+    async def _load_all_modules(self):
         print("Extensions are: "+str(self.extensions))
         for extension in self.extensions:
-            self._load_internal(extension)
+            await self._load_internal(extension)
             #bot_ref.load_extension(extension)
 
-    def _load_internal(self, extension):
+    async def _load_internal(self, extension):
         print("Loading " + extension + "...")
         if (extension not in self.extensions):
             print("This extension has not been seen before.")
 
         try:
 
-            self.bot_ref.load_extension(extension)
+            await self.bot_ref.load_extension(extension)
             if (extension not in self.extensions):
                 self.extensions.append(extension)
 
@@ -54,7 +54,7 @@ class Bootstrap_cog(commands.Cog, name="Bootstrap"):
     async def load(self, ctx, *args):
         print("Running Load command. Bot Ref is "+str(self))
         
-        if len(args) is 0:
+        if len(args) == 0:
             print("\n\n\n\n\n\nLoading all modules")
             for extension in self.extensions:
                 await self.load(ctx, extension)
@@ -75,11 +75,11 @@ class Bootstrap_cog(commands.Cog, name="Bootstrap"):
                     #print(f"extensions are: {self.bot_ref.extensions}")
                     if extension not in self.bot_ref.extensions:
                         await ctx.send(f"Loading {extension}...")
-                        self.bot_ref.load_extension(extension)
+                        await self.bot_ref.load_extension(extension)
                     else:
 
                         await ctx.send(f"Reloading {extension}...")
-                        self.bot_ref.reload_extension(extension)
+                        await self.bot_ref.reload_extension(extension)
                         # await ctx.send(extension+" reloaded.")
 
                     if (extension not in self.extensions):
@@ -112,7 +112,7 @@ class Bootstrap_cog(commands.Cog, name="Bootstrap"):
             print("Unloading " + extension + "...")
             if extension in self.bot_ref.extensions:
                 await ctx.send(f"Unloading {extension}...")
-                self.bot_ref.unload_extension(extension)
+                await self.bot_ref.unload_extension(extension)
                 self.extensions.remove(extension)
                 #await ctx.send(f"{extension} unloaded.")
         await ctx.send("Done.")
@@ -137,12 +137,12 @@ async def reload(ctx):
 
 
 
-def setup(bot):
+async def setup(bot):
     print("Setting up Bootstrap Cog")
     cog = Bootstrap_cog(bot)
     cog.bot_ref = bot
-    bot.add_cog(cog)
-    cog._load_all_modules()
+    await bot.add_cog(cog)
+    await cog._load_all_modules()
     """
     print("Starting bootstrap with bot "+str(bot))
     bot_ref = bot
