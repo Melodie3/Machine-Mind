@@ -1312,7 +1312,7 @@ loaf_converter""",
                 record = False
 
         #can be rolled plenty
-        elif channel_permission_levels.get(ctx.channel.name, 0) == PERMISSION_LEVEL_MAX:
+        elif channel_permission_levels.get(ctx.channel.name, 0) == PERMISSION_LEVEL_MAX and ctx.guild.id == default_guild:
             record = True
         
         # in neutral land -- NOTE-May not be reached
