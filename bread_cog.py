@@ -1,11 +1,12 @@
 """
 Patch Notes: 
 - Purchasing an item will now tell you how much of its cost you have remaining. So if an item costs red gems it will tell you how many red gems you have remaining after you buy it.
-- Worked with Aloe to make buying random chess pieces faster for large quantities
+- Worked with Aloe to speed up: buying random chess pieces, buying special bread packs, and making chessatrons
+- When buying multiple chess pieces and special bread packs, you will see how many of each item you got.
 - Fixed bug where getting a multiple of 55 chessatrons would ping you for no reason
 - Added alchemy recipe to turn a gold gem into a green gem
 - You can now use `$bread chessatron <number>` to make a specific number of chessatrons. Also works with `gem_chessatron`. Thanks to Aloe for this patch
-- Gambling now has less of a chance of failing internally. Thanks to Malte for this patch.
+- Gambling now has zero rather than nearly zero chance of failing internally. Thanks to Malte for this patch.
 - Added `$bread help`, finally. Thanks to Duck for this patch.
 
 TODO: Do not die to the plague
@@ -14,6 +15,7 @@ for server:
     update discord.py
     install numpy
     *possibly* run `python3 -m pip update`
+    !bread admin set_max_prestige_level 3
 
 
 Possible future stuff:
@@ -1500,11 +1502,13 @@ loaf_converter""",
 
         if user_account.get("auto_chessatron") is False and force is False:
             return
+        
+        print ("doing chessatron creation")
 
-        user_chess_pieces = user_account.get_all_items_with_attribute_unrolled("chess_pieces")
+        # user_chess_pieces = user_account.get_all_items_with_attribute_unrolled("chess_pieces")
         full_chess_set = values.chess_pieces_black_biased+values.chess_pieces_white_biased
 
-        leftover_pieces = utility.array_subtract((full_chess_set), user_chess_pieces )
+        # leftover_pieces = utility.array_subtract((full_chess_set), user_chess_pieces )
         #print(f"{ctx.author} has {len(leftover_pieces)} pieces left to collect.")
         #print(f"Those pieces are: {leftover_pieces}")
 
@@ -1512,11 +1516,14 @@ loaf_converter""",
         summary_count = 0
 
         # pointwise integer division between the full chess set and the set of the user's pieces.
-        valid_trons = min([user_account.get(x.name) // full_chess_set.count(x) for x in user_chess_pieces])
+        valid_trons = min([user_account.get(x.text) // full_chess_set.count(x) for x in values.all_chess_pieces])
 
         # iteration ends at the minimum value, make sure amount is never the minimum. 'amount is None' should mean no max ...
         # ... has been specified, so make as many trons as possible.
-        if amount is None: amount = valid_trons + 1
+        if amount is None: 
+            amount = valid_trons + 1
+
+        print(f"valid trons: {valid_trons}, amount: {amount}")
 
         # stop iteration when you can't make any more trons, or have hit the limit of specified trons; whichever comes first.
         for _ in range(min(valid_trons, amount)):
@@ -1573,12 +1580,12 @@ loaf_converter""",
             #user_account.increment("total_dough", 2000)
             #user_account.increment("full_chess_set", 1)
 
-            user_chess_pieces = user_account.get_all_items_with_attribute_unrolled("chess_pieces")
-            leftover_pieces = utility.array_subtract((full_chess_set), user_chess_pieces )
+            # user_chess_pieces = user_account.get_all_items_with_attribute_unrolled("chess_pieces")
+            # leftover_pieces = utility.array_subtract((full_chess_set), user_chess_pieces )
 
         #after the while loop we take all our summary count of chessatrons and announce them together
         if summary:
-            output = f"Congratulations! More chessatrons! You've made {summary_count} of them. Here's your reward of **{chessatron_result_value*summary_count} dough**."
+            output = f"Congratulations! More chessatrons! You've made {summary_count} of them. Here's your reward of **{utility.smart_number(chessatron_result_value*summary_count)} dough**."
             await utility.smart_reply(ctx, output)
             await asyncio.sleep(1)
             
@@ -1621,6 +1628,7 @@ loaf_converter""",
             if channel_permission_levels.get(ctx.channel.name, 0) < PERMISSION_LEVEL_ACTIVITIES:
                 await utility.smart_reply(ctx, f"Thank you for your interest in creating chessatrons! You can do so over in <#967544442468843560>.")
                 return
+            
             if arg.isnumeric():
                 await self.do_chessboard_completion(ctx, True, amount = int(arg))
             else:
@@ -1721,7 +1729,13 @@ loaf_converter""",
         user_account = self.json_interface.get_account(ctx.author)
         prestige_level = user_account.get_prestige_level()
 
-        max_prestige_level = 3
+        prestige_file = self.json_interface.get_custom_file("prestige")
+        if "max_prestige_level" in prestige_file:
+            max_prestige_level = prestige_file["max_prestige_level"]
+        else:
+            max_prestige_level = 1
+
+        # max_prestige_level = 3
 
         ascend_dough_cost = (prestige_level * 250000) # starts at 500k and goes up
         daily_rolls_requirement = 1000 + prestige_level * 100
@@ -1994,6 +2008,30 @@ loaf_converter""",
             return
 
 
+        def describe_cost(item_text):
+            amount = user_account.get(item_text)
+            if item_text == "total_dough":
+                return f"**{utility.smart_number(amount)} dough**"
+            else:
+                return f"**{utility.smart_number(amount)} {item_text}**"
+
+        def describe_cost_list(cost_list):
+            if len(cost_list) == 1:
+                cost_text = f"You now have {describe_cost(cost_list[0])} remaining."
+            elif len(cost_list) == 2:
+                cost_text = f"You now have {describe_cost(cost_list[0])} and {describe_cost(cost_list[1])} remaining."
+            else:
+                cost_text = "You now have "
+                length = len(cost_list)
+                for i in range(length):
+                    cost_text += describe_cost(cost_list[i])
+                    if i < length-1:
+                        cost_text += ", " 
+                    if i == length-2:
+                        cost_text += "and "
+                cost_text += " remaining."
+            return cost_text
+
         if item_count == 1:
 
             # if it exists but can't be bought, we say so
@@ -2018,12 +2056,7 @@ loaf_converter""",
 
             all_cost_types = item.get_cost_types(user_account)
 
-            def describe_cost(item_text):
-                amount = user_account.get(item_text)
-                if item_text == "total_dough":
-                    return f"**{utility.smart_number(amount)} dough**"
-                else:
-                    return f"**{utility.smart_number(amount)} {item_text}**"
+            
 
             if len(all_cost_types) == 1:
                 cost_text = f"You now have {describe_cost(all_cost_types[0])} remaining."
@@ -2106,10 +2139,19 @@ loaf_converter""",
 
             print(f"{ctx.author.display_name} bought {purchased_count} {item.display_name}")
             if item in store.prestige_store_items:
-                text = f"You have purchased {purchased_count} {item.display_name} upgrades! You are now at level {user_account.get(item.name)}."
-                text += f"\n\nYou now have **{user_account.get(values.ascension_token.text)} {values.ascension_token.text}** remaining."
+                if text is None:
+                    text = f"You have purchased {purchased_count} {item.display_name} upgrades! You are now at level {user_account.get(item.name)}."
+                # text += f"\n\nYou now have **{user_account.get(values.ascension_token.text)} {values.ascension_token.text}** remaining."
             else: #normal item
-                text = f"You have purchased {utility.write_count(purchased_count, item.display_name)}. You now have **{user_account.get('total_dough')} dough** remaining."
+                if text is None:
+                    text = f"You have purchased {utility.write_count(purchased_count, item.display_name)}."# \n\nYou now have **{user_account.get('total_dough')} dough** remaining."
+
+            # this will only describe the cost for the most recent level of the item purchased, but it's better than nothing.
+            all_cost_types = item.get_cost_types(user_account)
+            cost_text = describe_cost_list(all_cost_types)
+
+            text += "\n\n" + cost_text
+
             await ctx.reply(text)
 
 
@@ -3617,6 +3659,20 @@ anarchy - 1000% of your wager.
         print("Outputting file for "+filename)
         print(str(file))
         await ctx.send(output)
+
+    ########################################################################################################################
+    #####      ADMIN SET_MAX_PRESTIGE
+
+    @admin.group(
+        brief="sets the max prestige level",
+        help = "Usage: bread admin set_max_prestige_level [value]"
+    )
+    @commands.is_owner()
+    async def set_max_prestige_level(self, ctx, value: int):
+        prestige_file = self.json_interface.get_custom_file("prestige")
+        prestige_file["max_prestige_level"] = value
+        self.json_interface.set_custom_file("prestige", prestige_file)
+        await ctx.send("Done.")
 
     ########################################################################################################################
     #####      ADMIN ALLOW / DISALLOW

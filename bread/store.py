@@ -377,8 +377,9 @@ class Multiroller(Store_Item):
     # this item rolls bread multiple times for each command sent
 
     @classmethod
-    def cost(cls, user_account: account.Bread_Account) -> int:
-        level = user_account.get(cls.name) + 1
+    def cost(cls, user_account: account.Bread_Account, level:int = None) -> int:
+        if level is not None:
+            level = user_account.get(cls.name) + 1
 
         if level == 1:
             return 128
@@ -397,10 +398,12 @@ class Multiroller(Store_Item):
     @classmethod
     def max_level(cls, user_account: account.Bread_Account = None) -> typing.Optional[int]:
         prestige_level = user_account.get_prestige_level()
-        if prestige_level < 1:
+        if prestige_level == 0:
             return 10
-        else:
+        elif prestige_level < 10:
             return 11
+        else:
+            return 12
         
     @classmethod
     def find_max_purchasable_count(cls, user_account: account.Bread_Account) -> int:
@@ -411,15 +414,16 @@ class Multiroller(Store_Item):
 
         # same as before... price is not constant so loop
         purchase = 0
-        while 1:
-            if dough >= cls.cost(user_account, level) or level > cls.max_level:
-                purchase += 1
-                dough -= cls.cost(user_account, level)
-            else: break
+        while level <= cls.max_level(user_account) and dough >= cls.cost(user_account, level):
+
+            purchase += 1
             level += 1
+            dough -= cls.cost(user_account, level)
+            
 
         # which is sooner: the multiroller limit, or the amount you can buy?
-        return min(user_account.get(cls.name) + level, cls.max_level) - user_account.get(cls.name)
+        # return min(user_account.get(cls.name) + level, cls.max_level) - user_account.get(cls.name)
+        return purchase
 
     @classmethod
     def can_be_purchased(cls, user_account: account.Bread_Account) -> bool:
@@ -445,8 +449,9 @@ class Compound_Roller(Store_Item):
     display_name = "Compound Roller"
 
     @classmethod
-    def cost(cls, user_account: account.Bread_Account) -> int:
-        level = user_account.get(cls.name) + 1
+    def cost(cls, user_account: account.Bread_Account, level:int = None) -> int:
+        if level is not None:
+            level = user_account.get(cls.name) + 1
         return 128
 
     @classmethod
@@ -467,15 +472,15 @@ class Compound_Roller(Store_Item):
         level = user_account.get(cls.name) + 1
 
         purchase = 0
-        while 1:
-            if dough >= cls.cost(user_account, level) or level > cls.max_level:
-                purchase += 1
-                dough -= cls.cost(user_account, level)
-            else: break
+        while dough >= cls.cost(user_account, level) and level <= cls.max_level(user_account):
+            
+            purchase += 1
+            dough -= cls.cost(user_account, level)
             level += 1
 
         # which is sooner: the compound roller limit, or the amount you can buy?
-        return min(user_account.get(cls.name) + level, cls.max_level) - user_account.get(cls.name)
+        # return min(user_account.get(cls.name) + level, cls.max_level) - user_account.get(cls.name)
+        return purchase
 
     @classmethod
     def can_be_purchased(cls, user_account: account.Bread_Account) -> bool:
@@ -521,16 +526,20 @@ class Random_Chess_Piece(Store_Item):
         # subtract cost
         user_account.increment("total_dough", -cls.cost(user_account) * amount)
 
+        original_amount = amount
+
         # increase count
         #user_account.increment("chess_pieces", 1)
         full_chess_set = values.chess_pieces_black_biased + values.chess_pieces_white_biased
         user_chess_pieces = user_account.get_all_items_with_attribute_unrolled("chess_pieces")
         unfound_pieces = utility.array_subtract(full_chess_set, user_chess_pieces)
 
-        if amount > 1:
-            out_str = f'Congratulations! You have purchased {amount} chess pieces!'
-        else:
-            out_str = ''
+        purchased_pieces = dict()
+        for chess_piece in values.all_chess_pieces:
+            purchased_pieces[chess_piece.text] = 0
+
+        
+        out_str = ''
 
         # first we fill in any missing pieces
         while len(unfound_pieces) > 0 and amount > 0:
@@ -540,8 +549,9 @@ class Random_Chess_Piece(Store_Item):
                 unfound_pieces = utility.array_subtract(full_chess_set, user_chess_pieces)
 
                 amount -= len(unfound_pieces)
-                for i in unfound_pieces:
-                    user_account.add_item_attributes(i)
+                for piece in unfound_pieces:
+                    user_account.add_item_attributes(piece)
+                    purchased_pieces[piece.text] += 1
                 unfound_pieces = []
 
             # else we buy the pieces we need one at a time
@@ -549,9 +559,10 @@ class Random_Chess_Piece(Store_Item):
                 piece = random.choice(unfound_pieces)
                 user_account.add_item_attributes(piece)
                 unfound_pieces.remove(piece)
+                purchased_pieces[piece.text] += 1
                 amount -= 1
 
-                if out_str == '':
+                if original_amount == 1:
                     out_str = f'Congratulations! You have purchased a {piece.text}!'
 
 
@@ -560,11 +571,17 @@ class Random_Chess_Piece(Store_Item):
             # if you have all the chess pieces, you get a random chess piece.
             piece = random.choice(full_chess_set)
             user_account.add_item_attributes(piece)
+            purchased_pieces[piece.text] += 1
             amount -= 1
 
-            if out_str == '':
+            if original_amount == 1:
                 out_str = f'Congratulations! You have purchased a {piece.text}!'
 
+        if original_amount > 1:
+            out_str = "Congratulations! You have purchased the following chess pieces:\n"
+            for piece in purchased_pieces:
+                if purchased_pieces[piece] > 0:
+                    out_str += f'{piece}: {purchased_pieces[piece]} \n'
 
         # # then add random chess piece
         # if (random.randint(1, 4) == 1):
@@ -636,16 +653,33 @@ class Special_Bread_Pack(Store_Item):
 
         # this might allow you to see special bread pack changes in full when buying multiple?
 
-        bought_bread = rng.choice(bread_distribution, count)
-        for item in set(bread_distribution):
-            user_account.add_item_attributes(item, amount=bought_bread.count(item))
+        # bought_bread = rng.choice(bread_distribution, count)
+        # for item in set(bread_distribution):
+            #  user_account.add_item_attributes(item, amount=bought_bread.count(item))
 
-        output = f"Congratulations! You got the following {count} special breads:\n"
-        for item in set(bread_distribution):
-            item_text = item.text
-            if item_text in bought_bread:
-                #output += f"{all_purchased_items[item_text]} {item_text}\n"
-                output += f"{item_text} : +{bought_bread.count(item)}, -> {user_account.get(item_text)}\n"
+        # output = f"Congratulations! You got the following {count} special breads:\n"
+        # for item in set(bread_distribution):
+        #     item_text = item.text
+        #     if item_text in bought_bread:
+        #         #output += f"{all_purchased_items[item_text]} {item_text}\n"
+        #         output += f"{item_text} : +{bought_bread.count(item)}, -> {user_account.get(item_text)}\n"
+
+        bought_bread_dict = dict()
+        for bread in bread_distribution:
+            bought_bread_dict[bread.text] = 0
+        for i in range(count):
+            bread = random.choice(bread_distribution)
+            bought_bread_dict[bread.text] += 1
+
+        # add the breads to our account
+        for bread_type in values.all_special_breads+values.all_rare_breads:
+            user_account.add_item_attributes(bread_type, amount=bought_bread_dict[bread_type.text])
+
+        output = ""
+        for item_text in bought_bread_dict.keys():
+            output += f"{item_text} : +{bought_bread_dict[item_text]}, -> {user_account.get(item_text)}\n"
+        
+        
             
         return output
 
@@ -890,21 +924,21 @@ class LC_booster(Custom_price_item):
         else:
             return False
         
-    @classmethod
-    def find_max_purchasable_count(cls, user_account: account.Bread_Account) -> int:
-        level = user_account.get(cls.name) + 1
-        glods = user_account.get("gem_gold")
-        # gets the amounts of glods needed for each level. this currently gets (1,10,100,1000)[level:]
-        glods_price = [*zip( *cls.get_costs()[level:] )][1]
+    # @classmethod
+    # def find_max_purchasable_count(cls, user_account: account.Bread_Account) -> int:
+    #     level = user_account.get(cls.name) + 1
+    #     glods = user_account.get(values.gem_gold)
+    #     # gets the amounts of glods needed for each level. this currently gets (1,10,100,1000)[level:]
+    #     glods_price = [*zip( *cls.get_costs()[level:] )][1]
 
-        for i in range(len(cls.get_costs()[level:])):
-            if glods < sum(glods_price[:i+1]):
-                return i
-        return len(cls.get_costs()[1:]) - level
+    #     for i in range(len(cls.get_costs()[level:])):
+    #         if glods < sum(glods_price[:i+1]):
+    #             return i
+    #     return len(cls.get_costs()[1:]) - level
 
     @classmethod
-    def do_purchase(cls, user_account: account.Bread_Account, amount:int = 1):
-        super().do_purchase(user_account, amount=amount)
+    def do_purchase(cls, user_account: account.Bread_Account):
+        super().do_purchase(user_account)
         level = user_account.get(cls.name)
         return f"You are now at Recipe Refinement level {level}!"
 
