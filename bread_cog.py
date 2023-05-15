@@ -1,13 +1,6 @@
 """
 Patch Notes: 
-- Purchasing an item will now tell you how much of its cost you have remaining. So if an item costs red gems it will tell you how many red gems you have remaining after you buy it.
-- Worked with Aloe to speed up: buying random chess pieces, buying special bread packs, and making chessatrons
-- When buying multiple chess pieces and special bread packs, you will see how many of each item you got.
-- Fixed bug where getting a multiple of 55 chessatrons would ping you for no reason
-- Added alchemy recipe to turn a gold gem into a green gem
-- You can now use `$bread chessatron <number>` to make a specific number of chessatrons. Also works with `gem_chessatron`. Thanks to Aloe for this patch
-- Gambling now has zero rather than nearly zero chance of failing internally. Thanks to Malte for this patch.
-- Added `$bread help`, finally. Thanks to Duck for this patch.
+
 
 TODO: Do not die to the plague
 
@@ -3669,6 +3662,8 @@ anarchy - 1000% of your wager.
     )
     @commands.is_owner()
     async def set_max_prestige_level(self, ctx, value: int):
+        if await self.await_confirmation(ctx) is False:
+            return
         prestige_file = self.json_interface.get_custom_file("prestige")
         prestige_file["max_prestige_level"] = value
         self.json_interface.set_custom_file("prestige", prestige_file)
