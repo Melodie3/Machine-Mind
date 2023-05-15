@@ -1,5 +1,7 @@
 """
 Patch Notes: 
+- Purchasing an item will now tell you how much of its cost you have remaining. So if an item costs red gems it will tell you how many red gems you have remaining after you buy it.
+- Worked with Aloe to make buying random chess pieces faster for large quantities
 - Fixed bug where getting a multiple of 55 chessatrons would ping you for no reason
 - Added alchemy recipe to turn a gold gem into a green gem
 - You can now use `$bread chessatron <number>` to make a specific number of chessatrons. Also works with `gem_chessatron`. Thanks to Aloe for this patch
@@ -1106,7 +1108,7 @@ loaf_converter""",
 
         output = f"Leaderboard for {search_value}:\n\n"
 
-        output += f"The combined amount between all people is {total}.\n\n"
+        output += f"The combined amount between all people is {utility.smart_number(total)}.\n\n"
 
         # escape_transform = str.maketrans({"_":  r"\_"}) # lol trans
 
@@ -1983,6 +1985,7 @@ loaf_converter""",
             if i.name.lower() == item_name or i.display_name.lower() == item_name:
                 item = i
                 break
+            # this is for the item's name minus a trailing "s"
             if i.name.lower() == item_name_2 or i.display_name.lower() == item_name_2:
                 item = i
                 break
@@ -2013,17 +2016,43 @@ loaf_converter""",
             #user_account.increment(item.name, 1)
             self.json_interface.set_account(ctx.author,user_account)
 
+            all_cost_types = item.get_cost_types(user_account)
+
+            def describe_cost(item_text):
+                amount = user_account.get(item_text)
+                if item_text == "total_dough":
+                    return f"**{utility.smart_number(amount)} dough**"
+                else:
+                    return f"**{utility.smart_number(amount)} {item_text}**"
+
+            if len(all_cost_types) == 1:
+                cost_text = f"You now have {describe_cost(all_cost_types[0])} remaining."
+            elif len(all_cost_types) == 2:
+                cost_text = f"You now have {describe_cost(all_cost_types[0])} and {describe_cost(all_cost_types[1])} remaining."
+            else:
+                cost_text = "You now have "
+                length = len(all_cost_types)
+                for i in range(length):
+                    cost_text += describe_cost(all_cost_types[i])
+                    if i < length-1:
+                        cost_text += ", " 
+                    if i == length-2:
+                        cost_text += "and "
+                cost_text += " remaining."
+
             if item in store.prestige_store_items:
                 #await ctx.reply(f"Congratulations! You've unlocked the **{item.display_name}**! {text}")
                 if text is None:
                     text = f"Congratulations! You've unlocked the **{item.display_name}** upgrade! You are now at level {user_account.get(item.name)}."
                 
-                text += f"\n\nYou now have **{user_account.get(values.ascension_token.text)} {values.ascension_token.text}** remaining."
+                #text += f"\n\nYou now have **{user_account.get(values.ascension_token.text)} {values.ascension_token.text}** remaining."
             else:
                 if text is None:
                     text = f"You have purchased a {item.display_name}! You now have {user_account.get(item.name)} of them."
 
-                text += f"\n\nYou now have **{user_account.get('total_dough')} dough** remaining."
+                #text += f"\n\nYou now have **{user_account.get('total_dough')} dough** remaining."
+
+            text += "\n\n" + cost_text
 
             await ctx.reply(text)
 
@@ -2034,37 +2063,43 @@ loaf_converter""",
 
             # revised buying code
 
-            for i in buyable_items:
-                # check if the current class has the purchase_upper method
-                if 'find_max_purchasable_count' in dir(i):
-                    max_purchasable = i.find_max_purchasable_count(user_account)
+            
+            # check if the current class has the purchase_upper method
+            if 'find_max_purchasable_count' in dir(i):
+                max_purchasable = i.find_max_purchasable_count(user_account)
 
-                    # what's cool about this is all the price checks are done WITHIN purchase_upper
-                    # so we don't even have to check. purchase_num *should* be a valid purchase amount.
-                    # if item_count is larger than the amount you can afford, max_purchasable should be lower.
-                    # if you don't want to buy as much as you can, item_count will be lower.
-                    purchase_num = min(item_count,max_purchasable)
+                # what's cool about this is all the price checks are done WITHIN find_max_purchasable_count
+                # so we don't even have to check. purchase_num *should* be a valid purchase amount.
+                # if item_count is larger than the amount you can afford, max_purchasable should be lower.
+                # if you don't want to buy as much as you can, item_count will be lower.
+                purchase_num = min(item_count,max_purchasable)
 
-                    # purchase the item! do_purchase modified to allow for item counts.
-                    # only items with the purchase_upper method should have the modified code.
-                    text = item.do_purchase(user_account,amount = purchase_num)
+                # purchase the item! do_purchase modified to allow for item counts.
+                # only items with the purchase_upper method should have the modified code.
+                text = item.do_purchase(user_account,amount = purchase_num)
 
-                    purchased_count = purchase_num
+                purchased_count = purchase_num
 
-                else:
-                    # old code, for use with items that don't have find_max_purchasable_count
-                    purchased_count = 0
-                    for i in range(item_count):
-                        if item not in buyable_items:
-                            break # if we've bought as many as we can legally
+            else:
+                # old code, for use with items that don't have find_max_purchasable_count
+                purchased_count = 0
+                for i in range(item_count):
 
-                        if not item.is_affordable_for(user_account):
-                            break # if we've spent all our dough
+                    # buyable_items = self.get_buyable_items(user_account, all_items)
+                    
+                    # if item not in buyable_items:
+                    #     break # if we've bought as many as we can legally
 
-                        text = item.do_purchase(user_account)
-                        #user_account.increment(item.name, 1)
+                    if not item.can_be_purchased(user_account):
+                        break # if we've bought as many as we can legally
 
-                        purchased_count += 1
+                    if not item.is_affordable_for(user_account):
+                        break # if we've spent all our dough
+
+                    text = item.do_purchase(user_account)
+                    #user_account.increment(item.name, 1)
+
+                    purchased_count += 1
 
 
             self.json_interface.set_account(ctx.author,user_account)
