@@ -1651,8 +1651,13 @@ loaf_converter""",
         if gem_count < 32:
             await utility.smart_reply(ctx, f"You need at least 32 red gems to create a chessatron.")
             return
-        
-        number_of_chessatrons = gem_count // 32 # integer division
+
+        if arg.isnumeric():
+            arg = int(arg)
+            number_of_chessatrons = min(gem_count // 32,arg) # integer division
+        else: 
+            arg = None
+            number_of_chessatrons = gem_count // 32 # integer division
 
         user_account.increment(values.gem_red.text, -32*number_of_chessatrons)
 
@@ -1673,10 +1678,6 @@ loaf_converter""",
         self.json_interface.set_account(ctx.author, user_account)
 
         await utility.smart_reply(ctx, f"You have used {32*number_of_chessatrons} red gems to make chessatrons.")
-
-        if arg.isnumeric():
-            arg = int(arg)
-        else: arg = None
 
         await self.do_chessboard_completion(ctx, True, amount = int(arg))
 

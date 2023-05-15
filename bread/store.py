@@ -1,7 +1,6 @@
 
 import typing
 import random 
-from numpy import random as rand
 
 import bread.account as account
 import bread.values as values
@@ -229,9 +228,8 @@ class Daily_rolls(Store_Item):
     display_name = "Extra daily roll"
 
     @classmethod
-    def cost(cls, user_account: account.Bread_Account, level: None) -> int:
-        if level is None:
-            level = user_account.get(cls.name) + 1
+    def cost(cls, user_account: account.Bread_Account) -> int:
+        level = user_account.get(cls.name) + 1
         naive_cost = 128 #(max(0, level-10) * 128) # cost will be 256, 512, 768, 1024, ...
         # first few levels are cheaper
         level_discount_card = user_account.get("max_daily_rolls_discount")
@@ -259,30 +257,10 @@ class Daily_rolls(Store_Item):
     @classmethod
     def max_level(cls, user_account: account.Bread_Account = None) -> typing.Optional[int]:
         return 1000 + user_account.get_prestige_level() * 100
-    
-    @classmethod
-    def find_max_purchasable_count(cls, user_account: account.Bread_Account) -> int:
-        # find the max purchasable amount of the item.
-
-        dough = user_account.get("total_dough")
-        level = user_account.get(cls.name) + 1
-
-        # price is not constant. a loop will be important here, but should be faster than looping the entire process.
-        purchase = 0
-        while 1:
-            if dough >= cls.cost(user_account, level) or level > cls.max_level:
-                purchase += 1
-                dough -= cls.cost(user_account, level)
-            else: break
-            level += 1
-
-        # which is sooner: the daily rolls limit, or the amount you can buy?
-        # subtract the current amount of the item to get the amount purchasable, not the total amount possible.
-        return min(user_account.get(cls.name) + level, cls.max_level) - user_account.get(cls.name)
 
     @classmethod
-    def do_purchase(cls, user_account: account.Bread_Account, amount: int = 1):
-        super().do_purchase(user_account, amount=amount)
+    def do_purchase(cls, user_account: account.Bread_Account):
+        super().do_purchase(user_account)
         level = user_account.get(cls.name)
         prestige_level = user_account.get_prestige_level()
         if prestige_level >= 1:
@@ -322,25 +300,6 @@ class Loaf_Converter(Store_Item):
     @classmethod
     def max_level(cls, user_account: account.Bread_Account = None) -> typing.Optional[int]:
         return 69420
-    
-    @classmethod
-    def find_max_purchasable_count(cls, user_account: account.Bread_Account) -> int:
-        # find the max purchasable amount of the item.
-
-        # thanks duck
-
-        d = user_account.get("total_dough")
-        n = user_account.get(cls.name)
-        p = 256 - (user_account.get("loaf_converter_discount") * 12)
-
-        # the Equation
-        buyable_lcs = int(
-        ((-1 * (((2 * p) * n) + p)) + (((((2 * p) * n) + p)**2 + ((8 * p) * d))**0.5)) // (2 * p))
-
-        # which is sooner? max_level (lol) or the max amount you can buy?
-        return min(n + buyable_lcs, cls.max_level())
-
-
 
 class Dough_Multiplier(Store_Item):
     name = "dough_multiplier"
@@ -404,26 +363,6 @@ class Multiroller(Store_Item):
             return 11
         else:
             return 12
-        
-    @classmethod
-    def find_max_purchasable_count(cls, user_account: account.Bread_Account) -> int:
-        # find the max purchasable amount of the item.
-
-        dough = user_account.get("total_dough")
-        level = user_account.get(cls.name) + 1
-
-        # same as before... price is not constant so loop
-        purchase = 0
-        while level <= cls.max_level(user_account) and dough >= cls.cost(user_account, level):
-
-            purchase += 1
-            level += 1
-            dough -= cls.cost(user_account, level)
-            
-
-        # which is sooner: the multiroller limit, or the amount you can buy?
-        # return min(user_account.get(cls.name) + level, cls.max_level) - user_account.get(cls.name)
-        return purchase
 
     @classmethod
     def can_be_purchased(cls, user_account: account.Bread_Account) -> bool:
@@ -463,24 +402,6 @@ class Compound_Roller(Store_Item):
     @classmethod
     def max_level(cls, user_account: account.Bread_Account = None) -> typing.Optional[int]:
         return 5
-    
-    @classmethod
-    def find_max_purchasable_count(cls, user_account: account.Bread_Account) -> int:
-        # find the max purchasable amount of the item.
-
-        dough = user_account.get("total_dough")
-        level = user_account.get(cls.name) + 1
-
-        purchase = 0
-        while dough >= cls.cost(user_account, level) and level <= cls.max_level(user_account):
-            
-            purchase += 1
-            dough -= cls.cost(user_account, level)
-            level += 1
-
-        # which is sooner: the compound roller limit, or the amount you can buy?
-        # return min(user_account.get(cls.name) + level, cls.max_level) - user_account.get(cls.name)
-        return purchase
 
     @classmethod
     def can_be_purchased(cls, user_account: account.Bread_Account) -> bool:
@@ -647,13 +568,12 @@ class Special_Bread_Pack(Store_Item):
         # can just do * amount bc the price doesn't change.
         user_account.increment("total_dough", -cls.cost(user_account) * amount)
 
-        rng = rand.default_rng()
         count = 100 * amount
         bread_distribution = values.all_special_breads * 3 + values.all_rare_breads
 
         # this might allow you to see special bread pack changes in full when buying multiple?
 
-        # bought_bread = rng.choice(bread_distribution, count)
+                # bought_bread = rng.choice(bread_distribution, count)
         # for item in set(bread_distribution):
             #  user_account.add_item_attributes(item, amount=bought_bread.count(item))
 
@@ -678,8 +598,6 @@ class Special_Bread_Pack(Store_Item):
         output = ""
         for item_text in bought_bread_dict.keys():
             output += f"{item_text} : +{bought_bread_dict[item_text]}, -> {user_account.get(item_text)}\n"
-        
-        
             
         return output
 
@@ -866,29 +784,17 @@ class Bling(Custom_price_item):
     # @classmethod
     # def max_level(cls, user_account: account.Bread_Account = None) -> typing.Optional[int]:
     #     return len(cls.costs) - 1
-    
-    #  removed because it caused an error
-    # @classmethod
-    # def find_max_purchasable_count(cls, user_account: account.Bread_Account) -> int:
-    #     level = user_account.get(cls.name)
-
-    #     # only check the ones past your current level
-    #     for cost in cls.costs[level:]:
-    #         if user_account.get(cost[0]) < cost[1]:
-    #             break
-    #     return cls.costs.index(cost) + level - 1
 
     @classmethod
-    def do_purchase(cls, user_account: account.Bread_Account, amount: int = 1):
+    def do_purchase(cls, user_account: account.Bread_Account):
         level = user_account.get("bling") + 1
 
         if cls.is_affordable_for(user_account):
-            for i in range(amount):
-                user_account.increment(cls.costs[level + i][0], -cls.costs[level + i][1])
+            user_account.increment(cls.costs[level][0], -cls.costs[level][1])
 
-            user_account.increment("bling", amount)
+            user_account.increment("bling", 1)
 
-            return f"You have purchased a {', '.join([cls.costs[level + x][0] for x in range(amount)])} bling!"
+            return f"You have purchased a {cls.costs[level][0]} bling!"
         else:
             return f"You do not have enough {cls.costs[level][0]} to purchase a bling level {level}!"
 
@@ -923,18 +829,6 @@ class LC_booster(Custom_price_item):
             return True
         else:
             return False
-        
-    # @classmethod
-    # def find_max_purchasable_count(cls, user_account: account.Bread_Account) -> int:
-    #     level = user_account.get(cls.name) + 1
-    #     glods = user_account.get(values.gem_gold)
-    #     # gets the amounts of glods needed for each level. this currently gets (1,10,100,1000)[level:]
-    #     glods_price = [*zip( *cls.get_costs()[level:] )][1]
-
-    #     for i in range(len(cls.get_costs()[level:])):
-    #         if glods < sum(glods_price[:i+1]):
-    #             return i
-    #     return len(cls.get_costs()[1:]) - level
 
     @classmethod
     def do_purchase(cls, user_account: account.Bread_Account):
