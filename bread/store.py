@@ -573,17 +573,31 @@ class Special_Bread_Pack(Store_Item):
 
         # this might allow you to see special bread pack changes in full when buying multiple?
 
-        # oh this exists
-        bought_bread = random.choices(bread_distribution, k=count)
-        for item in set(bread_distribution):
-            user_account.add_item_attributes(item, amount=bought_bread.count(item))
+                # bought_bread = rng.choice(bread_distribution, count)
+        # for item in set(bread_distribution):
+            #  user_account.add_item_attributes(item, amount=bought_bread.count(item))
 
-        output = f"Congratulations! You got the following {count} special breads:\n"
-        for item in set(bread_distribution):
-            item_text = item.text
-            if item_text in bought_bread:
-                #output += f"{all_purchased_items[item_text]} {item_text}\n"
-                output += f"{item_text} : +{bought_bread.count(item)}, -> {user_account.get(item_text)}\n"
+        # output = f"Congratulations! You got the following {count} special breads:\n"
+        # for item in set(bread_distribution):
+        #     item_text = item.text
+        #     if item_text in bought_bread:
+        #         #output += f"{all_purchased_items[item_text]} {item_text}\n"
+        #         output += f"{item_text} : +{bought_bread.count(item)}, -> {user_account.get(item_text)}\n"
+
+        bought_bread_dict = dict()
+        for bread in bread_distribution:
+            bought_bread_dict[bread.text] = 0
+        for i in range(count):
+            bread = random.choice(bread_distribution)
+            bought_bread_dict[bread.text] += 1
+
+        # add the breads to our account
+        for bread_type in values.all_special_breads+values.all_rare_breads:
+            user_account.add_item_attributes(bread_type, amount=bought_bread_dict[bread_type.text])
+
+        output = ""
+        for item_text in bought_bread_dict.keys():
+            output += f"{item_text} : +{bought_bread_dict[item_text]}, -> {user_account.get(item_text)}\n"
             
         return output
 
