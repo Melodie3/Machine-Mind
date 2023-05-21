@@ -423,8 +423,8 @@ async def verify(ctx, user: typing.Optional[discord.Member]):
         descriptors.append("I am clean.")
     if "r/place 2023 coordinator" in [y.name.lower() for y in user.roles]:
         descriptors.append("Still waiting for r/Place 2023 huh?")
-    if "our/place participant" in [y.name.lower() for y in user.roles]:
-        descriptors.append("Thank you for aiding in the creation of r/Place.")
+    if "ping list poster" in [y.name.lower() for y in user.roles]:
+        descriptors.append("Stop using this command and go make the next ping list.")
     if "l*ndon system 🤢" in [y.name.lower() for y in user.roles]:
         descriptors.append("What compels you to play the London?")
     if "bingo-bot" in [y.name.lower() for y in user.roles]:
