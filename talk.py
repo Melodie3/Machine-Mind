@@ -346,20 +346,39 @@ async def verify(ctx, user: typing.Optional[discord.Member]):
         descriptors.append("The bread rolls incident :skull:")
 
 
+    #Addicted to _____ Roles
+    if "addicted to carpal tunnel" in [y.name.lower() for y in user.roles]:
+        descriptors.append("Copy and pasting $bread so many times has left a mark on you.")
+    if "addicted to roles" in [y.name.lower() for y in user.roles]:
+        descriptors.append("Do you collect roles just to get more responses from this command?")
     if "addicted to bricks" in [y.name.lower() for y in user.roles]:
         descriptors.append("I feel like I've delivered a lot of bricks to you recently.")
         descriptors.append("You *do* know that bricks weren't intended for recreational use, right?")
+    if "easily addicted" in [y.name.lower() for y in user.roles]:
+        descriptors.append("Are you addicted to running this command?")
     if "addicted to bread" in [y.name.lower() for y in user.roles]:
         descriptors.append("How can you still be hungry after all the bread?")
         descriptors.append(":bread:")
+        descriptors.append("Do you even roll bro?")
     if "addicted to stats" in [y.name.lower() for y in user.roles]:
         descriptors.append("You are too good at math for your own good.")
+    if "addicted to gambling" in [y.name.lower() for y in user.roles]:
+        descriptors.append("I hope you're not gambling with your life savings.")
+        descriptors.append("Remember, gambling is a sin.")
+    #Seriously Addicted to _____ Roles
+    if "seriously addicted to bricks" in [y.name.lower() for y in user.roles]:
+        descriptors.append("How many times will you decline en passant?")
+    if "seriously addicted to gambling" in [y.name.lower() for y in user.roles]:
+        descriptors.append("Positive outcome on average.")
+    if "seriously addicted to bread" in [y.name.lower() for y in user.roles]:
+        descriptors.append("You remember when bread was rolled on one line, don't you?")
+    #Miscellaneous roles
     if "bread" in [y.name.lower() for y in user.roles]:
         descriptors.append("Bread club!")
     if "moderator" in [y.name.lower() for y in user.roles]:
         descriptors.append("A moderator!")
     if "admin" in [y.name.lower() for y in user.roles]:
-        descriptors.append("An admin!")
+        descriptors.append("An amdin!")
     if "here when it all began" in [y.name.lower() for y in user.roles]:
         descriptors.append("You've been here since the very beginning.")
     if "og raid defenders" in [y.name.lower() for y in user.roles]:
@@ -370,14 +389,51 @@ async def verify(ctx, user: typing.Optional[discord.Member]):
         descriptors.append("I hope to see you at the next game night!")
     if "paperclip optimized 📎" in [y.name.lower() for y in user.roles]:
         descriptors.append("I estimate you could become approximately 10,000 paperclips.")
-    if "addicted to gambling" in [y.name.lower() for y in user.roles]:
-        descriptors.append("I hope you're not gambling with your life savings.")
-        descriptors.append("Remember, gambling is a sin.")
     if "ghomerl vs. cmauhin" in [y.name.lower() for y in user.roles]:
         descriptors.append("ghomerl vs. cmauhin")
     if "literally does care" in [y.name.lower() for y in user.roles]:
         descriptors.append("Thank you for signing up to be notified of server events!")
-
+    if "transbian thirst-trap" in [y.name.lower() for y in user.roles]:
+        descriptors.append("You seem to be a very valid person.")
+    if "gets pinged too much" in [y.name.lower() for y in user.roles]:
+        descriptors.append("<@&967443956659019786>")
+    if "hapy capy :heart:" in [y.name.lower() for y in user.roles]:
+        descriptors.append("A fellow supporter of the capybaras. I tip my hat to you.")
+    if "r/chess mod" in [y.name.lower() for y in user.roles]:
+        descriptors.append("Hey, OP! Did your game end in a stalemate? Did you encounter a weird pawn move? Are you trying to move a piece and it's not going? We have just the resource for you!")
+    if "gvc commentator" in [y.name.lower() for y in user.roles]:
+        descriptors.append("Will you be returning for the rematch, commentator?")
+    if "in debt" in [y.name.lower() for y in user.roles]:
+        descriptors.append("Interest is piling up for your debts.")
+    if "based" in [y.name.lower() for y in user.roles]:
+        descriptors.append("Thank you for boosting this server and making the bread game possible!")
+    if "this man got ten thousand bricks" in [y.name.lower() for y in user.roles]:
+        descriptors.append("Your dedication seems to know no bounds.")
+    if "event coordinator (brings cookies)" in [y.name.lower() for y in user.roles]:
+        descriptors.append("When is the next event?")
+    if "bribed a mod" in [y.name.lower() for y in user.roles]:
+        descriptors.append("Why did you bribe the mods? For fame? For power? For *bread*?")
+    if "brick jailed" in [y.name.lower() for y in user.roles]:
+        descriptors.append("What did you do this time?")
+    if "Minecraft" in [y.name.lower() for y in user.roles]:
+        descriptors.append("Have you eaten bread in Minecraft too?")
+    if "31004150 player" in [y.name.lower() for y in user.roles]:
+        descriptors.append(":brown_square:")
+    if "the peng affair" in [y.name.lower() for y in user.roles]:
+        descriptors.append("I am clean.")
+    if "r/place 2023 coordinator" in [y.name.lower() for y in user.roles]:
+        descriptors.append("Still waiting for r/Place 2023 huh?")
+    if "our/place participant" in [y.name.lower() for y in user.roles]:
+        descriptors.append("Thank you for aiding in the creation of r/Place.")
+    if "l*ndon system 🤢" in [y.name.lower() for y in user.roles]:
+        descriptors.append("What compels you to play the London?")
+    if "bingo-bot" in [y.name.lower() for y in user.roles]:
+        descriptors.append("Hmm... Why are you running this command?")
+    if "ghost council" in [y.name.lower() for y in user.roles]:
+        descriptors.append("What does the Ghost Council even mean?")
+    if "sus" in [y.name.lower() for y in user.roles]:
+        descriptors.append("sus")
+                           
     if len(descriptors) == 0:
         await ctx.send("Verification failed.")
     else:
