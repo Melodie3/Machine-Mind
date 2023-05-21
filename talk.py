@@ -432,7 +432,7 @@ async def verify(ctx, user: typing.Optional[discord.Member]):
     if "ghost council" in [y.name.lower() for y in user.roles]:
         descriptors.append("What does the Ghost Council even mean?")
     if "sus" in [y.name.lower() for y in user.roles]:
-        descriptors.append("sus")
+        descriptors.append("<:sus:961517169424883722>")
                            
     if len(descriptors) == 0:
         await ctx.send("Verification failed.")
