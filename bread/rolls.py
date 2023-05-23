@@ -295,7 +295,7 @@ def loaf_roll(luck = 1, user_account: account.Bread_Account = None):
         output["commentary"] = "Very shiny."
 
     # 4096 -> red gem, worth 250
-    elif random.randint(1,16394*odds_mult) <= gem_luck:
+    elif random.randint(1,16384*odds_mult) <= gem_luck:
         # red gem
         output["emote"] = values.gem_red
         output["commentary"] = "Shiny."
