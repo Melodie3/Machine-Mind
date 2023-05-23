@@ -2026,6 +2026,8 @@ loaf_converter""",
                 cost_text += " remaining."
             return cost_text
 
+        text = None
+
         if item_count == 1:
 
             # if it exists but can't be bought, we say so
