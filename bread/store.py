@@ -37,7 +37,7 @@ class Store_Item:
 
     @classmethod
     def get_price_description(cls, user_account: account.Bread_Account) -> str:
-        return f"{cls.cost(user_account)} dough"
+        return f"{utility.smart_number(cls.cost(user_account))} dough"
     
     @classmethod
     def description(cls, user_account: account.Bread_Account) -> str:
@@ -66,12 +66,20 @@ class Store_Item:
         return False
 
     @classmethod
-    def do_purchase(cls, user_account: account.Bread_Account):
+    def do_purchase(cls, user_account: account.Bread_Account, amount:int = 1):
         level = user_account.get(cls.name) + 1
 
         # then we can purchase it
-        user_account.increment("total_dough", -cls.cost(user_account))
-        user_account.increment(cls.name, 1)
+
+        # this must be a loop as certain items' prices aren't constant; you can't multiply
+        # by amount here.
+        for i in range(amount):
+            user_account.increment("total_dough", -cls.cost(user_account))
+            user_account.increment(cls.name, amount)
+
+    @classmethod
+    def get_cost_types(cls, user_account: account.Bread_Account, level: int = None):
+        return ["total_dough"]
         
 class Custom_price_item(Store_Item):
     name = "custom_price_item"
@@ -144,6 +152,21 @@ class Custom_price_item(Store_Item):
             [],
             [(values.gem_red.text, 1), ("total_dough", 1000)],
         ]
+
+    @classmethod
+    def get_cost_types(cls, user_account: account.Bread_Account, level: int = None):
+        if level is None: 
+            level = user_account.get(cls.name)
+
+        all_costs = cls.get_costs()
+        level_costs = all_costs[level]
+
+        retval = []
+
+        for cost in level_costs:
+            retval.append(cost[0]) # cost[0] is the type of item, cost[1] is the amount
+
+        return retval
 
 class Welcome_Packet(Store_Item):
     name = "welcome_packet"
@@ -278,8 +301,6 @@ class Loaf_Converter(Store_Item):
     def max_level(cls, user_account: account.Bread_Account = None) -> typing.Optional[int]:
         return 69420
 
-
-
 class Dough_Multiplier(Store_Item):
     name = "dough_multiplier"
     display_name = "Dough Multiplier"
@@ -315,8 +336,9 @@ class Multiroller(Store_Item):
     # this item rolls bread multiple times for each command sent
 
     @classmethod
-    def cost(cls, user_account: account.Bread_Account) -> int:
-        level = user_account.get(cls.name) + 1
+    def cost(cls, user_account: account.Bread_Account, level:int = None) -> int:
+        if level is not None:
+            level = user_account.get(cls.name) + 1
 
         if level == 1:
             return 128
@@ -335,10 +357,12 @@ class Multiroller(Store_Item):
     @classmethod
     def max_level(cls, user_account: account.Bread_Account = None) -> typing.Optional[int]:
         prestige_level = user_account.get_prestige_level()
-        if prestige_level < 1:
+        if prestige_level == 0:
             return 10
-        else:
+        elif prestige_level < 10:
             return 11
+        else:
+            return 12
 
     @classmethod
     def can_be_purchased(cls, user_account: account.Bread_Account) -> bool:
@@ -364,8 +388,9 @@ class Compound_Roller(Store_Item):
     display_name = "Compound Roller"
 
     @classmethod
-    def cost(cls, user_account: account.Bread_Account) -> int:
-        level = user_account.get(cls.name) + 1
+    def cost(cls, user_account: account.Bread_Account, level:int = None) -> int:
+        if level is not None:
+            level = user_account.get(cls.name) + 1
         return 128
 
     @classmethod
@@ -408,22 +433,76 @@ class Random_Chess_Piece(Store_Item):
     @classmethod
     def description(cls, user_account: account.Bread_Account) -> str:
         return "Purchase a random chess piece which you do not currently have."
+    
+    @classmethod
+    def find_max_purchasable_count(cls, user_account: account.Bread_Account) -> int:
+        # find the max purchasable amount of the item.
+
+        dough = user_account.get("total_dough")
+
+        return dough // cls.cost(user_account)
 
     @classmethod
-    def do_purchase(cls, user_account: account.Bread_Account):
+    def do_purchase(cls, user_account: account.Bread_Account, amount: int = 1):
         # subtract cost
-        user_account.increment("total_dough", -cls.cost(user_account))
+        user_account.increment("total_dough", -cls.cost(user_account) * amount)
+
+        original_amount = amount
 
         # increase count
         #user_account.increment("chess_pieces", 1)
-        full_chess_set = values.chess_pieces_black_biased+values.chess_pieces_white_biased
+        full_chess_set = values.chess_pieces_black_biased + values.chess_pieces_white_biased
         user_chess_pieces = user_account.get_all_items_with_attribute_unrolled("chess_pieces")
         unfound_pieces = utility.array_subtract(full_chess_set, user_chess_pieces)
-        if len(unfound_pieces) > 0:
-            awarded_piece = random.choice(unfound_pieces)
-        else:
-            awarded_piece = random.choice(full_chess_set)
-        user_account.add_item_attributes(awarded_piece)
+
+        purchased_pieces = dict()
+        for chess_piece in values.all_chess_pieces:
+            purchased_pieces[chess_piece.text] = 0
+
+        
+        out_str = ''
+
+        # first we fill in any missing pieces
+        while len(unfound_pieces) > 0 and amount > 0:
+            
+            # if we're buying more than we need, we just buy all the missing pieces
+            if amount >= len(unfound_pieces):
+                unfound_pieces = utility.array_subtract(full_chess_set, user_chess_pieces)
+
+                amount -= len(unfound_pieces)
+                for piece in unfound_pieces:
+                    user_account.add_item_attributes(piece)
+                    purchased_pieces[piece.text] += 1
+                unfound_pieces = []
+
+            # else we buy the pieces we need one at a time
+            else:
+                piece = random.choice(unfound_pieces)
+                user_account.add_item_attributes(piece)
+                unfound_pieces.remove(piece)
+                purchased_pieces[piece.text] += 1
+                amount -= 1
+
+                if original_amount == 1:
+                    out_str = f'Congratulations! You have purchased a {piece.text}!'
+
+
+
+        while amount > 0:
+            # if you have all the chess pieces, you get a random chess piece.
+            piece = random.choice(full_chess_set)
+            user_account.add_item_attributes(piece)
+            purchased_pieces[piece.text] += 1
+            amount -= 1
+
+            if original_amount == 1:
+                out_str = f'Congratulations! You have purchased a {piece.text}!'
+
+        if original_amount > 1:
+            out_str = "Congratulations! You have purchased the following chess pieces:\n"
+            for piece in purchased_pieces:
+                if purchased_pieces[piece] > 0:
+                    out_str += f'{piece}: {purchased_pieces[piece]} \n'
 
         # # then add random chess piece
         # if (random.randint(1, 4) == 1):
@@ -435,7 +514,7 @@ class Random_Chess_Piece(Store_Item):
         #     item = random.choice(values.chess_pieces_black_biased)
         #     user_account.add_item_attributes(item)
         
-        return f"Congratulations! You have purchased a {awarded_piece.text}!"
+        return out_str
 
 class Random_Special_Bread(Store_Item):
     name = "random_special_bread"
@@ -478,31 +557,48 @@ class Special_Bread_Pack(Store_Item):
         return "A pack of 100 random special and rare breads."
 
     @classmethod
-    def do_purchase(cls, user_account: account.Bread_Account):
+    def find_max_purchasable_count(cls, user_account: account.Bread_Account) -> int:
+        dough = user_account.get("total_dough")
+
+        return dough // 350
+
+    @classmethod
+    def do_purchase(cls, user_account: account.Bread_Account, amount = 1):
         # subtract cost
-        user_account.increment("total_dough", -cls.cost(user_account))
+        # can just do * amount bc the price doesn't change.
+        user_account.increment("total_dough", -cls.cost(user_account) * amount)
 
-        
-        count = 100
-        bread_distribution = values.all_special_breads + values.all_special_breads + values.all_special_breads + values.all_rare_breads
-        all_purchased_items = dict()
+        count = 100 * amount
+        bread_distribution = values.all_special_breads * 3 + values.all_rare_breads
 
+        # this might allow you to see special bread pack changes in full when buying multiple?
+
+                # bought_bread = rng.choice(bread_distribution, count)
+        # for item in set(bread_distribution):
+            #  user_account.add_item_attributes(item, amount=bought_bread.count(item))
+
+        # output = f"Congratulations! You got the following {count} special breads:\n"
+        # for item in set(bread_distribution):
+        #     item_text = item.text
+        #     if item_text in bought_bread:
+        #         #output += f"{all_purchased_items[item_text]} {item_text}\n"
+        #         output += f"{item_text} : +{bought_bread.count(item)}, -> {user_account.get(item_text)}\n"
+
+        bought_bread_dict = dict()
+        for bread in bread_distribution:
+            bought_bread_dict[bread.text] = 0
         for i in range(count):
-            purchased_item = random.choice(bread_distribution)
-            user_account.add_item_attributes(purchased_item)
-            if purchased_item.text in all_purchased_items.keys():
-                all_purchased_items[purchased_item.text] += 1
-            else:
-                all_purchased_items[purchased_item.text] = 1
+            bread = random.choice(bread_distribution)
+            bought_bread_dict[bread.text] += 1
 
-        output = f"Congratulations! You got the following {count} special breads:\n"
-        for item in (values.all_special_breads + values.all_rare_breads):
-            item_text = item.text
-            if item_text in all_purchased_items.keys():
-                #output += f"{all_purchased_items[item_text]} {item_text}\n"
-                output += f"{item_text} : +{all_purchased_items[item_text]}, -> {user_account.get(item_text)}\n"
+        # add the breads to our account
+        for bread_type in values.all_special_breads+values.all_rare_breads:
+            user_account.add_item_attributes(bread_type, amount=bought_bread_dict[bread_type.text])
+
+        output = ""
+        for item_text in bought_bread_dict.keys():
+            output += f"{item_text} : +{bought_bread_dict[item_text]}, -> {user_account.get(item_text)}\n"
             
-
         return output
 
 class Extra_Gamble(Store_Item):
@@ -522,13 +618,19 @@ class Extra_Gamble(Store_Item):
         return None
     
     @classmethod
-    def do_purchase(cls, user_account: account.Bread_Account):
+    def find_max_purchasable_count(cls, user_account: account.Bread_Account) -> int:
+        dough = user_account.get("total_dough")
+
+        return dough // 25
+    
+    @classmethod
+    def do_purchase(cls, user_account: account.Bread_Account, amount = 1):
         # subtract cost
-        user_account.increment("total_dough", -cls.cost(user_account))
+        user_account.increment("total_dough", -cls.cost(user_account) * amount)
 
         # reduce that gamble by 1
         # user_account.increment("daily_gambles", -5)
-        user_account.increment("max_gambles", 5)
+        user_account.increment("max_gambles", 5 * amount)
 
         return "Done.\n\nMay the odds be ever in your favor."
 
@@ -620,8 +722,12 @@ class Black_Hole_Technology(Custom_price_item):
 
         return "You have purchased black hole technology! Activate or deactivate it with the command `$bread black_hole`."
 
+    @classmethod
+    def get_cost_types(cls, user_account: account.Bread_Account, level: int = None):
+        return [values.gem_purple.text]
 
-class Bling(Store_Item):
+
+class Bling(Custom_price_item):
     name = "bling"
     display_name = "Bling"
 
@@ -634,27 +740,34 @@ class Bling(Store_Item):
              (values.anarchy_chess.text, 3)]
 
     @classmethod
-    def cost(cls, user_account: account.Bread_Account) -> int:
-        return 3
+    def get_costs(cls):
+        # I know this is duplicate but it means I don't need to replace some of the lower down code
+        return [[],
+                [(values.gem_red.text, 3)],
+                [(values.gem_blue.text, 3)],
+                [(values.gem_purple.text, 3)],
+                [(values.gem_green.text, 3)],
+                [(values.gem_gold.text, 3)],
+                [(values.anarchy_chess.text, 3)]]
 
     @classmethod
     def description(cls, user_account: account.Bread_Account) -> str:
         level = user_account.get("bling") + 1
         return f"A decorative {cls.costs[level][0]} for your stats and leaderboard pages. Purely cosmetic."
 
-    @classmethod
-    def get_price_description(cls, user_account: account.Bread_Account) -> str:
-        level = user_account.get("bling") + 1
+    # @classmethod
+    # def get_price_description(cls, user_account: account.Bread_Account) -> str:
+    #     level = user_account.get("bling") + 1
 
-        return f"{cls.costs[level][1]} {cls.costs[level][0]}"
+    #     return f"{cls.costs[level][1]} {cls.costs[level][0]}"
 
-    @classmethod
-    def is_affordable_for(cls, user_account: account.Bread_Account) -> bool:
-        level = user_account.get("bling") + 1
-        if user_account.get(cls.costs[level][0]) >= cls.costs[level][1]:
-            return True
-        else:
-            return False
+    # @classmethod
+    # def is_affordable_for(cls, user_account: account.Bread_Account) -> bool:
+    #     level = user_account.get("bling") + 1
+    #     if user_account.get(cls.costs[level][0]) >= cls.costs[level][1]:
+    #         return True
+    #     else:
+    #         return False
 
     @classmethod
     def can_be_purchased(cls, user_account: account.Bread_Account) -> bool:
@@ -667,22 +780,23 @@ class Bling(Store_Item):
                 return False
             else:
                 return True
+            
+    # @classmethod
+    # def max_level(cls, user_account: account.Bread_Account = None) -> typing.Optional[int]:
+    #     return len(cls.costs) - 1
 
     @classmethod
     def do_purchase(cls, user_account: account.Bread_Account):
         level = user_account.get("bling") + 1
-        if cls.is_affordable_for(user_account):
 
-            # subtract cost
+        if cls.is_affordable_for(user_account):
             user_account.increment(cls.costs[level][0], -cls.costs[level][1])
+
             user_account.increment("bling", 1)
+
             return f"You have purchased a {cls.costs[level][0]} bling!"
         else:
             return f"You do not have enough {cls.costs[level][0]} to purchase a bling level {level}!"
-
-    @classmethod
-    def max_level(cls, user_account: account.Bread_Account = None) -> typing.Optional[int]:
-        return len(cls.costs) - 1
 
 class LC_booster(Custom_price_item):
     name = "LC_booster"
@@ -715,7 +829,7 @@ class LC_booster(Custom_price_item):
             return True
         else:
             return False
-        
+
     @classmethod
     def do_purchase(cls, user_account: account.Bread_Account):
         super().do_purchase(user_account)
@@ -801,6 +915,10 @@ class Prestige_Store_Item(Store_Item):
     @classmethod
     def cost(cls, user_account: account.Bread_Account) -> int:
         return 0
+    
+    @classmethod
+    def get_cost_types(cls, user_account: account.Bread_Account, level: int = None):
+        return [values.ascension_token.text]
 
 
 class High_Roller_Table(Prestige_Store_Item):
@@ -1062,6 +1180,15 @@ class Gambit_shop_Item(Custom_price_item):
     @classmethod
     def description(cls, user_account: account.Bread_Account) -> str:
         return f"Boosts the dough you gain from a {cls.boost_item.text} by {cls.boost_amount}."
+    
+    @classmethod
+    def get_cost_types(cls, user_account: account.Bread_Account, level: int = None):
+        retval = []
+
+        for cost in cls.raw_cost:
+            retval.append(cost[0]) # cost[0] is the type of item, cost[1] is the amount
+
+        return retval
 
 class Gambit_Shop_Flatbread(Gambit_shop_Item):
     name = "gambit_shop_flatbread"

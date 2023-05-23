@@ -184,7 +184,7 @@ async def dayum(ctx):
     hidden= True,
 )
 async def bingo(ctx):
-    text = "You can find the current bingo board at https://mrsquirreldeduck.github.io/bingo/"
+    text = "You can find the current bingo board by running \"%board\""
     await ctx.send(text)
 
 # require proper punctuation for echo command
@@ -384,7 +384,7 @@ async def verify(ctx, user: typing.Optional[discord.Member]):
         
         await ctx.send(output + random.choice(descriptors))
 
-def setup(bot):
+async def setup(bot):
     importlib.reload(verification)
     importlib.reload(emoji)
     importlib.reload(utility)
@@ -400,3 +400,5 @@ def setup(bot):
     bot.add_command(our)
     bot.add_command(dayum)
     bot.add_command(bingo)
+
+    return bot

@@ -394,7 +394,7 @@ async def brick_animation(ctx, member: discord.Member, forever=False):
     #await asyncio.sleep(1)
     return message
 
-def setup(bot):
+async def setup(bot):
     importlib.reload(verification)
     importlib.reload(utility)
     #bot.add_command(timeout)

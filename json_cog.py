@@ -248,7 +248,7 @@ class JSON_cog(commands.Cog, name="JSON"):
 
 json_cog_ref = None
 
-def setup(bot):
+async def setup(bot):
     print("JSON cog being loaded")
     json_cog = JSON_cog(bot)
 
@@ -257,7 +257,7 @@ def setup(bot):
     
     global json_cog_ref 
     json_cog_ref = json_cog
-    bot.add_cog(json_cog)
+    await bot.add_cog(json_cog)
 
     #try:
         #Bread_cog.internal_load(bot)
