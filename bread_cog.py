@@ -1645,10 +1645,13 @@ loaf_converter""",
             await utility.smart_reply(ctx, f"You need at least 32 red gems to create a chessatron.")
             return
 
-        if arg.isnumeric():
+        if arg is None:
+            arg = None
+            number_of_chessatrons = gem_count // 32 # integer division
+        elif arg.isnumeric():
             arg = int(arg)
             number_of_chessatrons = min(gem_count // 32,arg) # integer division
-        else: 
+        else:
             arg = None
             number_of_chessatrons = gem_count // 32 # integer division
 
