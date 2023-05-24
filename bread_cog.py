@@ -1,6 +1,6 @@
 """
 Patch Notes: 
-
+- Default leaderboard search is now lifetime_dough rather than total_dough
 
 TODO: Do not die to the plague
 
@@ -975,9 +975,9 @@ loaf_converter""",
         if len(args) > 0:
             search_value = args[0]
             if utility.contains_ping(search_value):
-                search_value = "total_dough"
+                search_value = "lifetime_dough"
         else:
-            search_value = "total_dough"
+            search_value = "lifetime_dough"
 
         
         search_emoji = values.get_emote_text(search_value)
@@ -1115,7 +1115,7 @@ loaf_converter""",
             # output_name = name.translate(escape_transform)
             if index == person_position:
                 #bold the user's name
-                output += f"**{index+1}. {output_name}: {utility.smart_number(leaderboard[id])}**\n"
+                output += f"{index+1}. **{output_name}: {utility.smart_number(leaderboard[id])}**\n"
             else:
                 #don't bold anyone else's name
                 output += f"{index+1}. {output_name}: {utility.smart_number(leaderboard[id])}\n"
@@ -1137,7 +1137,7 @@ loaf_converter""",
                 output_name = name
                 if index == person_position:
                     #bold the user's name
-                    output += f"**{index+1}. {output_name}: {utility.smart_number(leaderboard[id])}**\n"
+                    output += f"{index+1}. **{output_name}: {utility.smart_number(leaderboard[id])}**\n"
                 else:
                     #don't bold anyone else's name
                     output += f"{index+1}. {output_name}: {utility.smart_number(leaderboard[id])}\n"
