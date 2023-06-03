@@ -290,7 +290,7 @@ class Bread_Account:
         return affecting_gems
 
     def get_maximum_daily_gifts(self):
-        return self.get("max_daily_rolls") * 24
+        return self.get("max_daily_rolls") * 24 + self.get("loaf_converter") * 1000
 
     def get_dough_boost_for_item(self, item: Emote):
         boosts_file = self.values.get("dough_boosts", dict())

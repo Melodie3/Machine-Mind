@@ -261,12 +261,13 @@ def loaf_roll(luck = 1, user_account: account.Bread_Account = None):
     # MoaKs
     if random.randint(1,8192*moak_rarity_mult*odds_mult) <= moak_luck:
         # one-of-a-kind
-        output["emote"] = random.choice([
-                                            #values.holy_hell, 
-                                            #values.horsey, 
-                                            values.anarchy_chess,
-                                            #values.anarchy,
-                                            ])
+        # output["emote"] = random.choice([
+        #                                     #values.holy_hell, 
+        #                                     #values.horsey, 
+        #                                     values.anarchy_chess,
+        #                                     #values.anarchy,
+        #                                     ])
+        output["emote"] = values.anarchy_chess
         output["commentary"] = "That sure is pretty rare!"
         output["extra_profit"] = user_account.get("max_daily_rolls") * 10 # between 10 and 10,000 extra
 
@@ -294,37 +295,37 @@ def loaf_roll(luck = 1, user_account: account.Bread_Account = None):
         output["commentary"] = "Very shiny."
 
     # 4096 -> red gem, worth 250
-    elif random.randint(1,16394*odds_mult) <= gem_luck:
+    elif random.randint(1,16384*odds_mult) <= gem_luck:
         # red gem
         output["emote"] = values.gem_red
         output["commentary"] = "Shiny."
 
     elif random.randint(1,512*odds_mult) <= luck:
         #chess piece
-        user_chess_pieces = user_account.get_all_items_with_attribute_unrolled("chess_pieces")
+        # user_chess_pieces = user_account.get_all_items_with_attribute_unrolled("chess_pieces")
 
         white_piece_chances = store.chess_piece_distribution_levels[ user_account.get("chess_piece_equalizer") ]
 
         if random.randint(1,100) <= white_piece_chances: # white pieces
-            unfound_white_pieces = utility.array_subtract(values.chess_pieces_white_biased, user_chess_pieces)
-            if len(unfound_white_pieces) > 0:
-                awarded_piece = random.choice(unfound_white_pieces)
-                #pprint.pprint(f"awarded white piece: {awarded_piece}, of choices: {str(unfound_white_pieces)}")
-            else:
-                awarded_piece = random.choice(values.chess_pieces_white_biased)
+            # unfound_white_pieces = utility.array_subtract(values.chess_pieces_white_biased, user_chess_pieces)
+            # if len(unfound_white_pieces) > 0:
+            #     awarded_piece = random.choice(unfound_white_pieces)
+            #     #pprint.pprint(f"awarded white piece: {awarded_piece}, of choices: {str(unfound_white_pieces)}")
+            # else:
+            #     awarded_piece = random.choice(values.chess_pieces_white_biased)
                 #print("all white pieces found, awarded random white piece")
             #output["emote"] = awarded_piece
             output["emote"] = random.choice(values.chess_pieces_white_biased)
             output["commentary"] = "Your Elo has been increased by 20 points."
         else: # black pieces
-            unfound_black_pieces = utility.array_subtract(values.chess_pieces_black_biased, user_chess_pieces)
-            if len(unfound_black_pieces) > 0:
-                awarded_piece = random.choice(unfound_black_pieces)
-                #pprint.pprint(f"awarded black piece: {awarded_piece}, of choices: {str(unfound_black_pieces)}")
-            else:
-                awarded_piece = random.choice(values.chess_pieces_black_biased)
-                #print("all black pieces found, awarded random black piece")
-            #output["emote"] = awarded_piece
+            # unfound_black_pieces = utility.array_subtract(values.chess_pieces_black_biased, user_chess_pieces)
+            # if len(unfound_black_pieces) > 0:
+            #     awarded_piece = random.choice(unfound_black_pieces)
+            #     #pprint.pprint(f"awarded black piece: {awarded_piece}, of choices: {str(unfound_black_pieces)}")
+            # else:
+            #     awarded_piece = random.choice(values.chess_pieces_black_biased)
+            #     #print("all black pieces found, awarded random black piece")
+            # #output["emote"] = awarded_piece
             output["emote"] = random.choice(values.chess_pieces_black_biased)
             output["commentary"] = "Your Elo has been increased by 10 points."
         
