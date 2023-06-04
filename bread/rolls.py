@@ -100,6 +100,8 @@ def bread_roll(roll_luck = 1, roll_count = 1, user_account: account.Bread_Accoun
             output["highest_roll"] = loaf_count
         elif loaf_count == 19:
             count_commentary = "Nineteen breads. I have no words for such a confluence of events."
+            output = utility.increment(output, "fourteen_or_higher", 1)
+            output["highest_roll"] = loaf_count
         elif loaf_count > 19 and loaf_count < 100:
             count_commentary = f"Holy hell! {loaf_count} breads!"
             output["highest_roll"] = loaf_count
