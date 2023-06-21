@@ -249,11 +249,10 @@ async def brick(ctx, member: typing.Optional[discord.Member], duration: typing.O
         #if *not* owner, full brickage (done in subcommand)
         pass
     else:
-        if verification.has_role(ctx.author, "moderator"):
+        if verification.has_role(ctx.author, "moderator") or verification.has_role(ctx.author, "deputized"):
             #since the sender is authorized, give correct target
             target = member
-            if duration is not None and \
-                    verification.has_role(ctx.author, "admin"):
+            if duration is not None:
                 if str(duration).lower() in ["forever", "permanent", "permanently", "ban"]:
                     #ban instead
                     print(f"user {member} will be banned")

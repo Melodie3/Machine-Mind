@@ -1496,7 +1496,7 @@ loaf_converter""",
         if user_account.get("auto_chessatron") is False and force is False:
             return
         
-        print ("doing chessatron creation")
+        # print ("doing chessatron creation")
 
         # user_chess_pieces = user_account.get_all_items_with_attribute_unrolled("chess_pieces")
         full_chess_set = values.chess_pieces_black_biased+values.chess_pieces_white_biased
