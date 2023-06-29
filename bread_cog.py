@@ -1,6 +1,9 @@
 """
 Patch Notes: 
-- Default leaderboard search is now lifetime_dough rather than total_dough
+- usernames fixed
+- no more rolling outside bread-rolls
+- Rolling a 19 now works properly
+- You can now only alchemize OoaKs once you've reached max daily rolls
 
 TODO: Do not die to the plague
 
@@ -100,8 +103,10 @@ channel_permission_levels = {
     "smap": 1,
 }
 
-
 default_guild = 958392331671830579
+testing_guild = 949092523035480134
+
+
 
 announcement_channel_ids = [958705808860921906] # bread on AC
 test_announcement_channel_ids = [960871600415178783]  # test on the castle
@@ -159,6 +164,25 @@ all_chess_pieces_white = [white_pawn,white_pawn, white_pawn, white_pawn, white_p
 
 all_stonks = [":pretzel:", ":cookie:", ":fortune_cookie:"]
 
+
+####################################################
+############   ASSIST FUNCTIONS  ###################
+####################################################
+
+def get_channel_permission_level(ctx):
+    # first, can only roll in channels and not in threads
+    if isinstance(ctx.channel, discord.threads.Thread):
+        return PERMISSION_LEVEL_NONE
+    #channel = ctx.channel.parent if isinstance(ctx.channel, discord.threads.Thread) else ctx.channel
+    permission_level = channel_permission_levels.get(ctx.channel.name, PERMISSION_LEVEL_NONE)
+    if ctx.guild.id != default_guild or ctx.guild.id != testing_guild:
+        permission_level = min(permission_level, PERMISSION_LEVEL_BASIC)
+    return permission_level
+
+
+
+def get_display_name(member):
+    return (member.global_name if (member.global_name is not None and member.name == member.display_name) else member.display_name)
 
 ####################################################
 ##############   JSON INTERFACE   ##################
@@ -524,7 +548,8 @@ class Bread_cog(commands.Cog, name="Bread"):
 
                 account.values["id"] = member.id
                 account.values["username"] = member.name
-                account.values["display_name"] = member.display_name
+                #account.values["display_name"] = member.display_name
+                account.values["display_name"] = get_display_name(member)
                 
                 # save the account
                 self.json_interface.set_account(member, account)
@@ -680,7 +705,7 @@ class Bread_cog(commands.Cog, name="Bread"):
 
         # make sure we're in the right channel to preven spam
         #if ctx.channel.name not in rollable_channels and ctx.channel.name not in earnable_channels:
-        if channel_permission_levels.get(ctx.channel.name, 0) < PERMISSION_LEVEL_BASIC:
+        if get_channel_permission_level(ctx) < PERMISSION_LEVEL_BASIC:
             await ctx.send("Sorry, you can't do that here.")
             return
 
@@ -1259,7 +1284,7 @@ loaf_converter""",
 
         rolls_remaining = user_account.get("max_daily_rolls") - user_account.get("daily_rolls")
         #if ctx.channel.name in earnable_channels:
-        if channel_permission_levels.get(ctx.channel.name, 0) == PERMISSION_LEVEL_MAX:
+        if get_channel_permission_level(ctx) == PERMISSION_LEVEL_MAX:
             user_multiroll = 2 ** (user_account.get("multiroller")) # 2 to power of multiroller
             user_multiroll = min(user_multiroll, rolls_remaining) 
             # kick user out if they're out of rolls
@@ -1289,18 +1314,18 @@ loaf_converter""",
         allowed_commentary = None
 
         #check if it's their first ever roll
-        if user_account.get("total_rolls") == 0 and channel_permission_levels.get(ctx.channel.name, 0) < PERMISSION_LEVEL_MAX:
+        if user_account.get("total_rolls") == 0 and get_channel_permission_level(ctx) < PERMISSION_LEVEL_MAX:
             record = True
             allowed_commentary = "Thank you for rolling some bread! Just a note, please move any future rolls over to <#967544442468843560>."
         
          #check if it's just not a place to roll at all. We'll give first-timers a pass.
-        elif channel_permission_levels.get(ctx.channel.name, 0) == PERMISSION_LEVEL_NONE:
+        elif get_channel_permission_level(ctx) == PERMISSION_LEVEL_NONE:
             await ctx.reply("Sorry, but you cannot roll bread here. Feel free to do so in <#967544442468843560>.")
             self.currently_interacting.remove(ctx.author.id)
             return
         
         #can be rolled but not recorded
-        elif channel_permission_levels.get(ctx.channel.name, 0) < PERMISSION_LEVEL_MAX:
+        elif get_channel_permission_level(ctx) < PERMISSION_LEVEL_MAX:
             if user_account.get("daily_rolls") == 0:
                 allowed_commentary = "Thank you for rolling. Remember, any new rolls will only be saved in <#967544442468843560>."
                 record = True
@@ -1309,7 +1334,7 @@ loaf_converter""",
                 record = False
 
         #can be rolled plenty
-        elif channel_permission_levels.get(ctx.channel.name, 0) == PERMISSION_LEVEL_MAX:
+        elif get_channel_permission_level(ctx) == PERMISSION_LEVEL_MAX:
             record = True
         
         # in neutral land -- NOTE-May not be reached
@@ -1327,7 +1352,7 @@ loaf_converter""",
         count_commentary = None
 
         # check how many rolls we have left, reject if none remain
-        if channel_permission_levels.get(ctx.channel.name, 0) == PERMISSION_LEVEL_MAX:
+        if get_channel_permission_level(ctx) == PERMISSION_LEVEL_MAX:
             amount_remaining = rolls_remaining - user_multiroll
             # amount_remaining =  user_account.get("max_daily_rolls") - user_account.get("daily_rolls")
             if amount_remaining < 0:
@@ -1393,7 +1418,7 @@ loaf_converter""",
                 
             self.json_interface.set_account(ctx.author,user_account)
 
-            if channel_permission_levels.get(ctx.channel.name, 0) == PERMISSION_LEVEL_MAX and user_account.has("roll_summarizer"):
+            if get_channel_permission_level(ctx) == PERMISSION_LEVEL_MAX and user_account.has("roll_summarizer"):
                 summarizer_commentary = rolls.summarize_roll(result)
             
 
@@ -1405,7 +1430,7 @@ loaf_converter""",
         roll_messages = result["roll_messages"]
 
         # if black hole is active
-        if user_account.get("black_hole") == 2 and channel_permission_levels.get(ctx.channel.name, 0) == PERMISSION_LEVEL_MAX:
+        if user_account.get("black_hole") == 2 and get_channel_permission_level(ctx) == PERMISSION_LEVEL_MAX:
             # we clear out any "unimportant" rolls
             new_roll_messages = []
             for message in roll_messages:
@@ -1446,7 +1471,7 @@ loaf_converter""",
                 output_messages.append(compound_message)
             
         # check if black hole is activated and if we're in #bread-rolls
-        if user_account.get("black_hole") == 2 and channel_permission_levels.get(ctx.channel.name, 0) == PERMISSION_LEVEL_MAX:
+        if user_account.get("black_hole") == 2 and get_channel_permission_level(ctx) == PERMISSION_LEVEL_MAX:
             await utility.smart_reply(ctx, ":cyclone:")
         
         # black hole is not activated, send messages normally
@@ -1516,7 +1541,7 @@ loaf_converter""",
         if amount is None: 
             amount = valid_trons + 1
 
-        print(f"valid trons: {valid_trons}, amount: {amount}")
+        # print(f"valid trons: {valid_trons}, amount: {amount}")
 
         # stop iteration when you can't make any more trons, or have hit the limit of specified trons; whichever comes first.
         for _ in range(min(valid_trons, amount)):
@@ -1618,7 +1643,7 @@ loaf_converter""",
             user_account.set("auto_chessatron", False)
             await utility.smart_reply(ctx, f"Auto chessatron is now off.")
         else:
-            if channel_permission_levels.get(ctx.channel.name, 0) < PERMISSION_LEVEL_ACTIVITIES:
+            if get_channel_permission_level(ctx) < PERMISSION_LEVEL_ACTIVITIES:
                 await utility.smart_reply(ctx, f"Thank you for your interest in creating chessatrons! You can do so over in <#967544442468843560>.")
                 return
             
@@ -1821,7 +1846,7 @@ loaf_converter""",
 
         # first we make sure this is a valid channel
         #if ctx.channel.name not in earnable_channels:
-        if channel_permission_levels.get(ctx.channel.name, 0) < PERMISSION_LEVEL_ACTIVITIES:
+        if get_channel_permission_level(ctx) < PERMISSION_LEVEL_ACTIVITIES:
             await ctx.reply("Hi! Thanks for visiting the bread shop. Our nearest location is over in <#967544442468843560>.")
             return
         
@@ -1861,7 +1886,7 @@ loaf_converter""",
             
             # first we make sure this is a valid channel
             #if ctx.channel.name not in earnable_channels:
-            if channel_permission_levels.get(ctx.channel.name, 0) < PERMISSION_LEVEL_ACTIVITIES:
+            if get_channel_permission_level(ctx) < PERMISSION_LEVEL_ACTIVITIES:
                 await ctx.reply("Hi! Thanks for visiting the hidden bakery. You can find us in <#967544442468843560>.")
                 return
             
@@ -1899,7 +1924,7 @@ loaf_converter""",
         
         # first we make sure this is a valid channel
         #if ctx.channel.name not in earnable_channels:
-        if channel_permission_levels.get(ctx.channel.name, 0) < PERMISSION_LEVEL_ACTIVITIES:
+        if get_channel_permission_level(ctx) < PERMISSION_LEVEL_ACTIVITIES:
             await ctx.reply("Hi! Thanks for visiting the gambit shop. Our nearest location is over in <#967544442468843560>.")
             return
         
@@ -1947,7 +1972,7 @@ loaf_converter""",
 
         # first we make sure this is a valid channel
         #if ctx.channel.name not in earnable_channels:
-        if channel_permission_levels.get(ctx.channel.name, 0) < PERMISSION_LEVEL_ACTIVITIES:
+        if get_channel_permission_level(ctx) < PERMISSION_LEVEL_ACTIVITIES:
             await ctx.reply("Thank you for your interest in purchasing an item from the store. Please visit our nearby location in <#967544442468843560>.")
             return
 
@@ -2372,7 +2397,7 @@ anarchy - 1000% of your wager.
             return
 
         #if ctx.channel.name not in earnable_channels:
-        if channel_permission_levels.get(ctx.channel.name, 0) < PERMISSION_LEVEL_ACTIVITIES:
+        if get_channel_permission_level(ctx) < PERMISSION_LEVEL_ACTIVITIES:
             await ctx.reply("Sorry, but you can only do that in <#967544442468843560>.")
             return
 
@@ -2732,7 +2757,7 @@ anarchy - 1000% of your wager.
         help="You can either use the stonk name or the stonk emoji.\nUse as \"$bread invest <amount> <stonk>\". You can also invest a certain amount of dough by using \"$bread invest <amount> dough <stonk>\".",
     )
     async def invest(self, ctx, *, args):
-        if channel_permission_levels.get(ctx.channel.name, 0) < PERMISSION_LEVEL_ACTIVITIES:
+        if get_channel_permission_level(ctx) < PERMISSION_LEVEL_ACTIVITIES:
             await ctx.reply("Thank you for your interest in stonks. They are available for you in <#967544442468843560>.")
             return
 
@@ -2919,7 +2944,7 @@ anarchy - 1000% of your wager.
         help="You can either use the stonk name or the stonk emoji.\nUse as \"$bread divest <amount> <stonk>\". You can also divest a certain amount of dough by using \"$bread divest <amount> dough <stonk>\".",
     )
     async def divest(self, ctx, *, args):
-        if channel_permission_levels.get(ctx.channel.name, 0) < PERMISSION_LEVEL_ACTIVITIES:
+        if get_channel_permission_level(ctx) < PERMISSION_LEVEL_ACTIVITIES:
             await ctx.reply("Thank you for your interest in buying high and selling low. You can do so in <#967544442468843560>.")
             return
 
@@ -3017,7 +3042,7 @@ anarchy - 1000% of your wager.
     async def portfolio(self, ctx, user: typing.Optional[discord.Member] = None):
         print(f"{ctx.author.name} requested their portfolio.")
 
-        if channel_permission_levels.get(ctx.channel.name, 0) < PERMISSION_LEVEL_BASIC:
+        if get_channel_permission_level(ctx) < PERMISSION_LEVEL_BASIC:
             await ctx.reply("Thank you for your interest in your stonks portfolio. We have it available for you in <#967544442468843560>.")
             return
         
@@ -3169,7 +3194,7 @@ anarchy - 1000% of your wager.
 
         # print(f"{ctx.author.name} requested to alchemize {count} {target_item}.")
 
-        if channel_permission_levels.get(ctx.channel.name, 0) < PERMISSION_LEVEL_ACTIVITIES:
+        if get_channel_permission_level(ctx) < PERMISSION_LEVEL_ACTIVITIES:
             await ctx.reply("Thank you for your interest in bread alchemy. Please find the alchemical circle is present in <#967544442468843560>.")
             return
 
@@ -3552,7 +3577,8 @@ anarchy - 1000% of your wager.
         # target_account = self.json_interface.get_account(target_user)
         target_account.values["id"] = target_user.id
         target_account.values["username"] = target_user.name
-        target_account.values["display_name"] = target_user.display_name
+        #target_account.values["display_name"] = target_user.display_name
+        target_account.values["display_name"] =  get_display_name(target_user)
 
         self.json_interface.set_account(target_user, target_account)
 
@@ -3871,7 +3897,7 @@ anarchy - 1000% of your wager.
 
                 account.values["id"] = member.id
                 account.values["username"] = member.name
-                account.values["display_name"] = member.display_name
+                account.values["display_name"] = get_display_name(member)
                 
                 # save the account
                 self.json_interface.set_account(member, account)
