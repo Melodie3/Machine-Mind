@@ -3246,6 +3246,10 @@ anarchy - 1000% of your wager.
             # print(f"Available recipes are: {alchemy.recipes}")
 
             if target_emote.name in alchemy.recipes.keys():
+                if user_account.get("max_daily_rolls") < store.Daily_rolls.max_level(user_account) and target_emote.name in [emote.name for emote in values.all_one_of_a_kind]:  
+                    await ctx.reply(f"I'm sorry, but you cannot alchemize any {target_emote.text} right now.")
+                    self.currently_interacting.remove(ctx.author.id)
+                    return
                 recipe_list = alchemy.recipes[target_emote.name]
             else:
                 await ctx.reply(f"There are no recipes to create {target_emote.text}. Perhaps research has not progressed far enough.")
