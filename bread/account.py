@@ -36,6 +36,7 @@ class Bread_Account:
         "auto_chessatron" : True,
         "spellcheck" : False,
         "black_hole" : 0,
+        "disabled_gifts" : False,
     }
 
 
