@@ -65,7 +65,7 @@ import bread.rolls as rolls
 import bread.store as store
 import bread.utility as utility
 import bread.alchemy as alchemy
-# import bread.stonks as stonks
+import bread.stonks as stonks
 
 # roles
 # average bread enjoyer
