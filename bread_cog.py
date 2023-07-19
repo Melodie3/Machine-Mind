@@ -1,7 +1,7 @@
 """
 Patch Notes: 
-- usernames fixed
-- no more rolling outside bread-rolls
+- Your display username should now work properly
+- Rolling is no longer allowed outside of #bread-rolls, including in threads.
 - Rolling a 19 now works properly
 - You can now only alchemize OoaKs once you've reached max daily rolls
 
@@ -170,12 +170,16 @@ all_stonks = [":pretzel:", ":cookie:", ":fortune_cookie:"]
 ####################################################
 
 def get_channel_permission_level(ctx):
+    print (f"getting channel permission level for {ctx.channel.name}")
     # first, can only roll in channels and not in threads
     if isinstance(ctx.channel, discord.threads.Thread):
+        print("tried to roll in a thread")
         return PERMISSION_LEVEL_NONE
     #channel = ctx.channel.parent if isinstance(ctx.channel, discord.threads.Thread) else ctx.channel
     permission_level = channel_permission_levels.get(ctx.channel.name, PERMISSION_LEVEL_NONE)
-    if ctx.guild.id != default_guild or ctx.guild.id != testing_guild:
+    print(f"permission level is {permission_level}")
+    if ctx.guild.id != default_guild and ctx.guild.id != testing_guild:
+        print("not in default guild")
         permission_level = min(permission_level, PERMISSION_LEVEL_BASIC)
     return permission_level
 
