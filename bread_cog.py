@@ -2805,8 +2805,9 @@ anarchy - 1000% of your wager.
                 return
             if arg.isdigit():
                 amount = int(arg)
-            if 'all' in args:
-                amount = 1000000000
+
+        if 'all' in args:
+            amount = 1000000000
         
         # get the emote from the args
 
@@ -2845,6 +2846,12 @@ anarchy - 1000% of your wager.
         if 'dough' in args:
             # x //= n is the same as x = x // n, where // is floor division.
             amount //= stonk_value
+
+        # this is here instead of at the top so
+        # 1. the amount detection doesn't get annoyed at you for using all and 
+        # 2. there's hopefully no weird behaviour if you use dough and all args
+        if "all" in args:
+            amount = user_account.get('total_dough') // stonk_value
 
         # now we buy the stonks
 
