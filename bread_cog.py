@@ -2375,16 +2375,23 @@ Special stats, such as special_bread, cannot be gifted or transferred.
         brief="Disables being gifted items.",
         aliases=["disable_gift, disablegifts, disablegift"]
     )
-    async def disable_gifts(self, ctx):
+    async def disable_gifts(self, ctx, toggle: typing.Optional[str] = None):
         user_account = self.json_interface.get_account(ctx.author)
         state = user_account.get("disabled_gifts")
 
-        if state == False:
+        if toggle == 'on':
             user_account.set("disabled_gifts", True)
             await ctx.reply("Other people can no longer gift you items.")
-        else:
+        elif toggle == 'off':
             user_account.set("disabled_gifts", False)
             await ctx.reply("You can now be gifted items again.")
+        else:
+            if state == False:
+                user_account.set("disabled_gifts", True)
+                await ctx.reply("Other people can no longer gift you items.")
+            else:
+                user_account.set("disabled_gifts", False)
+                await ctx.reply("You can now be gifted items again.")
 
         
         
