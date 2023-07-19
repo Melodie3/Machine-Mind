@@ -65,7 +65,7 @@ import bread.rolls as rolls
 import bread.store as store
 import bread.utility as utility
 import bread.alchemy as alchemy
-import bread.stonks as stonks
+# import bread.stonks as stonks
 
 # roles
 # average bread enjoyer
@@ -2244,6 +2244,10 @@ Special stats, such as special_bread, cannot be gifted or transferred.
             if receiver_account.get("id") != 960869046323134514: # always can gift to MM
                 await ctx.reply("Sorry, you can't gift to someone who has a higher ascension level than you.")
                 return
+            
+        if receiver_account.get("disabled_gifts") == True:
+            await ctx.reply("Sorry, you can't gift to that person.")
+            return
 
         #shitty way of converting to int
         try:
@@ -2366,6 +2370,22 @@ Special stats, such as special_bread, cannot be gifted or transferred.
         # elif type(arg1) is None or type(arg2) is None:
         #     await ctx.reply("Needs an amount and what to gift.")
         #     return
+
+    @bread.command(
+        brief="Disables being gifted items.",
+        aliases=["disable_gift, disablegifts, disablegift"]
+    )
+    async def disable_gifts(self, ctx):
+        user_account = self.json_interface.get_account(ctx.author)
+        state = user_account.get("disabled_gifts")
+
+        if state == False:
+            user_account.set("disabled_gifts", True)
+            await ctx.reply("Other people can no longer gift you items.")
+        else:
+            user_account.set("disabled_gifts", False)
+            await ctx.reply("You can now be gifted items again.")
+
         
         
 
