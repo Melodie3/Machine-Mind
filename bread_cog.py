@@ -2250,7 +2250,7 @@ Special stats, such as special_bread, cannot be gifted or transferred.
                 await ctx.reply("Sorry, you can't gift to someone who has a higher ascension level than you.")
                 return
             
-        if receiver_account.get("disabled_gifts") == True:
+        if receiver_account.get("gifts_disabled") == True:
             await ctx.reply("Sorry, you can't gift to that person.")
             return
 
@@ -2382,20 +2382,20 @@ Special stats, such as special_bread, cannot be gifted or transferred.
     )
     async def disable_gifts(self, ctx, toggle: typing.Optional[str] = None):
         user_account = self.json_interface.get_account(ctx.author)
-        state = user_account.get("disabled_gifts")
+        state = user_account.get("gifts_disabled")
 
         if toggle == 'on':
-            user_account.set("disabled_gifts", True)
+            user_account.set("gifts_disabled", True)
             await ctx.reply("Other people can no longer gift you items.")
         elif toggle == 'off':
-            user_account.set("disabled_gifts", False)
+            user_account.set("gifts_disabled", False)
             await ctx.reply("You can now be gifted items again.")
         else:
             if state == False:
-                user_account.set("disabled_gifts", True)
+                user_account.set("gifts_disabled", True)
                 await ctx.reply("Other people can no longer gift you items.")
             else:
-                user_account.set("disabled_gifts", False)
+                user_account.set("gifts_disabled", False)
                 await ctx.reply("You can now be gifted items again.")
 
         
