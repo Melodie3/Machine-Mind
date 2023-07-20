@@ -1,7 +1,9 @@
 """
 Patch Notes: 
 - You can now gift 'all', 'half', or 'quarter' of a given item to another user
-
+- You can now gift categories of items to another user. Available categories include `special_bread`, `rare_bread`, `chess_pieces`, and `shiny`
+- if you gift 'half' of a category to a user, it will give half of each item in that category to that user. So for example if you have 8 pawns and 4 rooks, it would gift 4 pawns and 2 rooks.
+- Changed the way numbers are displayed.
 
 TODO: Do not die to the plague
 
@@ -758,7 +760,7 @@ class Bread_cog(commands.Cog, name="Bread"):
             output += f"You've bread rolled {account.write_number_of_times('total_rolls')} overall.\n"
         
         if account.has("lifetime_gambles"):
-            output += f"You've gambled your dough {account.write_number_of_times('lifetime_gambles')}.\n"
+            output += f"You've gambled your dough {sn(account.write_number_of_times('lifetime_gambles'))}.\n"
         if account.has("max_daily_rolls"):
             output += f"You've rolled {sn(account.get('daily_rolls'))} of {account.write_number_of_times('max_daily_rolls')} today.\n"
         if account.has("loaf_converter"):
@@ -2711,10 +2713,10 @@ anarchy - 1000% of your wager.
 
         for stonk in all_stonks:
             value = round(stonks_file[stonk])
-            output += f"{stonk} - {value} dough\n"
+            output += f"{stonk} - {utility.smart_number(value)} dough\n"
 
         user_account = self.json_interface.get_account(ctx.author)
-        output += f"\nYou have **{user_account.get('total_dough')} dough** to spend.\n"
+        output += f"\nYou have **{utility.smart_number(user_account.get('total_dough'))} dough** to spend.\n"
         output += '\nUse "$bread invest <amount> <stonk>" to buy into a stonk.\nUse "$bread divest <amount> <stonk>" to get out while you\'re still behind.\nUse "$bread portfolio" to see your current stonk holdings.'
         await ctx.reply(output)
 
