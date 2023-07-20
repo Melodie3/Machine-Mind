@@ -415,14 +415,10 @@ def summarize_roll(result):
         output += f"\t:bread:: {result[':bread:']}\n"
         removals.append(":bread:")
 
-    if "rare_bread" in result.keys():
-        output += f"\nRare bread: {result['rare_bread']}\n"
-        removals.append("rare_bread")
-
-    if "special_bread" in result.keys() and "rare_bread" in result.keys():
-        output += f"Special bread: {result['special_bread'] - result['rare_bread']}\n"
-        removals.append("special_bread")
-    elif "special_bread" in result.keys():
+    # if "special_bread" in result.keys() and "rare_bread" in result.keys():
+    #     output += f"Special bread: {result['special_bread'] - result['rare_bread']}\n"
+    #     removals.append("special_bread")
+    if "special_bread" in result.keys():
         output += f"Special bread: {result['special_bread']}\n"
         removals.append("special_bread")
 
@@ -433,6 +429,15 @@ def summarize_roll(result):
             output += f"\t{key}: {result[key]}"
             removals.append(key)
 
+    if "rare_bread" in result.keys():
+        output += f"\nRare bread: {result['rare_bread']}\n"
+        removals.append("rare_bread")
+
+    for key in result.keys():
+        emote = values.get_emote(key)
+        if emote is not None and ("rare_bread" in emote.attributes):
+            output += f"\t{key}: {result[key]}"
+            removals.append(key)
 
     if "chess_pieces" in result.keys():
         output += f"\nChess pieces: {result['chess_pieces']}\n"

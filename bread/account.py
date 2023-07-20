@@ -305,6 +305,23 @@ class Bread_Account:
         boosts_file[item.text] = boost
         self.values["dough_boosts"] = boosts_file
 
+    def has_category(self, category_name: str):
+        if len(self.get_category(category_name)) > 0:
+            return True
+        else:
+            return False
+                
+    def get_category(self, category: str):
+        items = []
+        # we try with both the name and the name minus its last letter, in case there's an 's' at the end
+        for category_name in [category, category[:-1]]:
+            for item_name in self.values.keys():
+                item = values.get_emote(item_name)
+                if item is not None:
+                    if category_name.lower() in item.attributes:
+                        items.append(item)
+        return items
+
     ##############################################################
 
     #gets all items

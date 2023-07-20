@@ -1,9 +1,7 @@
 """
 Patch Notes: 
-- Your display username should now work properly
-- Rolling is no longer allowed outside of #bread-rolls, including in threads.
-- Rolling a 19 now works properly
-- You can now only alchemize OoaKs once you've reached max daily rolls
+- You can now gift 'all', 'half', or 'quarter' of a given item to another user
+
 
 TODO: Do not die to the plague
 
@@ -753,9 +751,9 @@ class Bread_cog(commands.Cog, name="Bread"):
         sn = utility.smart_number
 
         output += f"Stats for: {account.get_display_name()}:\n\n"
-        output += f"You have **{account.get_dough()} dough.**\n\n"
+        output += f"You have **{sn(account.get_dough())} dough.**\n\n"
         if account.has("earned_dough"):
-            output += f"You've found {account.get('earned_dough')} dough through all your rolls and {self.get_portfolio_combined_value(user.id)} dough through stonks.\n"
+            output += f"You've found {sn(account.get('earned_dough'))} dough through all your rolls and {sn(self.get_portfolio_combined_value(user.id))} dough through stonks.\n"
         if account.has("total_rolls"): 
             output += f"You've bread rolled {account.write_number_of_times('total_rolls')} overall.\n"
         
@@ -2219,7 +2217,8 @@ For instance, "$bread gift Melodie 5" would gift 5 dough to Melodie.
 Likewise, "$bread gift Melodie :croissant:" would gift a :croissant:,
 and "$bread gift Melodie 5 :croissant:" would gift 5 of them.
 
-Special stats, such as special_bread, cannot be gifted or transferred.
+Categories of items, such as special_bread or chess_pieces, can be gifted as a group. 
+For instance, "$bread gift Melodie 5 special_bread" would gift 5 of each special bread to Melodie.
 """
 
     @bread.command(
@@ -2264,6 +2263,10 @@ Special stats, such as special_bread, cannot be gifted or transferred.
         except:
             pass
         
+        do_fraction = False
+        amount = 0
+        do_category_gift = False
+
         # print(f"arg1 type was {type(arg1)} and arg2 type was {type(arg2)}")
         if type(arg1) is int and type(arg2) is str:
             amount = arg1
@@ -2279,9 +2282,99 @@ Special stats, such as special_bread, cannot be gifted or transferred.
         elif (type(arg1) is int and arg2 is None):
             emoji = "dough"
             amount = arg1
+
+        # check if there's a fraction of the item we're supposed to gift
+        elif (type(arg1) is str and type(arg2) is str and arg1.lower() in ["all", "half", "quarter"]):
+            emoji = arg2     
+            fraction_amount = arg1.lower() 
+            do_fraction = True
+        elif (type(arg1) is str and type(arg2) is str and arg2.lower() in ["all", "half", "quarter"]):
+            emoji = arg1
+            fraction_amount = arg2.lower()
+            do_fraction = True
         else:
             await ctx.reply("Needs an amount and what to gift.")
             return
+
+            
+        if sender_account.has_category(emoji):
+            do_category_gift = True
+            print(f"category gift of {emoji} detected")
+
+        if do_category_gift is True:
+            gifted_count = 0
+
+            if do_fraction is True:
+                # we recursively call gift for each item in the category, after calculating the amount
+                for item in sender_account.get_category(emoji):
+                    item_amount = 0
+                    if fraction_amount == "all":
+                        item_amount = sender_account.get(item.text)
+                    elif fraction_amount == "half":
+                        item_amount = sender_account.get(item.text) // 2
+                    elif fraction_amount == "quarter":
+                        item_amount = sender_account.get(item.text) // 4
+                    
+                    if item_amount > 0:
+                        gifted_count += item_amount
+                        await self.gift(ctx, target, item.text, item_amount)
+                        await asyncio.sleep(1)
+            else:
+                # we recursively call gift for each item in the category
+                # and then return
+                for item in sender_account.get_category(emoji):
+                    # we want to guarantee a successful gifting so we will gift less than "amount" if necessary
+                    item_amount = min(amount, sender_account.get(item.text))
+
+                    if item_amount > 0:
+                        gifted_count += item_amount
+                        await self.gift(ctx, target, item.text, item_amount)
+                        await asyncio.sleep(1)
+                
+            if gifted_count > 0:
+                await ctx.reply(f"Gifted {utility.smart_number(gifted_count)} {emoji} to {receiver_account.get_display_name()}.")
+            else:
+                await ctx.reply(f"Sorry, you don't have any {emoji} to gift.")
+
+            # now that we've acted recursively, we return to avoid triggering the rest of the function
+            return
+
+        
+
+        emote = None
+
+        if (emoji.lower() == "dough"):
+            item = "total_dough"
+            pass
+        elif do_category_gift is True:
+            pass # this block has no use if we're gifting a category
+        else:
+            # print(f"checking for gift with text {emoji}")
+            emote = values.get_emote(emoji)
+            if (emote is None) or (emote.can_be_gifted() == False):
+                # print("failed to find emote")
+                await ctx.reply("Sorry, that's not a giftable item.")
+                return
+            
+            item = emote.text
+        
+        if do_fraction is True:
+            # if we're gifting a category, go through every item in it and get the highest overall amount for "all"
+            if do_category_gift is True:
+                base_amount = 0
+                for item in sender_account.get_category(emoji):
+                    base_amount = max(base_amount, sender_account.get(item.text))
+            # otherwise we're gifting a single item, so get the amount of that item
+            else:
+                base_amount = sender_account.get(item)
+
+            
+            if fraction_amount == "all":
+                amount = base_amount
+            elif fraction_amount == "half":
+                amount = base_amount // 2
+            elif fraction_amount == "quarter":
+                amount = base_amount // 4
 
         if ctx.author.id == target.id:
             await ctx.reply("You can't gift bread to yourself, silly.")
@@ -2302,21 +2395,6 @@ Special stats, such as special_bread, cannot be gifted or transferred.
 
         
 
-        emote = None
-
-        if (emoji.lower() == "dough"):
-            item = "total_dough"
-            pass
-        else:
-            # print(f"checking for gift with text {emoji}")
-            emote = values.get_emote(emoji)
-            if (emote is None) or (emote.can_be_gifted() == False):
-                # print("failed to find emote")
-                await ctx.reply("Sorry, that's not a giftable item.")
-                return
-            
-            item = emote.text
-        
         # enforce maxumum gift amount to players of lower prestige level
         if receiver_account.get_prestige_level() < sender_account.get_prestige_level() and \
             item == "total_dough" and \
@@ -2352,7 +2430,7 @@ Special stats, such as special_bread, cannot be gifted or transferred.
                 sender_account.increment(item, -amount)
                 receiver_account.increment(item, amount)
                 print(f"{amount} dough has been gifted to {target.display_name} by {ctx.author.display_name}.")
-                await ctx.send(f"{amount} dough has been gifted to {target.mention}.")
+                await ctx.send(f"{utility.smart_number(amount)} dough has been gifted to {target.mention}.")
             else:
                 await ctx.reply("You don't have enough dough to gift that much.")
         else:
@@ -2360,7 +2438,7 @@ Special stats, such as special_bread, cannot be gifted or transferred.
                 sender_account.increment(item, -amount)
                 receiver_account.increment(item, amount)
                 print(f"{amount} {item} has been gifted to {target.display_name} by {ctx.author.display_name}.")
-                await ctx.send(f"{amount} {item} has been gifted to {target.mention}.")
+                await ctx.send(f"{utility.smart_number(amount)} {item} has been gifted to {target.mention}.")
             else:
                 await ctx.reply("You don't have enough of that to gift.")
             #  we will not gift attributes after all, those will be trophies for the roller
