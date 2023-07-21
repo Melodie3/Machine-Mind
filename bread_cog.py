@@ -3,7 +3,7 @@ Patch Notes:
 - You can now gift 'all', 'half', or 'quarter' of a given item to another user
 - You can now gift categories of items to another user. Available categories include `special_bread`, `rare_bread`, `chess_pieces`, and `shiny`
 - if you gift 'half' of a category to a user, it will give half of each item in that category to that user. So for example if you have 8 pawns and 4 rooks, it would gift 4 pawns and 2 rooks.
-- Changed the way numbers are displayed.
+- Changed the way large numbers are displayed.
 
 TODO: Do not die to the plague
 
@@ -803,30 +803,30 @@ class Bread_cog(commands.Cog, name="Bread"):
 
         output += "\nIndividual stats:\n"
         if account.has(":bread:"):
-            output += f":bread: - {account.get(':bread:')} found.\n"
+            output += f":bread: - {sn(account.get(':bread:'))}\n"
 
         # list all special breads
-        special_breads = account.get_all_items_with_attribute("special_bread")
-        selected_special_breads = list()
-        for i in range(len(special_breads)):
-            # skip the ones that are also rare
-            if "rare_bread" in special_breads[i].attributes:
-                continue
+        # special_breads = account.get_all_items_with_attribute("special_bread")
+        # selected_special_breads = list()
+        # for i in range(len(special_breads)):
+        #     # skip the ones that are also rare
+        #     if "rare_bread" in special_breads[i].attributes:
+        #         continue
             
-            if account.has(special_breads[i].text):
-                selected_special_breads.append(special_breads[i])
+        #     if account.has(special_breads[i].text):
+        #         selected_special_breads.append(special_breads[i])
 
-        for i in range(len(selected_special_breads)):
+        # for i in range(len(selected_special_breads)):
 
-            text = selected_special_breads[i].text
+        #     text = selected_special_breads[i].text
 
-            output += f"{account.get(text)} {text} "
-            if i != len(selected_special_breads) - 1:
-                output += ", "
-            else:
-                output += "\n"
+        #     output += f"{account.get(text)} {text} "
+        #     if i != len(selected_special_breads) - 1:
+        #         output += ", "
+        #     else:
+        #         output += "\n"
 
-        display_list = ["rare_bread", "misc_bread", "shiny", "shadow", "misc", "unique" ]
+        display_list = ["special_bread", "rare_bread", "misc_bread", "shiny", "shadow", "misc", "unique" ]
 
         #iterate through all the display list and print them
         for item_name in display_list:
@@ -845,7 +845,7 @@ class Bread_cog(commands.Cog, name="Bread"):
                 text = cleaned_items[i].text
                 # if account.get(text) == 0:
                 #     continue #skip empty values
-                output += f"{account.get(text)} {text} "
+                output += f"{sn(account.get(text))} {text} "
                 if i != len(cleaned_items) - 1:
                     output += ", "
                 else:
@@ -1229,7 +1229,7 @@ loaf_converter""",
         black_hole_value = user_account.get("black_hole")
 
         if black_hole_value <= 0:
-            await ctx.reply("You don't currenlty possess Black Hole Technology.")
+            await ctx.reply("You don't currently possess Black Hole Technology.")
             return
 
         if state is None:
