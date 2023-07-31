@@ -760,7 +760,7 @@ class Bread_cog(commands.Cog, name="Bread"):
             output += f"You've bread rolled {account.write_number_of_times('total_rolls')} overall.\n"
         
         if account.has("lifetime_gambles"):
-            output += f"You've gambled your dough {sn(account.write_number_of_times('lifetime_gambles'))}.\n"
+            output += f"You've gambled your dough {account.write_number_of_times('lifetime_gambles')}.\n"
         if account.has("max_daily_rolls"):
             output += f"You've rolled {sn(account.get('daily_rolls'))} of {account.write_number_of_times('max_daily_rolls')} today.\n"
         if account.has("loaf_converter"):
@@ -2253,6 +2253,10 @@ For instance, "$bread gift Melodie 5 special_bread" would gift 5 of each special
             
         if receiver_account.get("gifts_disabled") == True:
             await ctx.reply("Sorry, you can't gift to that person.")
+            return
+        
+        if sender_account.get("gifts_disabled") == True:
+            await ctx.reply("Sorry, you can't gift right now. Please reenable gifting with \"$bread disable_gifts off\".")
             return
 
         #shitty way of converting to int

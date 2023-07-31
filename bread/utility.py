@@ -3,30 +3,33 @@ import math
 import typing
 
 def smart_number(number: int) -> str:
-    # return f"{number:,}"
-    marker = ""
-    fraction = 0
-    if number > 1000000000000:
-        marker = "T"
-        fraction = number / 1000000000000
-    elif number > 1000000000:
-        marker = "B"
-        fraction = number / 1000000000
-    elif number > 1000000:
-        marker = "M"
-        fraction = number / 1000000
-    elif number > 10000:
-        marker = "K"
-        fraction = number / 1000
-    else:
+    shrink_large_numbers = False
+    if shrink_large_numbers is False:
         return f"{number:,}"
-    
-    if fraction > 100:
-        return f"{int(fraction):,} {marker}"
-    elif fraction > 10:
-        return f"{fraction:.1f} {marker}"
     else:
-        return f"{fraction:.2f} {marker}"
+        marker = ""
+        fraction = 0
+        if number > 1000000000000:
+            marker = "T"
+            fraction = number / 1000000000000
+        elif number > 1000000000:
+            marker = "B"
+            fraction = number / 1000000000
+        elif number > 1000000:
+            marker = "M"
+            fraction = number / 1000000
+        elif number > 10000:
+            marker = "K"
+            fraction = number / 1000
+        else:
+            return f"{number:,}"
+        
+        if fraction > 100:
+            return f"{int(fraction):,} {marker}"
+        elif fraction > 10:
+            return f"{fraction:.1f} {marker}"
+        else:
+            return f"{fraction:.2f} {marker}"
 
 
 def write_number_of_times(number):
