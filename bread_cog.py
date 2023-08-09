@@ -1,9 +1,6 @@
 """
 Patch Notes: 
-- You can now gift 'all', 'half', or 'quarter' of a given item to another user
-- You can now gift categories of items to another user. Available categories include `special_bread`, `rare_bread`, `chess_pieces`, and `shiny`
-- if you gift 'half' of a category to a user, it will give half of each item in that category to that user. So for example if you have 8 pawns and 4 rooks, it would gift 4 pawns and 2 rooks.
-- Changed the way large numbers are displayed.
+- You can now brick youorself for up to 1 day at a time @addicted to bricks
 
 TODO: Do not die to the plague
 
@@ -170,16 +167,16 @@ all_stonks = [":pretzel:", ":cookie:", ":fortune_cookie:"]
 ####################################################
 
 def get_channel_permission_level(ctx):
-    print (f"getting channel permission level for {ctx.channel.name}")
+    # print (f"getting channel permission level for {ctx.channel.name}")
     # first, can only roll in channels and not in threads
     if isinstance(ctx.channel, discord.threads.Thread):
-        print("tried to roll in a thread")
+        # print("tried to roll in a thread")
         return PERMISSION_LEVEL_NONE
     #channel = ctx.channel.parent if isinstance(ctx.channel, discord.threads.Thread) else ctx.channel
     permission_level = channel_permission_levels.get(ctx.channel.name, PERMISSION_LEVEL_NONE)
-    print(f"permission level is {permission_level}")
+    # print(f"permission level is {permission_level}")
     if ctx.guild.id != default_guild and ctx.guild.id != testing_guild:
-        print("not in default guild")
+        # print("not in default guild")
         permission_level = min(permission_level, PERMISSION_LEVEL_BASIC)
     return permission_level
 

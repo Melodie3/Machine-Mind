@@ -95,15 +95,21 @@ async def brick_stats(ctx, member: discord.Member):
 
         file = cabinet[id]
 
+        total_bricks = 0
+
         if "brick_count" not in file.keys():
             file["brick_count"] = 0
         output = f"Brick stats for {name}:\n\n"
         if "bricks" in file.keys():
             output += f":bricks: - {file['bricks']}\n"
+            total_bricks += file["bricks"]
         if "golden_bricks" in file.keys():
             output += f"{golden_brick_emoji} - {file['golden_bricks']}\n"
+            total_bricks += file["golden_bricks"]
         if "total_timeout" in file.keys():
-            output += f"total timeout: {file['total_timeout']} minutes"
+            output += f"Total timeout: {file['total_timeout']} minutes\n"
+        if total_bricks > 0:
+            output += f"Total bricks: {total_bricks}"
 
         await ctx.send(output)
 
@@ -129,21 +135,28 @@ async def brick_leaderboard(ctx, user: discord.Member):
         list_timeouts = {}
         list_bricks = {}
         list_golden_bricks = {}
+        list_total_bricks = {}
         for id in cabinet.keys():
             file = cabinet[id]
+            total_bricks = 0
             if "total_timeout" in file.keys():
                 list_timeouts[id] = file["total_timeout"]
             if "bricks" in file.keys():
                 list_bricks[id] = file["bricks"]
+                total_bricks += file["bricks"]
             if "golden_bricks" in file.keys():
                 list_golden_bricks[id] = file["golden_bricks"]
+                total_bricks += file["golden_bricks"]
+            if total_bricks > 0:
+                list_total_bricks[id] = total_bricks
 
         sorted_timeouts =        sorted(list_timeouts,      key=list_timeouts.get,      reverse=True)
         sorted_bricks =          sorted(list_bricks,        key=list_bricks.get,        reverse=True)
         sorted_golden_bricks =   sorted(list_golden_bricks, key=list_golden_bricks.get, reverse=True)
+        sorted_total_bricks =    sorted(list_total_bricks,  key=list_total_bricks.get,  reverse=True)
 
         #sorted(A, key=A.get, reverse=True)[:5]
-        for leaderboard in [sorted_bricks, sorted_golden_bricks, sorted_timeouts]:
+        for leaderboard in [sorted_total_bricks, sorted_bricks, sorted_golden_bricks, sorted_timeouts]:
             id_str = str(user.id)
             if id_str in leaderboard: # if user is in the leaderboard
                 index = leaderboard.index(id_str)
@@ -151,7 +164,10 @@ async def brick_leaderboard(ctx, user: discord.Member):
                 index = -1   
 
             list_ref = None
-            if leaderboard == sorted_timeouts:
+            if leaderboard == sorted_total_bricks:
+                output += "**Total bricks:**\n"
+                list_ref = list_total_bricks
+            elif leaderboard == sorted_timeouts:
                 output += "**:clock2: Total timeout:**\n"
                 list_ref = list_timeouts
             elif leaderboard == sorted_bricks:
@@ -175,7 +191,8 @@ async def brick_leaderboard(ctx, user: discord.Member):
                 else:
                     output += f"{i+1}. \n"
 
-            output += f"\n{inquirer_name} is at position {index+1} with a count of {list_ref[str(user.id)]}.\n"
+            if index != -1:
+                output += f"\n{inquirer_name} is at position {index+1} with a count of {list_ref[str(user.id)]}.\n"
             output += "\n"
             
         message = await ctx.send(output)
@@ -244,7 +261,7 @@ async def brick(ctx, member: typing.Optional[discord.Member], duration: typing.O
             return
         else:
             #not from owner
-            target = ctx.author            
+            target = ctx.author          
 
         #if *not* owner, full brickage (done in subcommand)
         pass
@@ -275,6 +292,19 @@ async def brick(ctx, member: typing.Optional[discord.Member], duration: typing.O
             else: #duration is None, timeout
                 pass
 
+        elif member is ctx.author:
+            # people can now brick themselves for arbitraty amounts of time
+            target = ctx.author
+            try:
+                duration = int(duration)
+                # no more than 1 day
+                duration = min(duration, 60*24)
+                # but at least 1 minute
+                duration = max(duration, 1)
+                print(f"duration will be {duration} minutes")
+                internal_duration = duration
+            except:
+                pass  
         else: #not from author, brick sender
             target = ctx.author
         #we know the member. If owner, brick them based on duration
