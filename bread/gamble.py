@@ -54,7 +54,7 @@ def gamble():
     
     total_chance = chance_brick + chance_nothing + chance_quarter + chance_half + chance_double + chance_quadruple + chance_ten_times
 
-    rolled_chance = random.randint(0,total_chance)
+    rolled_chance = random.randint(1,total_chance)
 
     rolled_chance -= chance_brick
     if rolled_chance <= 0:
