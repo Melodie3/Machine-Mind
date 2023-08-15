@@ -3535,7 +3535,7 @@ anarchy - 1000% of your wager.
             self.json_interface.set_account(ctx.author, user_account)
 
             output = f"Well done. You have created {count * item_multiplier} {target_emote.text}. You now have {user_account.get(target_emote.text)} of them."
-            if target_emote.gives_alchemy_award():
+            if target_emote.gives_alchemy_award() and not override_dough:
                 output += f"\nYou have also been awarded **{value} dough** for your efforts."
 
             await ctx.reply(output)
