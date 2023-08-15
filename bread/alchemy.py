@@ -184,7 +184,7 @@ recipes = {
         {
             "cost": [(values.anarchy_chess, 1)],
             "requirement": [("loaf_converter", 128)],
-            "provide_no_dough": true
+            "provide_no_dough": True
         }
     ],
 
