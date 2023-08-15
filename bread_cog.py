@@ -3406,7 +3406,12 @@ anarchy - 1000% of your wager.
                 recipes_description = f"There are {len(recipe_list)} recipes for {target_emote.text}.\n"
                 for i in range(len(recipe_list)):
                     recipe = recipe_list[i]
-                    recipes_description += f"**[ {i+1} ]**    {alchemy.describe_individual_recipe(recipe)}\n"
+                    recipes_description += f"**[ {i+1} ]**    {alchemy.describe_individual_recipe(recipe)}"
+
+                    if "result" in recipe:
+                        recipes_description += f"   **({recipe['result']}x)**"
+
+                    recipes_description += "\n"
 
                     # print (f"recipe is {recipe}")
                     
@@ -3453,13 +3458,21 @@ anarchy - 1000% of your wager.
             ########################################################################################################################
             #####      GET CONFIRMATION
 
+            item_multiplier = 1 # Amount of the output item to provide, by default it's 1 but something else can be specified via the recipe in alchemy.py.
+            if "result" in recipe:
+                item_multiplier = recipe["result"]
+
             already_confirmed = False
             if confirm is not None:
                 if confirm.lower() in ["yes", "y", "confirm"]:
                     already_confirmed = True
 
             if already_confirmed is False:
-                question_text = f"You have chosen to create {count} {target_emote.text} from the following recipe:\n{alchemy.describe_individual_recipe(recipe)}\n\n"
+                multiplier_text = ""
+                if "result" in recipe:
+                    multiplier_text = f"**({item_multiplier}x recipe)** "
+
+                question_text = f"You have chosen to create {count * item_multiplier} {target_emote.text} {multiplier_text}from the following recipe:\n{alchemy.describe_individual_recipe(recipe)}\n\n"
                 question_text += f"You have the following ingredients:\n"
                 for pair in recipe["cost"]:
                     question_text += f"{pair[0].text}: {user_account.get(pair[0].text)} of {pair[1] * count}\n"
@@ -3501,9 +3514,6 @@ anarchy - 1000% of your wager.
                     return
             
             value = 0
-            item_multiplier = 1 # Amount of the output item to provide, by default it's 1 but something else can be specified via the recipe in alchemy.py.
-            if "result" in recipe:
-                item_multiplier = recipe["result"]
 
             override_dough = False
             if "provide_no_dough" in recipe and recipe["provide_no_dough"]:
