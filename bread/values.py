@@ -154,7 +154,7 @@ class Rare_Bread_Emote(Emote):
         self.name = name
         self.emoji = emoji
         self.value = 10
-        self.attributes = ["special_bread", "rare_bread"]
+        self.attributes = ["rare_bread"]
         self.awards_value = False
         self.alchemy_value = 10
         self.alternate_names = []
@@ -171,8 +171,7 @@ doughnut = Emote(
     value=10,
     name="doughnut",
     emoji= "🍩",
-    attributes=["special_bread",
-                "rare_bread"]
+    attributes=["rare_bread"]
 )
 
 # bagel = {
@@ -187,8 +186,7 @@ bagel = Emote(
     value=10,
     name="bagel",
     emoji= "🥯",
-    attributes=["special_bread",
-                "rare_bread"]
+    attributes=["rare_bread"]
 )
 
 # waffle = {
@@ -203,8 +201,7 @@ waffle = Emote(
     value=10,
     name="waffle",
     emoji= "🧇",
-    attributes=["special_bread",
-                "rare_bread"]
+    attributes=["rare_bread"]
 )
 
 all_rare_breads = [doughnut, bagel, waffle]

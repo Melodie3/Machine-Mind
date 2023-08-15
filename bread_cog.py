@@ -1,6 +1,6 @@
 """
 Patch Notes: 
-- Default leaderboard search is now lifetime_dough rather than total_dough
+- You can now brick youorself for up to 1 day at a time @addicted to bricks
 
 TODO: Do not die to the plague
 
@@ -100,8 +100,10 @@ channel_permission_levels = {
     "smap": 1,
 }
 
-
 default_guild = 958392331671830579
+testing_guild = 949092523035480134
+
+
 
 announcement_channel_ids = [958705808860921906] # bread on AC
 test_announcement_channel_ids = [960871600415178783]  # test on the castle
@@ -159,6 +161,29 @@ all_chess_pieces_white = [white_pawn,white_pawn, white_pawn, white_pawn, white_p
 
 all_stonks = [":pretzel:", ":cookie:", ":fortune_cookie:"]
 
+
+####################################################
+############   ASSIST FUNCTIONS  ###################
+####################################################
+
+def get_channel_permission_level(ctx):
+    # print (f"getting channel permission level for {ctx.channel.name}")
+    # first, can only roll in channels and not in threads
+    if isinstance(ctx.channel, discord.threads.Thread):
+        # print("tried to roll in a thread")
+        return PERMISSION_LEVEL_NONE
+    #channel = ctx.channel.parent if isinstance(ctx.channel, discord.threads.Thread) else ctx.channel
+    permission_level = channel_permission_levels.get(ctx.channel.name, PERMISSION_LEVEL_NONE)
+    # print(f"permission level is {permission_level}")
+    if ctx.guild.id != default_guild and ctx.guild.id != testing_guild:
+        # print("not in default guild")
+        permission_level = min(permission_level, PERMISSION_LEVEL_BASIC)
+    return permission_level
+
+
+
+def get_display_name(member):
+    return (member.global_name if (member.global_name is not None and member.name == member.display_name) else member.display_name)
 
 ####################################################
 ##############   JSON INTERFACE   ##################
@@ -524,7 +549,8 @@ class Bread_cog(commands.Cog, name="Bread"):
 
                 account.values["id"] = member.id
                 account.values["username"] = member.name
-                account.values["display_name"] = member.display_name
+                #account.values["display_name"] = member.display_name
+                account.values["display_name"] = get_display_name(member)
                 
                 # save the account
                 self.json_interface.set_account(member, account)
@@ -680,7 +706,7 @@ class Bread_cog(commands.Cog, name="Bread"):
 
         # make sure we're in the right channel to preven spam
         #if ctx.channel.name not in rollable_channels and ctx.channel.name not in earnable_channels:
-        if channel_permission_levels.get(ctx.channel.name, 0) < PERMISSION_LEVEL_BASIC:
+        if get_channel_permission_level(ctx) < PERMISSION_LEVEL_BASIC:
             await ctx.send("Sorry, you can't do that here.")
             return
 
@@ -724,9 +750,9 @@ class Bread_cog(commands.Cog, name="Bread"):
         sn = utility.smart_number
 
         output += f"Stats for: {account.get_display_name()}:\n\n"
-        output += f"You have **{account.get_dough()} dough.**\n\n"
+        output += f"You have **{sn(account.get_dough())} dough.**\n\n"
         if account.has("earned_dough"):
-            output += f"You've found {account.get('earned_dough')} dough through all your rolls and {self.get_portfolio_combined_value(user.id)} dough through stonks.\n"
+            output += f"You've found {sn(account.get('earned_dough'))} dough through all your rolls and {sn(self.get_portfolio_combined_value(user.id))} dough through stonks.\n"
         if account.has("total_rolls"): 
             output += f"You've bread rolled {account.write_number_of_times('total_rolls')} overall.\n"
         
@@ -774,30 +800,30 @@ class Bread_cog(commands.Cog, name="Bread"):
 
         output += "\nIndividual stats:\n"
         if account.has(":bread:"):
-            output += f":bread: - {account.get(':bread:')} found.\n"
+            output += f":bread: - {sn(account.get(':bread:'))}\n"
 
         # list all special breads
-        special_breads = account.get_all_items_with_attribute("special_bread")
-        selected_special_breads = list()
-        for i in range(len(special_breads)):
-            # skip the ones that are also rare
-            if "rare_bread" in special_breads[i].attributes:
-                continue
+        # special_breads = account.get_all_items_with_attribute("special_bread")
+        # selected_special_breads = list()
+        # for i in range(len(special_breads)):
+        #     # skip the ones that are also rare
+        #     if "rare_bread" in special_breads[i].attributes:
+        #         continue
             
-            if account.has(special_breads[i].text):
-                selected_special_breads.append(special_breads[i])
+        #     if account.has(special_breads[i].text):
+        #         selected_special_breads.append(special_breads[i])
 
-        for i in range(len(selected_special_breads)):
+        # for i in range(len(selected_special_breads)):
 
-            text = selected_special_breads[i].text
+        #     text = selected_special_breads[i].text
 
-            output += f"{account.get(text)} {text} "
-            if i != len(selected_special_breads) - 1:
-                output += ", "
-            else:
-                output += "\n"
+        #     output += f"{account.get(text)} {text} "
+        #     if i != len(selected_special_breads) - 1:
+        #         output += ", "
+        #     else:
+        #         output += "\n"
 
-        display_list = ["rare_bread", "misc_bread", "shiny", "shadow", "misc", "unique" ]
+        display_list = ["special_bread", "rare_bread", "misc_bread", "shiny", "shadow", "misc", "unique" ]
 
         #iterate through all the display list and print them
         for item_name in display_list:
@@ -816,7 +842,7 @@ class Bread_cog(commands.Cog, name="Bread"):
                 text = cleaned_items[i].text
                 # if account.get(text) == 0:
                 #     continue #skip empty values
-                output += f"{account.get(text)} {text} "
+                output += f"{sn(account.get(text))} {text} "
                 if i != len(cleaned_items) - 1:
                     output += ", "
                 else:
@@ -1200,7 +1226,7 @@ loaf_converter""",
         black_hole_value = user_account.get("black_hole")
 
         if black_hole_value <= 0:
-            await ctx.reply("You don't currenlty possess Black Hole Technology.")
+            await ctx.reply("You don't currently possess Black Hole Technology.")
             return
 
         if state is None:
@@ -1259,7 +1285,7 @@ loaf_converter""",
 
         rolls_remaining = user_account.get("max_daily_rolls") - user_account.get("daily_rolls")
         #if ctx.channel.name in earnable_channels:
-        if channel_permission_levels.get(ctx.channel.name, 0) == PERMISSION_LEVEL_MAX:
+        if get_channel_permission_level(ctx) == PERMISSION_LEVEL_MAX:
             user_multiroll = 2 ** (user_account.get("multiroller")) # 2 to power of multiroller
             user_multiroll = min(user_multiroll, rolls_remaining) 
             # kick user out if they're out of rolls
@@ -1289,18 +1315,18 @@ loaf_converter""",
         allowed_commentary = None
 
         #check if it's their first ever roll
-        if user_account.get("total_rolls") == 0 and channel_permission_levels.get(ctx.channel.name, 0) < PERMISSION_LEVEL_MAX:
+        if user_account.get("total_rolls") == 0 and get_channel_permission_level(ctx) < PERMISSION_LEVEL_MAX:
             record = True
             allowed_commentary = "Thank you for rolling some bread! Just a note, please move any future rolls over to <#967544442468843560>."
         
          #check if it's just not a place to roll at all. We'll give first-timers a pass.
-        elif channel_permission_levels.get(ctx.channel.name, 0) == PERMISSION_LEVEL_NONE:
+        elif get_channel_permission_level(ctx) == PERMISSION_LEVEL_NONE:
             await ctx.reply("Sorry, but you cannot roll bread here. Feel free to do so in <#967544442468843560>.")
             self.currently_interacting.remove(ctx.author.id)
             return
         
         #can be rolled but not recorded
-        elif channel_permission_levels.get(ctx.channel.name, 0) < PERMISSION_LEVEL_MAX:
+        elif get_channel_permission_level(ctx) < PERMISSION_LEVEL_MAX:
             if user_account.get("daily_rolls") == 0:
                 allowed_commentary = "Thank you for rolling. Remember, any new rolls will only be saved in <#967544442468843560>."
                 record = True
@@ -1309,7 +1335,8 @@ loaf_converter""",
                 record = False
 
         #can be rolled plenty
-        elif channel_permission_levels.get(ctx.channel.name, 0) == PERMISSION_LEVEL_MAX:
+        elif get_channel_permission_level(ctx) == PERMISSION_LEVEL_MAX:
+
             record = True
         
         # in neutral land -- NOTE-May not be reached
@@ -1327,7 +1354,7 @@ loaf_converter""",
         count_commentary = None
 
         # check how many rolls we have left, reject if none remain
-        if channel_permission_levels.get(ctx.channel.name, 0) == PERMISSION_LEVEL_MAX:
+        if get_channel_permission_level(ctx) == PERMISSION_LEVEL_MAX:
             amount_remaining = rolls_remaining - user_multiroll
             # amount_remaining =  user_account.get("max_daily_rolls") - user_account.get("daily_rolls")
             if amount_remaining < 0:
@@ -1393,7 +1420,7 @@ loaf_converter""",
                 
             self.json_interface.set_account(ctx.author,user_account)
 
-            if channel_permission_levels.get(ctx.channel.name, 0) == PERMISSION_LEVEL_MAX and user_account.has("roll_summarizer"):
+            if get_channel_permission_level(ctx) == PERMISSION_LEVEL_MAX and user_account.has("roll_summarizer"):
                 summarizer_commentary = rolls.summarize_roll(result)
             
 
@@ -1405,7 +1432,7 @@ loaf_converter""",
         roll_messages = result["roll_messages"]
 
         # if black hole is active
-        if user_account.get("black_hole") == 2 and channel_permission_levels.get(ctx.channel.name, 0) == PERMISSION_LEVEL_MAX:
+        if user_account.get("black_hole") == 2 and get_channel_permission_level(ctx) == PERMISSION_LEVEL_MAX:
             # we clear out any "unimportant" rolls
             new_roll_messages = []
             for message in roll_messages:
@@ -1446,7 +1473,7 @@ loaf_converter""",
                 output_messages.append(compound_message)
             
         # check if black hole is activated and if we're in #bread-rolls
-        if user_account.get("black_hole") == 2 and channel_permission_levels.get(ctx.channel.name, 0) == PERMISSION_LEVEL_MAX:
+        if user_account.get("black_hole") == 2 and get_channel_permission_level(ctx) == PERMISSION_LEVEL_MAX:
             await utility.smart_reply(ctx, ":cyclone:")
         
         # black hole is not activated, send messages normally
@@ -1496,7 +1523,7 @@ loaf_converter""",
         if user_account.get("auto_chessatron") is False and force is False:
             return
         
-        print ("doing chessatron creation")
+        # print ("doing chessatron creation")
 
         # user_chess_pieces = user_account.get_all_items_with_attribute_unrolled("chess_pieces")
         full_chess_set = values.chess_pieces_black_biased+values.chess_pieces_white_biased
@@ -1516,7 +1543,7 @@ loaf_converter""",
         if amount is None: 
             amount = valid_trons + 1
 
-        print(f"valid trons: {valid_trons}, amount: {amount}")
+        # print(f"valid trons: {valid_trons}, amount: {amount}")
 
         # stop iteration when you can't make any more trons, or have hit the limit of specified trons; whichever comes first.
         for _ in range(min(valid_trons, amount)):
@@ -1618,7 +1645,7 @@ loaf_converter""",
             user_account.set("auto_chessatron", False)
             await utility.smart_reply(ctx, f"Auto chessatron is now off.")
         else:
-            if channel_permission_levels.get(ctx.channel.name, 0) < PERMISSION_LEVEL_ACTIVITIES:
+            if get_channel_permission_level(ctx) < PERMISSION_LEVEL_ACTIVITIES:
                 await utility.smart_reply(ctx, f"Thank you for your interest in creating chessatrons! You can do so over in <#967544442468843560>.")
                 return
             
@@ -1821,7 +1848,7 @@ loaf_converter""",
 
         # first we make sure this is a valid channel
         #if ctx.channel.name not in earnable_channels:
-        if channel_permission_levels.get(ctx.channel.name, 0) < PERMISSION_LEVEL_ACTIVITIES:
+        if get_channel_permission_level(ctx) < PERMISSION_LEVEL_ACTIVITIES:
             await ctx.reply("Hi! Thanks for visiting the bread shop. Our nearest location is over in <#967544442468843560>.")
             return
         
@@ -1861,7 +1888,7 @@ loaf_converter""",
             
             # first we make sure this is a valid channel
             #if ctx.channel.name not in earnable_channels:
-            if channel_permission_levels.get(ctx.channel.name, 0) < PERMISSION_LEVEL_ACTIVITIES:
+            if get_channel_permission_level(ctx) < PERMISSION_LEVEL_ACTIVITIES:
                 await ctx.reply("Hi! Thanks for visiting the hidden bakery. You can find us in <#967544442468843560>.")
                 return
             
@@ -1899,7 +1926,7 @@ loaf_converter""",
         
         # first we make sure this is a valid channel
         #if ctx.channel.name not in earnable_channels:
-        if channel_permission_levels.get(ctx.channel.name, 0) < PERMISSION_LEVEL_ACTIVITIES:
+        if get_channel_permission_level(ctx) < PERMISSION_LEVEL_ACTIVITIES:
             await ctx.reply("Hi! Thanks for visiting the gambit shop. Our nearest location is over in <#967544442468843560>.")
             return
         
@@ -1947,7 +1974,7 @@ loaf_converter""",
 
         # first we make sure this is a valid channel
         #if ctx.channel.name not in earnable_channels:
-        if channel_permission_levels.get(ctx.channel.name, 0) < PERMISSION_LEVEL_ACTIVITIES:
+        if get_channel_permission_level(ctx) < PERMISSION_LEVEL_ACTIVITIES:
             await ctx.reply("Thank you for your interest in purchasing an item from the store. Please visit our nearby location in <#967544442468843560>.")
             return
 
@@ -2189,7 +2216,8 @@ For instance, "$bread gift Melodie 5" would gift 5 dough to Melodie.
 Likewise, "$bread gift Melodie :croissant:" would gift a :croissant:,
 and "$bread gift Melodie 5 :croissant:" would gift 5 of them.
 
-Special stats, such as special_bread, cannot be gifted or transferred.
+Categories of items, such as special_bread or chess_pieces, can be gifted as a group. 
+For instance, "$bread gift Melodie 5 special_bread" would gift 5 of each special bread to Melodie.
 """
 
     @bread.command(
@@ -2219,6 +2247,14 @@ Special stats, such as special_bread, cannot be gifted or transferred.
             if receiver_account.get("id") != 960869046323134514: # always can gift to MM
                 await ctx.reply("Sorry, you can't gift to someone who has a higher ascension level than you.")
                 return
+            
+        if receiver_account.get("gifts_disabled") == True:
+            await ctx.reply("Sorry, you can't gift to that person.")
+            return
+        
+        if sender_account.get("gifts_disabled") == True:
+            await ctx.reply("Sorry, you can't gift right now. Please reenable gifting with \"$bread disable_gifts off\".")
+            return
 
         #shitty way of converting to int
         try:
@@ -2230,6 +2266,10 @@ Special stats, such as special_bread, cannot be gifted or transferred.
         except:
             pass
         
+        do_fraction = False
+        amount = 0
+        do_category_gift = False
+
         # print(f"arg1 type was {type(arg1)} and arg2 type was {type(arg2)}")
         if type(arg1) is int and type(arg2) is str:
             amount = arg1
@@ -2245,9 +2285,99 @@ Special stats, such as special_bread, cannot be gifted or transferred.
         elif (type(arg1) is int and arg2 is None):
             emoji = "dough"
             amount = arg1
+
+        # check if there's a fraction of the item we're supposed to gift
+        elif (type(arg1) is str and type(arg2) is str and arg1.lower() in ["all", "half", "quarter"]):
+            emoji = arg2     
+            fraction_amount = arg1.lower() 
+            do_fraction = True
+        elif (type(arg1) is str and type(arg2) is str and arg2.lower() in ["all", "half", "quarter"]):
+            emoji = arg1
+            fraction_amount = arg2.lower()
+            do_fraction = True
         else:
             await ctx.reply("Needs an amount and what to gift.")
             return
+
+            
+        if sender_account.has_category(emoji):
+            do_category_gift = True
+            print(f"category gift of {emoji} detected")
+
+        if do_category_gift is True:
+            gifted_count = 0
+
+            if do_fraction is True:
+                # we recursively call gift for each item in the category, after calculating the amount
+                for item in sender_account.get_category(emoji):
+                    item_amount = 0
+                    if fraction_amount == "all":
+                        item_amount = sender_account.get(item.text)
+                    elif fraction_amount == "half":
+                        item_amount = sender_account.get(item.text) // 2
+                    elif fraction_amount == "quarter":
+                        item_amount = sender_account.get(item.text) // 4
+                    
+                    if item_amount > 0:
+                        gifted_count += item_amount
+                        await self.gift(ctx, target, item.text, item_amount)
+                        await asyncio.sleep(1)
+            else:
+                # we recursively call gift for each item in the category
+                # and then return
+                for item in sender_account.get_category(emoji):
+                    # we want to guarantee a successful gifting so we will gift less than "amount" if necessary
+                    item_amount = min(amount, sender_account.get(item.text))
+
+                    if item_amount > 0:
+                        gifted_count += item_amount
+                        await self.gift(ctx, target, item.text, item_amount)
+                        await asyncio.sleep(1)
+                
+            if gifted_count > 0:
+                await ctx.reply(f"Gifted {utility.smart_number(gifted_count)} {emoji} to {receiver_account.get_display_name()}.")
+            else:
+                await ctx.reply(f"Sorry, you don't have any {emoji} to gift.")
+
+            # now that we've acted recursively, we return to avoid triggering the rest of the function
+            return
+
+        
+
+        emote = None
+
+        if (emoji.lower() == "dough"):
+            item = "total_dough"
+            pass
+        elif do_category_gift is True:
+            pass # this block has no use if we're gifting a category
+        else:
+            # print(f"checking for gift with text {emoji}")
+            emote = values.get_emote(emoji)
+            if (emote is None) or (emote.can_be_gifted() == False):
+                # print("failed to find emote")
+                await ctx.reply("Sorry, that's not a giftable item.")
+                return
+            
+            item = emote.text
+        
+        if do_fraction is True:
+            # if we're gifting a category, go through every item in it and get the highest overall amount for "all"
+            if do_category_gift is True:
+                base_amount = 0
+                for item in sender_account.get_category(emoji):
+                    base_amount = max(base_amount, sender_account.get(item.text))
+            # otherwise we're gifting a single item, so get the amount of that item
+            else:
+                base_amount = sender_account.get(item)
+
+            
+            if fraction_amount == "all":
+                amount = base_amount
+            elif fraction_amount == "half":
+                amount = base_amount // 2
+            elif fraction_amount == "quarter":
+                amount = base_amount // 4
 
         if ctx.author.id == target.id:
             await ctx.reply("You can't gift bread to yourself, silly.")
@@ -2268,21 +2398,6 @@ Special stats, such as special_bread, cannot be gifted or transferred.
 
         
 
-        emote = None
-
-        if (emoji.lower() == "dough"):
-            item = "total_dough"
-            pass
-        else:
-            # print(f"checking for gift with text {emoji}")
-            emote = values.get_emote(emoji)
-            if (emote is None) or (emote.can_be_gifted() == False):
-                # print("failed to find emote")
-                await ctx.reply("Sorry, that's not a giftable item.")
-                return
-            
-            item = emote.text
-        
         # enforce maxumum gift amount to players of lower prestige level
         if receiver_account.get_prestige_level() < sender_account.get_prestige_level() and \
             item == "total_dough" and \
@@ -2318,7 +2433,7 @@ Special stats, such as special_bread, cannot be gifted or transferred.
                 sender_account.increment(item, -amount)
                 receiver_account.increment(item, amount)
                 print(f"{amount} dough has been gifted to {target.display_name} by {ctx.author.display_name}.")
-                await ctx.send(f"{amount} dough has been gifted to {target.mention}.")
+                await ctx.send(f"{utility.smart_number(amount)} dough has been gifted to {target.mention}.")
             else:
                 await ctx.reply("You don't have enough dough to gift that much.")
         else:
@@ -2326,7 +2441,7 @@ Special stats, such as special_bread, cannot be gifted or transferred.
                 sender_account.increment(item, -amount)
                 receiver_account.increment(item, amount)
                 print(f"{amount} {item} has been gifted to {target.display_name} by {ctx.author.display_name}.")
-                await ctx.send(f"{amount} {item} has been gifted to {target.mention}.")
+                await ctx.send(f"{utility.smart_number(amount)} {item} has been gifted to {target.mention}.")
             else:
                 await ctx.reply("You don't have enough of that to gift.")
             #  we will not gift attributes after all, those will be trophies for the roller
@@ -2341,6 +2456,29 @@ Special stats, such as special_bread, cannot be gifted or transferred.
         # elif type(arg1) is None or type(arg2) is None:
         #     await ctx.reply("Needs an amount and what to gift.")
         #     return
+
+    @bread.command(
+        brief="Disables being gifted items.",
+        aliases=["disable_gift, disablegifts, disablegift"]
+    )
+    async def disable_gifts(self, ctx, toggle: typing.Optional[str] = None):
+        user_account = self.json_interface.get_account(ctx.author)
+        state = user_account.get("gifts_disabled")
+
+        if toggle == 'on':
+            user_account.set("gifts_disabled", True)
+            await ctx.reply("Other people can no longer gift you items.")
+        elif toggle == 'off':
+            user_account.set("gifts_disabled", False)
+            await ctx.reply("You can now be gifted items again.")
+        else:
+            if state == False:
+                user_account.set("gifts_disabled", True)
+                await ctx.reply("Other people can no longer gift you items.")
+            else:
+                user_account.set("gifts_disabled", False)
+                await ctx.reply("You can now be gifted items again.")
+
         
         
 
@@ -2372,7 +2510,7 @@ anarchy - 1000% of your wager.
             return
 
         #if ctx.channel.name not in earnable_channels:
-        if channel_permission_levels.get(ctx.channel.name, 0) < PERMISSION_LEVEL_ACTIVITIES:
+        if get_channel_permission_level(ctx) < PERMISSION_LEVEL_ACTIVITIES:
             await ctx.reply("Sorry, but you can only do that in <#967544442468843560>.")
             return
 
@@ -2576,10 +2714,10 @@ anarchy - 1000% of your wager.
 
         for stonk in all_stonks:
             value = round(stonks_file[stonk])
-            output += f"{stonk} - {value} dough\n"
+            output += f"{stonk} - {utility.smart_number(value)} dough\n"
 
         user_account = self.json_interface.get_account(ctx.author)
-        output += f"\nYou have **{user_account.get('total_dough')} dough** to spend.\n"
+        output += f"\nYou have **{utility.smart_number(user_account.get('total_dough'))} dough** to spend.\n"
         output += '\nUse "$bread invest <amount> <stonk>" to buy into a stonk.\nUse "$bread divest <amount> <stonk>" to get out while you\'re still behind.\nUse "$bread portfolio" to see your current stonk holdings.'
         await ctx.reply(output)
 
@@ -2732,7 +2870,7 @@ anarchy - 1000% of your wager.
         help="You can either use the stonk name or the stonk emoji.\nUse as \"$bread invest <amount> <stonk>\". You can also invest a certain amount of dough by using \"$bread invest <amount> dough <stonk>\".",
     )
     async def invest(self, ctx, *, args):
-        if channel_permission_levels.get(ctx.channel.name, 0) < PERMISSION_LEVEL_ACTIVITIES:
+        if get_channel_permission_level(ctx) < PERMISSION_LEVEL_ACTIVITIES:
             await ctx.reply("Thank you for your interest in stonks. They are available for you in <#967544442468843560>.")
             return
 
@@ -2926,7 +3064,7 @@ anarchy - 1000% of your wager.
         help="You can either use the stonk name or the stonk emoji.\nUse as \"$bread divest <amount> <stonk>\". You can also divest a certain amount of dough by using \"$bread divest <amount> dough <stonk>\".",
     )
     async def divest(self, ctx, *, args):
-        if channel_permission_levels.get(ctx.channel.name, 0) < PERMISSION_LEVEL_ACTIVITIES:
+        if get_channel_permission_level(ctx) < PERMISSION_LEVEL_ACTIVITIES:
             await ctx.reply("Thank you for your interest in buying high and selling low. You can do so in <#967544442468843560>.")
             return
 
@@ -3024,7 +3162,7 @@ anarchy - 1000% of your wager.
     async def portfolio(self, ctx, user: typing.Optional[discord.Member] = None):
         print(f"{ctx.author.name} requested their portfolio.")
 
-        if channel_permission_levels.get(ctx.channel.name, 0) < PERMISSION_LEVEL_BASIC:
+        if get_channel_permission_level(ctx) < PERMISSION_LEVEL_BASIC:
             await ctx.reply("Thank you for your interest in your stonks portfolio. We have it available for you in <#967544442468843560>.")
             return
         
@@ -3176,7 +3314,7 @@ anarchy - 1000% of your wager.
 
         # print(f"{ctx.author.name} requested to alchemize {count} {target_item}.")
 
-        if channel_permission_levels.get(ctx.channel.name, 0) < PERMISSION_LEVEL_ACTIVITIES:
+        if get_channel_permission_level(ctx) < PERMISSION_LEVEL_ACTIVITIES:
             await ctx.reply("Thank you for your interest in bread alchemy. Please find the alchemical circle is present in <#967544442468843560>.")
             return
 
@@ -3228,6 +3366,10 @@ anarchy - 1000% of your wager.
             # print(f"Available recipes are: {alchemy.recipes}")
 
             if target_emote.name in alchemy.recipes.keys():
+                if user_account.get("max_daily_rolls") < store.Daily_rolls.max_level(user_account) and target_emote.name in [emote.name for emote in values.all_one_of_a_kind]:  
+                    await ctx.reply(f"I'm sorry, but you cannot alchemize any {target_emote.text} right now.")
+                    self.currently_interacting.remove(ctx.author.id)
+                    return
                 recipe_list = alchemy.recipes[target_emote.name]
             else:
                 await ctx.reply(f"There are no recipes to create {target_emote.text}. Perhaps research has not progressed far enough.")
@@ -3559,7 +3701,8 @@ anarchy - 1000% of your wager.
         # target_account = self.json_interface.get_account(target_user)
         target_account.values["id"] = target_user.id
         target_account.values["username"] = target_user.name
-        target_account.values["display_name"] = target_user.display_name
+        #target_account.values["display_name"] = target_user.display_name
+        target_account.values["display_name"] =  get_display_name(target_user)
 
         self.json_interface.set_account(target_user, target_account)
 
@@ -3878,7 +4021,7 @@ anarchy - 1000% of your wager.
 
                 account.values["id"] = member.id
                 account.values["username"] = member.name
-                account.values["display_name"] = member.display_name
+                account.values["display_name"] = get_display_name(member)
                 
                 # save the account
                 self.json_interface.set_account(member, account)
