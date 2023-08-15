@@ -12,6 +12,15 @@ New way to store alchemy recipes.
 "cost" is the cost of the recipe, in a list of tuples containing the item and the number required.
 "requirement" is a list of tuples containing any requirements for the recipe, None can be used for no requirements. None will also be used if "requirement" is excluded.
 "result" is the number of output items to create. Will use 1 if it is not included.
+"provide_no_dough" is an optional bool for whether to override dough being provided by the item.
+Example item:
+{
+	"cost": [(values.anarchy_chess, 1)],
+        "requirement": [("loaf_converter", 128)],
+        "provide_no_dough": True,
+	"result": 5
+}
+This would be a recipe that has a cost of 1 MoaK, has a requirement of at least 128 Loaf Converters, will not provide dough when made (if it did in the first place), and will produce 5 of the output item.
 """
 recipes = {
     "Wpawn": [
