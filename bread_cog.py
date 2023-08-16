@@ -1437,7 +1437,8 @@ loaf_converter""",
             new_roll_messages = []
             for message in roll_messages:
                 if values.anarchy_chess.text in message or \
-                   values.gem_gold.text in message:
+                   values.gem_gold.text in message or \
+                   len(message.split()) >= 14 and len(message.split()) < 100: # really bad way of checking for 14 or higher rolls
                     new_roll_messages.append(message)
             roll_messages = new_roll_messages
 
