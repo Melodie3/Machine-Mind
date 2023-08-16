@@ -299,7 +299,7 @@ class Loaf_Converter(Store_Item):
 
     @classmethod
     def max_level(cls, user_account: account.Bread_Account = None) -> typing.Optional[int]:
-        return 69420
+        return 93258468905632490863452
 
 class Dough_Multiplier(Store_Item):
     name = "dough_multiplier"
