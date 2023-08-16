@@ -3374,7 +3374,27 @@ anarchy - 1000% of your wager.
                     await ctx.reply(f"I'm sorry, but you cannot alchemize any {target_emote.text} right now.")
                     self.currently_interacting.remove(ctx.author.id)
                     return
-                recipe_list = alchemy.recipes[target_emote.name]
+                recipe_list = alchemy.recipes[target_emote.name].copy()
+
+                # Remove recipes that the user doesn't have the requirements for.
+                # To do this, we iterate through a copy of the recipe list and check each requirement to make sure the user has that requirement.
+                # If the user does not, we remove the item from the original recipe_list, because we're iterating through the copy the iteration is not messed up.
+
+                for recipe in recipe_list.copy():
+                    if "requirement" not in recipe:
+                        continue # Recipe doesn't have any requirements.
+                        
+                    for require_key, require_amount in recipe["requirement"]:
+                        if user_account.get(require_key) < require_amount:
+                            # User does not have a requirement.
+                            recipe_list.remove(recipe)
+                            break
+                                
+                if len(recipe_list) == 0:
+                    # Either the recipe list was initially blank, in which there is some issue, or the user has not unlocked any recipes for the item yet.
+                    await ctx.reply(f"I'm sorry, but your technology has not yet found a way to create {target_emote.text}.")
+                    self.currently_interacting.remove(ctx.author.id)
+                    return
             else:
                 await ctx.reply(f"There are no recipes to create {target_emote.text}. Perhaps research has not progressed far enough.")
                 self.currently_interacting.remove(ctx.author.id)
@@ -3390,11 +3410,16 @@ anarchy - 1000% of your wager.
                 recipes_description = f"There are {len(recipe_list)} recipes for {target_emote.text}.\n"
                 for i in range(len(recipe_list)):
                     recipe = recipe_list[i]
-                    recipes_description += f"**[ {i+1} ]**    {alchemy.describe_individual_recipe(recipe)}\n"
+                    recipes_description += f"**[ {i+1} ]**    {alchemy.describe_individual_recipe(recipe)}"
+
+                    if "result" in recipe:
+                        recipes_description += f"   **({recipe['result']}x)**"
+
+                    recipes_description += "\n"
 
                     # print (f"recipe is {recipe}")
                     
-                    for pair in recipe:
+                    for pair in recipe["cost"]:
                         if pair[0] not in ingredients:
                             ingredients.append(pair[0])
 
@@ -3437,15 +3462,23 @@ anarchy - 1000% of your wager.
             ########################################################################################################################
             #####      GET CONFIRMATION
 
+            item_multiplier = 1 # Amount of the output item to provide, by default it's 1 but something else can be specified via the recipe in alchemy.py.
+            if "result" in recipe:
+                item_multiplier = recipe["result"]
+
             already_confirmed = False
             if confirm is not None:
                 if confirm.lower() in ["yes", "y", "confirm"]:
                     already_confirmed = True
 
             if already_confirmed is False:
-                question_text = f"You have chosen to create {count} {target_emote.text} from the following recipe:\n{alchemy.describe_individual_recipe(recipe)}\n\n"
+                multiplier_text = ""
+                if "result" in recipe:
+                    multiplier_text = f"**({item_multiplier}x recipe)** "
+
+                question_text = f"You have chosen to create {count * item_multiplier} {target_emote.text} {multiplier_text}from the following recipe:\n{alchemy.describe_individual_recipe(recipe)}\n\n"
                 question_text += f"You have the following ingredients:\n"
-                for pair in recipe:
+                for pair in recipe["cost"]:
                     question_text += f"{pair[0].text}: {user_account.get(pair[0].text)} of {pair[1] * count}\n"
                         
                 question_text += "\nWould you like to proceed? Yes or No."
@@ -3474,7 +3507,7 @@ anarchy - 1000% of your wager.
 
 
             # first we make sure the user has enough ingredients
-            for pair in recipe:
+            for pair in recipe["cost"]:
                 cost = pair[1] * count
                 posessions = user_account.get(pair[0].text)
                 # print(f"{ctx.author.display_name} is attempting to alchemize {count} {target_emote.name}")
@@ -3486,23 +3519,27 @@ anarchy - 1000% of your wager.
             
             value = 0
 
+            override_dough = False
+            if "provide_no_dough" in recipe and recipe["provide_no_dough"]:
+                override_dough = True # Provide no dough from the recipe, even if the item calls for it. This is set in the recipe, instead of the item.
+
             for i in range(count):
                 # we remove the ingredients
-                for pair in recipe:
+                for pair in recipe["cost"]:
                     user_account.increment(pair[0].text, -pair[1])
 
                 # then we add the item
                 
-                user_account.add_item_attributes(target_emote)
-                if target_emote.gives_alchemy_award():
-                    value += user_account.add_dough_intelligent(target_emote.get_alchemy_value() + user_account.get_dough_boost_for_item(target_emote))
+                user_account.add_item_attributes(target_emote, item_multiplier)
+                if target_emote.gives_alchemy_award() and not override_dough:
+                    value += user_account.add_dough_intelligent((target_emote.get_alchemy_value() + user_account.get_dough_boost_for_item(target_emote)) * item_multiplier)
 
 
             # finally, we save the account
             self.json_interface.set_account(ctx.author, user_account)
 
-            output = f"Well done. You have created {count} {target_emote.text}. You now have {user_account.get(target_emote.text)} of them."
-            if target_emote.gives_alchemy_award():
+            output = f"Well done. You have created {count * item_multiplier} {target_emote.text}. You now have {user_account.get(target_emote.text)} of them."
+            if target_emote.gives_alchemy_award() and not override_dough:
                 output += f"\nYou have also been awarded **{value} dough** for your efforts."
 
             await ctx.reply(output)

@@ -7,6 +7,307 @@ import bread.values as values
 # wpawn = bpawn + bpawn + bpawn
 # ":Bpawn:"
 
+"""
+New way to store alchemy recipes.
+"cost" is the cost of the recipe, in a list of tuples containing the item and the number required.
+"requirement" is a list of tuples containing any requirements for the recipe, None can be used for no requirements. None will also be used if "requirement" is excluded.
+"result" is the number of output items to create. Will use 1 if it is not included.
+"provide_no_dough" is an optional bool for whether to override dough being provided by the item.
+Example item:
+{
+	"cost": [(values.anarchy_chess, 1)],
+        "requirement": [("loaf_converter", 128)],
+        "provide_no_dough": True,
+	"result": 5
+}
+This would be a recipe that has a cost of 1 MoaK, has a requirement of at least 128 Loaf Converters, will not provide dough when made (if it did in the first place), and will produce 5 of the output item.
+"""
+recipes = {
+    "Wpawn": [
+        {
+            "cost": [(values.black_pawn, 2), (values.doughnut, 10), (values.bagel, 10), (values.waffle, 10)]
+        },
+        {
+            "cost": [(values.black_pawn, 2), (values.croissant, 10), (values.flatbread, 10), (values.stuffed_flatbread, 10), (values.sandwich, 10), (values.french_bread, 10)]
+        },
+        {
+            "cost": [(values.black_pawn, 3)]
+        },
+        {
+            "cost": [(values.gem_red, 1)]
+        }
+    ],
+    "Wrook": [
+        {
+            "cost": [(values.black_rook, 1), (values.sandwich, 50), (values.waffle, 25)]
+        },
+        {
+            "cost": [(values.black_rook, 2), (values.sandwich, 50)]
+        },
+        {
+            "cost": [(values.black_rook, 3)]
+        },
+        {
+            "cost": [(values.black_rook, 2), (values.waffle, 75)]
+        },
+        {
+            "cost": [(values.gem_red, 1)]
+        }
+    ],
+        "Wknight" : [
+        {
+			"cost": [(values.black_knight, 1), (values.croissant, 50), (values.bagel, 25)]
+		},
+        {
+			"cost": [(values.black_knight, 2), (values.croissant, 50)]
+		},
+        {
+			"cost": [(values.black_knight, 3)]
+		},
+        {
+			"cost": [(values.black_knight, 2), (values.bagel, 75)]
+		},
+        {
+			"cost": [(values.gem_red, 1)]
+		}
+    ],
+
+    "Wbishop" : [
+        {
+			"cost": [(values.black_bishop, 1), (values.french_bread, 50), (values.doughnut, 25)]
+		},
+        {
+			"cost": [(values.black_bishop, 2), (values.french_bread, 50)]
+		},
+        {
+			"cost": [(values.black_bishop, 3)]
+		},
+        {
+			"cost": [(values.black_bishop, 2), (values.doughnut, 75)]
+		},
+        {
+			"cost": [(values.gem_red, 1)]
+		}
+    ],
+
+    "Wqueen" : [
+        {
+			"cost": [(values.black_queen, 1), (values.stuffed_flatbread, 50), (values.doughnut, 25)]
+		},
+        {
+			"cost": [(values.black_queen, 2), (values.stuffed_flatbread, 50)]
+		},
+        {
+			"cost": [(values.black_queen, 3)]
+		},
+        {
+			"cost": [(values.black_queen, 2), (values.doughnut, 75)]
+		},
+        {
+			"cost": [(values.gem_red, 1)]
+		}
+    ],
+
+    "Wking" : [
+        {
+			"cost": [(values.black_king, 1), (values.flatbread, 50), (values.bagel, 25)]
+		},
+        {
+			"cost": [(values.black_king, 2), (values.flatbread, 50)]
+		},
+        {
+			"cost": [(values.black_king, 3)]
+		},
+        {
+			"cost": [(values.black_king, 2), (values.bagel, 75)]
+		},
+        {
+			"cost": [(values.gem_red, 1)]
+		}
+    ],
+
+    "Bpawn" : [
+        {
+			"cost": [(values.white_pawn, 1)]
+		},
+        {
+			"cost": [(values.gem_red, 1)]
+		}
+    ],
+
+    "Brook" : [
+        {
+			"cost": [(values.white_rook, 1)]
+		},
+        {
+			"cost": [(values.gem_red, 1)]
+		}
+    ],
+
+    "Bknight" : [
+        {
+			"cost": [(values.white_knight, 1)]
+		},
+        {
+			"cost": [(values.gem_red, 1)]
+		}
+    ],
+
+    "Bbishop" : [
+        {
+			"cost": [(values.white_bishop, 1)]
+		},
+        {
+			"cost": [(values.gem_red, 1)]
+		}
+    ],
+
+    "Bqueen" : [
+        {
+			"cost": [(values.white_queen, 1)]
+		},
+        {
+			"cost": [(values.gem_red, 1)]
+		}
+    ],
+
+    "Bking" : [
+        {
+			"cost": [(values.white_king, 1)]
+		},
+        {
+			"cost": [(values.gem_red, 1)]
+		}
+    ],
+
+
+    "gem_gold" : [
+        {
+			"cost": [(values.gem_green, 2), (values.gem_purple, 4), (values.gem_blue, 8), (values.gem_red, 16)]
+		},
+        {
+			"cost": [(values.normal_bread, 10000), 
+            (values.croissant, 1000), (values.flatbread, 1000), (values.stuffed_flatbread, 1000), (values.sandwich, 1000), (values.french_bread, 1000),
+            (values.doughnut, 500), (values.bagel, 500), (values.waffle, 500)]
+		},
+        {
+            "cost": [(values.anarchy_chess, 1)],
+            "requirement": [("loaf_converter", 128)],
+            "provide_no_dough": True
+        }
+    ],
+
+    "gem_green" : [
+        {
+			"cost": [(values.gem_purple, 2)]
+		},
+        {
+			"cost": [(values.gem_gold, 1)],
+            "result": 4
+		}
+    ],
+
+    "gem_purple" : [
+        {
+			"cost": [(values.gem_blue, 2)]
+		},
+        {
+			"cost": [(values.gem_green, 1)]
+		}
+    ],
+
+    "gem_blue" : [
+        {
+			"cost": [(values.gem_red, 2)]
+		},
+        {
+			"cost": [(values.gem_purple, 1)]
+		}
+    ],
+
+    "gem_red" : [
+        {
+			"cost": [(values.gem_blue, 1)]
+		}
+    ],
+
+    "omega_chessatron" : [
+        {
+			"cost": [(values.chessatron, 5), (values.anarchy_chess, 1), 
+            (values.gem_gold, 1), (values.gem_green, 1), (values.gem_purple, 1), (values.gem_blue, 1), (values.gem_red, 1),
+			]
+		}
+    ],
+
+    "holy_hell" : [
+        {
+			"cost": [ (values.anarchy_chess, 5) ]
+		}
+    ],
+
+    "anarchy" : [
+        {
+			"cost": [(values.anarchy_chess, 5)]
+		}
+    ],
+
+    "horsey" : [
+        {
+			"cost": [(values.anarchy_chess, 5)]
+		}
+    ],
+
+    "doughnut" : [
+        {
+			"cost": [(values.normal_bread, 25)]
+		}
+    ],
+
+    "bagel" : [
+        {
+			"cost": [(values.normal_bread, 25)]
+		}
+    ],
+
+    "waffle" : [
+        {
+			"cost": [(values.normal_bread, 25)]
+		}
+    ],
+
+    "flatbread" : [
+        {
+			"cost": [(values.normal_bread, 10)]
+		}
+    ],
+
+    "stuffed_flatbread" : [
+        {
+			"cost": [(values.normal_bread, 10)]
+		}
+    ],
+
+    "sandwich" : [
+        {
+			"cost": [(values.normal_bread, 10)]
+		}
+    ],
+
+    "french_bread" : [
+        {
+			"cost": [(values.normal_bread, 10)]
+		}
+    ],
+
+    "croissant" : [
+        {
+			"cost": [(values.normal_bread, 10)]
+		}
+    ]
+}
+
+# Old recipe storage.
+"""
 recipes = {
     "Wpawn" : [ 
         [(values.black_pawn, 2), (values.doughnut, 10), (values.bagel, 10), (values.waffle, 10)],
@@ -164,6 +465,7 @@ recipes = {
     ],
 
 }       
+"""
 
 def alchemy(target_item, item1, item2, item3):
     target_name = target_item.name.lower()
@@ -177,13 +479,13 @@ def alchemy(target_item, item1, item2, item3):
 
 def describe_individual_recipe(recipe):
     output = ""
-    for i in range(len(recipe)):
+    for i in range(len(recipe["cost"])):
     #for pair in recipe:
-        pair = recipe[i]
+        pair = recipe["cost"][i]
         item = pair[0]
         amount = pair[1]
         output += f"{amount} {item.text}"
-        if i < len(recipe) - 1:
+        if i < len(recipe["cost"]) - 1:
             output += ",  "
     return output
 
