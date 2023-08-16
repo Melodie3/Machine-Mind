@@ -2219,6 +2219,9 @@ and "$bread gift Melodie 5 :croissant:" would gift 5 of them.
 
 Categories of items, such as special_bread or chess_pieces, can be gifted as a group. 
 For instance, "$bread gift Melodie 5 special_bread" would gift 5 of each special bread to Melodie.
+
+Instead of using a number, 'all', 'half' or 'quarter' can be used to gift that amount of the items.
+For example, "$bread gift Melodie all chess_pieces" would gift all your chess pieces to Melodie.
 """
 
     @bread.command(
