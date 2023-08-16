@@ -2392,7 +2392,7 @@ For example, "$bread gift Melodie all chess_pieces" would gift all your chess pi
         if (amount < 0):
             print(f"Rejecting steal request from {ctx.author.display_name}")
             await ctx.reply("Trying to steal bread? Mum won't be very happy about that.")
-            await ctx.invoke(self.bot.get_command('brick'), member=ctx.author, duration="10")
+            await ctx.invoke(self.bot.get_command('brick'), member=ctx.author, duration="1")
             return
         
         if (amount == 0):
