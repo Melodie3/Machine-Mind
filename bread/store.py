@@ -23,7 +23,7 @@ ascension_token_levels = [50, 150, 450, 1000]
 daily_rolls_discount_prices = [128, 124, 120, 116, 112, 108, 104, 100]
 loaf_converter_discount_prices = [256, 244, 232, 220, 208, 196, 184, 172]
 chess_piece_distribution_levels = [25, 33, 42, 50]
-moak_booster_multipliers = [1, 1.3, 1.7, 2.1, 2.8,3.7]
+moak_booster_multipliers = [1, 1.3, 1.69, 2.197, 2.8561,3.71293]
 chessatron_shadow_booster_levels = [0, 5, 10, 15, 20]
 shadow_gold_gem_luck_boost_levels = [0, 10, 20, 30, 40]
 
