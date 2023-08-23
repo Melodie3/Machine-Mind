@@ -984,6 +984,7 @@ loaf_converter""",
         lifetime = False
         search_all = False
         wide_leaderboard = False
+        ascensions = []
         requester_account = self.json_interface.get_account(ctx.author.id)
 
         if "lifetime" in args:
@@ -997,6 +998,14 @@ loaf_converter""",
         if "wide" in args:
             wide_leaderboard = True
             args.remove("wide")
+        
+        for arg in args.copy():
+            if arg.startswith("a") and arg[1:].isnumeric():
+                ascensions.append(int(arg[1:]))
+                args.remove(arg)
+        
+        if len(ascensions) == 0:
+            ascensions.append(requester_account.get("prestige_level"))
 
         if len(args) > 0:
             search_value = args[0]
@@ -1081,7 +1090,7 @@ loaf_converter""",
                 if "id" not in file.keys():
                     return False
                 checked_account = self.json_interface.get_account(file["id"])
-                if requester_account.get("prestige_level") == checked_account.get("prestige_level"):
+                if checked_account.get("prestige_level") in ascensions:
                     return True
                 else:
                     return False
