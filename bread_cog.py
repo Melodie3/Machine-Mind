@@ -1703,7 +1703,7 @@ loaf_converter""",
 
         await utility.smart_reply(ctx, f"You have used {32*number_of_chessatrons} red gems to make chessatrons.")
 
-        await self.do_chessboard_completion(ctx, True, amount = int(arg))
+        await self.do_chessboard_completion(ctx, True, amount = int(number_of_chessatrons))
 
     ########################################################################################################################
     #####      BREAD SPELLCHECK
