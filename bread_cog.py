@@ -987,6 +987,7 @@ loaf_converter""",
         lifetime = False
         search_all = False
         wide_leaderboard = False
+        ascensions = []
         requester_account = self.json_interface.get_account(ctx.author.id)
 
         if "lifetime" in args:
@@ -1000,6 +1001,14 @@ loaf_converter""",
         if "wide" in args:
             wide_leaderboard = True
             args.remove("wide")
+        
+        for arg in args.copy():
+            if arg.startswith("a") and arg[1:].isnumeric():
+                ascensions.append(int(arg[1:]))
+                args.remove(arg)
+        
+        if len(ascensions) == 0:
+            ascensions.append(requester_account.get("prestige_level"))
 
         if len(args) > 0:
             search_value = args[0]
@@ -1084,7 +1093,7 @@ loaf_converter""",
                 if "id" not in file.keys():
                     return False
                 checked_account = self.json_interface.get_account(file["id"])
-                if requester_account.get("prestige_level") == checked_account.get("prestige_level"):
+                if checked_account.get("prestige_level") in ascensions:
                     return True
                 else:
                     return False
@@ -1706,7 +1715,7 @@ loaf_converter""",
 
         await utility.smart_reply(ctx, f"You have used {32*number_of_chessatrons} red gems to make chessatrons.")
 
-        await self.do_chessboard_completion(ctx, True, amount = int(arg))
+        await self.do_chessboard_completion(ctx, True, amount = int(number_of_chessatrons))
 
     ########################################################################################################################
     #####      BREAD SPELLCHECK
@@ -3111,7 +3120,7 @@ anarchy - 1000% of your wager.
             if arg.isdigit():
                 amount = int(arg)
             if arg == 'all':
-                amount = 1000000000
+                amount = -1
             if arg == 'dough':
                 print("dough arg found in divest")
                 dough_value = True
@@ -3141,11 +3150,11 @@ anarchy - 1000% of your wager.
 
         stonk_value = round(stonks_file[emote.text])
         #check if we're selling a certain amount of dough worth of a stonk, rather than a certain amount of stonks
-        if dough_value is True:
+        if dough_value is True and not amount == -1:
             amount = math.ceil(amount/stonk_value)
 
         # now we adjust the amount to make sure we don't sell more than we have
-        if amount > user_account.get(emote.text):
+        if amount > user_account.get(emote.text) or amount == -1:
             amount = user_account.get(emote.text)
 
         # sell the stonks
