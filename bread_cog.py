@@ -1,6 +1,9 @@
 """
 Patch Notes: 
-- You can now brick youorself for up to 1 day at a time @addicted to bricks
+- Fixed gem_chessatron bug, should work normally now, thanks Duck
+- Minor improvement to divest all command, thanks Malte
+- LC cap is now 093258468905632490863452 instead of 69,420. Thanks Duck for the change lol
+- You can now view specific ascension levels with the leaderboard command. Use the argument `a0` to view, well, ascension 0. You can use multiple arguments, like `a0 a1 a2` to view all three. Thanks Duck for implementing it.
 
 TODO: Do not die to the plague
 
