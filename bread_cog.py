@@ -3108,7 +3108,7 @@ anarchy - 1000% of your wager.
             if arg.isdigit():
                 amount = int(arg)
             if arg == 'all':
-                amount = 1000000000
+                amount = -1
             if arg == 'dough':
                 print("dough arg found in divest")
                 dough_value = True
@@ -3138,11 +3138,11 @@ anarchy - 1000% of your wager.
 
         stonk_value = round(stonks_file[emote.text])
         #check if we're selling a certain amount of dough worth of a stonk, rather than a certain amount of stonks
-        if dough_value is True:
+        if dough_value is True and not amount == -1:
             amount = math.ceil(amount/stonk_value)
 
         # now we adjust the amount to make sure we don't sell more than we have
-        if amount > user_account.get(emote.text):
+        if amount > user_account.get(emote.text) or amount == -1:
             amount = user_account.get(emote.text)
 
         # sell the stonks
