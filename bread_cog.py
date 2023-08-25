@@ -1229,10 +1229,20 @@ loaf_converter""",
 
     @bread.command(
         hidden = False,
-        brief= "Toggles the black hole.",
+        brief = "Interacts with the black hole technology.",
+        help = 
+        """
+        Usage: 
+        $bread black_hole [on/off]
+        $bread black_hole [item1] [item2]...
+        
+        Use "$bread black_hole" without any arguments or "$bread black_hole [on/off]" to toggle the state of the black hole.
+        You can customize what items can be shown in your rolls by appending item names, categories, "14+" or "lottery_win" after the command.
+        """,
         aliases = ["blackhole"]
     )
-    async def black_hole(self, ctx, state: typing.Optional[str]):
+    async def black_hole(self, ctx, state: typing.Optional[bool], *, args: typing.Optional[str]):
+        # booleans here allow converting from "on" and "off" to True and False, neat!
 
         user_account = self.json_interface.get_account(ctx.author)
         black_hole_value = user_account.get("black_hole")
@@ -1241,23 +1251,47 @@ loaf_converter""",
             await ctx.reply("You don't currently possess Black Hole Technology.")
             return
 
-        if state is None:
-            if black_hole_value == 1:
+        if args is None:
+            if state is None:
+                if black_hole_value == 1:
+                    user_account.set("black_hole", 2)
+                elif black_hole_value == 2:
+                    user_account.set("black_hole", 1)
+            elif state == True:
                 user_account.set("black_hole", 2)
-            elif black_hole_value == 2:
+            elif state == False:
                 user_account.set("black_hole", 1)
-        elif state.lower() == "on":
-            user_account.set("black_hole", 2)
-        elif state.lower() == "off":
-            user_account.set("black_hole", 1)
-        else:
-            await ctx.reply("Please choose either 'on' or 'off'.")
-            return
 
-        if user_account.get("black_hole") == 2:
-            await ctx.reply("Black hole enabled.")
-        elif user_account.get("black_hole") == 1:
-            await ctx.reply("Black hole disabled.")
+            if user_account.get("black_hole") == 2:
+                await ctx.reply("Black hole enabled.")
+            elif user_account.get("black_hole") == 1:
+                await ctx.reply("Black hole disabled.")
+
+        else:
+            conditions = set()
+            for arg in args.split(" "):
+                # checks if arg is a category
+                # from account.get_category
+
+                category = False
+                for category_name in [arg, arg[:-1], arg + "s"]:
+                    for item in values.all_emotes:
+                        if category_name.lower() in item.attributes:
+                            conditions.add(item.text)
+                            category = True
+
+                # nope, not a category!
+                if category is False:
+                    if arg == "14+":
+                        conditions.add(arg)
+                    elif values.get_emote_text(arg) != None:
+                        conditions.add(values.get_emote_text(arg))
+            
+            if len(conditions) == 0:
+                await ctx.reply("I could not recognize any item. Your black hole customization has not been changed.")
+            else:
+                user_account.set("black_hole_conditions", list(conditions))
+                await ctx.reply("Your black hole customization has been changed to: " + " ".join(conditions))
         
 
 
@@ -1447,10 +1481,11 @@ loaf_converter""",
         if user_account.get("black_hole") == 2 and get_channel_permission_level(ctx) == PERMISSION_LEVEL_MAX:
             # we clear out any "unimportant" rolls
             new_roll_messages = []
+            conditions = user_account.get("black_hole_conditions")
             for message in roll_messages:
-                if values.anarchy_chess.text in message or \
-                   values.gem_gold.text in message or \
-                   len(message.split()) >= 14 and len(message.split()) < 100: # really bad way of checking for 14 or higher rolls
+                if any(item in message for item in conditions) or \
+                   ("14+" in conditions) and len(message.split()) >= 14 and len(message.split()) < 50 or \
+                   ("🤞" in conditions) and len(message.split()) >= 50:
                     new_roll_messages.append(message)
             roll_messages = new_roll_messages
 
