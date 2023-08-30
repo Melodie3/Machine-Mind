@@ -2779,7 +2779,13 @@ anarchy - 1000% of your wager.
                 
 
             value = round(stonks_file[stonk])
-            output += f"**{value}** dough\n"
+            output += f"**{value}** dough"
+
+            if stonk + "_split" in stonks_file:
+                if stonks_file[stonk + "_split"] is True:
+                    output += " **(Split!)**"
+            
+            output += "\n"
 
         # post messages
         if IS_PRODUCTION == "True":
@@ -3229,6 +3235,36 @@ anarchy - 1000% of your wager.
 
     
     def stonk_fluctuate_internal(self):
+        # Auto splitting stonks.
+        stonks_file = self.json_interface.get_custom_file("stonks")
+
+
+        stonk_starting_values = {
+            ":cookie:": 25,
+            ":pretzel:": 100,
+            ":fortune_cookie:": 500
+        }
+        for stonk in all_stonks:
+            stonks_file[stonk + "_split"] = False # Reset the split marker to false, so stonks_announce() won't say the stonk got split when it didn't.
+            if stonks_file[stonk] >= stonk_starting_values[stonk] * 2:
+                if stonks_file[stonk] >= stonk_starting_values[stonk] * 3: # If the stonk is above 3x the starting value then split it no matter the history.
+                    self.stonk_split_internal(stonk)
+                    stonks_file[stonk + "_split"] = True # Set the split marker to true so stonks_announce() will say it got split.
+                    continue
+
+                if stonk + "_history" not in stonks_file:
+                    continue # If the history doesn't exist, then just skip to the next stonk.
+
+                stonk_history = stonks_file[stonk + "_history"] + [stonks_file[stonk]]
+                rise_fall = []
+
+                for tick_id in range(len(stonk_history) - 1): # Subtract 1 so it doesn't check the current values and future values that do not exist.
+                    rise_fall.append(stonk_history[tick_id] >= stonk_history[tick_id + 1]) # Append a bool for whether the stonk rose, fell, or stagnated. True is fall or stagnate, False is a rise.
+                
+                if rise_fall.count(True) >= 2: # If the stonk fell or stagnated 2 or more times in the history data read.
+                    self.stonk_split_internal(stonk)
+                    stonks_file[stonk + "_split"] = True # Set the split marker to true so stonks_announce() will say it got split.
+                    
         # it's in a try block so that it won't crash if running on a server without the stonks file
         try:
             stonks.stonk_fluctuate(self) # this will forever remain a secret
@@ -3236,6 +3272,7 @@ anarchy - 1000% of your wager.
             print("stonk fluctuate failed")
         
         # auto split code here?
+        # I put the auto splitting code before stonk_fluctuate so the data that is used to determine a split is visible to players before the split occurs.
 
         # dividend code here?
 
