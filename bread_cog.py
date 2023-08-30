@@ -7,6 +7,8 @@ Patch Notes:
 - Max level of chessatron contraption, ethereal shine, and First Catch are now 50.
 - Gamble winnings are once again included in lifetime dough.
 - Added another level of Recipe Refinement just for fun. 
+- Stonks will now auto split at 2x their original value, or wait until 3x if the stonk is performing well.
+
 
 TODO: Do not die to the plague
 
@@ -3294,12 +3296,14 @@ anarchy - 1000% of your wager.
         stonk_value = stonks_file[stonk_text]
         stonks_file[stonk_text] = stonk_value/2
 
-        history_file = stonks_file.get(stonk_text+"_history", [])
+        # for a while we would split all the history values as well so that the portfolio command would
+        # show a more reasonable value, but this messes with the display of a stonk_split message.
+        # history_file = stonks_file.get(stonk_text+"_history", [])
 
-        for i in range(len(history_file)):
-            history_file[i] = history_file[i]/2
+        # for i in range(len(history_file)):
+        #     history_file[i] = history_file[i]/2
 
-        stonks_file[stonk_text+"_history"] = history_file
+        # stonks_file[stonk_text+"_history"] = history_file
             
 
         self.json_interface.set_custom_file("stonks", stonks_file)
