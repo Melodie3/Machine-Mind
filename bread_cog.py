@@ -3281,6 +3281,13 @@ anarchy - 1000% of your wager.
             ":pretzel:": 100,
             ":fortune_cookie:": 500
         }
+                    
+        # it's in a try block so that it won't crash if running on a server without the stonks file
+        try:
+            stonks.stonk_fluctuate(self) # this will forever remain a secret
+        except:
+            print("stonk fluctuate failed")
+        
         for stonk in all_stonks:
             stonks_file[stonk + "_split"] = False # Reset the split marker to false, so stonks_announce() won't say the stonk got split when it didn't.
             if stonks_file[stonk] >= stonk_starting_values[stonk] * 2:
@@ -3301,12 +3308,6 @@ anarchy - 1000% of your wager.
                 if rise_fall.count(True) >= 2: # If the stonk fell or stagnated 2 or more times in the history data read.
                     self.stonk_split_internal(stonk)
                     stonks_file[stonk + "_split"] = True # Set the split marker to true so stonks_announce() will say it got split.
-                    
-        # it's in a try block so that it won't crash if running on a server without the stonks file
-        try:
-            stonks.stonk_fluctuate(self) # this will forever remain a secret
-        except:
-            print("stonk fluctuate failed")
         
         # auto split code here?
         # I put the auto splitting code before stonk_fluctuate so the data that is used to determine a split is visible to players before the split occurs.
