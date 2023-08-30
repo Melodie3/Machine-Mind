@@ -1,9 +1,12 @@
 """
 Patch Notes: 
-- Fixed gem_chessatron bug, should work normally now, thanks Duck
-- Minor improvement to divest all command, thanks Malte
-- LC cap is now 093258468905632490863452 instead of 69,420. Thanks Duck for the change lol
-- You can now view specific ascension levels with the leaderboard command. Use the argument `a0` to view, well, ascension 0. You can use multiple arguments, like `a0 a1 a2` to view all three. Thanks Duck for implementing it.
+- Removed some caps on hidden bakery items.
+- Max level of Daily Discount Card is now 31, for a minimum daily roll price of 4.
+- Max level of Self Converting Yeast is now 20, for a minimum loaf converter price of 16 per level.
+- Increased the max level of High Roller Table by 3, with a new max gambling cap of 1,000,000,000,000
+- Max level of chessatron contraption, ethereal shine, and First Catch are now 50.
+- Gamble winnings are once again included in lifetime dough.
+- Added another level of Recipe Refinement just for fun. 
 
 TODO: Do not die to the plague
 
@@ -1056,7 +1059,7 @@ loaf_converter""",
                 else:
                     portfolio_value = 0
 
-                #dough += file.get("gamble_winnings", 0)
+                dough += file.get("gamble_winnings", 0)
 
                 if lifetime is True:
                     if "lifetime_earned_dough" in file.keys():
