@@ -36,6 +36,7 @@ class Bread_Account:
         "auto_chessatron" : True,
         "spellcheck" : False,
         "black_hole" : 0,
+        "black_hole_conditions" : ["<:anarchy_chess:960772054746005534>", "<:gem_gold:1006498746718244944>", "14+"],
         "gifts_disabled" : False,
     }
 
