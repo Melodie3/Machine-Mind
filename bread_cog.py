@@ -1,6 +1,14 @@
 """
 Patch Notes: 
-- You can now brick youorself for up to 1 day at a time @addicted to bricks
+- Removed some caps on hidden bakery items.
+- Max level of Daily Discount Card is now 31, for a minimum daily roll price of 4.
+- Max level of Self Converting Yeast is now 20, for a minimum loaf converter price of 16 per level.
+- Increased the max level of High Roller Table by 3, with a new max gambling cap of 1,000,000,000,000
+- Max level of chessatron contraption, ethereal shine, and First Catch are now 50.
+- Gamble winnings are once again included in lifetime dough.
+- Added another level of Recipe Refinement just for fun. 
+- Stonks will now auto split at 2x their original value, or wait until 3x if the stonk is performing well.
+
 
 TODO: Do not die to the plague
 
@@ -984,6 +992,7 @@ loaf_converter""",
         lifetime = False
         search_all = False
         wide_leaderboard = False
+        ascensions = []
         requester_account = self.json_interface.get_account(ctx.author.id)
 
         if "lifetime" in args:
@@ -997,6 +1006,14 @@ loaf_converter""",
         if "wide" in args:
             wide_leaderboard = True
             args.remove("wide")
+        
+        for arg in args.copy():
+            if arg.startswith("a") and arg[1:].isnumeric():
+                ascensions.append(int(arg[1:]))
+                args.remove(arg)
+        
+        if len(ascensions) == 0:
+            ascensions.append(requester_account.get("prestige_level"))
 
         if len(args) > 0:
             search_value = args[0]
@@ -1044,7 +1061,7 @@ loaf_converter""",
                 else:
                     portfolio_value = 0
 
-                #dough += file.get("gamble_winnings", 0)
+                dough += file.get("gamble_winnings", 0)
 
                 if lifetime is True:
                     if "lifetime_earned_dough" in file.keys():
@@ -1081,7 +1098,7 @@ loaf_converter""",
                 if "id" not in file.keys():
                     return False
                 checked_account = self.json_interface.get_account(file["id"])
-                if requester_account.get("prestige_level") == checked_account.get("prestige_level"):
+                if checked_account.get("prestige_level") in ascensions:
                     return True
                 else:
                     return False
@@ -1217,10 +1234,20 @@ loaf_converter""",
 
     @bread.command(
         hidden = False,
-        brief= "Toggles the black hole.",
+        brief = "Interacts with the black hole technology.",
+        help = 
+        """
+        Usage: 
+        $bread black_hole [on/off]
+        $bread black_hole [item1] [item2]...
+        
+        Use "$bread black_hole" without any arguments or "$bread black_hole [on/off]" to toggle the state of the black hole.
+        You can customize what items can be shown in your rolls by appending item names, categories, "14+" or "lottery_win" after the command.
+        """,
         aliases = ["blackhole"]
     )
-    async def black_hole(self, ctx, state: typing.Optional[str]):
+    async def black_hole(self, ctx, state: typing.Optional[bool], *, args: typing.Optional[str]):
+        # booleans here allow converting from "on" and "off" to True and False, neat!
 
         user_account = self.json_interface.get_account(ctx.author)
         black_hole_value = user_account.get("black_hole")
@@ -1229,23 +1256,47 @@ loaf_converter""",
             await ctx.reply("You don't currently possess Black Hole Technology.")
             return
 
-        if state is None:
-            if black_hole_value == 1:
+        if args is None:
+            if state is None:
+                if black_hole_value == 1:
+                    user_account.set("black_hole", 2)
+                elif black_hole_value == 2:
+                    user_account.set("black_hole", 1)
+            elif state == True:
                 user_account.set("black_hole", 2)
-            elif black_hole_value == 2:
+            elif state == False:
                 user_account.set("black_hole", 1)
-        elif state.lower() == "on":
-            user_account.set("black_hole", 2)
-        elif state.lower() == "off":
-            user_account.set("black_hole", 1)
-        else:
-            await ctx.reply("Please choose either 'on' or 'off'.")
-            return
 
-        if user_account.get("black_hole") == 2:
-            await ctx.reply("Black hole enabled.")
-        elif user_account.get("black_hole") == 1:
-            await ctx.reply("Black hole disabled.")
+            if user_account.get("black_hole") == 2:
+                await ctx.reply("Black hole enabled.")
+            elif user_account.get("black_hole") == 1:
+                await ctx.reply("Black hole disabled.")
+
+        else:
+            conditions = set()
+            for arg in args.split(" "):
+                # checks if arg is a category
+                # from account.get_category
+
+                category = False
+                for category_name in [arg, arg[:-1], arg + "s"]:
+                    for item in values.all_emotes:
+                        if category_name.lower() in item.attributes:
+                            conditions.add(item.text)
+                            category = True
+
+                # nope, not a category!
+                if category is False:
+                    if arg == "14+":
+                        conditions.add(arg)
+                    elif values.get_emote_text(arg) != None:
+                        conditions.add(values.get_emote_text(arg))
+            
+            if len(conditions) == 0:
+                await ctx.reply("I could not recognize any item. Your black hole customization has not been changed.")
+            else:
+                user_account.set("black_hole_conditions", list(conditions))
+                await ctx.reply("Your black hole customization has been changed to: " + " ".join(conditions))
         
 
 
@@ -1435,10 +1486,11 @@ loaf_converter""",
         if user_account.get("black_hole") == 2 and get_channel_permission_level(ctx) == PERMISSION_LEVEL_MAX:
             # we clear out any "unimportant" rolls
             new_roll_messages = []
+            conditions = user_account.get("black_hole_conditions")
             for message in roll_messages:
-                if values.anarchy_chess.text in message or \
-                   values.gem_gold.text in message or \
-                   len(message.split()) >= 14 and len(message.split()) < 100: # really bad way of checking for 14 or higher rolls
+                if any(item in message for item in conditions) or \
+                   ("14+" in conditions) and len(message.split()) >= 14 and len(message.split()) < 50 or \
+                   ("🤞" in conditions) and len(message.split()) >= 50:
                     new_roll_messages.append(message)
             roll_messages = new_roll_messages
 
@@ -1703,7 +1755,7 @@ loaf_converter""",
 
         await utility.smart_reply(ctx, f"You have used {32*number_of_chessatrons} red gems to make chessatrons.")
 
-        await self.do_chessboard_completion(ctx, True, amount = int(arg))
+        await self.do_chessboard_completion(ctx, True, amount = int(number_of_chessatrons))
 
     ########################################################################################################################
     #####      BREAD SPELLCHECK
@@ -2764,7 +2816,13 @@ anarchy - 1000% of your wager.
                 
 
             value = round(stonks_file[stonk])
-            output += f"**{value}** dough\n"
+            output += f"**{value}** dough"
+
+            if stonk + "_split" in stonks_file:
+                if stonks_file[stonk + "_split"] is True:
+                    output += " **(Split!)**"
+            
+            output += "\n"
 
         # post messages
         if IS_PRODUCTION == "True":
@@ -3214,6 +3272,36 @@ anarchy - 1000% of your wager.
 
     
     def stonk_fluctuate_internal(self):
+        # Auto splitting stonks.
+        stonks_file = self.json_interface.get_custom_file("stonks")
+
+
+        stonk_starting_values = {
+            ":cookie:": 25,
+            ":pretzel:": 100,
+            ":fortune_cookie:": 500
+        }
+        for stonk in all_stonks:
+            stonks_file[stonk + "_split"] = False # Reset the split marker to false, so stonks_announce() won't say the stonk got split when it didn't.
+            if stonks_file[stonk] >= stonk_starting_values[stonk] * 2:
+                if stonks_file[stonk] >= stonk_starting_values[stonk] * 3: # If the stonk is above 3x the starting value then split it no matter the history.
+                    self.stonk_split_internal(stonk)
+                    stonks_file[stonk + "_split"] = True # Set the split marker to true so stonks_announce() will say it got split.
+                    continue
+
+                if stonk + "_history" not in stonks_file:
+                    continue # If the history doesn't exist, then just skip to the next stonk.
+
+                stonk_history = stonks_file[stonk + "_history"] + [stonks_file[stonk]]
+                rise_fall = []
+
+                for tick_id in range(len(stonk_history) - 1): # Subtract 1 so it doesn't check the current values and future values that do not exist.
+                    rise_fall.append(stonk_history[tick_id] >= stonk_history[tick_id + 1]) # Append a bool for whether the stonk rose, fell, or stagnated. True is fall or stagnate, False is a rise.
+                
+                if rise_fall.count(True) >= 2: # If the stonk fell or stagnated 2 or more times in the history data read.
+                    self.stonk_split_internal(stonk)
+                    stonks_file[stonk + "_split"] = True # Set the split marker to true so stonks_announce() will say it got split.
+                    
         # it's in a try block so that it won't crash if running on a server without the stonks file
         try:
             stonks.stonk_fluctuate(self) # this will forever remain a secret
@@ -3221,6 +3309,7 @@ anarchy - 1000% of your wager.
             print("stonk fluctuate failed")
         
         # auto split code here?
+        # I put the auto splitting code before stonk_fluctuate so the data that is used to determine a split is visible to players before the split occurs.
 
         # dividend code here?
 
@@ -3242,12 +3331,14 @@ anarchy - 1000% of your wager.
         stonk_value = stonks_file[stonk_text]
         stonks_file[stonk_text] = stonk_value/2
 
-        history_file = stonks_file.get(stonk_text+"_history", [])
+        # for a while we would split all the history values as well so that the portfolio command would
+        # show a more reasonable value, but this messes with the display of a stonk_split message.
+        # history_file = stonks_file.get(stonk_text+"_history", [])
 
-        for i in range(len(history_file)):
-            history_file[i] = history_file[i]/2
+        # for i in range(len(history_file)):
+        #     history_file[i] = history_file[i]/2
 
-        stonks_file[stonk_text+"_history"] = history_file
+        # stonks_file[stonk_text+"_history"] = history_file
             
 
         self.json_interface.set_custom_file("stonks", stonks_file)

@@ -240,7 +240,7 @@ def bread_roll(roll_luck = 1, roll_count = 1, user_account: account.Bread_Accoun
 def loaf_roll(luck = 1, user_account: account.Bread_Account = None):
     #output what it's getting called with
     #print (f"loaf roll called with luck: {luck}, include_moaks: {include_moaks}, max_daily_rolls: {max_daily_rolls}")
-    odds_mult = 4
+    # odds_mult = 4
     moak_rarity_mult = round(user_account.get("max_daily_rolls") / 10)
     gem_boost = user_account.get_shadow_gold_gem_boost_count()
 
@@ -261,7 +261,7 @@ def loaf_roll(luck = 1, user_account: account.Bread_Account = None):
 
 
     # MoaKs
-    if random.randint(1,8192*moak_rarity_mult*odds_mult) <= moak_luck:
+    if random.randint(1, moak_rarity_mult * 2**15) <= moak_luck:
         # one-of-a-kind
         # output["emote"] = random.choice([
         #                                     #values.holy_hell, 
@@ -273,36 +273,36 @@ def loaf_roll(luck = 1, user_account: account.Bread_Account = None):
         output["commentary"] = "That sure is pretty rare!"
         output["extra_profit"] = user_account.get("max_daily_rolls") * 10 # between 10 and 10,000 extra
 
-    elif random.randint(1,1048576*odds_mult) <= gem_luck:
+    elif random.randint(1, 2**22) <= gem_luck:
         # gold gem
         output["emote"] = values.gem_gold
         output["commentary"] = "The fabled gold gem!"
 
     # 32768 -> green gem worth 2000
-    elif random.randint(1,131072*odds_mult) <= gem_luck:
+    elif random.randint(1, 2**19) <= gem_luck:
         # green gem
         output["emote"] = values.gem_green
         output["commentary"] = "Incredibly shiny!"
 
     # 16384 -> purple gem worth 1000
-    elif random.randint(1,65536*odds_mult) <= gem_luck:
+    elif random.randint(1, 2**18) <= gem_luck:
         # purple gem
         output["emote"] = values.gem_purple
         output["commentary"] = "So very shiny."
 
     # 8192 -> blue gem worth 500
-    elif random.randint(1,32768*odds_mult) <= gem_luck:
+    elif random.randint(1, 2**17) <= gem_luck:
         # blue gem
         output["emote"] = values.gem_blue
         output["commentary"] = "Very shiny."
 
     # 4096 -> red gem, worth 250
-    elif random.randint(1,16384*odds_mult) <= gem_luck:
+    elif random.randint(1, 2**16) <= gem_luck:
         # red gem
         output["emote"] = values.gem_red
         output["commentary"] = "Shiny."
 
-    elif random.randint(1,512*odds_mult) <= luck:
+    elif random.randint(1, 2**11) <= luck:
         #chess piece
         # user_chess_pieces = user_account.get_all_items_with_attribute_unrolled("chess_pieces")
 
@@ -331,12 +331,12 @@ def loaf_roll(luck = 1, user_account: account.Bread_Account = None):
             output["emote"] = random.choice(values.chess_pieces_black_biased)
             output["commentary"] = "Your Elo has been increased by 10 points."
         
-    elif random.randint(1,128*odds_mult) <= luck:
+    elif random.randint(1, 2**9) <= luck:
         #rare bread
         output["emote"]= random.choice(values.all_rare_breads)
         output["commentary"] = "Tasty!"
         
-    elif random.randint(1,32*odds_mult) <= luck:
+    elif random.randint(1, 2**7) <= luck:
         #special bread
         output["emote"] = random.choice(values.all_special_breads)
         output["commentary"] = "Tasty."

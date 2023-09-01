@@ -20,12 +20,12 @@ import bread.utility as utility
 
 ascension_token_levels = [50, 150, 450, 1000]
 
-daily_rolls_discount_prices = [128, 124, 120, 116, 112, 108, 104, 100]
-loaf_converter_discount_prices = [256, 244, 232, 220, 208, 196, 184, 172]
+# daily_rolls_discount_prices = [128, 124, 120, 116, 112, 108, 104, 100]
+# loaf_converter_discount_prices = [256, 244, 232, 220, 208, 196, 184, 172]
 chess_piece_distribution_levels = [25, 33, 42, 50]
 moak_booster_multipliers = [1, 1.3, 1.7, 2.1, 2.8,3.7]
-chessatron_shadow_booster_levels = [0, 5, 10, 15, 20]
-shadow_gold_gem_luck_boost_levels = [0, 10, 20, 30, 40]
+# chessatron_shadow_booster_levels = [0, 5, 10, 15, 20]
+# shadow_gold_gem_luck_boost_levels = [0, 10, 20, 30, 40]
 
 class Store_Item:
     name = "generic_item"
@@ -233,7 +233,9 @@ class Daily_rolls(Store_Item):
         naive_cost = 128 #(max(0, level-10) * 128) # cost will be 256, 512, 768, 1024, ...
         # first few levels are cheaper
         level_discount_card = user_account.get("max_daily_rolls_discount")
-        adjusted_cost = daily_rolls_discount_prices[level_discount_card]
+        
+        #adjusted_cost = daily_rolls_discount_prices[level_discount_card]
+        adjusted_cost = naive_cost - (level_discount_card * 4)
         if level < 10:
             return 0
         elif level == 11:
@@ -277,7 +279,8 @@ class Loaf_Converter(Store_Item):
     @classmethod
     def cost(cls, user_account: account.Bread_Account) -> int:
         level = user_account.get(cls.name) + 1
-        discounted_cost = loaf_converter_discount_prices[user_account.get("loaf_converter_discount")]
+        discounted_cost = 256 - (user_account.get("loaf_converter_discount") * 12)
+        # discounted_cost = loaf_converter_discount_prices[user_account.get("loaf_converter_discount")]
         combined_cost =  level * discounted_cost
         return combined_cost
 
@@ -299,7 +302,7 @@ class Loaf_Converter(Store_Item):
 
     @classmethod
     def max_level(cls, user_account: account.Bread_Account = None) -> typing.Optional[int]:
-        return 69420
+        return 93258468905632490863452
 
 class Dough_Multiplier(Store_Item):
     name = "dough_multiplier"
@@ -810,6 +813,7 @@ class LC_booster(Custom_price_item):
             [(values.gem_gold.text, 10)],
             [(values.gem_gold.text, 100)],
             [(values.gem_gold.text, 1000)],
+            [(values.gem_gold.text, 10000)],
         ]
     
     @classmethod
@@ -925,19 +929,23 @@ class High_Roller_Table(Prestige_Store_Item):
     name = "gamble_level"
     display_name = "High Roller Table"
 
-    gamble_levels = [50, 500, 1500, 5000, 10000, 100000, 10000000]
+    gamble_levels = [50, 500, 1500, 5000, 10000, 100000, 10000000, 1000000000, 1000000000000]
 
     costs = [0, 1, 1, 1, 1, 1, 1]
 
     @classmethod
     def cost(cls, user_account: account.Bread_Account) -> int:
         level = user_account.get(cls.name) + 1
-        return cls.costs[level]
+        if level < 1:
+            return 0
+        else:
+            return 1
+        #return cls.costs[level]
 
     @classmethod
     def max_level(cls, user_account: account.Bread_Account = None) -> typing.Optional[int]:
         level = user_account.get(cls.name) + 1
-        return 6
+        return len(cls.gamble_levels) - 1
 
     @classmethod
     def description(cls, user_account: account.Bread_Account) -> str:
@@ -953,42 +961,46 @@ class Daily_Discount_Card(Prestige_Store_Item):
     name = "max_daily_rolls_discount"
     display_name = "Daily Discount Card"
 
-    costs = [0, 1, 1, 1, 2, 2, 2, 3]
+    #costs = [0, 1, 1, 1, 2, 2, 2, 3]
 
     @classmethod
     def cost(cls, user_account: account.Bread_Account) -> int:
         level = user_account.get(cls.name) + 1
-        return cls.costs[level]
+
+        return ((level - 1) // 3) + 1
+        #return cls.costs[level]
 
     @classmethod
     def description(cls, user_account: account.Bread_Account) -> str:
         level = user_account.get(cls.name) + 1
-        new_price = daily_rolls_discount_prices[level]
+        new_price = 128 - (level * 4)
         return f"Reduces the cost of a daily roll by 4, to {new_price}."
 
     @classmethod
     def max_level(cls, user_account: account.Bread_Account = None) -> typing.Optional[int]:
-        return 7
+        return 31
 
 class Self_Converting_Yeast(Prestige_Store_Item):
     name = "loaf_converter_discount"
     display_name = "Self Converting Yeast"
 
-    costs = [0, 1, 1, 1, 2, 2, 2, 3]
+    # costs = [0, 1, 1, 1, 2, 2, 2, 3]
 
     @classmethod
     def cost(cls, user_account: account.Bread_Account) -> int:
         level = user_account.get(cls.name) + 1
-        return cls.costs[level]
+        return ((level - 1) // 3) + 1 # every 3 levels costs 1 more
+        # return cls.costs[level]
 
     @classmethod
     def description(cls, user_account: account.Bread_Account) -> str:
         level = user_account.get(cls.name) + 1
-        return f"Reduces the cost of each loaf converter level by 12, to {loaf_converter_discount_prices[level]}."
+        new_cost = 256 - (level * 12)
+        return f"Reduces the cost of each loaf converter level by 12, to {new_cost}."
 
     @classmethod
     def max_level(cls, user_account: account.Bread_Account = None) -> typing.Optional[int]:
-        return 7
+        return 20
 
     @classmethod
     def do_purchase(cls, user_account: account.Bread_Account):
@@ -1047,16 +1059,19 @@ class Chessatron_Contraption(Prestige_Store_Item):
     @classmethod
     def cost(cls, user_account: account.Bread_Account) -> int:
         level = user_account.get(cls.name) + 1
-        return cls.costs[level]
+        return ((level - 1) // 2) + 1 # every 2 levels costs 1 more
+        # return cls.costs[level]
 
     @classmethod
     def description(cls, user_account: account.Bread_Account) -> str:
         level = user_account.get(cls.name) + 1
-        return f"Allows you to gain a benefit of 100 extra dough on each chessatron you find, for each shadowmega chessatron you own. Works for up to {chessatron_shadow_booster_levels[level]} shadowmega chessatrons."
+        count = level * 5
+        return f"Allows you to gain a benefit of 100 extra dough on each chessatron you find, for each shadowmega chessatron you own. Works for up to {count} shadowmega chessatrons."
 
     @classmethod
     def max_level(cls, user_account: account.Bread_Account = None) -> typing.Optional[int]:
-        return len(cls.costs) - 1
+        return 50
+        # return len(cls.costs) - 1
 
 class Ethereal_Shine(Prestige_Store_Item):
     name = "shadow_gold_gem_luck_boost"
@@ -1067,17 +1082,20 @@ class Ethereal_Shine(Prestige_Store_Item):
     @classmethod
     def cost(cls, user_account: account.Bread_Account) -> int:
         level = user_account.get(cls.name) + 1
-        return cls.costs[level]
+        return ((level - 1) // 2) + 1 # every 2 levels costs 1 more
+        #return cls.costs[level]
 
     @classmethod
     def description(cls, user_account: account.Bread_Account) -> str:
         level = user_account.get(cls.name) + 1
-        max_boost_count = shadow_gold_gem_luck_boost_levels[level]
+        # max_boost_count = shadow_gold_gem_luck_boost_levels[level]
+        max_boost_count = level * 10
         return f"Allows your shadow gold gems to help you find new gems. Up to {max_boost_count} shadow gold gems will be counted as 1 extra LC each, for the purposes of searching for gems specifically. This synergizes with Recipe Refinement."
 
     @classmethod
     def max_level(cls, user_account: account.Bread_Account = None) -> typing.Optional[int]:
-        return len(cls.costs) - 1
+        return 50
+        # return len(cls.costs) - 1
 
 class First_Catch(Prestige_Store_Item):
     name = "first_catch_level"
@@ -1088,7 +1106,8 @@ class First_Catch(Prestige_Store_Item):
     @classmethod
     def cost(cls, user_account: account.Bread_Account) -> int:
         level = user_account.get(cls.name) + 1
-        return cls.costs[level]
+        return ((level - 1) // 2) + 1 # every 2 levels costs 1 more
+        # return cls.costs[level]
 
     @classmethod
     def description(cls, user_account: account.Bread_Account) -> str:
@@ -1097,7 +1116,8 @@ class First_Catch(Prestige_Store_Item):
 
     @classmethod
     def max_level(cls, user_account: account.Bread_Account = None) -> typing.Optional[int]:
-        return len(cls.costs) - 1
+        return 50
+        # return len(cls.costs) - 1
 
     @classmethod
     def do_purchase(cls, user_account: account.Bread_Account):

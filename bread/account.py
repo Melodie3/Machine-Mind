@@ -36,6 +36,7 @@ class Bread_Account:
         "auto_chessatron" : True,
         "spellcheck" : False,
         "black_hole" : 0,
+        "black_hole_conditions" : ["<:anarchy_chess:960772054746005534>", "<:gem_gold:1006498746718244944>", "14+"],
         "gifts_disabled" : False,
     }
 
@@ -268,10 +269,11 @@ class Bread_Account:
         return total_value
 
     def get_shadowmega_boost_count(self):
-        from bread.store import chessatron_shadow_booster_levels
+        # from bread.store import chessatron_shadow_booster_levels
         shadowmega_boost_level = self.get("chessatron_shadow_boost")
         # print (f"shadowmega_boost_level: {shadowmega_boost_level}")
-        max_shadowmegas = chessatron_shadow_booster_levels[shadowmega_boost_level]
+        # max_shadowmegas = chessatron_shadow_booster_levels[shadowmega_boost_level]
+        max_shadowmegas = shadowmega_boost_level * 5
         # print (f"max_shadowmegas: {max_shadowmegas}")
         shadowmega_count = self.get(values.shadowmega_chessatron.text)
         # print (f"shadowmega_count: {shadowmega_count}")
@@ -283,9 +285,10 @@ class Bread_Account:
         return self.get_shadowmega_boost_count() * 100
 
     def get_shadow_gold_gem_boost_count(self):
-        from bread.store import shadow_gold_gem_luck_boost_levels
+        # from bread.store import shadow_gold_gem_luck_boost_levels
         boost_level = self.get("shadow_gold_gem_luck_boost")
-        max_gem_bonus = shadow_gold_gem_luck_boost_levels[boost_level]
+        # max_gem_bonus = shadow_gold_gem_luck_boost_levels[boost_level]
+        max_gem_bonus = boost_level * 10
         gem_count = self.get(values.shadow_gem_gold.text)
         affecting_gems = min(gem_count, max_gem_bonus)
         return affecting_gems
