@@ -1,13 +1,6 @@
 """
 Patch Notes: 
-- Removed some caps on hidden bakery items.
-- Max level of Daily Discount Card is now 31, for a minimum daily roll price of 4.
-- Max level of Self Converting Yeast is now 20, for a minimum loaf converter price of 16 per level.
-- Increased the max level of High Roller Table by 3, with a new max gambling cap of 1,000,000,000,000
-- Max level of chessatron contraption, ethereal shine, and First Catch are now 50.
-- Gamble winnings are once again included in lifetime dough.
-- Added another level of Recipe Refinement just for fun. 
-- Stonks will now auto split at 2x their original value, or wait until 3x if the stonk is performing well.
+
 
 
 TODO: Do not die to the plague
@@ -2583,11 +2576,12 @@ anarchy - 1000% of your wager.
         minimum_wager = 4
 
         gamble_level = user_account.get("gamble_level")
-        gamble_levels = [50, 500, 1500, 5000, 10000, 100000, 10000000]
+        #gamble_levels = [50, 500, 1500, 5000, 10000, 100000, 10000000]
+        gamble_levels = store.High_Roller_Table.gamble_levels
         if gamble_level < len(gamble_levels):
             maximum_wager = gamble_levels[gamble_level]
         else:
-            maximum_wager = 100000
+            maximum_wager = gamble_levels[-1]
 
         if amount < minimum_wager:
             await ctx.reply(f"The minimum wager is {minimum_wager}.")
@@ -2606,7 +2600,7 @@ anarchy - 1000% of your wager.
         self.currently_interacting.append(ctx.author.id)
 
         if amount > maximum_wager:
-            await ctx.reply(f"The maximum wager is {maximum_wager}. I'll enter that in for you.")
+            await ctx.reply(f"The maximum wager is {utility.smart_number(maximum_wager)}. I'll enter that in for you.")
             await asyncio.sleep(1)
             amount = maximum_wager
 
@@ -2686,14 +2680,14 @@ anarchy - 1000% of your wager.
                 try: # brick avoidance deterrant
                     response = "You found a brick. Please hold, delivering reward at high speed."
                     if result['result'].name == "brick_gold":
-                        response += f" Looks like you'll be able to sell this one for {winnings} dough."
+                        response += f" Looks like you'll be able to sell this one for {utility.smart_number(winnings)} dough."
                     await utility.smart_reply(ctx, response)
                     await asyncio.sleep(2)
                 except:
                     pass 
                 await ctx.invoke(self.bot.get_command('brick'), member=ctx.author, duration=None)
             else:
-                await utility.smart_reply(ctx, f"With a {winning_text}, you won {winnings} dough.")
+                await utility.smart_reply(ctx, f"With a {winning_text}, you won {utility.smart_number(winnings)} dough.")
         
             daily_gambles = user_account.get_value_strict("daily_gambles")
             if daily_gambles == max_gambles:
