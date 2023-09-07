@@ -1,6 +1,7 @@
 """
 Patch Notes: 
-
+- you can use "$bread black_hole show" to see your current settings
+- Black hole will now correctly display lottery wins. Use ":fingers_crossed:" or "lottery_win" as an argument to enable this.
 
 
 TODO: Do not die to the plague
@@ -1233,6 +1234,7 @@ loaf_converter""",
         Usage: 
         $bread black_hole [on/off]
         $bread black_hole [item1] [item2]...
+        $bread black_hole show
         
         Use "$bread black_hole" without any arguments or "$bread black_hole [on/off]" to toggle the state of the black hole.
         You can customize what items can be shown in your rolls by appending item names, categories, "14+" or "lottery_win" after the command.
@@ -1265,6 +1267,15 @@ loaf_converter""",
             elif user_account.get("black_hole") == 1:
                 await ctx.reply("Black hole disabled.")
 
+        # check if arg is "show"
+        elif len(args) >= 4 and args[:4].lower() == "show":
+            # print("showing black hole")
+            conditions = user_account.get("black_hole_conditions")
+            if len(conditions) == 0:
+                await ctx.reply("Your black hole is currently set to show no items.")
+            else:
+                await ctx.reply("Your black hole is currently set to show: " + " ".join(conditions))
+
         else:
             conditions = set()
             for arg in args.split(" "):
@@ -1281,6 +1292,8 @@ loaf_converter""",
                 # nope, not a category!
                 if category is False:
                     if arg == "14+":
+                        conditions.add(arg)
+                    elif arg == "lottery_win":
                         conditions.add(arg)
                     elif values.get_emote_text(arg) != None:
                         conditions.add(values.get_emote_text(arg))
@@ -1482,8 +1495,8 @@ loaf_converter""",
             conditions = user_account.get("black_hole_conditions")
             for message in roll_messages:
                 if any(item in message for item in conditions) or \
-                   ("14+" in conditions) and len(message.split()) >= 14 and len(message.split()) < 50 or \
-                   ("🤞" in conditions) and len(message.split()) >= 50:
+                   (("14+" in conditions) and len(message.split()) >= 14 and len(message.split()) < 50) or \
+                   ((("lottery_win" in conditions) or (":fingers_crossed:" in conditions)) and len(message.split()) >= 50):
                     new_roll_messages.append(message)
             roll_messages = new_roll_messages
 
