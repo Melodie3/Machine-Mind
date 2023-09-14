@@ -187,6 +187,10 @@ def get_channel_permission_level(ctx):
 def get_display_name(member):
     return (member.global_name if (member.global_name is not None and member.name == member.display_name) else member.display_name)
 
+def parse_int(argument) -> int | None:
+    """Converts an argument to an integer, will remove commas along the way."""
+    return int(float(str(argument).replace(",", "")))
+
 def is_digit(string) -> bool:
     """Same as str.isdigit(), but will remove commas first."""
     return str(string).replace(",", "").isdigit()
@@ -321,7 +325,7 @@ class JSON_interface:
         #return [account.Bread_Account.from_dict(index, self.data["bread"][index]) for index in self.data["bread"]]
         output = []
         for index in self.data["bread"]:
-            if index.isdigit():
+            if is_digit(index):
                 output.append(self.get_account(index))
             # yield account.Bread_Account.from_dict(index, self.data["bread"][index])
         return output
@@ -1014,8 +1018,8 @@ loaf_converter""",
             args.remove("wide")
         
         for arg in args.copy():
-            if arg.startswith("a") and arg[1:].isnumeric():
-                ascensions.append(int(arg[1:]))
+            if arg.startswith("a") and is_numeric(arg[1:]):
+                ascensions.append(parse_int(arg[1:]))
                 args.remove(arg)
         
         if len(ascensions) == 0:
@@ -1110,7 +1114,7 @@ loaf_converter""",
                     return False
 
         for key in all_files.keys():
-            if not key.isdigit():
+            if not is_digit(key):
                 continue # skip non-numeric keys
             file = all_files[key]
             #print (f"Investigating {key}: \n{file}")
@@ -1720,8 +1724,8 @@ loaf_converter""",
                 await utility.smart_reply(ctx, f"Thank you for your interest in creating chessatrons! You can do so over in <#967544442468843560>.")
                 return
             
-            if arg.isnumeric():
-                await self.do_chessboard_completion(ctx, True, amount = int(arg))
+            if is_numeric(arg):
+                await self.do_chessboard_completion(ctx, True, amount = parse_int(arg))
             else:
                 await self.do_chessboard_completion(ctx, True)
 
@@ -1746,8 +1750,8 @@ loaf_converter""",
         if arg is None:
             arg = None
             number_of_chessatrons = gem_count // 32 # integer division
-        elif arg.isnumeric():
-            arg = int(arg)
+        elif is_numeric(arg):
+            arg = parse_int(arg)
             number_of_chessatrons = min(gem_count // 32,arg) # integer division
         else:
             arg = None
@@ -1773,7 +1777,7 @@ loaf_converter""",
 
         await utility.smart_reply(ctx, f"You have used {32*number_of_chessatrons} red gems to make chessatrons.")
 
-        await self.do_chessboard_completion(ctx, True, amount = int(number_of_chessatrons))
+        await self.do_chessboard_completion(ctx, True, amount = parse_int(number_of_chessatrons))
 
     ########################################################################################################################
     #####      BREAD SPELLCHECK
@@ -2056,9 +2060,9 @@ loaf_converter""",
             if item_name_split[0][0] == '-':
                 await ctx.reply("You can't buy negative numbers of items.")
                 return
-            if item_name_split[0].isdigit():
+            if is_digit(item_name_split[0]):
                 item_name = " ".join(item_name_split[1:])
-                item_count = int(item_name_split[0])
+                item_count = parse_int(item_name_split[0])
             if item_name_split[0] == "all":
                 item_name = " ".join(item_name_split[1:])
                 item_count = 100000
@@ -2300,8 +2304,8 @@ For example, "$bread gift Melodie all chess_pieces" would gift all your chess pi
         aliases=["pay"]
     )
     async def gift(self, ctx, target: typing.Optional[discord.Member], 
-                    arg1: typing.Optional[typing.Union[int, str]], 
-                    arg2: typing.Optional[typing.Union[int, str]]):
+                    arg1: typing.Optional[typing.Union[parse_int, str]], 
+                    arg2: typing.Optional[typing.Union[parse_int, str]]):
         # await ctx.reply("This function isn't ready yet.")
 
         if target is None: #then it's empty and we'll tell them how to use it.
@@ -2332,11 +2336,11 @@ For example, "$bread gift Melodie all chess_pieces" would gift all your chess pi
 
         #shitty way of converting to int
         try:
-            arg1 = int(arg1)
+            arg1 = parse_int(arg1)
         except:
             pass
         try:
-            arg2 = int(arg2)
+            arg2 = parse_int(arg2)
         except:
             pass
         
@@ -2578,7 +2582,7 @@ anarchy - 1000% of your wager.
         brief= "Risk / Reward.",
         help=bread_gamble_info
     )
-    async def gamble(self, ctx, amount: typing.Optional[int] ):
+    async def gamble(self, ctx, amount: typing.Optional[parse_int] ):
         if amount is None:
             await ctx.send(self.bread_gamble_info)
             return
@@ -2636,7 +2640,7 @@ anarchy - 1000% of your wager.
         
 
         result = gamble.gamble()
-        winnings = int(amount * result["multiple"])
+        winnings = parse_int(amount * result["multiple"])
         #await ctx.send(f"You got a {result['result'].text} and won {winnings} dough.")
 
         #make grid
@@ -2882,8 +2886,8 @@ anarchy - 1000% of your wager.
 
         # first get the amount from the args
         for arg in args:
-            if arg.isdigit():
-                amount = int(arg)
+            if is_digit(arg):
+                amount = parse_int(arg)
                 break
         if amount is None:
             for arg in args:
@@ -2966,8 +2970,8 @@ anarchy - 1000% of your wager.
             if arg.startswith('-'):
                 await ctx.reply("You can't invest negative dough.")
                 return
-            if arg.isdigit():
-                amount = int(arg)
+            if is_digit(arg):
+                amount = parse_int(arg)
 
         if 'all' in args:
             amount = 1000000000
@@ -3075,8 +3079,8 @@ anarchy - 1000% of your wager.
 
         # first get the amount from the args
         for arg in args:
-            if arg.isdigit():
-                amount = int(arg)
+            if is_digit(arg):
+                amount = parse_int(arg)
                 break
         if amount is None:
             for arg in args:
@@ -3182,8 +3186,8 @@ anarchy - 1000% of your wager.
             if arg.startswith('-'):
                 await ctx.reply("You can't divest negative dough.")
                 return
-            if arg.isdigit():
-                amount = int(arg)
+            if is_digit(arg):
+                amount = parse_int(arg)
             if arg == 'all':
                 amount = -1
             if arg == 'dough':
@@ -3371,7 +3375,7 @@ anarchy - 1000% of your wager.
         self.json_interface.accounts.clear()
 
         for file_key in user_files.keys():
-            if not file_key.isdigit(): # skip all non-user files
+            if not is_digit(file_key): # skip all non-user files
                 continue
             file = user_files[file_key]
             #print(f"Individual file is: \n{file}")
@@ -3413,7 +3417,7 @@ anarchy - 1000% of your wager.
         help="Creates more advanced materials from basic ones. Call the command and follow the instructions, keeping in mind what you would like to create."
     )
     #@commands.is_owner()
-    async def alchemy(self, ctx, count: typing.Optional[int] = None, target_item: typing.Optional[str] = None, recipe_num: typing.Optional[int] = None, confirm: typing.Optional[str] = None):
+    async def alchemy(self, ctx, count: typing.Optional[parse_int] = None, target_item: typing.Optional[str] = None, recipe_num: typing.Optional[parse_int] = None, confirm: typing.Optional[str] = None):
         
         if count is None:
             count = 1
@@ -3557,7 +3561,7 @@ anarchy - 1000% of your wager.
                     return
 
                 try:
-                    recipe_num = int(msg.content)
+                    recipe_num = parse_int(msg.content)
                 except ValueError:
                     await ctx.reply(f"I do not recognize that as a number. Please try again from the beginning.")
                     self.currently_interacting.remove(ctx.author.id)
@@ -3726,7 +3730,7 @@ anarchy - 1000% of your wager.
     async def set(self, ctx, 
                     user: typing.Optional[discord.Member], 
                     key: str,
-                    value: int,
+                    value: parse_int,
                     do_force: typing.Optional[str]):
         if await self.await_confirmation(ctx) is False:
             return
@@ -3776,7 +3780,7 @@ anarchy - 1000% of your wager.
     async def increment(self, ctx, 
                     user: discord.Member, 
                     key: str,
-                    value: int,
+                    value: parse_int,
                     do_force: typing.Optional[str]):
         if await self.await_confirmation(ctx) is False:
             return
@@ -3969,7 +3973,7 @@ anarchy - 1000% of your wager.
         help = "Usage: bread admin set_max_prestige_level [value]"
     )
     @commands.is_owner()
-    async def set_max_prestige_level(self, ctx, value: int):
+    async def set_max_prestige_level(self, ctx, value: parse_int):
         if await self.await_confirmation(ctx) is False:
             return
         prestige_file = self.json_interface.get_custom_file("prestige")
@@ -4195,7 +4199,7 @@ anarchy - 1000% of your wager.
         
         # go through all accounts and do the operation
         for index in self.json_interface.data["bread"].keys():
-            if not index.isdigit():
+            if not is_digit(index):
                 continue
             user_account = self.json_interface.get_account(index)
             
@@ -4235,7 +4239,7 @@ anarchy - 1000% of your wager.
         #     print("This is a development server")
             
         # for index in self.json_interface.data["bread"].keys():
-        #     if not index.isdigit():
+        #     if not is_digit(index):
         #         continue # skip the custom accounts
         #     user_account = self.json_interface.get_account(index)
         #     if user_account.has("one_of_a_kind"):
@@ -4418,7 +4422,7 @@ anarchy - 1000% of your wager.
 
     
     def write_number_of_times(number):
-        number = int(number)
+        number = parse_int(number)
         if number == 0:
             return "zero times"
         elif number == 1:
