@@ -187,6 +187,18 @@ def get_channel_permission_level(ctx):
 def get_display_name(member):
     return (member.global_name if (member.global_name is not None and member.name == member.display_name) else member.display_name)
 
+def is_digit(string) -> bool:
+    """Same as str.isdigit(), but will remove commas first."""
+    return str(string).replace(",", "").isdigit()
+
+def is_numeric(string) -> bool:
+    """Same as str.isnumeric(), but will remove commas first."""
+    return str(string).replace(",", "").isnumeric()
+
+def is_decimal(string) -> bool:
+    """Same as str.isdecimal(), but will remove commas first."""
+    return str(string).replace(",", "").isdecimal()
+
 ####################################################
 ##############   JSON INTERFACE   ##################
 ####################################################
