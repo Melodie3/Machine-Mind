@@ -392,81 +392,81 @@ def summarize_roll(result):
 
     output = "\tSummary of results:\n"
     if "value" in result:
-        output += f"Total gain: **{result['value']} dough**\n"
+        output += f"Total gain: **{utility.smart_number(result['value'])} dough**\n"
         removals.append("value")
 
     if "gambit_shop_bonus" in result:
-        output += f"Gambit shop bonus: {result['gambit_shop_bonus']} dough\n"
+        output += f"Gambit shop bonus: {utility.smart_number(result['gambit_shop_bonus'])} dough\n"
         removals.append("gambit_shop_bonus")
 
     if "highest_roll" in result:
-        output += f"The highest roll was {result['highest_roll']}.\n"
+        output += f"The highest roll was {utility.smart_number(result['highest_roll'])}.\n"
         removals.append("highest_roll")
 
     if "natural_1" in result:
-        output += f"Natural 1: {result['natural_1']}\n"
+        output += f"Natural 1: {utility.smart_number((result['natural_1'])}\n"
         removals.append("natural_1")
 
     if "ten_breads" in result:
-        output += f"Ten breads: {result['ten_breads']}\n"
+        output += f"Ten breads: {utility.smart_number(result['ten_breads'])}\n"
         removals.append("ten_breads")
 
     if ":bread:" in result:
-        output += f"\t:bread:: {result[':bread:']}\n"
+        output += f"\t:bread:: {utility.smart_number(result[':bread:'])}\n"
         removals.append(":bread:")
 
     # if "special_bread" in result.keys() and "rare_bread" in result.keys():
     #     output += f"Special bread: {result['special_bread'] - result['rare_bread']}\n"
     #     removals.append("special_bread")
     if "special_bread" in result.keys():
-        output += f"Special bread: {result['special_bread']}\n"
+        output += f"Special bread: {utility.smart_number(result['special_bread'])}\n"
         removals.append("special_bread")
 
 
     for key in result.keys():
         emote = values.get_emote(key)
         if emote is not None and ("special_bread" in emote.attributes):
-            output += f"\t{key}: {result[key]}"
+            output += f"\t{key}: {utility.smart_number(result[key])}"
             removals.append(key)
 
     if "rare_bread" in result.keys():
-        output += f"\nRare bread: {result['rare_bread']}\n"
+        output += f"\nRare bread: {utility.smart_number(result['rare_bread'])}\n"
         removals.append("rare_bread")
 
     for key in result.keys():
         emote = values.get_emote(key)
         if emote is not None and ("rare_bread" in emote.attributes):
-            output += f"\t{key}: {result[key]}"
+            output += f"\t{key}: {utility.smart_number(result[key])}"
             removals.append(key)
 
     if "chess_pieces" in result.keys():
-        output += f"\nChess pieces: {result['chess_pieces']}\n"
+        output += f"\nChess pieces: {utility.smart_number(result['chess_pieces'])}\n"
         removals.append("chess_pieces")
 
     for key in result.keys():
         emote = values.get_emote(key)
         if emote is not None and ("chess_pieces" in emote.attributes):
-            output += f"\t{key}: {result[key]}"
+            output += f"\t{key}: {utility.smart_number(result[key])}"
             removals.append(key)
 
     if "shiny" in result.keys():
-        output += f"\nShiny Items: {result['shiny']}\n"
+        output += f"\nShiny Items: {utility.smart_number(result['shiny'])}\n"
         removals.append("shiny")
 
     for key in result.keys():
         emote = values.get_emote(key)
         if emote is not None and ("shiny" in emote.attributes):
-            output += f"\t{key}: {result[key]}"
+            output += f"\t{key}: {utility.smart_number(result[key])}"
             removals.append(key)
 
     if "many_of_a_kind" in result.keys():
-        output += f"\nMany of a kind: {result['many_of_a_kind']}\n"
+        output += f"\nMany of a kind: {utility.smart_number(result['many_of_a_kind'])}\n"
         removals.append("many_of_a_kind")
         removals.append("one_of_a_kind")
         removals.append("unique")
     
     if values.anarchy_chess.text in result.keys():
-        output += f"{values.anarchy_chess.text}: {result[values.anarchy_chess.text]}\n"
+        output += f"{values.anarchy_chess.text}: {utility.smart_number(result[values.anarchy_chess.text])}\n"
         removals.append(values.anarchy_chess.text)
 
     last_header = True
@@ -475,6 +475,6 @@ def summarize_roll(result):
             if last_header:
                 output += "\nExtra items:\n"
                 last_header = False
-            output += f"{key}: {result[key]}\n"
+            output += f"{key}: {utility.smart_number(result[key])}\n"
     # output += f"{roll['emote']} {roll['commentary']}"
     return output
