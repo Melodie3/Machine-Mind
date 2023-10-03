@@ -3,6 +3,9 @@ Patch Notes:
 - You can now refer to a omega_chessatron as simply an "omega"
 - Your bread stats page will now show you how much dough you get per chessatron.
 - Improved the chessatron code so that making obscene numbers of chessatrons should now not lag the bot *too* much.
+- Added smart numbers to the roll summary (Thanks Duck)
+- Gem_chessatron will no longer automatically tron if you have auto chessatron disabled. (Thanks Malte)
+- Some commands now support commas in their arguments (Thanks Duck)
 
 TODO: Do not die to the plague
 
