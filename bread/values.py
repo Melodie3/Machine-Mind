@@ -289,7 +289,8 @@ omega_chessatron = Emote(
     name="omega_chessatron",
     attributes=["unique"],
     awards_value = True,
-    giftable=False
+    giftable=False,
+    alternate_names = ["omega"]
 )
 
 # "<:anarchy_chess:960772054746005534>",
