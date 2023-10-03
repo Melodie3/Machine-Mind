@@ -1,8 +1,8 @@
 """
 Patch Notes: 
-- you can use "$bread black_hole show" to see your current settings
-- Black hole will now correctly display lottery wins. Use ":fingers_crossed:" or "lottery_win" as an argument to enable this.
-
+- You can now refer to a omega_chessatron as simply an "omega"
+- Your bread stats page will now show you how much dough you get per chessatron.
+- Improved the chessatron code so that making obscene numbers of chessatrons should now not lag the bot *too* much.
 
 TODO: Do not die to the plague
 
@@ -773,6 +773,8 @@ class Bread_cog(commands.Cog, name="Bread"):
                 output += f", which, with Recipe Refinement level {LC_booster_level}, makes you {boosted_amount} times more likely to find special items.\n"
             else:
                 output += ".\n"
+        if account.has(values.omega_chessatron.text):
+            output += f"With your {account.write_count(values.omega_chessatron.text, 'Omega Chessatron')}, each new chessatron is worth {sn(account.get_chessatron_dough_amount(True))} dough.\n"
         if account.has("multiroller"):
             output += f"With your {account.write_count('multiroller', 'Multiroller')}, you roll {utility.write_number_of_times(2 ** account.get('multiroller'))} with each command. "
         if account.has("compound_roller"):
@@ -1582,7 +1584,7 @@ loaf_converter""",
         if user_account.get("auto_chessatron") is False and force is False:
             return
         
-        # print ("doing chessatron creation")
+        print ("doing chessatron creation")
 
         # user_chess_pieces = user_account.get_all_items_with_attribute_unrolled("chess_pieces")
         full_chess_set = values.chess_pieces_black_biased+values.chess_pieces_white_biased
@@ -1604,11 +1606,21 @@ loaf_converter""",
 
         # print(f"valid trons: {valid_trons}, amount: {amount}")
 
+        board = Bread_cog.format_chess_pieces(user_account.values)
+        chessatron_value = user_account.get_chessatron_dough_amount(False) 
+
+        # for emote in full_chess_set:
+        #     user_account.increment(emote.text, -1)
+
+        # clear out the chess pieces from the account all at once
+        for emote in full_chess_set:
+            user_account.increment(emote, -min(valid_trons, amount))
+
         # stop iteration when you can't make any more trons, or have hit the limit of specified trons; whichever comes first.
         for _ in range(min(valid_trons, amount)):
 
-            board = Bread_cog.format_chess_pieces(user_account.values)
-
+            
+            """
             # start at 2000
             chessatron_value = values.chessatron.value
 
@@ -1621,7 +1633,7 @@ loaf_converter""",
             # add omegas
             omega_count = user_account.get(values.omega_chessatron.text)
             chessatron_value += omega_count * 250
-
+            """
             # finally add the dough and chessatron
             chessatron_result_value = user_account.add_dough_intelligent(chessatron_value)
             user_account.add_item_attributes(values.chessatron)
@@ -1629,8 +1641,7 @@ loaf_converter""",
             # chessatron_value = user_account.add_item(values.chessatron)
 
             # now remove the chess set and increment some stuff
-            for emote in full_chess_set:
-                user_account.increment(emote.text, -1)
+            
 
             if user_account.get(values.chessatron.text) < 5:
                 await utility.smart_reply(ctx, f"You have collected all the chess pieces! Congratulations!\n\nWhat a beautiful collection!")
@@ -1663,7 +1674,7 @@ loaf_converter""",
             # leftover_pieces = utility.array_subtract((full_chess_set), user_chess_pieces )
 
         #after the while loop we take all our summary count of chessatrons and announce them together
-        if summary:
+        if summary and summary_count < 5000:
             output = f"Congratulations! More chessatrons! You've made {summary_count} of them. Here's your reward of **{utility.smart_number(chessatron_result_value*summary_count)} dough**."
             await utility.smart_reply(ctx, output)
             await asyncio.sleep(1)
@@ -1676,6 +1687,11 @@ loaf_converter""",
                     output = ""
                     await asyncio.sleep(1)
             await utility.smart_reply(ctx, output)
+        elif summary:
+            output = f"Wow. You have created a **lot** of chessatrons. {summary_count} to be exact. I will not even attempt to list them all. Here is your reward of **{utility.smart_number(chessatron_result_value*summary_count)} dough**."
+            await utility.smart_reply(ctx, output)
+            await asyncio.sleep(1)
+            await utility.smart_reply(ctx, f"{values.chessatron.text} x {summary_count}")
     
 
     ########################################################################################################################
