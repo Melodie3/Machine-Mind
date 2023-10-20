@@ -514,6 +514,19 @@ class Random_Chess_Piece(Store_Item):
             amount = 0
         
         # add any remaining chess pieces
+
+        # check if you have the same relative amount of every chess piece and buy a random one in that case
+        user_chess_pieces = [user_account.get(i) for i in map(lambda x: x.text, values.all_chess_pieces)]
+        relative_piece_amounts = [i/j for i, j in zip(user_chess_pieces, chess_board_numbers)]
+        if all(map(lambda x: x == relative_piece_amounts[0], relative_piece_amounts)):
+            for _ in range(amount):
+                piece = random.choice(full_chess_set)
+                user_account.add_item_attributes(piece)
+                purchased_pieces[piece.text] += 1
+                if original_amount == 1:
+                    out_str = f'Congratulations! You have purchased a {piece.text}!'
+            amount = 0
+            
         for _ in range(amount):
             # in theory, if we're here, we can't get to an even distribution, so we always have to buy the piece that you have the least of
             # also this shouldn't be called very often and I don't know how to do it better so this is super inefficient
