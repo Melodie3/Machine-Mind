@@ -308,6 +308,16 @@ class Bread_Account:
         boosts_file[item.text] = boost
         self.values["dough_boosts"] = boosts_file
 
+    def get_chessatron_dough_amount(self, include_prestige_boost = True):
+        amount = values.chessatron.value   
+        amount += self.get_shadowmega_boost_amount()
+        # then we add omegas
+        amount += self.get(values.omega_chessatron.text) * 250
+        if include_prestige_boost:
+            prestige_mult = self.get_prestige_multiplier()
+            amount = round(amount * prestige_mult)  
+        return amount   
+
     def has_category(self, category_name: str):
         if len(self.get_category(category_name)) > 0:
             return True

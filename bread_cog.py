@@ -1,14 +1,11 @@
 """
 Patch Notes: 
-- Removed some caps on hidden bakery items.
-- Max level of Daily Discount Card is now 31, for a minimum daily roll price of 4.
-- Max level of Self Converting Yeast is now 20, for a minimum loaf converter price of 16 per level.
-- Increased the max level of High Roller Table by 3, with a new max gambling cap of 1,000,000,000,000
-- Max level of chessatron contraption, ethereal shine, and First Catch are now 50.
-- Gamble winnings are once again included in lifetime dough.
-- Added another level of Recipe Refinement just for fun. 
-- Stonks will now auto split at 2x their original value, or wait until 3x if the stonk is performing well.
-
+- You can now refer to a omega_chessatron as simply an "omega"
+- Your bread stats page will now show you how much dough you get per chessatron.
+- Improved the chessatron code so that making obscene numbers of chessatrons should now not lag the bot *too* much.
+- Added smart numbers to the roll summary (Thanks Duck)
+- Gem_chessatron will no longer automatically tron if you have auto chessatron disabled. (Thanks Malte)
+- Some commands now support commas in their arguments (Thanks Duck)
 
 TODO: Do not die to the plague
 
@@ -193,6 +190,22 @@ def get_channel_permission_level(ctx):
 def get_display_name(member):
     return (member.global_name if (member.global_name is not None and member.name == member.display_name) else member.display_name)
 
+def parse_int(argument) -> int | None:
+    """Converts an argument to an integer, will remove commas along the way."""
+    return int(float(str(argument).replace(",", "")))
+
+def is_digit(string) -> bool:
+    """Same as str.isdigit(), but will remove commas first."""
+    return str(string).replace(",", "").isdigit()
+
+def is_numeric(string) -> bool:
+    """Same as str.isnumeric(), but will remove commas first."""
+    return str(string).replace(",", "").isnumeric()
+
+def is_decimal(string) -> bool:
+    """Same as str.isdecimal(), but will remove commas first."""
+    return str(string).replace(",", "").isdecimal()
+
 ####################################################
 ##############   JSON INTERFACE   ##################
 ####################################################
@@ -315,7 +328,7 @@ class JSON_interface:
         #return [account.Bread_Account.from_dict(index, self.data["bread"][index]) for index in self.data["bread"]]
         output = []
         for index in self.data["bread"]:
-            if index.isdigit():
+            if is_digit(index):
                 output.append(self.get_account(index))
             # yield account.Bread_Account.from_dict(index, self.data["bread"][index])
         return output
@@ -779,6 +792,8 @@ class Bread_cog(commands.Cog, name="Bread"):
                 output += f", which, with Recipe Refinement level {LC_booster_level}, makes you {boosted_amount} times more likely to find special items.\n"
             else:
                 output += ".\n"
+        if account.has(values.omega_chessatron.text):
+            output += f"With your {account.write_count(values.omega_chessatron.text, 'Omega Chessatron')}, each new chessatron is worth {sn(account.get_chessatron_dough_amount(True))} dough.\n"
         if account.has("multiroller"):
             output += f"With your {account.write_count('multiroller', 'Multiroller')}, you roll {utility.write_number_of_times(2 ** account.get('multiroller'))} with each command. "
         if account.has("compound_roller"):
@@ -1008,8 +1023,8 @@ loaf_converter""",
             args.remove("wide")
         
         for arg in args.copy():
-            if arg.startswith("a") and arg[1:].isnumeric():
-                ascensions.append(int(arg[1:]))
+            if arg.startswith("a") and is_numeric(arg[1:]):
+                ascensions.append(parse_int(arg[1:]))
                 args.remove(arg)
         
         if len(ascensions) == 0:
@@ -1104,7 +1119,7 @@ loaf_converter""",
                     return False
 
         for key in all_files.keys():
-            if not key.isdigit():
+            if not is_digit(key):
                 continue # skip non-numeric keys
             file = all_files[key]
             #print (f"Investigating {key}: \n{file}")
@@ -1240,6 +1255,7 @@ loaf_converter""",
         Usage: 
         $bread black_hole [on/off]
         $bread black_hole [item1] [item2]...
+        $bread black_hole show
         
         Use "$bread black_hole" without any arguments or "$bread black_hole [on/off]" to toggle the state of the black hole.
         You can customize what items can be shown in your rolls by appending item names, categories, "14+" or "lottery_win" after the command.
@@ -1272,6 +1288,15 @@ loaf_converter""",
             elif user_account.get("black_hole") == 1:
                 await ctx.reply("Black hole disabled.")
 
+        # check if arg is "show"
+        elif len(args) >= 4 and args[:4].lower() == "show":
+            # print("showing black hole")
+            conditions = user_account.get("black_hole_conditions")
+            if len(conditions) == 0:
+                await ctx.reply("Your black hole is currently set to show no items.")
+            else:
+                await ctx.reply("Your black hole is currently set to show: " + " ".join(conditions))
+
         else:
             conditions = set()
             for arg in args.split(" "):
@@ -1288,6 +1313,8 @@ loaf_converter""",
                 # nope, not a category!
                 if category is False:
                     if arg == "14+":
+                        conditions.add(arg)
+                    elif arg == "lottery_win":
                         conditions.add(arg)
                     elif values.get_emote_text(arg) != None:
                         conditions.add(values.get_emote_text(arg))
@@ -1489,8 +1516,8 @@ loaf_converter""",
             conditions = user_account.get("black_hole_conditions")
             for message in roll_messages:
                 if any(item in message for item in conditions) or \
-                   ("14+" in conditions) and len(message.split()) >= 14 and len(message.split()) < 50 or \
-                   ("🤞" in conditions) and len(message.split()) >= 50:
+                   (("14+" in conditions) and len(message.split()) >= 14 and len(message.split()) < 50) or \
+                   ((("lottery_win" in conditions) or (":fingers_crossed:" in conditions)) and len(message.split()) >= 50):
                     new_roll_messages.append(message)
             roll_messages = new_roll_messages
 
@@ -1576,7 +1603,7 @@ loaf_converter""",
         if user_account.get("auto_chessatron") is False and force is False:
             return
         
-        # print ("doing chessatron creation")
+        print ("doing chessatron creation")
 
         # user_chess_pieces = user_account.get_all_items_with_attribute_unrolled("chess_pieces")
         full_chess_set = values.chess_pieces_black_biased+values.chess_pieces_white_biased
@@ -1598,11 +1625,21 @@ loaf_converter""",
 
         # print(f"valid trons: {valid_trons}, amount: {amount}")
 
+        board = Bread_cog.format_chess_pieces(user_account.values)
+        chessatron_value = user_account.get_chessatron_dough_amount(False) 
+
+        # for emote in full_chess_set:
+        #     user_account.increment(emote.text, -1)
+
+        # clear out the chess pieces from the account all at once
+        for emote in full_chess_set:
+            user_account.increment(emote, -min(valid_trons, amount))
+
         # stop iteration when you can't make any more trons, or have hit the limit of specified trons; whichever comes first.
         for _ in range(min(valid_trons, amount)):
 
-            board = Bread_cog.format_chess_pieces(user_account.values)
-
+            
+            """
             # start at 2000
             chessatron_value = values.chessatron.value
 
@@ -1615,7 +1652,7 @@ loaf_converter""",
             # add omegas
             omega_count = user_account.get(values.omega_chessatron.text)
             chessatron_value += omega_count * 250
-
+            """
             # finally add the dough and chessatron
             chessatron_result_value = user_account.add_dough_intelligent(chessatron_value)
             user_account.add_item_attributes(values.chessatron)
@@ -1623,8 +1660,7 @@ loaf_converter""",
             # chessatron_value = user_account.add_item(values.chessatron)
 
             # now remove the chess set and increment some stuff
-            for emote in full_chess_set:
-                user_account.increment(emote.text, -1)
+            
 
             if user_account.get(values.chessatron.text) < 5:
                 await utility.smart_reply(ctx, f"You have collected all the chess pieces! Congratulations!\n\nWhat a beautiful collection!")
@@ -1657,7 +1693,7 @@ loaf_converter""",
             # leftover_pieces = utility.array_subtract((full_chess_set), user_chess_pieces )
 
         #after the while loop we take all our summary count of chessatrons and announce them together
-        if summary:
+        if summary and summary_count < 5000:
             output = f"Congratulations! More chessatrons! You've made {summary_count} of them. Here's your reward of **{utility.smart_number(chessatron_result_value*summary_count)} dough**."
             await utility.smart_reply(ctx, output)
             await asyncio.sleep(1)
@@ -1670,6 +1706,11 @@ loaf_converter""",
                     output = ""
                     await asyncio.sleep(1)
             await utility.smart_reply(ctx, output)
+        elif summary:
+            output = f"Wow. You have created a **lot** of chessatrons. {summary_count} to be exact. I will not even attempt to list them all. Here is your reward of **{utility.smart_number(chessatron_result_value*summary_count)} dough**."
+            await utility.smart_reply(ctx, output)
+            await asyncio.sleep(1)
+            await utility.smart_reply(ctx, f"{values.chessatron.text} x {summary_count}")
     
 
     ########################################################################################################################
@@ -1702,8 +1743,8 @@ loaf_converter""",
                 await utility.smart_reply(ctx, f"Thank you for your interest in creating chessatrons! You can do so over in <#967544442468843560>.")
                 return
             
-            if arg.isnumeric():
-                await self.do_chessboard_completion(ctx, True, amount = int(arg))
+            if is_numeric(arg):
+                await self.do_chessboard_completion(ctx, True, amount = parse_int(arg))
             else:
                 await self.do_chessboard_completion(ctx, True)
 
@@ -1728,8 +1769,8 @@ loaf_converter""",
         if arg is None:
             arg = None
             number_of_chessatrons = gem_count // 32 # integer division
-        elif arg.isnumeric():
-            arg = int(arg)
+        elif is_numeric(arg):
+            arg = parse_int(arg)
             number_of_chessatrons = min(gem_count // 32,arg) # integer division
         else:
             arg = None
@@ -1755,7 +1796,7 @@ loaf_converter""",
 
         await utility.smart_reply(ctx, f"You have used {32*number_of_chessatrons} red gems to make chessatrons.")
 
-        await self.do_chessboard_completion(ctx, amount = int(number_of_chessatrons))
+        await self.do_chessboard_completion(ctx, amount = parse_int(number_of_chessatrons))
 
     ########################################################################################################################
     #####      BREAD SPELLCHECK
@@ -2038,9 +2079,9 @@ loaf_converter""",
             if item_name_split[0][0] == '-':
                 await ctx.reply("You can't buy negative numbers of items.")
                 return
-            if item_name_split[0].isdigit():
+            if is_digit(item_name_split[0]):
                 item_name = " ".join(item_name_split[1:])
-                item_count = int(item_name_split[0])
+                item_count = parse_int(item_name_split[0])
             if item_name_split[0] == "all":
                 item_name = " ".join(item_name_split[1:])
                 item_count = 100000
@@ -2282,8 +2323,8 @@ For example, "$bread gift Melodie all chess_pieces" would gift all your chess pi
         aliases=["pay"]
     )
     async def gift(self, ctx, target: typing.Optional[discord.Member], 
-                    arg1: typing.Optional[typing.Union[int, str]], 
-                    arg2: typing.Optional[typing.Union[int, str]]):
+                    arg1: typing.Optional[typing.Union[parse_int, str]], 
+                    arg2: typing.Optional[typing.Union[parse_int, str]]):
         # await ctx.reply("This function isn't ready yet.")
 
         if target is None: #then it's empty and we'll tell them how to use it.
@@ -2314,11 +2355,11 @@ For example, "$bread gift Melodie all chess_pieces" would gift all your chess pi
 
         #shitty way of converting to int
         try:
-            arg1 = int(arg1)
+            arg1 = parse_int(arg1)
         except:
             pass
         try:
-            arg2 = int(arg2)
+            arg2 = parse_int(arg2)
         except:
             pass
         
@@ -2560,7 +2601,7 @@ anarchy - 1000% of your wager.
         brief= "Risk / Reward.",
         help=bread_gamble_info
     )
-    async def gamble(self, ctx, amount: typing.Optional[int] ):
+    async def gamble(self, ctx, amount: typing.Optional[parse_int] ):
         if amount is None:
             await ctx.send(self.bread_gamble_info)
             return
@@ -2583,11 +2624,12 @@ anarchy - 1000% of your wager.
         minimum_wager = 4
 
         gamble_level = user_account.get("gamble_level")
-        gamble_levels = [50, 500, 1500, 5000, 10000, 100000, 10000000]
+        #gamble_levels = [50, 500, 1500, 5000, 10000, 100000, 10000000]
+        gamble_levels = store.High_Roller_Table.gamble_levels
         if gamble_level < len(gamble_levels):
             maximum_wager = gamble_levels[gamble_level]
         else:
-            maximum_wager = 100000
+            maximum_wager = gamble_levels[-1]
 
         if amount < minimum_wager:
             await ctx.reply(f"The minimum wager is {minimum_wager}.")
@@ -2606,7 +2648,7 @@ anarchy - 1000% of your wager.
         self.currently_interacting.append(ctx.author.id)
 
         if amount > maximum_wager:
-            await ctx.reply(f"The maximum wager is {maximum_wager}. I'll enter that in for you.")
+            await ctx.reply(f"The maximum wager is {utility.smart_number(maximum_wager)}. I'll enter that in for you.")
             await asyncio.sleep(1)
             amount = maximum_wager
 
@@ -2617,7 +2659,7 @@ anarchy - 1000% of your wager.
         
 
         result = gamble.gamble()
-        winnings = int(amount * result["multiple"])
+        winnings = parse_int(amount * result["multiple"])
         #await ctx.send(f"You got a {result['result'].text} and won {winnings} dough.")
 
         #make grid
@@ -2686,14 +2728,14 @@ anarchy - 1000% of your wager.
                 try: # brick avoidance deterrant
                     response = "You found a brick. Please hold, delivering reward at high speed."
                     if result['result'].name == "brick_gold":
-                        response += f" Looks like you'll be able to sell this one for {winnings} dough."
+                        response += f" Looks like you'll be able to sell this one for {utility.smart_number(winnings)} dough."
                     await utility.smart_reply(ctx, response)
                     await asyncio.sleep(2)
                 except:
                     pass 
                 await ctx.invoke(self.bot.get_command('brick'), member=ctx.author, duration=None)
             else:
-                await utility.smart_reply(ctx, f"With a {winning_text}, you won {winnings} dough.")
+                await utility.smart_reply(ctx, f"With a {winning_text}, you won {utility.smart_number(winnings)} dough.")
         
             daily_gambles = user_account.get_value_strict("daily_gambles")
             if daily_gambles == max_gambles:
@@ -2863,8 +2905,8 @@ anarchy - 1000% of your wager.
 
         # first get the amount from the args
         for arg in args:
-            if arg.isdigit():
-                amount = int(arg)
+            if is_digit(arg):
+                amount = parse_int(arg)
                 break
         if amount is None:
             for arg in args:
@@ -2947,8 +2989,8 @@ anarchy - 1000% of your wager.
             if arg.startswith('-'):
                 await ctx.reply("You can't invest negative dough.")
                 return
-            if arg.isdigit():
-                amount = int(arg)
+            if is_digit(arg):
+                amount = parse_int(arg)
 
         if 'all' in args:
             amount = 1000000000
@@ -3056,8 +3098,8 @@ anarchy - 1000% of your wager.
 
         # first get the amount from the args
         for arg in args:
-            if arg.isdigit():
-                amount = int(arg)
+            if is_digit(arg):
+                amount = parse_int(arg)
                 break
         if amount is None:
             for arg in args:
@@ -3163,8 +3205,8 @@ anarchy - 1000% of your wager.
             if arg.startswith('-'):
                 await ctx.reply("You can't divest negative dough.")
                 return
-            if arg.isdigit():
-                amount = int(arg)
+            if is_digit(arg):
+                amount = parse_int(arg)
             if arg == 'all':
                 amount = -1
             if arg == 'dough':
@@ -3281,6 +3323,13 @@ anarchy - 1000% of your wager.
             ":pretzel:": 100,
             ":fortune_cookie:": 500
         }
+                    
+        # it's in a try block so that it won't crash if running on a server without the stonks file
+        try:
+            stonks.stonk_fluctuate(self) # this will forever remain a secret
+        except:
+            print("stonk fluctuate failed")
+        
         for stonk in all_stonks:
             stonks_file[stonk + "_split"] = False # Reset the split marker to false, so stonks_announce() won't say the stonk got split when it didn't.
             if stonks_file[stonk] >= stonk_starting_values[stonk] * 2:
@@ -3301,12 +3350,6 @@ anarchy - 1000% of your wager.
                 if rise_fall.count(True) >= 2: # If the stonk fell or stagnated 2 or more times in the history data read.
                     self.stonk_split_internal(stonk)
                     stonks_file[stonk + "_split"] = True # Set the split marker to true so stonks_announce() will say it got split.
-                    
-        # it's in a try block so that it won't crash if running on a server without the stonks file
-        try:
-            stonks.stonk_fluctuate(self) # this will forever remain a secret
-        except:
-            print("stonk fluctuate failed")
         
         # auto split code here?
         # I put the auto splitting code before stonk_fluctuate so the data that is used to determine a split is visible to players before the split occurs.
@@ -3351,7 +3394,7 @@ anarchy - 1000% of your wager.
         self.json_interface.accounts.clear()
 
         for file_key in user_files.keys():
-            if not file_key.isdigit(): # skip all non-user files
+            if not is_digit(file_key): # skip all non-user files
                 continue
             file = user_files[file_key]
             #print(f"Individual file is: \n{file}")
@@ -3393,7 +3436,7 @@ anarchy - 1000% of your wager.
         help="Creates more advanced materials from basic ones. Call the command and follow the instructions, keeping in mind what you would like to create."
     )
     #@commands.is_owner()
-    async def alchemy(self, ctx, count: typing.Optional[int] = None, target_item: typing.Optional[str] = None, recipe_num: typing.Optional[int] = None, confirm: typing.Optional[str] = None):
+    async def alchemy(self, ctx, count: typing.Optional[parse_int] = None, target_item: typing.Optional[str] = None, recipe_num: typing.Optional[parse_int] = None, confirm: typing.Optional[str] = None):
         
         if count is None:
             count = 1
@@ -3537,7 +3580,7 @@ anarchy - 1000% of your wager.
                     return
 
                 try:
-                    recipe_num = int(msg.content)
+                    recipe_num = parse_int(msg.content)
                 except ValueError:
                     await ctx.reply(f"I do not recognize that as a number. Please try again from the beginning.")
                     self.currently_interacting.remove(ctx.author.id)
@@ -3706,7 +3749,7 @@ anarchy - 1000% of your wager.
     async def set(self, ctx, 
                     user: typing.Optional[discord.Member], 
                     key: str,
-                    value: int,
+                    value: parse_int,
                     do_force: typing.Optional[str]):
         if await self.await_confirmation(ctx) is False:
             return
@@ -3756,7 +3799,7 @@ anarchy - 1000% of your wager.
     async def increment(self, ctx, 
                     user: discord.Member, 
                     key: str,
-                    value: int,
+                    value: parse_int,
                     do_force: typing.Optional[str]):
         if await self.await_confirmation(ctx) is False:
             return
@@ -3949,7 +3992,7 @@ anarchy - 1000% of your wager.
         help = "Usage: bread admin set_max_prestige_level [value]"
     )
     @commands.is_owner()
-    async def set_max_prestige_level(self, ctx, value: int):
+    async def set_max_prestige_level(self, ctx, value: parse_int):
         if await self.await_confirmation(ctx) is False:
             return
         prestige_file = self.json_interface.get_custom_file("prestige")
@@ -4175,7 +4218,7 @@ anarchy - 1000% of your wager.
         
         # go through all accounts and do the operation
         for index in self.json_interface.data["bread"].keys():
-            if not index.isdigit():
+            if not is_digit(index):
                 continue
             user_account = self.json_interface.get_account(index)
             
@@ -4215,7 +4258,7 @@ anarchy - 1000% of your wager.
         #     print("This is a development server")
             
         # for index in self.json_interface.data["bread"].keys():
-        #     if not index.isdigit():
+        #     if not is_digit(index):
         #         continue # skip the custom accounts
         #     user_account = self.json_interface.get_account(index)
         #     if user_account.has("one_of_a_kind"):
@@ -4398,7 +4441,7 @@ anarchy - 1000% of your wager.
 
     
     def write_number_of_times(number):
-        number = int(number)
+        number = parse_int(number)
         if number == 0:
             return "zero times"
         elif number == 1:
