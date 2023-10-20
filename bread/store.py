@@ -6,6 +6,8 @@ import bread.account as account
 import bread.values as values
 import bread.utility as utility
 
+from math import ceil
+
 # loaf converter
 # 1 - 2/3 single loafs converted to special
 # 2 - all single loaves converted to special
@@ -444,80 +446,172 @@ class Random_Chess_Piece(Store_Item):
         dough = user_account.get("total_dough")
 
         return dough // cls.cost(user_account)
-
+    
     @classmethod
     def do_purchase(cls, user_account: account.Bread_Account, amount: int = 1):
+
+        # 1. fill chess pieces up to be "chessboard distributed"
+        # 2. add bought pieces//32 chess sets
+        # 3. add the rest randomly
+
         # subtract cost
         user_account.increment("total_dough", -cls.cost(user_account) * amount)
 
         original_amount = amount
 
-        # increase count
-        #user_account.increment("chess_pieces", 1)
-        full_chess_set = values.chess_pieces_black_biased + values.chess_pieces_white_biased
-        user_chess_pieces = user_account.get_all_items_with_attribute_unrolled("chess_pieces")
-        unfound_pieces = utility.array_subtract(full_chess_set, user_chess_pieces)
-
         purchased_pieces = dict()
         for chess_piece in values.all_chess_pieces:
             purchased_pieces[chess_piece.text] = 0
-
         
         out_str = ''
 
-        # first we fill in any missing pieces
-        while len(unfound_pieces) > 0 and amount > 0:
-            
-            # if we're buying more than we need, we just buy all the missing pieces
-            if amount >= len(unfound_pieces):
-                unfound_pieces = utility.array_subtract(full_chess_set, user_chess_pieces)
+        full_chess_set = values.chess_pieces_black_biased + values.chess_pieces_white_biased
 
-                amount -= len(unfound_pieces)
-                for piece in unfound_pieces:
-                    user_account.add_item_attributes(piece)
-                    purchased_pieces[piece.text] += 1
-                unfound_pieces = []
+        user_chess_pieces = [user_account.get(i) for i in map(lambda x: x.text, values.all_chess_pieces)]
+        chess_board_numbers = [1, 1, 2, 2, 2, 8, 8, 2, 2, 2, 1, 1]
 
-            # else we buy the pieces we need one at a time
-            else:
-                piece = random.choice(unfound_pieces)
+        # 1:
+        # find the chess piece the account has the most of
+        highest_relative_piece = max([i/j for i, j in zip(user_chess_pieces, chess_board_numbers)])
+
+        # figure out how many total chessboards you'd have if the pieces were even
+        boards_to_complete = ceil(highest_relative_piece)
+
+        unfound_pieces = [j * boards_to_complete - i for i, j in zip(user_chess_pieces, chess_board_numbers)]
+
+        # check if you're buying enough pieces to add them all, if not make less boards
+        do_full_boards = True
+        if amount < sum(unfound_pieces):
+            # lower bound on how many boards you can complete
+            boards_to_complete = amount // 32
+            unfound_pieces = [j * boards_to_complete - i for i, j in zip(user_chess_pieces, chess_board_numbers)]
+            unfound_pieces = [0 if i < 0 else i for i in unfound_pieces] # make sure we don't have any negative amounts
+
+            # we can skip step 2. because you haven't bought enough pieces
+            do_full_boards = False
+
+        # complete boards
+        amount -= sum(unfound_pieces)
+        for i, piece in enumerate(values.all_chess_pieces):
+            user_account.add_item_attributes(piece, unfound_pieces[i])
+            purchased_pieces[piece.text] += unfound_pieces[i]
+
+        # 2:
+        if do_full_boards:
+            full_boards = amount // 32
+            amount -= full_boards * 32
+
+            for i, piece in enumerate(values.all_chess_pieces):
+                user_account.add_item_attributes(piece, full_boards * chess_board_numbers[i])
+                purchased_pieces[piece.text] += full_boards * chess_board_numbers[i]
+        
+        # 3:
+            # if we've done full boards, we can add the rest of the pieces randomly
+            for _ in range(amount):
+                piece = random.choice(full_chess_set)
                 user_account.add_item_attributes(piece)
-                unfound_pieces.remove(piece)
                 purchased_pieces[piece.text] += 1
-                amount -= 1
+            amount = 0
+        
+        # add any remaining chess pieces
+        for _ in range(amount):
+            # in theory, if we're here, we can't get to an even distribution, so we always have to buy the piece that you have the least of
+            # also this shouldn't be called very often and I don't know how to do it better so this is super inefficient
 
-                if original_amount == 1:
-                    out_str = f'Congratulations! You have purchased a {piece.text}!'
+            user_chess_pieces = [user_account.get(i) for i in map(lambda x: x.text, values.all_chess_pieces)]
+            relative_piece_amounts = [i/j for i, j in zip(user_chess_pieces, chess_board_numbers)]
 
-
-
-        while amount > 0:
-            # if you have all the chess pieces, you get a random chess piece.
-            piece = random.choice(full_chess_set)
+            piece = relative_piece_amounts.index(min(relative_piece_amounts))
+            piece = values.all_chess_pieces[piece]
+            
             user_account.add_item_attributes(piece)
             purchased_pieces[piece.text] += 1
-            amount -= 1
 
             if original_amount == 1:
                 out_str = f'Congratulations! You have purchased a {piece.text}!'
-
+            
         if original_amount > 1:
             out_str = "Congratulations! You have purchased the following chess pieces:\n"
             for piece in purchased_pieces:
                 if purchased_pieces[piece] > 0:
                     out_str += f'{piece}: {purchased_pieces[piece]} \n'
-
-        # # then add random chess piece
-        # if (random.randint(1, 4) == 1):
-        #     #user_account.increment(random.choice(values.chess_pieces_white_biased).text)
-        #     item = random.choice(values.chess_pieces_white_biased)
-        #     user_account.add_item_attributes(item)
-        # else:
-        #     #user_account.increment(random.choice(values.chess_pieces_black_biased).text)
-        #     item = random.choice(values.chess_pieces_black_biased)
-        #     user_account.add_item_attributes(item)
         
         return out_str
+            
+
+#    @classmethod
+#    def do_purchase(cls, user_account: account.Bread_Account, amount: int = 1):
+#        # subtract cost
+#        user_account.increment("total_dough", -cls.cost(user_account) * amount)
+#
+#        original_amount = amount
+#
+#        # increase count
+#        #user_account.increment("chess_pieces", 1)
+#        full_chess_set = values.chess_pieces_black_biased + values.chess_pieces_white_biased
+#        user_chess_pieces = user_account.get_all_items_with_attribute_unrolled("chess_pieces")
+#        unfound_pieces = utility.array_subtract(full_chess_set, user_chess_pieces)
+#
+#        purchased_pieces = dict()
+#        for chess_piece in values.all_chess_pieces:
+#            purchased_pieces[chess_piece.text] = 0
+#
+#        
+#        out_str = ''
+#
+#        # first we fill in any missing pieces
+#        while len(unfound_pieces) > 0 and amount > 0:
+#            
+#            # if we're buying more than we need, we just buy all the missing pieces
+#            if amount >= len(unfound_pieces):
+#                unfound_pieces = utility.array_subtract(full_chess_set, user_chess_pieces)
+#
+#                amount -= len(unfound_pieces)
+#                for piece in unfound_pieces:
+#                    user_account.add_item_attributes(piece)
+#                    purchased_pieces[piece.text] += 1
+#                unfound_pieces = []
+#
+#            # else we buy the pieces we need one at a time
+#            else:
+#                piece = random.choice(unfound_pieces)
+#                user_account.add_item_attributes(piece)
+#                unfound_pieces.remove(piece)
+#                purchased_pieces[piece.text] += 1
+#                amount -= 1
+#
+#                if original_amount == 1:
+#                    out_str = f'Congratulations! You have purchased a {piece.text}!'
+#
+#
+#
+#        while amount > 0:
+#            # if you have all the chess pieces, you get a random chess piece.
+#            piece = random.choice(full_chess_set)
+#            user_account.add_item_attributes(piece)
+#            purchased_pieces[piece.text] += 1
+#            amount -= 1
+#
+#            if original_amount == 1:
+#                out_str = f'Congratulations! You have purchased a {piece.text}!'
+#
+#        if original_amount > 1:
+#            out_str = "Congratulations! You have purchased the following chess pieces:\n"
+#            for piece in purchased_pieces:
+#                if purchased_pieces[piece] > 0:
+#                    out_str += f'{piece}: {purchased_pieces[piece]} \n'
+#
+#        # # then add random chess piece
+#        # if (random.randint(1, 4) == 1):
+#        #     #user_account.increment(random.choice(values.chess_pieces_white_biased).text)
+#        #     item = random.choice(values.chess_pieces_white_biased)
+#        #     user_account.add_item_attributes(item)
+#        # else:
+#        #     #user_account.increment(random.choice(values.chess_pieces_black_biased).text)
+#        #     item = random.choice(values.chess_pieces_black_biased)
+#        #     user_account.add_item_attributes(item)
+#        
+#        return out_str
 
 class Random_Special_Bread(Store_Item):
     name = "random_special_bread"
