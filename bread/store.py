@@ -455,12 +455,74 @@ class Random_Chess_Piece(Store_Item):
         # increase count
         #user_account.increment("chess_pieces", 1)
         full_chess_set = values.chess_pieces_black_biased + values.chess_pieces_white_biased
-        user_chess_pieces = user_account.get_all_items_with_attribute_unrolled("chess_pieces")
-        unfound_pieces = utility.array_subtract(full_chess_set, user_chess_pieces)
 
         purchased_pieces = dict()
         for chess_piece in values.all_chess_pieces:
             purchased_pieces[chess_piece.text] = 0
+
+        # first we deal with full chess sets
+        if amount > 32:
+            chess_sets = amount // 32
+            for piece in full_chess_set:
+                user_account.add_item_attributes(piece, amount=chess_sets)
+                purchased_pieces[piece.text] += chess_sets
+            amount -= chess_sets * 32
+
+        #then any remaining pieces afterward
+        
+        #first build a dict of all the pieces the user has
+        user_chess_pieces = dict()
+        for chess_piece in values.all_chess_pieces:
+            user_chess_pieces[chess_piece.text] = user_account.get(chess_piece.text)
+
+        # then build a dict for the pieces of a default chess set
+        default_chess_pieces = dict()
+        for chess_piece in full_chess_set:
+            default_chess_pieces[chess_piece.text] = default_chess_pieces.get(chess_piece.text, 0) + 1
+
+        # then subtract the user's pieces from the default set
+        unfound_pieces = utility.dict_subtract(default_chess_pieces, user_chess_pieces)
+
+        # convert unfound pieces to an array
+        unfound_pieces_array = list()
+        for piece_text in unfound_pieces:
+            unfound_pieces_array.extend([piece_text] * unfound_pieces[piece_text])
+
+        # otherwise we are missing pieces and we need to buy them
+        while amount > 0:
+            if len(unfound_pieces_array) > 0:
+                piece_text = random.choice(unfound_pieces_array)
+                piece_emote = values.get_emote(piece_text)
+                user_account.add_item_attributes(piece_emote)
+                purchased_pieces[piece_text] += 1
+                unfound_pieces_array.remove(piece_text)
+                amount -= 1
+            else:
+                # now we have all our missing pieces, so buy random chess pieces
+                piece = random.choice(full_chess_set)
+                user_account.add_item_attributes(piece)
+                purchased_pieces[piece.text] += 1
+                amount -= 1
+
+        out_str = ''
+        if original_amount == 1:
+            # set piece_text to the only member of the purchased_pieces dict
+            piece_text = list(purchased_pieces.keys())[0]
+            out_str = f'Congratulations! You have purchased a {piece_text}!'
+        else:
+            out_str = "Congratulations! You have purchased the following chess pieces:\n"
+            for piece in purchased_pieces:
+                if purchased_pieces[piece] > 0:
+                    out_str += f'{piece}: {purchased_pieces[piece]} \n'
+        return out_str
+            
+
+
+        """
+        user_chess_pieces = user_account.get_all_items_with_attribute_unrolled("chess_pieces")
+        unfound_pieces = utility.array_subtract(full_chess_set, user_chess_pieces)
+
+        
 
         
         out_str = ''
@@ -492,7 +554,16 @@ class Random_Chess_Piece(Store_Item):
 
 
         while amount > 0:
-            # if you have all the chess pieces, you get a random chess piece.
+            # if you have all the chess pieces and you're buying less than a full set, you get a random chess piece.
+            # but, if you're buying more, you get that many full sets
+            if amount >= 32:
+                chess_sets = amount // 32
+                for piece in full_chess_set:
+                    user_account.add_item_attributes(piece, amount=chess_sets)
+                    purchased_pieces[piece.text] += chess_sets
+                amount -= chess_sets * 32
+                continue
+
             piece = random.choice(full_chess_set)
             user_account.add_item_attributes(piece)
             purchased_pieces[piece.text] += 1
@@ -516,8 +587,7 @@ class Random_Chess_Piece(Store_Item):
         #     #user_account.increment(random.choice(values.chess_pieces_black_biased).text)
         #     item = random.choice(values.chess_pieces_black_biased)
         #     user_account.add_item_attributes(item)
-        
-        return out_str
+        """
 
 class Random_Special_Bread(Store_Item):
     name = "random_special_bread"

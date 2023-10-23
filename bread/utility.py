@@ -70,6 +70,16 @@ def array_subtract(array1, array2):
             #this is subtly different, but it means that duplicate members are only removed one at a time
     return output
 
+def dict_subtract(dict1, dict2):
+    output = dict()
+    output.update(dict1)
+    for key in dict2:
+        if key in output:
+            output[key] -= dict2[key]
+            if output[key] <= 0:
+                del output[key]
+    return output
+
 
 def increment(dictionary: dict, key, amount: int =1) -> dict:
     if key in dictionary:

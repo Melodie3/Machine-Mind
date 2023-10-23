@@ -404,7 +404,7 @@ def summarize_roll(result):
         removals.append("highest_roll")
 
     if "natural_1" in result:
-        output += f"Natural 1: {utility.smart_number((result['natural_1'])}\n"
+        output += f"Natural 1: {utility.smart_number(result['natural_1'])}\n"
         removals.append("natural_1")
 
     if "ten_breads" in result:
