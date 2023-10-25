@@ -1625,19 +1625,20 @@ loaf_converter""",
         # print(f"valid trons: {valid_trons}, amount: {amount}")
 
         board = Bread_cog.format_chess_pieces(user_account.values)
-        chessatron_value = user_account.get_chessatron_dough_amount(False) 
+        chessatron_value = user_account.get_chessatron_dough_amount(include_prestige_boost=False) 
+        trons_to_make = min(valid_trons, amount)
 
         # for emote in full_chess_set:
         #     user_account.increment(emote.text, -1)
 
         # clear out the chess pieces from the account all at once
-        for emote in full_chess_set:
-            user_account.increment(emote, -min(valid_trons, amount))
+        for chess_piece in full_chess_set:
+            user_account.increment(chess_piece, -trons_to_make)
 
-        trons_to_make = min(valid_trons, amount)
+        
 
         # first we add the dough and attributes
-        chessatron_result_value = user_account.add_dough_intelligent(chessatron_value * trons_to_make)
+        total_dough_value = user_account.add_dough_intelligent(chessatron_value * trons_to_make)
         user_account.add_item_attributes(values.chessatron, trons_to_make)
 
         # then we send the tron messages
@@ -1655,14 +1656,14 @@ loaf_converter""",
 
             await utility.smart_reply(ctx, f"{values.chessatron.text}")
             await asyncio.sleep(1)
-            await utility.smart_reply(ctx, f"May it serve you well. You also have been awarded **{chessatron_result_value} dough** for your efforts.")
+            await utility.smart_reply(ctx, f"May it serve you well. You also have been awarded **{total_dough_value} dough** for your efforts.")
         elif trons_to_make < 10:
             await asyncio.sleep(1)
-            await utility.smart_reply(ctx, f"Congratulations! You've collected all the chess pieces again! This will be chessatron **#{user_account.get(values.chessatron.text)+1}** for you.\n\n{board}\nHere is your award of **{chessatron_result_value} dough**, and here's your new chessatron!")
+            await utility.smart_reply(ctx, f"Congratulations! You've collected all the chess pieces again! This will be chessatron **#{user_account.get(values.chessatron.text)+1}** for you.\n\n{board}\nHere is your award of **{total_dough_value} dough**, and here's your new chessatron!")
             await asyncio.sleep(1)
             await utility.smart_reply(ctx, f"{values.chessatron.text}")
         elif trons_to_make < 5000:
-            output = f"Congratulations! More chessatrons! You've made {trons_to_make} of them. Here's your reward of **{utility.smart_number(chessatron_result_value*trons_to_make)} dough**."
+            output = f"Congratulations! More chessatrons! You've made {trons_to_make} of them. Here's your reward of **{utility.smart_number(total_dough_value)} dough**."
             await utility.smart_reply(ctx, output)
             await asyncio.sleep(1)
             
@@ -1675,10 +1676,10 @@ loaf_converter""",
                     await asyncio.sleep(1)
             await utility.smart_reply(ctx, output)
         else:
-            output = f"Wow. You have created a **lot** of chessatrons. {utility.smart_number(trons_to_make)} to be exact. I will not even attempt to list them all. Here is your reward of **{utility.smart_number(chessatron_result_value*trons_to_make)} dough**."
+            output = f"Wow. You have created a **lot** of chessatrons. {utility.smart_number(trons_to_make)} to be exact. I will not even attempt to list them all. Here is your reward of **{utility.smart_number(total_dough_value)} dough**."
             await utility.smart_reply(ctx, output)
             await asyncio.sleep(1)
-            await utility.smart_reply(ctx, f"{values.chessatron.text} x {trons_to_make}")
+            await utility.smart_reply(ctx, f"{values.chessatron.text} x {utility.smart_number(trons_to_make)}")
     
 
     ########################################################################################################################
