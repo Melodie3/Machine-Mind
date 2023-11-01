@@ -781,7 +781,12 @@ class Bread_cog(commands.Cog, name="Bread"):
         if account.has("lifetime_gambles"):
             output += f"You've gambled your dough {account.write_number_of_times('lifetime_gambles')}.\n"
         if account.has("max_daily_rolls"):
-            output += f"You've rolled {sn(account.get('daily_rolls'))} of {account.write_number_of_times('max_daily_rolls')} today.\n"
+            if account.get('daily_rolls') < 0:
+                output += f"You have {sn(-account.get('daily_rolls'))} stored rolls, plus a maximum of {sn(account.get('max_daily_rolls'))} daily rolls.\n"
+            else:
+                output += f"You've rolled {sn(account.get('daily_rolls'))} of {account.write_number_of_times('max_daily_rolls')} today.\n"
+        if account.get('max_days_of_stored_rolls') > 1:
+            output += f"You can store rolls for up to {account.get('max_days_of_stored_rolls')} days.\n"
         if account.has("loaf_converter"):
             output += f"You have {account.write_count('loaf_converter', 'Loaf Converter')}"  
             if account.has("LC_booster"):
@@ -1349,12 +1354,7 @@ loaf_converter""",
             self.currently_interacting.remove(ctx.author.id)
             return
 
-        # start at 10 max rolls
-        if not user_account.has("max_daily_rolls", 10):
-            user_account.set_value("max_daily_rolls",10)
-
-        if not user_account.has("daily_rolls", 0):
-            user_account.set_value("daily_rolls",0)
+        
 
         # if user_account.has("daily_rolls", user_account.get("max_daily_rolls")) and ctx.channel.name in earnable_channels:
         #     await ctx.reply("Sorry, but that's all the rolls you can do here for today. New rolls are available each day at <t:1653429922:t>.")
@@ -1362,6 +1362,7 @@ loaf_converter""",
         
         user_luck = user_account.get("loaf_converter") + 1
 
+        
         rolls_remaining = user_account.get("max_daily_rolls") - user_account.get("daily_rolls")
         #if ctx.channel.name in earnable_channels:
         if get_channel_permission_level(ctx) == PERMISSION_LEVEL_MAX:
@@ -1375,7 +1376,12 @@ loaf_converter""",
         else:
             user_multiroll = 1
 
-        max_daily_rolls = user_account.get("max_daily_rolls")
+        #for stored rolls, they are any amount of daily rolls below zero
+        # so we get our daily rolls and add our user_multiroll to it
+        # and then we check if it's less than zero
+        stored_rolls_remaining = -(user_account.get("daily_rolls") + user_multiroll)
+        if stored_rolls_remaining < 0:
+            stored_rolls_remaining = 0
         
         ######
         ############################################################
@@ -1440,7 +1446,11 @@ loaf_converter""",
                 await ctx.reply( "Sorry, but that's all the rolls you can do here for today. New rolls are available each day at <t:1653429922:t>.")
                 self.currently_interacting.remove(ctx.author.id)
                 return
+            # we tell them how many stored rolls they have left
+            elif stored_rolls_remaining > 0:
+                count_commentary = f"You have {stored_rolls_remaining} stored rolls and a total of {amount_remaining} more rolls today."
             #we remove 1 because this check happens *before* the increment, but talks about what happens *after* the increment.
+
             elif amount_remaining == 0:
                 count_commentary = f"That was your last roll for the day."
                 # add a special message for new players
@@ -1448,7 +1458,7 @@ loaf_converter""",
                     count_commentary += '\n\nWould you like to stop by the shop and see what you can get? Check it out with "$bread shop".'
             elif amount_remaining == 1:
                 count_commentary = f"You have one more roll today."
-            elif amount_remaining <= 3:
+            elif amount_remaining <= 3 or user_account.get('roll_summarizer') == 1:
                 count_commentary = f"You have {amount_remaining} more rolls today."
 
         ###########################################################################
@@ -1604,7 +1614,7 @@ loaf_converter""",
         if user_account.get("auto_chessatron") is False and force is False:
             return
         
-        print ("doing chessatron creation")
+        # print ("doing chessatron creation")
 
         # user_chess_pieces = user_account.get_all_items_with_attribute_unrolled("chess_pieces")
         full_chess_set = values.chess_pieces_black_biased+values.chess_pieces_white_biased
@@ -1645,23 +1655,29 @@ loaf_converter""",
         if trons_to_make == 0:
             return
         elif trons_to_make < 3:
-            await utility.smart_reply(ctx, f"You have collected all the chess pieces! Congratulations!\n\nWhat a beautiful collection!")
-            await asyncio.sleep(1)
+            messages_to_send = trons_to_make
+            while messages_to_send > 0:
+                await utility.smart_reply(ctx, f"You have collected all the chess pieces! Congratulations!\n\nWhat a beautiful collection!")
+                await asyncio.sleep(1)
 
-            await utility.smart_reply(ctx, f"{board}")
-            await asyncio.sleep(1)
+                await utility.smart_reply(ctx, f"{board}")
+                await asyncio.sleep(1)
 
-            await utility.smart_reply(ctx, f"You will now be awarded the most prestigious of chess pieces: The Mega Chessatron!")
-            await asyncio.sleep(1)
+                await utility.smart_reply(ctx, f"You will now be awarded the most prestigious of chess pieces: The Mega Chessatron!")
+                await asyncio.sleep(1)
 
-            await utility.smart_reply(ctx, f"{values.chessatron.text}")
-            await asyncio.sleep(1)
-            await utility.smart_reply(ctx, f"May it serve you well. You also have been awarded **{total_dough_value} dough** for your efforts.")
+                await utility.smart_reply(ctx, f"{values.chessatron.text}")
+                await asyncio.sleep(1)
+                await utility.smart_reply(ctx, f"May it serve you well. You also have been awarded **{total_dough_value} dough** for your efforts.")
+                messages_to_send -= 1
         elif trons_to_make < 10:
-            await asyncio.sleep(1)
-            await utility.smart_reply(ctx, f"Congratulations! You've collected all the chess pieces again! This will be chessatron **#{user_account.get(values.chessatron.text)+1}** for you.\n\n{board}\nHere is your award of **{total_dough_value} dough**, and here's your new chessatron!")
-            await asyncio.sleep(1)
-            await utility.smart_reply(ctx, f"{values.chessatron.text}")
+            messages_to_send = trons_to_make
+            while messages_to_send > 0:
+                await asyncio.sleep(1)
+                await utility.smart_reply(ctx, f"Congratulations! You've collected all the chess pieces! This will be chessatron **#{user_account.get(values.chessatron.text)+1-messages_to_send}** for you.\n\n{board}\nHere is your award of **{total_dough_value} dough**, and here's your new chessatron!")
+                await asyncio.sleep(1)
+                await utility.smart_reply(ctx, f"{values.chessatron.text}")
+                messages_to_send -= 1
         elif trons_to_make < 5000:
             output = f"Congratulations! More chessatrons! You've made {trons_to_make} of them. Here's your reward of **{utility.smart_number(total_dough_value)} dough**."
             await utility.smart_reply(ctx, output)
@@ -4113,7 +4129,7 @@ anarchy - 1000% of your wager.
 
         account.reset_to_default()
 
-        account.set("total_dough", 1000000)
+        account.set("total_dough", 10000000000000000000000000000)
         account.set("loaf_converter", 128)
         account.set("max_daily_rolls", 1000)
 

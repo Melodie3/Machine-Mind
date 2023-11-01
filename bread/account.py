@@ -26,6 +26,7 @@ class Bread_Account:
         "total_dough" : 0,
         "lifetime_dough" : 0,
         "highest_roll" : 0,
+        "daily_rolls" : 0,
         "max_daily_rolls" : 10,
         "allowed" : True,
         "max_games" : 20,
@@ -38,6 +39,7 @@ class Bread_Account:
         "black_hole" : 0,
         "black_hole_conditions" : ["<:anarchy_chess:960772054746005534>", "<:gem_gold:1006498746718244944>", "14+"],
         "gifts_disabled" : False,
+        "max_days_of_stored_rolls" : 1,
     }
 
 
@@ -57,9 +59,21 @@ class Bread_Account:
         }
 
     def daily_reset(self):
-        self.set("daily_rolls", 0)
+        # self.set("daily_rolls", 0)
+
+        # we need to deal with stored daily rolls, so:
+        # first calculate what the max numbber of stored rolls is
+        minimum_daily_rolls = -self.get_maximum_stored_rolls()
+        # then remove one day of rolls from our counter
+        new_daily_rolls = self.get("daily_rolls") - self.get("max_daily_rolls")
+        # then make sure that we aren't exceeding our maximum
+        new_daily_rolls = max(minimum_daily_rolls, new_daily_rolls)
+        # then set the new value
+        self.set("daily_rolls", new_daily_rolls)
+
         self.set("daily_gambles", 0)
         self.set("max_gambles", 20)
+
         if self.has ("daily_gifts"):
             self.set("daily_gifts", 0)
         if self.has ("first_catch_level"):
@@ -295,6 +309,9 @@ class Bread_Account:
 
     def get_maximum_daily_gifts(self):
         return self.get("max_daily_rolls") * 24 + self.get("loaf_converter") * 1000
+    
+    def get_maximum_stored_rolls(self):
+        return self.get("max_daily_rolls") * self.get("max_days_of_stored_rolls")
 
     def get_dough_boost_for_item(self, item: Emote):
         boosts_file = self.values.get("dough_boosts", dict())

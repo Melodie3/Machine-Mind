@@ -1,6 +1,7 @@
 
 import typing
 import random 
+import math
 
 import bread.account as account
 import bread.values as values
@@ -359,13 +360,20 @@ class Multiroller(Store_Item):
 
     @classmethod
     def max_level(cls, user_account: account.Bread_Account = None) -> typing.Optional[int]:
+        # prestige_level = user_account.get_prestige_level()
+        # if prestige_level == 0:
+        #     return 10
+        # elif prestige_level < 10:
+        #     return 11
+        # else:
+        #     return 12
         prestige_level = user_account.get_prestige_level()
-        if prestige_level == 0:
-            return 10
-        elif prestige_level < 10:
-            return 11
-        else:
-            return 12
+        max_potential_rolls = (1000 + prestige_level * 100) * user_account.get("max_days_of_stored_rolls")
+        # we want it so that someone can multiroll all their day's rolls in one command
+        # so what we do is find out how many multirollers would be required for that
+        # the log2 tells us just that
+        return math.ceil(math.log2(max_potential_rolls)) + 1
+
 
     @classmethod
     def can_be_purchased(cls, user_account: account.Bread_Account) -> bool:
