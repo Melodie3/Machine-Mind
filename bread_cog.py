@@ -1,12 +1,10 @@
 """
 Patch Notes: 
-- You can now refer to a omega_chessatron as simply an "omega"
-- Your bread stats page will now show you how much dough you get per chessatron.
-- Improved the chessatron code so that making obscene numbers of chessatrons should now not lag the bot *too* much.
-- Similarly created a message for when 5,000 or more chessatrons are created, which will summarize them rather than listing them all out. This is to prevent MM spending a week listing chessatrons when snow eventually trons, lol.
-- Added smart numbers to the roll summary (Thanks Duck)
-- Gem_chessatron will no longer automatically tron if you have auto chessatron disabled. (Thanks Malte)
-- Some commands now support commas in their arguments (Thanks Duck)
+(todo) test reply ping
+(todo) 
+    - fix random special bread pack 
+        (step one: create normalization function)
+        step 2: finish normalizing, by turning the floats into ints and then adding/subtracting where necessary
 
 TODO: Do not die to the plague
 

@@ -2,6 +2,7 @@
 import typing
 import random 
 import math
+import numpy as np
 
 import bread.account as account
 import bread.values as values
@@ -665,20 +666,46 @@ class Special_Bread_Pack(Store_Item):
         #         #output += f"{all_purchased_items[item_text]} {item_text}\n"
         #         output += f"{item_text} : +{bought_bread.count(item)}, -> {user_account.get(item_text)}\n"
 
-        bought_bread_dict = dict()
-        for bread in bread_distribution:
-            bought_bread_dict[bread.text] = 0
-        for i in range(count):
-            bread = random.choice(bread_distribution)
-            bought_bread_dict[bread.text] += 1
+        # previous code
+        if count < 10000:
+            bought_bread_dict = dict()
+            for bread in bread_distribution:
+                bought_bread_dict[bread.text] = 0
+            for i in range(count):
+                bread = random.choice(bread_distribution)
+                bought_bread_dict[bread.text] += 1
+        else:
+            #step 1: create array of random numbers on a bell curve
+            pre_normalized_array = np.random.default_rng().normal(.5,.1, len(bread_distribution))
+            # make sure that the array contains numbers only between 0 and 1
+            for i in range(len(pre_normalized_array)):
+                pre_normalized_array[i] = max(0, pre_normalized_array[i])
+                pre_normalized_array[i] = min(1, pre_normalized_array[i])
+            # step 2: normalize array to the total count
+            normalized_array = utility.normalize_array_to_ints(pre_normalized_array, count)
+            # step 3: go through array and make sure the total is equal to the count
+            while sum(normalized_array) != count:
+                if sum(normalized_array) > count:
+                    normalized_array[np.random.randint(0, len(normalized_array))] -= 1
+                else:
+                    normalized_array[np.random.randint(0, len(normalized_array))] += 1
+            # we now have an array of which breads to get for the entire pack
+            # now we just need to convert it to a dict
+            bought_bread_dict = dict()
+            for bread in values.all_special_breads+values.all_rare_breads:
+                bought_bread_dict[bread.text] = 0
+            for i in range(len(bread_distribution)):
+                bought_bread_dict[bread_distribution[i].text] += normalized_array[i]
+
 
         # add the breads to our account
         for bread_type in values.all_special_breads+values.all_rare_breads:
             user_account.add_item_attributes(bread_type, amount=bought_bread_dict[bread_type.text])
 
+        sn = utility.smart_number
         output = ""
         for item_text in bought_bread_dict.keys():
-            output += f"{item_text} : +{bought_bread_dict[item_text]}, -> {user_account.get(item_text)}\n"
+            output += f"{item_text} : +{sn(bought_bread_dict[item_text])}, -> {sn(user_account.get(item_text))}\n"
             
         return output
 

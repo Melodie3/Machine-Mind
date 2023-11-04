@@ -135,6 +135,16 @@ def rand_logit(x: typing.Optional[int] = None):
 def remap(x, in_min, in_max, out_min, out_max):
   return (x - in_min) * (out_max - out_min) / (in_max - in_min) + out_min
 
+def normalize_array_to_ints(array: list, target_total:int = 1000) -> list:
+    total = sum(array)
+    if total == 0:
+        return array
+    new_array = [x / total for x in array]
+    for x in range(len(new_array)):
+        new_array[x] = round(new_array[x] * target_total)
+    return new_array
+
+
 def contains_ping(string: str) -> bool:
     if "<@" in string:
         return True
@@ -152,11 +162,17 @@ def sanitize_ping(string: str) -> str:
     return output
 
 # this will first try a regular reply, and if that fails, it will send it as a plain message with a mention
-async def smart_reply(ctx, message):
+async def smart_reply(ctx, message, ping_reply: bool = True):
     if message == "" or message is None:
         return None
-    try:
-        message = await ctx.reply(message)
-    except:
-        message = await ctx.send(f"{ctx.author.mention}\n\n{message}")
+    if ping_reply is True:
+        try:
+            message = await ctx.reply(message)
+        except:
+            message = await ctx.send(f"{ctx.author.mention}\n\n{message}")
+    else:
+        try: 
+            message = await ctx.send(message, mention_author=False)
+        except:
+            message = await ctx.send(f"{sanitize_ping(ctx.author.display_name)}:\n\n{message}")
     return message
