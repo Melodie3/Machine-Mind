@@ -185,7 +185,7 @@ async def brick_leaderboard(ctx, user: discord.Member):
                     if utility.contains_ping(name):
                         name = file["username"]
                     if i == index:
-                        output += f"**{i+1}. {name}: {list_ref[id]}**\n"
+                        output += f"{i+1}. **{name}: {list_ref[id]}**\n"
                     else:
                         output += f"{i+1}. {name}: {list_ref[id]}\n"
                 else:
