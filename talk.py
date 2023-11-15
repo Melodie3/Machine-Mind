@@ -407,7 +407,7 @@ async def verify(ctx, user: typing.Optional[discord.Member]):
         descriptors.append("Interest is piling up for your debts.")
     if "based" in [y.name.lower() for y in user.roles]:
         descriptors.append("Thank you for boosting this server and making the bread game possible!")
-    if "this man got ten thousand bricks" in [y.name.lower() for y in user.roles]:
+    if "(Addicted to Bricks)²" in [y.name.lower() for y in user.roles]:
         descriptors.append("Your dedication seems to know no bounds.")
     if "event coordinator (brings cookies)" in [y.name.lower() for y in user.roles]:
         descriptors.append("When is the next event?")
