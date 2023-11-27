@@ -3,6 +3,7 @@ import os
 from datetime import datetime
 import importlib
 import asyncio
+import typing
 
 import discord
 from discord.ext import commands
@@ -23,17 +24,21 @@ class JSON_cog(commands.Cog, name="JSON"):
 
     file_path = "database.json"
 
+    default_guild = '958392331671830579'
+
     default_data = {
         'load_count' : 0,
-        'bread': {},
-        'enforcement' : {
-            "546829925890523167": {
-                "username": "Melodie",
-                "display_name": "Melodie",
-                "total_timeout": 1,
-                "bricks": 1
+        default_guild: {
+            'bread': {},
+            'enforcement' : {
+                "546829925890523167": {
+                    "username": "Melodie",
+                    "display_name": "Melodie",
+                    "total_timeout": 1,
+                    "bricks": 1
+                },
             },
-        },
+        }
     }
 
     data = dict()
@@ -74,7 +79,13 @@ class JSON_cog(commands.Cog, name="JSON"):
         #wait to be closer to the hour
         time = datetime.now()
 
-        if time.minute > 10:
+        if time.minute < 10:
+            # wait until 5 minutes after the hour
+            wait_time = max(10 - time.minute, 0)
+            print (f"waiting before JSONs loop for {wait_time} minutes")
+            await asyncio.sleep(60*wait_time)
+            print (time.strftime("Finished waiting at %H:%M:%S"))
+        elif time.minute > 10:
             #wait into next hour
             wait_time = max(70 - time.minute, 0)
             print (f"waiting before JSON loop for {wait_time} minutes")
@@ -82,19 +93,20 @@ class JSON_cog(commands.Cog, name="JSON"):
             print (time.strftime("Finished waiting at %H:%M:%S"))
 
     
+    
     def capture_and_save_data(self):
 
         # save chess data
         try:
             print("JSON Cog: attempting to save Chess data")
             chess_cog = self.bot.get_cog("Chess")
-            chess_cog.capture_data(self)
+            chess_cog.internal_save(self)
             print("Done.")
         except BaseException as err:
             print("Unable to do so.")
             print(err)
 
-        # save chess data
+        # save bread data
         try:
             print("JSON Cog: attempting to save Bread data")
             bread_cog = self.bot.get_cog("Bread")
@@ -174,6 +186,34 @@ class JSON_cog(commands.Cog, name="JSON"):
             print("Error loading "+self.file_path)
             self.data = self.default_data
 
+        self.transfer_data_if_nonexistent()
+
+    def transfer_data_if_nonexistent(self):
+        # originallly the format was to have everything stored in a flat heirarchy, but now we have guilds and vaults
+        # and we want to transfer the old data into the new format, at least once
+        # first we check if we have already done it
+        default_guild = '958392331671830579'
+
+        if default_guild in self.data.keys():
+            return
+        # then we go through the old data and transfer it
+        print("Transferring old data to new format")
+        self.data[default_guild] = dict()
+        if 'bread' in self.data.keys():
+            self.data[default_guild]['bread'] = self.data['bread']
+            del self.data['bread']
+        if 'enforcement' in self.data.keys():
+            self.data[default_guild]['enforcement'] = self.data['enforcement']
+            del self.data['enforcement']
+        if 'chess' in self.data.keys():
+            self.data[default_guild]['chess'] = self.data['chess']
+            del self.data['chess']
+        if 'archived_bread_count' in self.data.keys():
+            self.data[default_guild]['archived_bread_count'] = self.data['archived_bread_count']
+            del self.data['archived_bread_count']
+        print("Done.")
+
+        
     def save_all_data(self):
         self.internal_save()
     
@@ -205,6 +245,78 @@ class JSON_cog(commands.Cog, name="JSON"):
     ####################################
     #####      INTERFACE NEW
 
+    # every server has a vault. In each vault there is a "bread" and a "chess" among other things
+    def get_vault(self, guild: typing.Union[discord.Guild, int, str]):
+        
+        if guild is None:
+            # print ("No guild was passed, using default vault")
+            # vault = self.data.get(self.default_guild, None)
+            raise Exception("No guild was passed")
+        elif isinstance(guild, discord.Guild):
+            vault = self.data.get(str(guild.id), None)
+        elif isinstance(guild, int):
+            vault = self.data.get(str(guild), None)
+        elif isinstance(guild, str):
+            vault = self.data.get(guild, None)
+        else:
+            return None
+    
+        if vault is None:
+            print ("guild not found, creating new vault")
+            vault = dict()
+            self.set_vault(guild, vault)
+
+        return vault
+
+    def set_vault(self, guild: typing.Union[discord.Guild, int, str], vault: dict):
+        if isinstance(guild, discord.Guild):
+            self.data[str(guild.id)] = vault
+        elif isinstance(guild, int):
+            self.data[str(guild)] = vault
+        elif isinstance(guild, str):
+            self.data[guild] = vault
+        elif guild is None:
+            self.data[self.default_guild] = vault
+            
+    
+    def get_filing_cabinet(self, name: str, guild: typing.Union[discord.Guild, int, str] = None, create_if_nonexistent=False):
+        vault = self.get_vault(guild)
+
+        if name in vault.keys():
+            return vault[name]
+        elif create_if_nonexistent:
+            vault[name] = dict()
+            self.set_vault(guild, vault)
+            return vault[name]
+        else:
+            return None
+        
+    def set_filing_cabinet(self, name: str, cabinet: dict, guild: typing.Union[discord.Guild, int, str] = None):
+        vault = self.get_vault(guild)
+        vault[name] = cabinet
+        self.set_vault(guild, vault)
+    
+    def set_file_in_filing_cabinet(self, cabinet_name: str, file_name: str, file: dict, guild: typing.Union[discord.Guild, int, str] = None):
+        cabinet = self.get_filing_cabinet(cabinet_name, guild, create_if_nonexistent=True)
+        cabinet[file_name] = file
+        self.set_filing_cabinet(cabinet_name, cabinet, guild)
+    
+    def delete_file_in_filing_cabinet(self, cabinet_name: str, file_name: str, guild: typing.Union[discord.Guild, int, str] = None):
+        cabinet = self.get_filing_cabinet(cabinet_name, guild, create_if_nonexistent=True)
+        if file_name in cabinet.keys():
+            del cabinet[file_name]
+        self.set_filing_cabinet(cabinet_name, cabinet, guild)
+
+    def get_list_of_all_guilds(self):
+        output = []
+        for key in self.data.keys():
+            if key == 'load_count':
+                continue
+            if key.isnumeric() is False:
+                continue
+            output.append(key)
+        return output
+    """
     # cheeky name for the meta-groups such as bread and enforcement
     def get_filing_cabinet(self, name: str, create_if_nonexistent=False):
         if name in self.data.keys():
@@ -217,10 +329,11 @@ class JSON_cog(commands.Cog, name="JSON"):
 
     def set_filing_cabinet(self, name: str, cabinet: dict):
         self.data[name] = cabinet
-
+    """
     ####################################
     #####      INTERFACE
 
+    """
     def get_file_for_user(self, cabinet_name: str, user: discord.member): 
         key = str(user.id)
         cabinet = self.get_filing_cabinet(cabinet_name)
@@ -243,7 +356,7 @@ class JSON_cog(commands.Cog, name="JSON"):
         cabinet = self.get_filing_cabinet(cabinet_name)
         cabinet[key] = file
         self.set_filing_cabinet(cabinet_name, cabinet)
-    
+    """
 
 
 json_cog_ref = None

@@ -26,7 +26,7 @@ def json_data_increment(member: discord.Member, field: str, amount: int):
         # print("Attempting reference through cog")
         JSON_cog = bot_ref.get_cog("JSON")
         # print(f"JSON cog is {JSON_cog}")
-        cabinet = JSON_cog.get_filing_cabinet("enforcement", create_if_nonexistent=True)
+        cabinet = JSON_cog.get_filing_cabinet("enforcement", guild = member.guild.id, create_if_nonexistent=True)
         # print("Cabinet loaded")
         
         id = str(member.id) #needs to be string because ints can't be keys in JSON
@@ -45,7 +45,7 @@ def json_data_increment(member: discord.Member, field: str, amount: int):
         
         file[field] += amount
 
-        JSON_cog.set_filing_cabinet("enforcement", cabinet)
+        JSON_cog.set_filing_cabinet("enforcement", cabinet = cabinet, guild = member.guild.id)
         print(f"Value {field} is now {file[field]}")
 
     except Exception as exception:
@@ -80,7 +80,7 @@ async def brick_stats(ctx, member: discord.Member):
         #print("Attempting reference through cog")
         JSON_cog = bot_ref.get_cog("JSON")
         #print(f"JSON cog is {JSON_cog}")
-        cabinet = JSON_cog.get_filing_cabinet("enforcement", create_if_nonexistent=False)
+        cabinet = JSON_cog.get_filing_cabinet("enforcement", guild = ctx.guild.id, create_if_nonexistent=False)
         #print("Cabinet loaded")
         
         id = str(member.id) #needs to be string because ints can't be keys in JSON
@@ -129,7 +129,7 @@ async def brick_leaderboard(ctx, user: discord.Member):
         #print("Attempting reference through cog")
         JSON_cog = bot_ref.get_cog("JSON")
         #print(f"JSON cog is {JSON_cog}")
-        cabinet = JSON_cog.get_filing_cabinet("enforcement", create_if_nonexistent=False)
+        cabinet = JSON_cog.get_filing_cabinet("enforcement", guild=ctx.guild.id, create_if_nonexistent=False)
         #print("Cabinet loaded")
         
         list_timeouts = {}

@@ -1,12 +1,18 @@
 """
 Patch Notes: 
+
+Special bread pack efficiency improved
 (todo) test reply ping
-(todo) 
-    - fix random special bread pack 
-        (step one: create normalization function)
-        step 2: finish normalizing, by turning the floats into ints and then adding/subtracting where necessary
+
 
 TODO: Do not die to the plague
+
+Migration plan to multi-server database:
+All database functions take a server or a server id as an argument
+JSON cog will have a dictionary of servers, each of which has a dictionary of users
+there will also be the default dictionaries at the top level, JSON cog will need to flawlessly be able to load from one and save to the other
+JSON cog will now take a server/server id as an argument when calling a filing cabinet, but will not alter the way filing cabinets are handled
+we need a new name for the server level storage, one which encompasses several filing cabinets. Maybe Vault, maybe warehouse.
 
 for server:
     update discord.py
@@ -113,25 +119,6 @@ announcement_channel_ids = [958705808860921906] # bread on AC
 test_announcement_channel_ids = [960871600415178783]  # test on the castle
 
 
-all_breads = [":bread:",
-                ":french_bread:",
-                ":croissant:",
-                ":flatbread:",
-                ":sandwich:",
-                ":stuffed_flatbread:"]
-
-rare_breads = [":doughnut:",
-                ":bagel:",
-                ":waffle:"]
-
-
-
-            
-
-one_of_a_kind = ["<:anarchy_chess:960772054746005534>",
-                 "<:horsey:960727531592511578>", 
-                 "<:holy_hell:961184782253948938>"]     
-                 #"<:anarchy:960771114819264533>"] # anarchy symbol - retired
 
 white_pawn = "<:Wpawn:961815364319207516>"
 white_rook = "<:Wrook:961815364482793492>"
@@ -163,8 +150,10 @@ all_chess_pieces_white = [white_pawn,white_pawn, white_pawn, white_pawn, white_p
                             white_queen,
                             white_king]
 
-all_stonks = [":pretzel:", ":cookie:", ":fortune_cookie:"]
-
+# all_stonks = [":pretzel:", ":cookie:", ":fortune_cookie:"]
+main_stonks = [":pretzel:", ":cookie:", ":fortune_cookie:",  ":pancakes:"]
+shadow_stonks = [":cake:", ":pizza:", ":pie:", ":cupcake:"]
+all_stonks = main_stonks + shadow_stonks
 
 ####################################################
 ############   ASSIST FUNCTIONS  ###################
@@ -179,12 +168,28 @@ def get_channel_permission_level(ctx):
     #channel = ctx.channel.parent if isinstance(ctx.channel, discord.threads.Thread) else ctx.channel
     permission_level = channel_permission_levels.get(ctx.channel.name, PERMISSION_LEVEL_NONE)
     # print(f"permission level is {permission_level}")
-    if ctx.guild.id != default_guild and ctx.guild.id != testing_guild:
-        # print("not in default guild")
-        permission_level = min(permission_level, PERMISSION_LEVEL_BASIC)
+    # if ctx.guild.id != default_guild and ctx.guild.id != testing_guild:
+    #     # print("not in default guild")
+    #     # TODO: change this once we support multi-server gaming
+    #     permission_level = min(permission_level, PERMISSION_LEVEL_BASIC)
     return permission_level
 
+def get_id_from_guild(guild: typing.Union[discord.Guild, int, str]) -> str:
+    if type(guild) is int:
+        guild_id = str(guild)
+    elif type(guild) is discord.Guild:
+        guild_id = str(guild.id)
+    elif type(guild) is str:
+        guild_id = guild
+    return guild_id
 
+def get_guild_from_id(guild_id: typing.Union[discord.Guild, int, str]) -> discord.Guild:
+    guild_id = get_id_from_guild(guild_id)
+    return bot_ref.get_guild(int(guild_id))
+
+def get_name_from_guild(guild: typing.Union[discord.Guild, int, str]) -> str:
+    guild_id = get_id_from_guild(guild)
+    return bot_ref.get_guild(int(guild_id)).name
 
 def get_display_name(member):
     return (member.global_name if (member.global_name is not None and member.name == member.display_name) else member.display_name)
@@ -243,7 +248,9 @@ class JSON_interface:
         
     }
 
+    all_guilds = list()
     data = dict()
+    archived_bread_data = dict()
     accounts = dict()
 
     ####################################
@@ -255,24 +262,39 @@ class JSON_interface:
 
         JSON_cog = bot_ref.get_cog("JSON")
         JSON_cog.load_all_data() 
-        self.data["bread"] = JSON_cog.get_filing_cabinet("bread", create_if_nonexistent=True)
-        self.data["archived_bread_count"] = JSON_cog.get_filing_cabinet("archived_bread_count", create_if_nonexistent=False)
 
-        print("Load process complete, one way or another.")
+        all_json_guilds = JSON_cog.get_list_of_all_guilds()
+
+        print("Loading data for all guilds")
+        for guild_id in all_json_guilds:
+            print(f"Loading data for guild {guild_id}")
+            self.data[guild_id] = JSON_cog.get_filing_cabinet("bread", create_if_nonexistent=False, guild=guild_id)
+            if self.data[guild_id] is not None:
+                self.all_guilds.append(guild_id)
+                print(f"Loaded data for guild {guild_id}")
+            
+        self.archived_bread_data = JSON_cog.get_filing_cabinet("archived_bread_count", create_if_nonexistent=False, guild=default_guild)
+        # self.data["bread"] = JSON_cog.get_filing_cabinet("bread", create_if_nonexistent=True)
+        # self.data["archived_bread_count"] = JSON_cog.get_filing_cabinet("archived_bread_count", create_if_nonexistent=False)
+
+        print("Load process complete.")
 
     
-    def internal_save(self, json_cog = None):
+    def internal_save(self, JSON_cog = None):
         print("saving bread data")
-        if json_cog is None:
-            json_cog = bot_ref.get_cog("JSON")
-        json_cog.set_filing_cabinet("bread", self.data["bread"])
+        if JSON_cog is None:
+            JSON_cog = bot_ref.get_cog("JSON")
+
+        for guild_id in self.data.keys():
+            JSON_cog.set_filing_cabinet("bread", self.data[guild_id], guild=guild_id)
+            # JSON_cog.set_filing_cabinet("archived_bread_count", self.data[guild_id]["archived_bread_count"], guild=guild_id)
+        # JSON_cog.set_filing_cabinet("bread", self.data)
         # JSON_cog.set_filing_cabinet("archived_bread_count", self.data["archived_bread_count"])
-        json_cog.save_all_data()
+        JSON_cog.save_all_data()
         
         
 
     def create_backup(self):
-        pass
         #first, make sure there's a backup folder (relative path)
         folder_path = "backup/"
         if not os.path.exists(folder_path):
@@ -292,8 +314,12 @@ class JSON_interface:
     ####################################
     #####      INTERFACE
 
-    def get_account(self, user:typing.Union[discord.Member, int, str]) -> account.Bread_Account:
-        #index = str(user.id)
+    def get_account(self, user:typing.Union[discord.Member, int, str], guild: typing.Union[discord.Guild, int, str]) -> account.Bread_Account:
+        if guild is None:
+            raise ValueError("Guild cannot be None")        
+        
+        guild_id = get_id_from_guild(guild)
+
         if type(user) is int:
             index = str(user)
         elif type(user) is discord.Member:
@@ -301,14 +327,17 @@ class JSON_interface:
         else:
             index = str(user)
 
-        if index in self.accounts:
-            return self.accounts[index]
-        account_raw = account.Bread_Account.from_dict(index, self.get_file_for_user(user))
-        self.accounts[index] = account_raw
+        # if index in self.accounts:
+        #     return self.accounts[index]
+        account_raw = account.Bread_Account.from_dict(index, self.get_file_for_user(user, guild_id))
+        # self.accounts[index] = account_raw
         return account_raw
         
 
-    def set_account(self, user:typing.Union[discord.Member, int, str], user_account: account.Bread_Account):
+    def set_account(self, user:typing.Union[discord.Member, int, str], user_account: account.Bread_Account, guild: typing.Union[discord.Guild, int, str]):
+        if guild is None:   
+            raise ValueError("Guild cannot be None")
+        
         if type(user) is int:
             index = str(user)
         elif type(user) is discord.Member:
@@ -316,69 +345,78 @@ class JSON_interface:
         else:
             index = str(user)
 
-        self.accounts[index] = user_account
-        self.data["bread"][index] = user_account.to_dict()
+        guild_id = get_id_from_guild(guild)
+
+        # self.accounts[index] = user_account
+        self.data[guild_id][index] = user_account.to_dict()
 
     def has_account(self, user:discord.Member) -> bool:
         index = str(user.id)
-        return index in self.data["bread"]
+        guild = str(user.guild.id)
+        return index in self.data[guild]
 
-    def get_all_user_accounts(self) -> list:
+    def get_all_user_accounts(self, guild: typing.Union[discord.Guild, int, str]) -> list:
+        guild_id = get_id_from_guild(guild)
+        
         #return [account.Bread_Account.from_dict(index, self.data["bread"][index]) for index in self.data["bread"]]
         output = []
-        for index in self.data["bread"]:
+        for index in self.data[guild_id]:
             if is_digit(index):
-                output.append(self.get_account(index))
+                output.append(self.get_account(index, guild_id))
             # yield account.Bread_Account.from_dict(index, self.data["bread"][index])
         return output
+
+    def get_list_of_all_guilds(self) -> list:
+        return list(self.all_guilds)
 
     ####################################
     #####      INTERFACE NICHE
 
-    def get_custom_file(self, label:str):
-        if label in self.data["bread"]:
-            return self.data["bread"][label]
+    def get_custom_file(self, label:str, guild: typing.Union[discord.Guild, int, str]):
+        guild_id = get_id_from_guild(guild)
+
+        if label in self.data[guild_id]:
+            return self.data[guild_id][label]
         else:
             return dict()
 
-    def set_custom_file(self, label:str, file_data:dict):
-        self.data["bread"][label] = file_data
+    def set_custom_file(self, label:str, file_data:dict, guild: typing.Union[discord.Guild, int, str]):
+        guild_id = get_id_from_guild(guild)
 
+        self.data[guild_id][label] = file_data
 
-    """
-    ####################################
-    #####      INTERFACE GUILD
-    
-    def get_guild_name(self, guild_id: int) -> str:
-        if guild_id in self.data["bread"]:
-            return self.data["bread"][str(guild_id)]["guild_info"]["name"]
-        else:
-            return ""
-
-    def get_all_rolling_channels(self) -> list:
-        for guild_id in self.data["bread"].keys():
+    def get_guild_info(self, guild: typing.Union[discord.Guild, int, str]) -> dict:
+        guild_id = get_id_from_guild(guild)
+        if "guild_info" not in self.data[guild_id].keys():
+            self.data[guild_id]["guild_info"] = dict()
             guild = bot_ref.get_guild(int(guild_id))
-            if guild is not None:
-                #all_channels = guild.get_all_channels()
-                for channel in guild.get_all_channels():
-                    if channel.name.lower() in rollable_channels:
-                        yield channel
+            self.data[guild_id]["guild_info"]["name"] = guild.name
 
-    def get_communication_channel(self, guild_id: int) -> discord.TextChannel:
-        if guild_id in self.data["bread"]:
-            output = bot_ref.get_channel(int(self.data["bread"][str(guild_id)]["guild_info"]["communications_channel"]))
-            if output == None:
-                pass
-            return output
-        else:
-            return None
-    """
+
+        return self.data[guild_id]["guild_info"]
+
+    def set_guild_info(self, guild_info: dict, guild: typing.Union[discord.Guild, int, str]):
+        guild_id = get_id_from_guild(guild)
+        self.data[guild_id]["guild_info"] = guild_info
+
+    def get_rolling_channel(self, guild: typing.Union[discord.Guild, int, str]) -> str:
+        guild_info = self.get_guild_info(guild)
+        if "rolling_channel" not in guild_info.keys():
+            return "<#967544442468843560>" # bread roll channel link in default guild
+        return guild_info["rolling_channel"]
+
+
     ####################################
     #####      INTERFACE OLD
 
     
 
-    def get_file_for_user(self, user: typing.Union[discord.Member, int, str]): 
+    def get_file_for_user(self, user: typing.Union[discord.Member, int, str], guild: typing.Union[discord.Guild, int, str]) -> dict: 
+        guild_id = get_id_from_guild(guild)
+        if guild_id not in self.data.keys():
+            self.data[guild_id] = dict()
+
+
         if type(user) is int:
             key = str(user)
         elif type(user) is discord.Member:
@@ -386,55 +424,24 @@ class JSON_interface:
         else:
             key = str(user)
         #print("Searching database for file for "+user.display_name)
-        if key in self.data['bread']:
+        if key in self.data[guild_id]:
             #print("Found")
-            return self.data['bread'][key]
+            return self.data[guild_id][key]
         else:
             print("Creating new data for "+str(user))
+            guild = bot_ref.get_guild(int(guild_id))
+            member = guild.get_member(int(key))
             new_file = {
                 'total_dough' : 0,
                 'earned_dough' : 0,
-                'max_daily_rolls' : 10
+                'max_daily_rolls' : 10,
+                'username' : member.name,
+                'display_name' : get_display_name(member),
+                'id' : member.id,
+                'guild_id' : guild_id,
             }
-            self.data['bread'][key] = new_file
+            self.data[guild_id][key] = new_file
             return new_file
-
-    def update_file_for_user(self, user: typing.Union[discord.Member,str,int], file):
-        if type(user) is int:
-            key = str(user)
-        elif type(user) is discord.Member:
-            key = str(user.id)
-        else:
-            key = str(user)
-        print("Updating bread file for "+str(user.display_name))
-        # if self.data['bread'][key] is not None:
-        #     print("Existing file is:")
-        #     print(self.data['bread'][key])
-        # print("New file is ")
-        # print(file)
-        self.data['bread'][key] = file
-
-    # self, Discord user, string, integer
-    def increase_value_in_file(self, user: discord.member, key: str, value_change: int):
-        file = self.get_file_for_user(user)
-        if key not in file:
-            file[key] = 0
-        file[key] += value_change
-
-        #self.update_file_for_user(user, file) # I believe these are still by reference so the update should be inherent
-    def set_value_in_file(self, user: discord.member, key: str, new_value):
-        file = self.get_file_for_user(user)
-        if key not in file:
-            print("Set value - creating new entry")
-        file[key] = new_value
-
-    def get_value_in_file(self, user: discord.member, key: str):
-        file = self.get_file_for_user(user)
-        if key not in file:
-            print("Get value - No such value")
-            return 0
-        else: 
-            return file[key]
         
 
 
@@ -477,9 +484,9 @@ class Bread_cog(commands.Cog, name="Bread"):
 
         #run at 3pm
         if time.hour == 15:
-            self.json_interface.create_backup()
+            # self.json_interface.create_backup()
             self.reset_internal() # this resets all roll counts to 0
-            print("Backup called")
+            print("Daily reset called")
             await self.announce("bread_o_clock", "It's Bread O'Clock!")
 
         # every 6 hours, based around 3pm
@@ -519,30 +526,56 @@ class Bread_cog(commands.Cog, name="Bread"):
     async def announce(self, key, message: str):
 
         print("announce called")
-        load_dotenv()
-        IS_PRODUCTION = getenv('IS_PRODUCTION')
-        if IS_PRODUCTION == 'False':
-            return
+        # load_dotenv()
+        # IS_PRODUCTION = getenv('IS_PRODUCTION')
+        # if IS_PRODUCTION == 'False':
+        #     return
         print("announce continuing")
 
-        for channel_id in announcement_channel_ids:
+        for guild_id in self.json_interface.get_list_of_all_guilds():
+            guild_info = self.json_interface.get_guild_info(guild_id)
+            if "announcement_channel" not in guild_info.keys():
+                continue
+            channel_id = guild_info["announcement_channel"]
             channel = self.bot.get_channel(int(channel_id))
-            if channel is not None:
-                # save message and delete previous one
-                # first create a key we'll use to refer to each one
-                save_key = str(key) + str(channel_id)
+            if channel is None:
+                print(f"Channel not found for guild {guild_id}")
+                continue
+            # save message and delete previous one
+            # first create a key we'll use to refer to each one
+            save_key = str(key) + str(guild_id)
+            try:
+                await self.previous_messages[save_key].delete()
+                self.previous_messages.pop(save_key)
+            except:
+                print(f"message deletion failed for {save_key}")
+                pass
+            try:
+                message = await channel.send(message)
+                self.previous_messages[save_key] = message
+            except:
+                print(f"message sending failed for {save_key}")
+                pass
 
-                if save_key in self.previous_messages:
-                    try:
-                        await self.previous_messages[save_key].delete()
-                        self.previous_messages.pop(save_key)
-                    except:
-                        pass
-                    try:
-                        message = await channel.send(message)
-                        self.previous_messages[save_key] = message
-                    except:
-                        pass
+
+        # for channel_id in announcement_channel_ids:
+        #     channel = self.bot.get_channel(int(channel_id))
+        #     if channel is not None:
+        #         # save message and delete previous one
+        #         # first create a key we'll use to refer to each one
+        #         save_key = str(key) + str(channel_id)
+
+        #         if save_key in self.previous_messages:
+        #             try:
+        #                 await self.previous_messages[save_key].delete()
+        #                 self.previous_messages.pop(save_key)
+        #             except:
+        #                 pass
+        #             try:
+        #                 message = await channel.send(message)
+        #                 self.previous_messages[save_key] = message
+        #             except:
+        #                 pass
 
     ########################################################################################################################
     #####      SYNCHRONIZE_USERNAMES
@@ -550,33 +583,39 @@ class Bread_cog(commands.Cog, name="Bread"):
     def synchronize_usernames_internal(self):
         # we get the guild and then all the members in it
         # guild = default_guild
-        guild = self.bot.get_guild(default_guild)
-        all_members = guild.members
 
-        print(f"member count is {len(all_members)}, theoretical amount is {guild.member_count}")
+        for guild_id in self.json_interface.get_list_of_all_guilds():
+            # guild = self.bot.get_guild(default_guild)
+            guild = self.bot.get_guild(int(guild_id))
+            all_members = guild.members
+            
+            print(f"synchronizing usernames for guild {get_name_from_guild(guild)}")
+            print(f"member count is {len(all_members)}, theoretical amount is {guild.member_count}")
 
-        if len(all_members) != guild.member_count:
-            print("member count mismatch")
+            if len(all_members) != guild.member_count:
+                print("member count mismatch")
 
-        # we iterate through all the members and rename the key
-        for member in all_members:
-            # make sure they have an account
-            # print (f"Checking {member.display_name}")
-            if self.json_interface.has_account(member):
-                #print(f"{member.display_name} has account")
-                # get the account
-                account = self.json_interface.get_account(member)
+            # we iterate through all the members and rename the key
+            for member in all_members:
+                # make sure they have an account
+                # print (f"Checking {member.display_name}")
+                if self.json_interface.has_account(member):
+                    #print(f"{member.display_name} has account")
+                    # get the account
+                    account = self.json_interface.get_account(member, guild=guild_id)
 
-                account.values["id"] = member.id
-                account.values["username"] = member.name
-                #account.values["display_name"] = member.display_name
-                account.values["display_name"] = get_display_name(member)
-                
-                # save the account
-                self.json_interface.set_account(member, account)
+                    account.values["id"] = member.id
+                    account.values["username"] = member.name
+                    #account.values["display_name"] = member.display_name
+                    account.values["display_name"] = get_display_name(member)
+                    
+                    # save the account
+                    self.json_interface.set_account(member, account, guild=guild_id)
 
         # save the database      
         self.json_interface.internal_save()
+        
+        
 
     ########################################################################################################################
     #####      BREAD
@@ -591,7 +630,7 @@ class Bread_cog(commands.Cog, name="Bread"):
         #print(f"bread invoked with passed subcommand {ctx.subcommand_passed}")
 
         if ctx.invoked_subcommand is None:
-            user_account = self.json_interface.get_account(ctx.author)
+            user_account = self.json_interface.get_account(ctx.author, guild=ctx.guild.id)
             spellcheck = user_account.get("spellcheck")
             if spellcheck is False or ctx.subcommand_passed == None:
                 await self.roll(ctx)
@@ -639,11 +678,11 @@ class Bread_cog(commands.Cog, name="Bread"):
         #archive check
         if check_archive is False:
             #getting current data
-            file = self.json_interface.get_file_for_user(user)
+            file = self.json_interface.get_file_for_user(user, ctx.guild.id)
             file["username"] = user.name
         else:
             #getting archived data
-            old_data = self.json_interface.data["archived_bread_count"]
+            old_data = self.json_interface.archived_bread_data
             id_str = str(user.id)
             #print(f"Searching for {id_str} in archived data {old_data.keys()}")
             if id_str in old_data.keys():
@@ -746,7 +785,7 @@ class Bread_cog(commands.Cog, name="Bread"):
         print(f"stats called for user {user.display_name} by {ctx.author.display_name}")
 
         # get account
-        account = self.json_interface.get_account(user)
+        account = self.json_interface.get_account(user, ctx.guild.id)
 
         # bread stats chess
         if (modifier is not None) and (modifier.lower() == "chess" or modifier.lower() == "chess pieces" or modifier.lower() == "pieces"):
@@ -772,7 +811,7 @@ class Bread_cog(commands.Cog, name="Bread"):
         output += f"Stats for: {account.get_display_name()}:\n\n"
         output += f"You have **{sn(account.get_dough())} dough.**\n\n"
         if account.has("earned_dough"):
-            output += f"You've found {sn(account.get('earned_dough'))} dough through all your rolls and {sn(self.get_portfolio_combined_value(user.id))} dough through stonks.\n"
+            output += f"You've found {sn(account.get('earned_dough'))} dough through all your rolls and {sn(self.get_portfolio_combined_value(user.id, guild=ctx.guild.id))} dough through stonks.\n"
         if account.has("total_rolls"): 
             output += f"You've bread rolled {account.write_number_of_times('total_rolls')} overall.\n"
         
@@ -874,36 +913,6 @@ class Bread_cog(commands.Cog, name="Bread"):
                     output += ", "
                 else:
                     output += "\n"
-
-        # # list rare_breads
-        # rare_breads = account.get_all_items_with_attribute("rare_bread")
-        # for i in range(len(rare_breads)):
-        #     text = rare_breads[i].text
-        #     output += f"{account.get(text)} {text} "
-        #     if i != len(rare_breads) - 1:
-        #         output += ", "
-        #     else:
-        #         output += ".\n"
-
-        # # list misc_breads
-        # misc_breads = account.get_all_items_with_attribute("misc_bread")
-        # for i in range(len(misc_breads)):
-        #     text = misc_breads[i].text
-        #     output += f"{account.get(text)} {text} "
-        #     if i != len(misc_breads) - 1:
-        #         output += ", "
-        #     else:
-        #         output += ".\n"
-
-        # # list misc. breads
-        # misc_items = account.get_all_items_with_attribute("misc")
-        # for i in range(len(misc_items)):
-        #     text = misc_items[i].text
-        #     output += f"{account.get(text)} {text} "
-        #     if i != len(misc_items) - 1:
-        #         output += ", "
-        #     else:
-        #         output += ".\n"
 
         output2 = ""
 
@@ -1012,7 +1021,7 @@ loaf_converter""",
         search_all = False
         wide_leaderboard = False
         ascensions = []
-        requester_account = self.json_interface.get_account(ctx.author.id)
+        requester_account = self.json_interface.get_account(ctx.author.id, ctx.guild.id)
 
         if "lifetime" in args:
             lifetime = True
@@ -1076,7 +1085,7 @@ loaf_converter""",
                 else:
                     dough = file["lifetime_dough"]
                 if "id" in file.keys():
-                    portfolio_value = self.get_portfolio_combined_value(file["id"])
+                    portfolio_value = self.get_portfolio_combined_value(file["id"], guild=ctx.guild.id)
                 else:
                     portfolio_value = 0
 
@@ -1091,13 +1100,13 @@ loaf_converter""",
         if search_value.lower() == "stonk_profit":
             def get_value_of_file(file):
                 if "id" in file.keys():
-                    return self.get_portfolio_combined_value(file["id"])
+                    return self.get_portfolio_combined_value(file["id"], guild=ctx.guild.id)
                 else:
                     return 0
         elif search_value.lower() == "portfolio_value":
             def get_value_of_file(file):
                 if "id" in file.keys():
-                    portfolio_value =  self.get_portfolio_value(file["id"])
+                    portfolio_value =  self.get_portfolio_value(file["id"], guild=ctx.guild.id)
                     if (lifetime is True) and ("lifetime_portfolio_value" in file.keys()):
                         portfolio_value += file["lifetime_portfolio_value"]
                     return portfolio_value
@@ -1107,7 +1116,7 @@ loaf_converter""",
         leaderboard = dict()
         total = 0
 
-        all_files = self.json_interface.data["bread"]
+        all_files = self.json_interface.data[str(ctx.guild.id)]
         
         if search_all is True:
             def include_file(file):
@@ -1116,7 +1125,7 @@ loaf_converter""",
             def include_file(file):
                 if "id" not in file.keys():
                     return False
-                checked_account = self.json_interface.get_account(file["id"])
+                checked_account = self.json_interface.get_account(file["id"], guild = ctx.guild.id)
                 if checked_account.get("prestige_level") in ascensions:
                     return True
                 else:
@@ -1172,7 +1181,7 @@ loaf_converter""",
         for index in range(0,top_entries_to_display):
             # name = sorted_names[index]
             id = sorted_ids[index]
-            name = self.json_interface.get_account(id).get_display_name()
+            name = self.json_interface.get_account(id, ctx.guild.id).get_display_name()
             output_name = name # the output from get_display_name is escaped
             # output_name = name.translate(escape_transform)
             if index == person_position:
@@ -1195,7 +1204,7 @@ loaf_converter""",
                 # name = sorted_names[index]
                 # output_name = name.translate(escape_transform)
                 id = sorted_ids[index]
-                name = self.json_interface.get_account(id).get_display_name()
+                name = self.json_interface.get_account(id, ctx.guild.id).get_display_name()
                 output_name = name
                 if index == person_position:
                     #bold the user's name
@@ -1211,42 +1220,14 @@ loaf_converter""",
 
         # print (f"person position is {person_position}")
 
-        person_display_name = self.json_interface.get_account(person.id).get_display_name()
+        person_display_name = self.json_interface.get_account(person.id, ctx.guild.id).get_display_name()
 
         if person_position != -1: #if they're actually on the list
             output += f"\n{person_display_name} is at position {person_position+1}."
 
         await ctx.send(output)
         #await ctx.reply("This doesn't actually do anything yet.")
-        pass
 
-    ########################################################################################################################
-    #####      BREAD TOTAL
-
-    # the following code will total up the value of a given emote across all users
-    @bread.command(
-        hidden = True,
-        brief= "Totals up a stat.",
-    )
-    @commands.is_owner() # depreciated
-    async def total(self, ctx, value: typing.Optional[str]):
-        if value is None:
-            await ctx.reply("Please provide something to total up.")
-            return
-
-        # use the values module to get the emoji from the string
-        emote = values.get_emote(value)
-        if emote is not None:
-            value = emote.text
-        
-        total = 0
-        all_files = self.json_interface.data["bread"]
-        for key in all_files.keys():
-            file = all_files[key]
-            if value in file:
-                total += file[value]
-
-        await ctx.reply(f"The total for {value} is {total}.")
 
     ########################################################################################################################
     #####      BREAD BLACK_HOLE
@@ -1269,7 +1250,7 @@ loaf_converter""",
     async def black_hole(self, ctx, state: typing.Optional[bool], *, args: typing.Optional[str]):
         # booleans here allow converting from "on" and "off" to True and False, neat!
 
-        user_account = self.json_interface.get_account(ctx.author)
+        user_account = self.json_interface.get_account(ctx.author, guild=ctx.guild.id)
         black_hole_value = user_account.get("black_hole")
 
         if black_hole_value <= 0:
@@ -1329,6 +1310,9 @@ loaf_converter""",
                 user_account.set("black_hole_conditions", list(conditions))
                 await ctx.reply("Your black hole customization has been changed to: " + " ".join(conditions))
         
+        # set the account
+        self.json_interface.set_account(ctx.author, user_account, ctx.guild.id)
+        
 
 
     ########################################################################################################################
@@ -1346,7 +1330,7 @@ loaf_converter""",
         #otherwise we add them to the list
         self.currently_interacting.append(ctx.author.id)
 
-        user_account = self.json_interface.get_account(ctx.author)
+        user_account = self.json_interface.get_account(ctx.author, guild=ctx.guild.id)
         if not user_account.boolean_is("allowed", default=True):
             await ctx.reply("Sorry, you are not allowed to roll.")
             self.currently_interacting.remove(ctx.author.id)
@@ -1400,21 +1384,21 @@ loaf_converter""",
         #check if it's their first ever roll
         if user_account.get("total_rolls") == 0 and get_channel_permission_level(ctx) < PERMISSION_LEVEL_MAX:
             record = True
-            allowed_commentary = "Thank you for rolling some bread! Just a note, please move any future rolls over to <#967544442468843560>."
+            allowed_commentary = f"Thank you for rolling some bread! Just a note, please move any future rolls over to {self.json_interface.get_rolling_channel(ctx.guild.id)}."
         
          #check if it's just not a place to roll at all. We'll give first-timers a pass.
         elif get_channel_permission_level(ctx) == PERMISSION_LEVEL_NONE:
-            await ctx.reply("Sorry, but you cannot roll bread here. Feel free to do so in <#967544442468843560>.")
+            await ctx.reply(f"Sorry, but you cannot roll bread here. Feel free to do so in {self.json_interface.get_rolling_channel(ctx.guild.id)}.")
             self.currently_interacting.remove(ctx.author.id)
             return
         
         #can be rolled but not recorded
         elif get_channel_permission_level(ctx) < PERMISSION_LEVEL_MAX:
             if user_account.get("daily_rolls") == 0:
-                allowed_commentary = "Thank you for rolling. Remember, any new rolls will only be saved in <#967544442468843560>."
+                allowed_commentary = f"Thank you for rolling. Remember, any new rolls will only be saved in {self.json_interface.get_rolling_channel(ctx.guild.id)}."
                 record = True
             else:
-                allowed_commentary = "Thank you for rolling. Remember, stats are only saved in <#967544442468843560>."
+                allowed_commentary = f"Thank you for rolling. Remember, stats are only saved in {self.json_interface.get_rolling_channel(ctx.guild.id)}."
                 record = False
 
         #can be rolled plenty
@@ -1425,10 +1409,10 @@ loaf_converter""",
         # in neutral land -- NOTE-May not be reached
         else:
             if user_account.get("daily_rolls") == 0:
-                allowed_commentary = "Thank you for rolling. Please remember to roll in <#967544442468843560>."
+                allowed_commentary = f"Thank you for rolling. Please remember to roll in {self.json_interface.get_rolling_channel(ctx.guild.id)}."
                 record = True
             else:
-                await ctx.reply("Sorry, you can't roll here. Feel free to do so in <#967544442468843560>.")
+                await ctx.reply(f"Sorry, you can't roll here. Feel free to do so in {self.json_interface.get_rolling_channel(ctx.guild.id)}.")
                 self.currently_interacting.remove(ctx.author.id)
                 return
 
@@ -1505,7 +1489,7 @@ loaf_converter""",
                 if result["highest_roll"] > prev_highest_roll:
                     user_account.set_value("highest_roll", result["highest_roll"])
                 
-            self.json_interface.set_account(ctx.author,user_account)
+            self.json_interface.set_account(ctx.author,user_account, guild = ctx.guild.id)
 
             if get_channel_permission_level(ctx) == PERMISSION_LEVEL_MAX and user_account.has("roll_summarizer"):
                 summarizer_commentary = rolls.summarize_roll(result)
@@ -1599,6 +1583,8 @@ loaf_converter""",
 
         await self.do_chessboard_completion(ctx)
 
+        self.json_interface.set_account(ctx.author, user_account, ctx.guild.id)
+
         #now we remove them from the list of rollers, this allows them to roll again without spamming
         self.currently_interacting.remove(ctx.author.id)
 
@@ -1607,7 +1593,7 @@ loaf_converter""",
 
     async def do_chessboard_completion(self, ctx, force: bool = False, amount = None):
 
-        user_account = self.json_interface.get_account(ctx.author)
+        user_account = self.json_interface.get_account(ctx.author, guild=ctx.guild.id)
 
         if user_account.get("auto_chessatron") is False and force is False:
             return
@@ -1666,13 +1652,13 @@ loaf_converter""",
 
                 await utility.smart_reply(ctx, f"{values.chessatron.text}")
                 await asyncio.sleep(1)
-                await utility.smart_reply(ctx, f"May it serve you well. You also have been awarded **{total_dough_value} dough** for your efforts.")
+                await utility.smart_reply(ctx, f"May it serve you well. You also have been awarded **{total_dough_value//trons_to_make} dough** for your efforts.")
                 messages_to_send -= 1
         elif trons_to_make < 10:
             messages_to_send = trons_to_make
             while messages_to_send > 0:
                 await asyncio.sleep(1)
-                await utility.smart_reply(ctx, f"Congratulations! You've collected all the chess pieces! This will be chessatron **#{user_account.get(values.chessatron.text)+1-messages_to_send}** for you.\n\n{board}\nHere is your award of **{total_dough_value} dough**, and here's your new chessatron!")
+                await utility.smart_reply(ctx, f"Congratulations! You've collected all the chess pieces! This will be chessatron **#{user_account.get(values.chessatron.text)+1-messages_to_send}** for you.\n\n{board}\nHere is your award of **{total_dough_value//trons_to_make} dough**, and here's your new chessatron!")
                 await asyncio.sleep(1)
                 await utility.smart_reply(ctx, f"{values.chessatron.text}")
                 messages_to_send -= 1
@@ -1694,6 +1680,8 @@ loaf_converter""",
             await utility.smart_reply(ctx, output)
             await asyncio.sleep(1)
             await utility.smart_reply(ctx, f"{values.chessatron.text} x {utility.smart_number(trons_to_make)}")
+
+        self.json_interface.set_account(ctx.author, user_account, ctx.guild.id)
     
 
     ########################################################################################################################
@@ -1710,7 +1698,7 @@ loaf_converter""",
     async def chessatron(self, ctx, arg: typing.Optional[str] = None) -> None:
         """Toggle auto chessatron on or off."""
         
-        user_account = self.json_interface.get_account(ctx.author)
+        user_account = self.json_interface.get_account(ctx.author, guild = ctx.guild.id)
 
         if arg is None:
             arg = ""
@@ -1723,7 +1711,7 @@ loaf_converter""",
             await utility.smart_reply(ctx, f"Auto chessatron is now off.")
         else:
             if get_channel_permission_level(ctx) < PERMISSION_LEVEL_ACTIVITIES:
-                await utility.smart_reply(ctx, f"Thank you for your interest in creating chessatrons! You can do so over in <#967544442468843560>.")
+                await utility.smart_reply(ctx, f"Thank you for your interest in creating chessatrons! You can do so over in {self.json_interface.get_rolling_channel(ctx.guild.id)}.")
                 return
             
             if is_numeric(arg):
@@ -1731,7 +1719,7 @@ loaf_converter""",
             else:
                 await self.do_chessboard_completion(ctx, True)
 
-        self.json_interface.set_account(ctx.author, user_account)
+        self.json_interface.set_account(ctx.author, user_account, guild = ctx.guild.id)
         
 
     ########################################################################################################################
@@ -1742,7 +1730,7 @@ loaf_converter""",
     )
     async def gem_chessatron(self, ctx, arg = None):
 
-        user_account = self.json_interface.get_account(ctx.author)
+        user_account = self.json_interface.get_account(ctx.author, guild = ctx.guild.id)
         gem_count = user_account.get(values.gem_red.text)
 
         if gem_count < 32:
@@ -1775,7 +1763,7 @@ loaf_converter""",
         user_account.increment(values.white_queen.text, 1*number_of_chessatrons)
         user_account.increment(values.white_king.text, 1*number_of_chessatrons)
 
-        self.json_interface.set_account(ctx.author, user_account)
+        self.json_interface.set_account(ctx.author, user_account, guild = ctx.guild.id)
 
         await utility.smart_reply(ctx, f"You have used {32*number_of_chessatrons} red gems to make chess pieces.")
 
@@ -1796,7 +1784,7 @@ loaf_converter""",
     async def spellcheck(self, ctx, toggle: typing.Optional[str] = None):
         """Toggle spellcheck on or off."""
 
-        user_account = self.json_interface.get_account(ctx.author)
+        user_account = self.json_interface.get_account(ctx.author, guild = ctx.guild.id)
 
         if toggle is None:
             toggle = ""
@@ -1814,7 +1802,7 @@ loaf_converter""",
             else:
                 await utility.smart_reply(ctx, f"Spellcheck is now off.")
 
-        self.json_interface.set_account(ctx.author, user_account)
+        self.json_interface.set_account(ctx.author, user_account, guild = ctx.guild.id)
 
 
     ########################################################################################################################
@@ -1827,10 +1815,10 @@ loaf_converter""",
     async def ascend(self, ctx):
         """Ascend to a higher plane of existence."""
         
-        user_account = self.json_interface.get_account(ctx.author)
+        user_account = self.json_interface.get_account(ctx.author, guild = ctx.guild.id)
         prestige_level = user_account.get_prestige_level()
 
-        prestige_file = self.json_interface.get_custom_file("prestige")
+        prestige_file = self.json_interface.get_custom_file("prestige", guild = ctx.guild.id)
         if "max_prestige_level" in prestige_file:
             max_prestige_level = prestige_file["max_prestige_level"]
         else:
@@ -1909,7 +1897,7 @@ loaf_converter""",
         await utility.smart_reply(ctx, description)
 
         # and save the account
-        self.json_interface.set_account(ctx.author, user_account)
+        self.json_interface.set_account(ctx.author, user_account, guild = ctx.guild.id)
 
     ########################################################################################################################
     #####      BREAD SHOP / BREAD STORE
@@ -1926,11 +1914,11 @@ loaf_converter""",
         # first we make sure this is a valid channel
         #if ctx.channel.name not in earnable_channels:
         if get_channel_permission_level(ctx) < PERMISSION_LEVEL_ACTIVITIES:
-            await ctx.reply("Hi! Thanks for visiting the bread shop. Our nearest location is over in <#967544442468843560>.")
+            await ctx.reply(f"Hi! Thanks for visiting the bread shop. Our nearest location is over in {self.json_interface.get_rolling_channel(ctx.guild.id)}.")
             return
         
         # we get the account of the user who called it
-        user_account = self.json_interface.get_account(ctx.author)
+        user_account = self.json_interface.get_account(ctx.author, guild = ctx.guild.id)
 
         # now we get the list of items
         items = self.get_buyable_items(user_account, store.normal_store_items)
@@ -1966,11 +1954,11 @@ loaf_converter""",
             # first we make sure this is a valid channel
             #if ctx.channel.name not in earnable_channels:
             if get_channel_permission_level(ctx) < PERMISSION_LEVEL_ACTIVITIES:
-                await ctx.reply("Hi! Thanks for visiting the hidden bakery. You can find us in <#967544442468843560>.")
+                await ctx.reply(f"Hi! Thanks for visiting the hidden bakery. You can find us in {self.json_interface.get_rolling_channel(ctx.guild.id)}.")
                 return
             
             # we get the account of the user who called it
-            user_account = self.json_interface.get_account(ctx.author)
+            user_account = self.json_interface.get_account(ctx.author, guild = ctx.guild.id)
     
             if user_account.get_prestige_level() < 1:
                 await ctx.reply("The door to this shop seems to be locked.")
@@ -2004,11 +1992,11 @@ loaf_converter""",
         # first we make sure this is a valid channel
         #if ctx.channel.name not in earnable_channels:
         if get_channel_permission_level(ctx) < PERMISSION_LEVEL_ACTIVITIES:
-            await ctx.reply("Hi! Thanks for visiting the gambit shop. Our nearest location is over in <#967544442468843560>.")
+            await ctx.reply(f"Hi! Thanks for visiting the gambit shop. Our nearest location is over in {self.json_interface.get_rolling_channel(ctx.guild.id)}.")
             return
         
         # we get the account of the user who called it
-        user_account = self.json_interface.get_account(ctx.author)
+        user_account = self.json_interface.get_account(ctx.author, guild = ctx.guild.id)
 
         # now we get the list of items
         items = self.get_buyable_items(user_account, store.gambit_shop_items)
@@ -2052,7 +2040,7 @@ loaf_converter""",
         # first we make sure this is a valid channel
         #if ctx.channel.name not in earnable_channels:
         if get_channel_permission_level(ctx) < PERMISSION_LEVEL_ACTIVITIES:
-            await ctx.reply("Thank you for your interest in purchasing an item from the store. Please visit our nearby location in <#967544442468843560>.")
+            await ctx.reply(f"Thank you for your interest in purchasing an item from the store. Please visit our nearby location in {self.json_interface.get_rolling_channel(ctx.guild.id)}.")
             return
 
         # split the first word of the item name and check if it's a number
@@ -2080,7 +2068,7 @@ loaf_converter""",
             return
 
         # first we get the account of the user who called it
-        user_account = self.json_interface.get_account(ctx.author)
+        user_account = self.json_interface.get_account(ctx.author, guild = ctx.guild.id)
 
         # now we get the list of items
         if user_account.get_prestige_level() < 1:
@@ -2155,7 +2143,7 @@ loaf_converter""",
             #print(f"item is {item}, user account is {user_account}, tuple is {(item, user_account)}")
             text = item.do_purchase(user_account)
             #user_account.increment(item.name, 1)
-            self.json_interface.set_account(ctx.author,user_account)
+            self.json_interface.set_account(ctx.author,user_account, guild = ctx.guild.id)
 
             all_cost_types = item.get_cost_types(user_account)
 
@@ -2238,7 +2226,7 @@ loaf_converter""",
                     purchased_count += 1
 
 
-            self.json_interface.set_account(ctx.author,user_account)
+            self.json_interface.set_account(ctx.author,user_account, guild = ctx.guild.id)
 
             print(f"{ctx.author.display_name} bought {purchased_count} {item.display_name}")
             if item in store.prestige_store_items:
@@ -2314,8 +2302,8 @@ For example, "$bread gift Melodie all chess_pieces" would gift all your chess pi
             await ctx.reply(self.bread_gift_text)
             return
 
-        sender_account = self.json_interface.get_account(ctx.author)
-        receiver_account = self.json_interface.get_account(target)
+        sender_account = self.json_interface.get_account(ctx.author, guild = ctx.guild.id)
+        receiver_account = self.json_interface.get_account(target, guild = ctx.guild.id)
 
         #file = self.json_interface.get_file_for_user(ctx.author)
         if "allowed" in sender_account.values.keys():
@@ -2530,8 +2518,8 @@ For example, "$bread gift Melodie all chess_pieces" would gift all your chess pi
             #         sender_account.increment(atrribute, -amount)
             #         receiver_account.increment(atrribute, amount)
         
-        self.json_interface.set_account(ctx.author, sender_account)
-        self.json_interface.set_account(target, receiver_account)
+        self.json_interface.set_account(ctx.author, sender_account, guild = ctx.guild.id)
+        self.json_interface.set_account(target, receiver_account, guild = ctx.guild.id)
 
         # elif type(arg1) is None or type(arg2) is None:
         #     await ctx.reply("Needs an amount and what to gift.")
@@ -2542,7 +2530,7 @@ For example, "$bread gift Melodie all chess_pieces" would gift all your chess pi
         aliases=["disable_gift, disablegifts, disablegift"]
     )
     async def disable_gifts(self, ctx, toggle: typing.Optional[str] = None):
-        user_account = self.json_interface.get_account(ctx.author)
+        user_account = self.json_interface.get_account(ctx.author, guild = ctx.guild.id)
         state = user_account.get("gifts_disabled")
 
         if toggle == 'on':
@@ -2558,6 +2546,8 @@ For example, "$bread gift Melodie all chess_pieces" would gift all your chess pi
             else:
                 user_account.set("gifts_disabled", False)
                 await ctx.reply("You can now be gifted items again.")
+        
+        self.json_interface.set_account(ctx.author, user_account, guild = ctx.guild.id)
 
         
         
@@ -2591,12 +2581,12 @@ anarchy - 1000% of your wager.
 
         #if ctx.channel.name not in earnable_channels:
         if get_channel_permission_level(ctx) < PERMISSION_LEVEL_ACTIVITIES:
-            await ctx.reply("Sorry, but you can only do that in <#967544442468843560>.")
+            await ctx.reply(f"Sorry, but you can only do that in {self.json_interface.get_rolling_channel(ctx.guild.id)}.")
             return
 
         print(f"{ctx.author.display_name} gambled {amount} dough")
 
-        user_account = self.json_interface.get_account(ctx.author)
+        user_account = self.json_interface.get_account(ctx.author, guild = ctx.guild.id)
         if user_account.has("total_dough", amount):
             pass
         else:
@@ -2733,7 +2723,7 @@ anarchy - 1000% of your wager.
 
         user_account.increment("gamble_winnings", winnings - amount)
         user_account.increment("total_dough", winnings)
-        self.json_interface.set_account(ctx.author, user_account)
+        self.json_interface.set_account(ctx.author, user_account, guild = ctx.guild.id)
 
         self.currently_interacting.remove(ctx.author.id)
 
@@ -2777,27 +2767,28 @@ anarchy - 1000% of your wager.
             #await ctx.send_help(ctx.command)
 
         output = "Welcome to the stonk market!\nCurrent values are as follows:\n\n"
-        stonks_file = self.json_interface.get_custom_file("stonks")
+        stonks_file = self.json_interface.get_custom_file("stonks", guild = ctx.guild.id)
 
-        #set default values
-        save = False
-        if values.pretzel.text not in stonks_file.keys():
-            stonks_file[values.pretzel.text] = 100
-            save = True
-        if values.cookie.text not in stonks_file.keys():
-            stonks_file[values.cookie.text] = 25
-            save = True
-        if values.fortune_cookie.text not in stonks_file.keys():
-            stonks_file[values.fortune_cookie.text] = 500
-            save = True
-        if save == True:
-            self.json_interface.set_custom_file("stonks", stonks_file)
+        # #set default values
+        # save = False
+        # if values.pretzel.text not in stonks_file.keys():
+        #     stonks_file[values.pretzel.text] = 100
+        #     save = True
+        # if values.cookie.text not in stonks_file.keys():
+        #     stonks_file[values.cookie.text] = 25
+        #     save = True
+        # if values.fortune_cookie.text not in stonks_file.keys():
+        #     stonks_file[values.fortune_cookie.text] = 500
+        #     save = True
+        # if save == True:
+        #     self.json_interface.set_custom_file("stonks", stonks_file)
 
-        for stonk in all_stonks:
-            value = round(stonks_file[stonk])
-            output += f"{stonk} - {utility.smart_number(value)} dough\n"
+        for stonk in main_stonks:
+            if stonk in stonks_file.keys():
+                value = round(stonks_file[stonk])
+                output += f"{stonk} - {utility.smart_number(value)} dough\n"
 
-        user_account = self.json_interface.get_account(ctx.author)
+        user_account = self.json_interface.get_account(ctx.author, guild = ctx.guild.id)
         output += f"\nYou have **{utility.smart_number(user_account.get('total_dough'))} dough** to spend.\n"
         output += '\nUse "$bread invest <amount> <stonk>" to buy into a stonk.\nUse "$bread divest <amount> <stonk>" to get out while you\'re still behind.\nUse "$bread portfolio" to see your current stonk holdings.'
         await ctx.reply(output)
@@ -2827,28 +2818,41 @@ anarchy - 1000% of your wager.
         self.previous_messages.clear()
 
         # define message
-        output = "Current stonk values are as follows:\n\n"
-        stonks_file = self.json_interface.get_custom_file("stonks")
-        for stonk in all_stonks:
-            stonk_history_key = stonk+"_history"
-            stonk_history = stonks_file[stonk_history_key] # will be a list
+        for guild in self.json_interface.get_list_of_all_guilds():
+            stonks_file = self.json_interface.get_custom_file("stonks", guild = guild)
+            if stonks_file is None:
+                continue
+            guild_info = self.json_interface.get_guild_info(guild)
+            announcement_channel_id = guild_info.get("announcement_channel", None)
+            if announcement_channel_id is None:
+                continue
+            announcement_channel = self.bot.get_channel(int(announcement_channel_id))
 
-            output += f"{stonk}: "
+            output = "Current stonk values are as follows:\n\n"
+            for stonk in main_stonks:
+                stonk_history_key = stonk+"_history"
+                stonk_history = stonks_file[stonk_history_key] # will be a list
 
-            for entry_number in range(len(stonk_history)): # for each element of a list
-                historical_value = stonk_history[entry_number] # get the element
-                output += f"{round(historical_value)} -> " 
+                output += f"{stonk}: "
+
+                for entry_number in range(len(stonk_history)): # for each element of a list
+                    historical_value = stonk_history[entry_number] # get the element
+                    output += f"{round(historical_value)} -> " 
+                    
+
+                value = round(stonks_file[stonk])
+                output += f"**{value}** dough"
+
+                if stonk + "_split" in stonks_file:
+                    if stonks_file[stonk + "_split"] is True:
+                        output += " **(Split!)**"
                 
+                output += "\n"
 
-            value = round(stonks_file[stonk])
-            output += f"**{value}** dough"
+            message = await announcement_channel.send(output)
+            self.previous_messages.append(message)
 
-            if stonk + "_split" in stonks_file:
-                if stonks_file[stonk + "_split"] is True:
-                    output += " **(Split!)**"
-            
-            output += "\n"
-
+        """
         # post messages
         if IS_PRODUCTION == "True":
             channel_ids =  announcement_channel_ids
@@ -2862,6 +2866,7 @@ anarchy - 1000% of your wager.
                     self.previous_messages.append(message)
                 except:
                     pass
+        """
 
     ########################################################################################################################
     #####      BREAD INVEST OLD
@@ -2872,7 +2877,7 @@ anarchy - 1000% of your wager.
     )
     async def invest_old(self, ctx, *, args):
         if ctx.channel.name not in earnable_channels:
-            await ctx.reply("Thank you for your interest in stonks. They are available for you in <#967544442468843560>.")
+            await ctx.reply("Thank you for your interest in stonks. They are available for you in {self.json_interface.get_rolling_channel(ctx.guild.id)}.")
             return
 
         amount = None
@@ -2958,7 +2963,7 @@ anarchy - 1000% of your wager.
     )
     async def invest(self, ctx, *, args):
         if get_channel_permission_level(ctx) < PERMISSION_LEVEL_ACTIVITIES:
-            await ctx.reply("Thank you for your interest in stonks. They are available for you in <#967544442468843560>.")
+            await ctx.reply(f"Thank you for your interest in stonks. They are available for you in {self.json_interface.get_rolling_channel(ctx.guild.id)}.")
             return
 
         amount = None
@@ -3001,14 +3006,15 @@ anarchy - 1000% of your wager.
             return
         
         # now we go through the stonks and see if we can find one that matches the emote
-        stonks_file = self.json_interface.get_custom_file("stonks")
-        user_account = self.json_interface.get_account(ctx.author)
+        stonks_file = self.json_interface.get_custom_file("stonks", guild = ctx.guild.id)
+        user_account = self.json_interface.get_account(ctx.author, guild = ctx.guild.id)
 
-        print(f"{ctx.author.name} is investing {amount} {emote} stonks for {amount} dough.")
-        if emote.text not in stonks_file.keys():
+        if emote.text not in main_stonks or emote.text not in stonks_file.keys():
             await ctx.reply("Sorry, I don't recognize that stonk.")
             return
         
+        print(f"{ctx.author.name} is investing {amount} {emote} stonks for {amount} dough.")
+
         stonk_value = round(stonks_file[emote.text])
 
         #check if we're buying a certain amount of dough worth of a stonk, rather than a certain amount of stonks
@@ -3029,7 +3035,7 @@ anarchy - 1000% of your wager.
         user_account.increment(emote.text, buy_amount)
         user_account.increment('investment_profit', (-buy_amount * stonk_value))
 
-        self.json_interface.set_account(ctx.author, user_account)
+        self.json_interface.set_account(ctx.author, user_account, guild = ctx.guild.id)
         
         await ctx.reply(f"You invested in {utility.smart_number(buy_amount)} {emote.text} stonks for **{utility.smart_number(buy_amount*stonk_value)} dough**.\n\nYou have **{utility.smart_number(user_account.get_dough())} dough** remaining.")
         print(f"{ctx.author.name} invested in {buy_amount} {emote.name} stonks for {buy_amount*stonk_value} dough.")
@@ -3045,7 +3051,7 @@ anarchy - 1000% of your wager.
     )
     async def divest_old(self, ctx, *, args):
         if ctx.channel.name not in earnable_channels:
-            await ctx.reply("Thank you for your interest in buying high and selling low. You can do so in <#967544442468843560>.")
+            await ctx.reply("Thank you for your interest in buying high and selling low. You can do so in {self.json_interface.get_rolling_channel(ctx.guild.id)}.")
             return
 
         stonks_file = self.json_interface.get_custom_file("stonks")
@@ -3152,11 +3158,11 @@ anarchy - 1000% of your wager.
     )
     async def divest(self, ctx, *, args):
         if get_channel_permission_level(ctx) < PERMISSION_LEVEL_ACTIVITIES:
-            await ctx.reply("Thank you for your interest in buying high and selling low. You can do so in <#967544442468843560>.")
+            await ctx.reply(f"Thank you for your interest in buying high and selling low. You can do so in {self.json_interface.get_rolling_channel(ctx.guild.id)}.")
             return
 
-        stonks_file = self.json_interface.get_custom_file("stonks")
-        user_account = self.json_interface.get_account(ctx.author)
+        stonks_file = self.json_interface.get_custom_file("stonks", guild = ctx.guild.id)
+        user_account = self.json_interface.get_account(ctx.author, guild = ctx.guild.id)
 
         amount = None
         emote = None
@@ -3169,7 +3175,9 @@ anarchy - 1000% of your wager.
             if args[0] == "all":
                 
                 amount_divested = 0
-                for stonk in all_stonks:
+                for stonk in main_stonks:
+                    if stonk not in stonks_file.keys():
+                        continue
                     stonk_cost = round(stonks_file[stonk])
 
                     profit = stonk_cost*user_account.get(stonk)
@@ -3178,7 +3186,7 @@ anarchy - 1000% of your wager.
                     user_account.increment("investment_profit", profit)
                     user_account.set(stonk, 0) # sell all the stonk by definition
 
-                    self.json_interface.set_account(ctx.author, user_account)
+                    self.json_interface.set_account(ctx.author, user_account, guild = ctx.guild.id)
                 await ctx.reply(f"You divested all of your stonks for **{utility.smart_number(amount_divested)} dough**.\n\nYou now have **{utility.smart_number(user_account.get_dough())} dough**.")
                 return
         
@@ -3215,7 +3223,7 @@ anarchy - 1000% of your wager.
         
 
         # make sure the stonk is in the stonks file
-        if emote.text not in all_stonks:
+        if emote.text not in main_stonks:
             await ctx.reply("Sorry, I don't recognize that stonk.")
             return
 
@@ -3233,7 +3241,7 @@ anarchy - 1000% of your wager.
         user_account.increment(emote.text, -amount)
         user_account.increment('investment_profit', stonk_value*amount)
             
-        self.json_interface.set_account(ctx.author, user_account)
+        self.json_interface.set_account(ctx.author, user_account, guild = ctx.guild.id)
 
         await ctx.reply(f"You sold {utility.smart_number(amount)} {emote.text} stonks for **{utility.smart_number(amount*stonk_value)} dough**. You now have **{utility.smart_number(user_account.get_dough())} dough** and {utility.smart_number(user_account.get(emote.text))} {emote.text}.")
         print (f"{ctx.author.name} divested in {amount} {emote.text} stonks for {amount*stonk_value} dough.")
@@ -3250,23 +3258,23 @@ anarchy - 1000% of your wager.
         print(f"{ctx.author.name} requested their portfolio.")
 
         if get_channel_permission_level(ctx) < PERMISSION_LEVEL_BASIC:
-            await ctx.reply("Thank you for your interest in your stonks portfolio. We have it available for you in <#967544442468843560>.")
+            await ctx.reply(f"Thank you for your interest in your stonks portfolio. We have it available for you in {self.json_interface.get_rolling_channel(ctx.guild.id)}.")
             return
         
         if user is None:
             user = ctx.author
 
-        user_account = self.json_interface.get_account(user)
+        user_account = self.json_interface.get_account(user, guild = ctx.guild.id)
 
         # investments = user_account.get_all_items_with_attribute("stonks")
-        stonks_file = self.json_interface.get_custom_file("stonks")
+        stonks_file = self.json_interface.get_custom_file("stonks", guild = ctx.guild.id)
 
         output = f"Investment portfolio for {user_account.get_display_name()}:\n\n"
         total_value = 0
         history_value = 0
         num_stonks_held = 0
 
-        for stonk in all_stonks:
+        for stonk in main_stonks:
             if user_account.has(stonk):
                 num_stonks_held += 1
                 stonk_text = stonk #stonk.text
@@ -3298,42 +3306,62 @@ anarchy - 1000% of your wager.
     
     def stonk_fluctuate_internal(self):
         # Auto splitting stonks.
-        stonks_file = self.json_interface.get_custom_file("stonks")
+
+        all_guild_ids = self.json_interface.get_list_of_all_guilds()
+        for guild_id in all_guild_ids:
+            print(f"stonk fluctuate: checking guild {get_name_from_guild(guild_id)}")
+            stonks_file = self.json_interface.get_custom_file("stonks", guild = guild_id)
 
 
-        stonk_starting_values = {
-            ":cookie:": 25,
-            ":pretzel:": 100,
-            ":fortune_cookie:": 500
-        }
+            stonk_starting_values = {
+                ":cookie:": 25,
+                ":pretzel:": 100,
+                ":fortune_cookie:": 500,
+                ":pancakes:": 2_500,
+                ":cake:": 21_000,
+                ":pizza:": 168_000,
+                ":pie:": 1_512_000,
+                ":cupcake:": 15_120_000
+            }
+
+            # initialize stonks if they're not already
+            for stonk in all_stonks:
+                if stonk not in stonks_file.keys():
+                    print(f"stonk {stonk} not in stonks file, initializing")
+                    stonks_file[stonk] = stonk_starting_values[stonk]
+                if stonk + "_history" not in stonks_file.keys():
+                    stonks_file[stonk + "_history"] = []
+                        
+            # it's in a try block so that it won't crash if running on a server without the stonks file
+            try:
+                stonks_file = stonks.stonk_fluctuate(stonks_file) # this will forever remain a secret
+            except:
+                print("stonk fluctuate failed")
+            
+            # stonk autosplit code
+            for stonk in all_stonks:
+                stonks_file[stonk + "_split"] = False # Reset the split marker to false, so stonks_announce() won't say the stonk got split when it didn't.
+                # print (f"stonks file is {stonks_file}")
+                if stonks_file[stonk] >= stonk_starting_values[stonk] * 2:
+                    if stonks_file[stonk] >= stonk_starting_values[stonk] * 3: # If the stonk is above 3x the starting value then split it no matter the history.
+                        self.stonk_split_internal(stonk, guild= guild_id)
+                        stonks_file[stonk + "_split"] = True # Set the split marker to true so stonks_announce() will say it got split.
+                        continue
+
+                    if stonk + "_history" not in stonks_file:
+                        continue # If the history doesn't exist, then just skip to the next stonk.
+
+                    stonk_history = stonks_file[stonk + "_history"] + [stonks_file[stonk]]
+                    rise_fall = []
+
+                    for tick_id in range(len(stonk_history) - 1): # Subtract 1 so it doesn't check the current values and future values that do not exist.
+                        rise_fall.append(stonk_history[tick_id] >= stonk_history[tick_id + 1]) # Append a bool for whether the stonk rose, fell, or stagnated. True is fall or stagnate, False is a rise.
                     
-        # it's in a try block so that it won't crash if running on a server without the stonks file
-        try:
-            stonks.stonk_fluctuate(self) # this will forever remain a secret
-        except:
-            print("stonk fluctuate failed")
-        
-        for stonk in all_stonks:
-            stonks_file[stonk + "_split"] = False # Reset the split marker to false, so stonks_announce() won't say the stonk got split when it didn't.
-            if stonks_file[stonk] >= stonk_starting_values[stonk] * 2:
-                if stonks_file[stonk] >= stonk_starting_values[stonk] * 3: # If the stonk is above 3x the starting value then split it no matter the history.
-                    self.stonk_split_internal(stonk)
-                    stonks_file[stonk + "_split"] = True # Set the split marker to true so stonks_announce() will say it got split.
-                    continue
-
-                if stonk + "_history" not in stonks_file:
-                    continue # If the history doesn't exist, then just skip to the next stonk.
-
-                stonk_history = stonks_file[stonk + "_history"] + [stonks_file[stonk]]
-                rise_fall = []
-
-                for tick_id in range(len(stonk_history) - 1): # Subtract 1 so it doesn't check the current values and future values that do not exist.
-                    rise_fall.append(stonk_history[tick_id] >= stonk_history[tick_id + 1]) # Append a bool for whether the stonk rose, fell, or stagnated. True is fall or stagnate, False is a rise.
-                
-                if rise_fall.count(True) >= 2: # If the stonk fell or stagnated 2 or more times in the history data read.
-                    self.stonk_split_internal(stonk)
-                    stonks_file[stonk + "_split"] = True # Set the split marker to true so stonks_announce() will say it got split.
-        
+                    if rise_fall.count(True) >= 2: # If the stonk fell or stagnated 2 or more times in the history data read.
+                        self.stonk_split_internal(stonk, guild = guild_id)
+                        stonks_file[stonk + "_split"] = True # Set the split marker to true so stonks_announce() will say it got split.
+            
+            self.json_interface.set_custom_file("stonks", stonks_file, guild = guild_id)
         # auto split code here?
         # I put the auto splitting code before stonk_fluctuate so the data that is used to determine a split is visible to players before the split occurs.
 
@@ -3342,18 +3370,21 @@ anarchy - 1000% of your wager.
         
     
 
-    def stonk_reset_internal(self):
-        stonks_file = self.json_interface.get_custom_file("stonks")
+    def stonk_reset_internal(self, guild):
+        stonks_file = self.json_interface.get_custom_file("stonks", guild = guild)
 
         #set default values
         stonks_file[values.pretzel.text] = 100
         stonks_file[values.cookie.text] = 25
         stonks_file[values.fortune_cookie.text] = 500
 
-        self.json_interface.set_custom_file("stonks", stonks_file)
+        self.json_interface.set_custom_file("stonks", stonks_file, guild=guild)
 
-    def stonk_split_internal(self, stonk_text: str):
-        stonks_file = self.json_interface.get_custom_file("stonks")
+    def stonk_split_internal(self, stonk_text: str, guild: typing.Union[discord.Guild, int, str]):
+
+        guild_id = get_id_from_guild(guild)
+
+        stonks_file = self.json_interface.get_custom_file("stonks", guild = guild_id)
         stonk_value = stonks_file[stonk_text]
         stonks_file[stonk_text] = stonk_value/2
 
@@ -3367,29 +3398,36 @@ anarchy - 1000% of your wager.
         # stonks_file[stonk_text+"_history"] = history_file
             
 
-        self.json_interface.set_custom_file("stonks", stonks_file)
+        self.json_interface.set_custom_file("stonks", stonks_file, guild = guild_id)
 
         #now we go through everyone's investments and split them
-        user_files = self.json_interface.data["bread"]
+        # user_files = self.json_interface.data[guild_id]
 
         #wipe the accounts cache since we'll be direcly manipulating data. 
         # Would be better to avoid this in the future.
-        self.json_interface.accounts.clear()
+        # self.json_interface.accounts.clear()
 
-        for file_key in user_files.keys():
-            if not is_digit(file_key): # skip all non-user files
-                continue
-            file = user_files[file_key]
-            #print(f"Individual file is: \n{file}")
-            if stonk_text in file.keys():
-                file[stonk_text] = file[stonk_text] * 2
+        # for file_key in user_files.keys():
+        #     if not is_digit(file_key): # skip all non-user files
+        #         continue
+        #     file = user_files[file_key]
+        #     #print(f"Individual file is: \n{file}")
+        #     if stonk_text in file.keys():
+        #         file[stonk_text] = file[stonk_text] * 2
+
+        all_accounts_in_guild = self.json_interface.get_all_user_accounts(guild_id)
+        for account in all_accounts_in_guild:
+            if account.has(stonk_text):
+                account.set(stonk_text, account.get(stonk_text) * 2)
+                self.json_interface.set_account(account.values["id"], account, guild = guild_id)
 
         print(f"{stonk_text} has been split into two stonks")
 
 
-    def get_portfolio_value(self, user_id: int):
-        stonks_file = self.json_interface.get_custom_file("stonks")
-        user_file = self.json_interface.get_account(user_id)
+    def get_portfolio_value(self, user_id: int, guild):
+        guild_id = get_id_from_guild(guild)
+        stonks_file = self.json_interface.get_custom_file("stonks", guild_id)
+        user_file = self.json_interface.get_account(user_id, guild_id)
         investments = user_file.get_all_items_with_attribute("stonks")
         total_value = 0
         for stonk in investments:
@@ -3401,9 +3439,9 @@ anarchy - 1000% of your wager.
         return total_value
 
 
-    def get_portfolio_combined_value(self, user_id: int):
-        user_file = self.json_interface.get_account(user_id)
-        portfolio_value = self.get_portfolio_value(user_id)
+    def get_portfolio_combined_value(self, user_id: int, guild):
+        user_file = self.json_interface.get_account(user_id, guild)
+        portfolio_value = self.get_portfolio_value(user_id, guild)
         return portfolio_value + user_file.get("investment_profit")
 
     
@@ -3436,7 +3474,7 @@ anarchy - 1000% of your wager.
         # print(f"{ctx.author.name} requested to alchemize {count} {target_item}.")
 
         if get_channel_permission_level(ctx) < PERMISSION_LEVEL_ACTIVITIES:
-            await ctx.reply("Thank you for your interest in bread alchemy. Please find the alchemical circle is present in <#967544442468843560>.")
+            await ctx.reply(f"Thank you for your interest in bread alchemy. Please find the alchemical circle is present in {self.json_interface.get_rolling_channel(ctx.guild.id)}.")
             return
 
         #check if they're already alchemizing
@@ -3446,7 +3484,7 @@ anarchy - 1000% of your wager.
         self.currently_interacting.append(ctx.author.id)
 
 
-        user_account = self.json_interface.get_account(ctx.author)
+        user_account = self.json_interface.get_account(ctx.author, guild = ctx.guild.id)
 
         # transform it into a comprehensible string
         # target_item = values.get_emote(target_item)
@@ -3653,7 +3691,7 @@ anarchy - 1000% of your wager.
 
 
             # finally, we save the account
-            self.json_interface.set_account(ctx.author, user_account)
+            self.json_interface.set_account(ctx.author, user_account, guild = ctx.guild.id)
 
             output = f"Well done. You have created {count * item_multiplier} {target_emote.text}. You now have {user_account.get(target_emote.text)} of them."
             if target_emote.gives_alchemy_award() and not override_dough:
@@ -3677,7 +3715,7 @@ anarchy - 1000% of your wager.
         brief = "Shows how much dough you have.",
     )
     async def dough(self, ctx):
-        user_account = self.json_interface.get_account(ctx.author)
+        user_account = self.json_interface.get_account(ctx.author, guild = ctx.guild.id)
         await ctx.reply(f"You have **{utility.smart_number(user_account.get_dough())} dough**.")
 
     #############################################################################################################################
@@ -3743,7 +3781,7 @@ anarchy - 1000% of your wager.
             user = ctx.author
         
         # file = self.json_interface.get_file_for_user(user)
-        account = self.json_interface.get_account(user)
+        account = self.json_interface.get_account(user, guild = ctx.guild.id)
         file = account.values
 
         
@@ -3765,9 +3803,8 @@ anarchy - 1000% of your wager.
                 return
 
         file[key_name] = value
-        # self.json_interface.update_file_for_user(user, file)
         account.values = file
-        self.json_interface.set_account(user, account)
+        self.json_interface.set_account(user, account, guild = ctx.guild.id)
         
         await ctx.send(output+"Done.")
 
@@ -3793,7 +3830,7 @@ anarchy - 1000% of your wager.
             user = ctx.author
         
         # file = self.json_interface.get_file_for_user(user)
-        account = self.json_interface.get_account(user)
+        account = self.json_interface.get_account(user, guild = ctx.guild.id)
         file = account.values
 
         
@@ -3818,8 +3855,7 @@ anarchy - 1000% of your wager.
         file[key_name] = value + file[key_name]
 
         account.values = file
-        self.json_interface.set_account(user, account)
-        # self.json_interface.update_file_for_user(user, file)
+        self.json_interface.set_account(user, account, guild = ctx.guild.id)
 
         await ctx.send(output+"Done.")
 
@@ -3831,13 +3867,13 @@ anarchy - 1000% of your wager.
     async def reset_account(self, ctx, user: discord.Member):
         if await self.await_confirmation(ctx) is False:
             return
-        user_account = self.json_interface.get_account(user)
+        user_account = self.json_interface.get_account(user, guild = ctx.guild.id)
         # username = user_account.get("username")
         # display_name = user_account.get("display_name")
         user_account.reset_to_default()
         # user_account.set("username", username)
         # user_account.set("display_name", display_name)
-        self.json_interface.set_account(user, user_account)
+        self.json_interface.set_account(user, user_account, guild = ctx.guild.id)
         print (f"Reset account for {user.display_name}")
         await ctx.send("Done.")
 
@@ -3850,7 +3886,7 @@ anarchy - 1000% of your wager.
         if await self.await_confirmation(ctx) is False:
             return
     
-        origin_account = self.json_interface.get_account(origin_user)
+        origin_account = self.json_interface.get_account(origin_user, guild = ctx.guild.id)
         
         # hacky copy operation
         target_account = account.Bread_Account.from_dict(str(target_user.id), origin_account.to_dict())
@@ -3862,7 +3898,7 @@ anarchy - 1000% of your wager.
         #target_account.values["display_name"] = target_user.display_name
         target_account.values["display_name"] =  get_display_name(target_user)
 
-        self.json_interface.set_account(target_user, target_account)
+        self.json_interface.set_account(target_user, target_account, guild = ctx.guild.id)
 
         print (f"Copied account from {origin_user.name} to {target_user.name}")
         await ctx.send("Done.")
@@ -3887,7 +3923,7 @@ anarchy - 1000% of your wager.
     @commands.is_owner()
     async def reward_single_server_booster(self, ctx, user: discord.Member, multiplier: typing.Optional[float] = 1):
         #first get user account
-        user_account = self.json_interface.get_account(user)
+        user_account = self.json_interface.get_account(user, guild = ctx.guild.id)
 
         result = rolls.bread_roll(roll_luck= user_account.get("loaf_converter")+1, 
                                     roll_count= user_account.get("max_daily_rolls"),
@@ -3899,10 +3935,10 @@ anarchy - 1000% of your wager.
 
         value = round(value + portfolio_value * 0.04) # 4% of portfolio value
 
-        value = round(value * multiplier) # 2 days worth of rolls
+        value = round(value * multiplier) # X days worth of rolls
 
         added_value = user_account.add_dough_intelligent(value)
-        self.json_interface.set_account(user, user_account)
+        self.json_interface.set_account(user, user_account, guild = ctx.guild.id)
         await ctx.send(f"Thank you {user.mention} for boosting the server! {added_value} dough has been deposited into your account.")
         
 
@@ -3935,7 +3971,7 @@ anarchy - 1000% of your wager.
             output += "Applying to self.\n"
             user = ctx.author
 
-        file = self.json_interface.get_file_for_user(user)
+        file = self.json_interface.get_file_for_user(user, guild = ctx.guild.id)
         for key in file.keys():
             if key == "display_name":
                 if file[key] in ["@everyone", "@here"]:
@@ -3959,7 +3995,7 @@ anarchy - 1000% of your wager.
     @commands.is_owner()
     async def show_custom(self, ctx, filename: str):
         output = ""
-        file = self.json_interface.get_custom_file(filename)
+        file = self.json_interface.get_custom_file(filename, guild = ctx.guild.id)
         for key in file.keys():
             output += str(key) + " -- " + str(file[key]) + "\n"
 
@@ -3978,9 +4014,9 @@ anarchy - 1000% of your wager.
     async def set_max_prestige_level(self, ctx, value: parse_int):
         if await self.await_confirmation(ctx) is False:
             return
-        prestige_file = self.json_interface.get_custom_file("prestige")
+        prestige_file = self.json_interface.get_custom_file("prestige", guild = ctx.guild.id)
         prestige_file["max_prestige_level"] = value
-        self.json_interface.set_custom_file("prestige", prestige_file)
+        self.json_interface.set_custom_file("prestige", prestige_file, guild = ctx.guild.id)
         await ctx.send("Done.")
 
     ########################################################################################################################
@@ -3996,8 +4032,10 @@ anarchy - 1000% of your wager.
             print("Bread Allow failed to recognize user "+str(user))
             ctx.reply("User reference not resolvable, please retry.")
             return
-        
-        self.json_interface.set_value_in_file(user, "allowed", True)
+        user_account = self.json_interface.get_account(user, ctx.guild.id)
+        user_account.set("allowed", True)
+        self.json_interface.set_account(user, user_account, ctx.guild.id)
+
         await ctx.send("Done.")
         
 
@@ -4012,7 +4050,10 @@ anarchy - 1000% of your wager.
             ctx.reply("User reference not resolvable, please retry.")
             return
         
-        self.json_interface.set_value_in_file(user, "allowed", False)
+        user_account = self.json_interface.get_account(user, ctx.guild.id)
+        user_account.set("allowed", False)
+        self.json_interface.set_account(user, user_account, ctx.guild.id)
+
         await ctx.send("Done.")
 
     ########################################################################################################################
@@ -4034,18 +4075,24 @@ anarchy - 1000% of your wager.
     async def daily_reset(self, ctx):
         if await self.await_confirmation(ctx) is False:
             return
-        self.reset_internal()
+        self.reset_internal(ctx.guild.id)
         await ctx.send("Done.")
 
-    def reset_internal(self):
-        files = self.json_interface.data["bread"]
+    def reset_internal(self, guild: typing.Optional[typing.Union[discord.Guild,str,int]] = None):
         print("Internal daily reset called")
-
         self.currently_interacting.clear()
 
-        for account in self.json_interface.get_all_user_accounts():
-            account.daily_reset()
-            self.json_interface.set_account(account.get("id"), account)
+        if guild is not None:
+            guild_id = get_id_from_guild(guild)
+            for account in self.json_interface.get_all_user_accounts(guild_id):
+                account.daily_reset()
+                self.json_interface.set_account(account.get("id"), account, guild_id)
+        else: #call for all accounts
+            for guild_id in self.json_interface.get_list_of_all_guilds():
+                for account in self.json_interface.get_all_user_accounts(guild_id):
+                    account.daily_reset()
+                    self.json_interface.set_account(account.get("id"), account, guild_id)
+
         """
         #wipe the accounts cache since we'll be direcly manipulating data. 
         # Would be better to avoid this in the future.
@@ -4065,6 +4112,7 @@ anarchy - 1000% of your wager.
     ########################################################################################################################
     #####      ADMIN PURGE_ACCOUNT_CACHE
 
+    #depreciated, we're avoiding using the account cache now
     @admin.group()
     @commands.is_owner()
     async def purge_account_cache(self, ctx):
@@ -4080,28 +4128,33 @@ anarchy - 1000% of your wager.
     @commands.is_owner()
     async def rename(self, ctx, starting_name: str, ending_name: str):
 
-        # first get the bread database
-        JSON_cog = self.bot.get_cog("JSON")
-        cabinet = JSON_cog.get_filing_cabinet("bread")
-
-        # we get the guild and then all the members in it
-        guild = ctx.guild
-        all_members = guild.members
-
-        # we iterate through all the members and rename the key
-        for member in all_members:
-            # make sure they have an account
-            if self.json_interface.has_account(member):
-                # get the account
-                account = self.json_interface.get_account(member)
-
-                # rename the key
-                if starting_name in account.values.keys():
-                    account.values[ending_name] = account.values[starting_name]
+        all_guilds = self.json_interface.get_list_of_all_guilds()
+        for guild_id in all_guilds:
+            for account in self.json_interface.get_all_user_accounts(guild_id):
+                if starting_name in account.keys():
+                    account.set(ending_name, account.get(starting_name))
                     del account.values[starting_name]
+                    self.json_interface.set_account(account.get("id"), account, guild_id)
 
-                # save the account
-                self.json_interface.set_account(member, account)
+
+        # # we get the guild and then all the members in it
+        # guild = ctx.guild
+        # all_members = guild.members
+
+        # # we iterate through all the members and rename the key
+        # for member in all_members:
+        #     # make sure they have an account
+        #     if self.json_interface.has_account(member):
+        #         # get the account
+        #         account = self.json_interface.get_account(member)
+
+        #         # rename the key
+        #         if starting_name in account.values.keys():
+        #             account.values[ending_name] = account.values[starting_name]
+        #             del account.values[starting_name]
+
+        #         # save the account
+        #         self.json_interface.set_account(member, account)
 
         # save the database      
         self.json_interface.internal_save()
@@ -4123,7 +4176,7 @@ anarchy - 1000% of your wager.
         if user is None:
             user = ctx.author
         
-        account = self.json_interface.get_account(user)
+        account = self.json_interface.get_account(user, guild = ctx.guild.id)
 
         account.reset_to_default()
 
@@ -4147,7 +4200,7 @@ anarchy - 1000% of your wager.
         for word in [":doughnut:", ":bagel:", ":waffle:", ":croissant:", ":flatbread:", ":stuffed_flatbread:", ":sandwich:", ":french_bread:"]:
             account.set(word, 5000)
 
-        self.json_interface.set_account(user, account)
+        self.json_interface.set_account(user, account, guild = ctx.guild.id)
         await ctx.send("Done.")
 
     ########################################################################################################################
@@ -4155,10 +4208,14 @@ anarchy - 1000% of your wager.
 
     @admin.command()
     @commands.is_owner()
-    async def synchronize_usernames(self, ctx):
-        # self.synchronize_usernames_internal()
+    async def synchronize_usernames(self, ctx, do_manually: typing.Optional[str] = None):
 
-        guild = self.bot.get_guild(default_guild)
+        if do_manually != "manual":
+            self.synchronize_usernames_internal()
+            await ctx.send("Done.")
+            return
+
+        guild = self.bot.get_guild(ctx.guild.id)
         all_members = guild.members
 
         print(f"member count is {len(all_members)}, theoretical amount is {guild.member_count}")
@@ -4169,20 +4226,20 @@ anarchy - 1000% of your wager.
 
         # we iterate through all the members and rename the key
         # for member in all_members:
-        async for member in guild.fetch_members(limit=3000):
+        async for member in guild.fetch_members(limit=5000):
             # make sure they have an account
             # print (f"Checking {member.display_name}")
             if self.json_interface.has_account(member):
                 print(f"{member.display_name} has account")
                 # get the account
-                account = self.json_interface.get_account(member)
+                account = self.json_interface.get_account(member, guild = ctx.guild.id)
 
                 account.values["id"] = member.id
                 account.values["username"] = member.name
                 account.values["display_name"] = get_display_name(member)
                 
                 # save the account
-                self.json_interface.set_account(member, account)
+                self.json_interface.set_account(member, account, guild = ctx.guild.id)
 
         # save the database      
         self.json_interface.internal_save()
@@ -4200,15 +4257,16 @@ anarchy - 1000% of your wager.
             return
         
         # go through all accounts and do the operation
-        for index in self.json_interface.data["bread"].keys():
-            if not is_digit(index):
-                continue
-            user_account = self.json_interface.get_account(index)
+        
+        # for index in self.json_interface.data["bread"].keys():
+        #     if not is_digit(index):
+        #         continue
+        #     user_account = self.json_interface.get_account(index)
             
-            if user_account.get("LC_booster") == 1:
-                user_account.increment(values.gem_gold.text, 1)
+        #     if user_account.get("LC_booster") == 1:
+        #         user_account.increment(values.gem_gold.text, 1)
 
-            self.json_interface.set_account(index, user_account)
+        #     self.json_interface.set_account(index, user_account)
 
             # #now we check each dough boost and increase it
             # for special_bread in values.all_special_breads:
@@ -4351,6 +4409,24 @@ anarchy - 1000% of your wager.
         self.json_interface.internal_save(json_cog)
 
     ########################################################################################################################
+    #####      ADMIN SET_ANNOUNCEMENT_CHANNEL
+
+    @admin.command(
+        aliases = ["set_announce_channel"], 
+    )
+    @commands.is_owner()
+    async def set_announcement_channel(self, ctx, channel: typing.Optional[discord.TextChannel]=None):
+        if channel is None:
+            channel = ctx.channel
+
+        guild_info = self.json_interface.get_guild_info(ctx.guild.id)
+        guild_info["announcement_channel"] = channel.id
+        self.json_interface.set_guild_info(guild=ctx.guild.id, guild_info=guild_info)
+
+        await ctx.send(f"Done. Announcements will be made in {channel.mention}.")
+
+
+    ########################################################################################################################
     #####      ADMIN STONK_FLUCTUATE
 
     @admin.command()
@@ -4367,7 +4443,7 @@ anarchy - 1000% of your wager.
     @admin.command()
     @commands.is_owner()
     async def stonk_reset(self, ctx):
-        self.stonk_reset_internal()
+        self.stonk_reset_internal(guild = ctx.guild.id)
         await ctx.invoke(self.stonks)
 
     ########################################################################################################################
@@ -4377,7 +4453,7 @@ anarchy - 1000% of your wager.
     @commands.is_owner()
     async def stonk_split(self, ctx, stonk_name: str):
         stonk_text = values.get_emote_text(stonk_name)
-        self.stonk_split_internal(stonk_text)
+        self.stonk_split_internal(stonk_text, guild=ctx.guild.id)
         await ctx.reply("Done.")
 
     ########################################################################################################################
@@ -4385,18 +4461,18 @@ anarchy - 1000% of your wager.
 
     @admin.command()
     @commands.is_owner()
-    async def add_chess_set(self, ctx, target : typing.Optional[discord.Member]):
+    async def add_chess_set(self, ctx, target : typing.Optional[discord.Member], count : typing.Optional[int] = 1):
         if target is None:
             target = ctx.author
 
-        user_account = self.json_interface.get_account(target)
+        user_account = self.json_interface.get_account(target, guild = ctx.guild.id)
         full_chess_set = values.chess_pieces_black_biased+values.chess_pieces_white_biased
 
         # add all pieces to the account
         for emote in full_chess_set:
-            user_account.increment(emote.text, 1)
+            user_account.increment(emote.text, count)
 
-        self.json_interface.set_account(target, user_account)
+        self.json_interface.set_account(target, user_account, guild = ctx.guild.id)
 
         await ctx.reply("Done.")
 
@@ -4412,10 +4488,10 @@ anarchy - 1000% of your wager.
         if target is None:
             target = ctx.author
 
-        user_account = self.json_interface.get_account(target)
+        user_account = self.json_interface.get_account(target, guild = ctx.guild.id)
         user_account.increase_prestige_level()
 
-        self.json_interface.set_account(target, user_account)
+        self.json_interface.set_account(target, user_account, guild = ctx.guild.id)
 
         await ctx.reply(f"Done. Prestige level is now {user_account.get_prestige_level()}.")
 
@@ -4572,6 +4648,7 @@ async def setup(bot):
     importlib.reload(store)
     importlib.reload(utility)
     importlib.reload(alchemy)
+    importlib.reload(stonks)
 
     try:
         #Bread_cog.internal_load(bot)

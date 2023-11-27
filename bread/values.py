@@ -536,6 +536,14 @@ cookie = Emote(
     attributes=["misc_bread", "stonks"]
 )
 
+pancakes = Emote(
+    text=":pancakes:",
+    name="pancakes",
+    emoji="🥞",
+    attributes=["misc_bread", "stonks"],
+    alternate_names=["pancake"]
+)
+
 # rest of the misc breads
 birthday = Emote(
     text=":birthday:",
@@ -551,12 +559,7 @@ cake = Emote(
     attributes=["misc_bread"]
 )
 
-pancakes = Emote(
-    text=":pancakes:",
-    name="pancakes",
-    emoji="🥞",
-    attributes=["misc_bread"]
-)
+
 
 hamburger = Emote(
     text=":hamburger:",

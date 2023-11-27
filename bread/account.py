@@ -269,7 +269,10 @@ class Bread_Account:
         global bread_cog_ref
         if bread_cog_ref is None:
             bread_cog_ref = bread_cog.bread_cog_ref
-        stonks_file = bread_cog_ref.json_interface.get_custom_file("stonks")
+        guild_id = self.get("guild_id")
+        if guild_id is None or guild_id == 0:
+            guild_id = bread_cog.default_guild
+        stonks_file = bread_cog_ref.json_interface.get_custom_file("stonks", guild_id)
         own_stonks = self.get_all_items_with_attribute("stonks")
 
         total_value = 0

@@ -1223,8 +1223,9 @@ class Chess_bot(commands.Cog, name="Chess"):
         self.internal_save()
         await ctx.send("Done.")
 
-    def internal_save(self):
-        JSON_cog = bot_ref.get_cog("JSON")
+    def internal_save(self, JSON_cog=None):
+        if JSON_cog is None:
+            JSON_cog = bot_ref.get_cog("JSON")
         #JSON_cog.load_all_data() 
         #cabinet = JSON_cog.get_filing_cabinet("chess", create_if_nonexistent=True)
         outfile = dict()
@@ -1233,11 +1234,17 @@ class Chess_bot(commands.Cog, name="Chess"):
             game = self.games[channel]
             id = str(channel.id)
             saved_game = game.to_dict()
-            outfile[id] = saved_game
+            #outfile[id] = saved_game
+            if (game.is_starting_position()):
+                JSON_cog.delete_file_in_filing_cabinet(cabinet_name="chess", file_name=id, guild=channel.guild)
+                continue
+            JSON_cog.set_file_in_filing_cabinet(cabinet_name="chess", file_name=id, file=saved_game, guild=channel.guild)
+            # the signature is set_file_in_filing_cabinet(self, cabinet_name: str, file_name: str, file: dict, guild: typing.Union[discord.Guild, int, str] = None)
 
-        JSON_cog.set_filing_cabinet("chess", outfile)
+        #JSON_cog.set_filing_cabinet("chess", outfile)
         JSON_cog.save_all_data()
 
+    """
     def capture_data(self, json_store):
         outfile = dict()
 
@@ -1249,6 +1256,7 @@ class Chess_bot(commands.Cog, name="Chess"):
 
         json_store.set_filing_cabinet("chess", outfile)
         json_store.save_all_data()
+    """
 
     @commands.command( hidden = True )
     @commands.is_owner()
@@ -1259,16 +1267,27 @@ class Chess_bot(commands.Cog, name="Chess"):
     def internal_load(self):
         JSON_cog = bot_ref.get_cog("JSON")
         JSON_cog.load_all_data() 
-        cabinet = JSON_cog.get_filing_cabinet("chess", create_if_nonexistent=True)
 
-        for id in cabinet.keys():
-            print (f"loading game {id}")
-            # try:
-            saved_game = cabinet[id]
-            restored_game = Chess_game.from_dict(saved_game)
-            self.games[restored_game.channel] = restored_game # restored_game
-            # except:
-            #     print(f"failed to load game {id}")
+        all_guilds = JSON_cog.get_list_of_all_guilds()
+        for guild in all_guilds:
+            cabinet = JSON_cog.get_filing_cabinet("chess", guild=guild, create_if_nonexistent=False)
+            if cabinet is not None:
+                for id in cabinet.keys():
+                    print (f"loading game {id}")
+                    saved_game = cabinet[id]
+                    restored_game = Chess_game.from_dict(saved_game)
+                    self.games[restored_game.channel] = restored_game
+
+        # cabinet = JSON_cog.get_filing_cabinet("chess", create_if_nonexistent=True)
+
+        # for id in cabinet.keys():
+        #     print (f"loading game {id}")
+        #     # try:
+        #     saved_game = cabinet[id]
+        #     restored_game = Chess_game.from_dict(saved_game)
+        #     self.games[restored_game.channel] = restored_game # restored_game
+        #     # except:
+        #     #     print(f"failed to load game {id}")
         
 
     @commands.command(
