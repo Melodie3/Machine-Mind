@@ -162,17 +162,23 @@ def sanitize_ping(string: str) -> str:
     return output
 
 # this will first try a regular reply, and if that fails, it will send it as a plain message with a mention
-async def smart_reply(ctx, message, ping_reply: bool = True):
+async def smart_reply(ctx, message: str, ping_reply: bool = True):
     if message == "" or message is None:
         return None
-    if ping_reply is True:
-        try:
-            message = await ctx.reply(message)
-        except:
+        
+    # Try except block to catch errors 
+    try:
+        message = await ctx.reply(message, mention_author=ping_reply)
+    except discord.HTTPException:
+        # Sending the message has failed, so the message we're trying to reply to has likely been deleted.
+        if ping_reply:
+            # Ping reply is on, so send the message normally but with a ping at the start.
             message = await ctx.send(f"{ctx.author.mention}\n\n{message}")
-    else:
-        try: 
-            message = await ctx.send(message, mention_author=False)
-        except:
+        else:
+            # Ping reply is off, so send the message and put the author's display name at the top, so they know it's theirs.
             message = await ctx.send(f"{sanitize_ping(ctx.author.display_name)}:\n\n{message}")
+    except:
+        # Some other exception has occurred, so reraise it.
+        raise
+        
     return message
