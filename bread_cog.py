@@ -1,7 +1,8 @@
 """
 Patch Notes: 
 
-Special bread pack efficiency improved
+
+
 (todo) test reply ping
 
 
@@ -1583,7 +1584,7 @@ loaf_converter""",
 
         await self.do_chessboard_completion(ctx)
 
-        self.json_interface.set_account(ctx.author, user_account, ctx.guild.id)
+        # self.json_interface.set_account(ctx.author, user_account, ctx.guild.id)
 
         #now we remove them from the list of rollers, this allows them to roll again without spamming
         self.currently_interacting.remove(ctx.author.id)
@@ -1635,6 +1636,9 @@ loaf_converter""",
         total_dough_value = user_account.add_dough_intelligent(chessatron_value * trons_to_make)
         user_account.add_item_attributes(values.chessatron, trons_to_make)
 
+        # we save the account
+        self.json_interface.set_account(ctx.author, user_account, ctx.guild.id)
+
         # then we send the tron messages
         if trons_to_make == 0:
             return
@@ -1681,7 +1685,6 @@ loaf_converter""",
             await asyncio.sleep(1)
             await utility.smart_reply(ctx, f"{values.chessatron.text} x {utility.smart_number(trons_to_make)}")
 
-        self.json_interface.set_account(ctx.author, user_account, ctx.guild.id)
     
 
     ########################################################################################################################
@@ -1705,9 +1708,11 @@ loaf_converter""",
         
         if arg.lower() == "on":
             user_account.set("auto_chessatron", True)
+            self.json_interface.set_account(ctx.author, user_account, guild = ctx.guild.id)
             await utility.smart_reply(ctx, f"Auto chessatron is now on.")
         elif arg.lower() == "off":
             user_account.set("auto_chessatron", False)
+            self.json_interface.set_account(ctx.author, user_account, guild = ctx.guild.id)
             await utility.smart_reply(ctx, f"Auto chessatron is now off.")
         else:
             if get_channel_permission_level(ctx) < PERMISSION_LEVEL_ACTIVITIES:
@@ -1719,7 +1724,6 @@ loaf_converter""",
             else:
                 await self.do_chessboard_completion(ctx, True)
 
-        self.json_interface.set_account(ctx.author, user_account, guild = ctx.guild.id)
         
 
     ########################################################################################################################
@@ -2629,7 +2633,8 @@ anarchy - 1000% of your wager.
         user_account.increment("daily_gambles", 1)
         user_account.increment("lifetime_gambles", 1)
         
-        
+        self.json_interface.set_account(ctx.author, user_account, ctx.guild.id)
+
 
         result = gamble.gamble()
         winnings = parse_int(amount * result["multiple"])
@@ -2721,6 +2726,8 @@ anarchy - 1000% of your wager.
         except:
             pass #only happens if original message was deleted.
 
+
+        user_account = self.json_interface.get_account(ctx.author, guild = ctx.guild.id)
         user_account.increment("gamble_winnings", winnings - amount)
         user_account.increment("total_dough", winnings)
         self.json_interface.set_account(ctx.author, user_account, guild = ctx.guild.id)
@@ -3660,6 +3667,7 @@ anarchy - 1000% of your wager.
             ########################################################################################################################
             #####      CREATE ITEM
 
+            user_account = self.json_interface.get_account(ctx.author, guild = ctx.guild.id)
 
             # first we make sure the user has enough ingredients
             for pair in recipe["cost"]:
