@@ -20,7 +20,7 @@ import bread.utility as utility
 # flowers
 
 
-ascension_token_levels = [50, 150, 450, 1000, 1650]
+ascension_token_levels = [50, 150, 450, 1000, 1660]
 
 # daily_rolls_discount_prices = [128, 124, 120, 116, 112, 108, 104, 100]
 # loaf_converter_discount_prices = [256, 244, 232, 220, 208, 196, 184, 172]
