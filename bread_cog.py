@@ -663,7 +663,10 @@ class Bread_cog(commands.Cog, name="Bread"):
         brief="Stats about bread.",
         help="Gives bread stats about either the person calling it or the named user."
     )
-    async def stats_old(self, ctx, user: typing.Optional[discord.Member], archived: typing.Optional[str]):
+    async def stats_old(self, ctx,
+            user: typing.Optional[discord.Member] = commands.parameter(description = "The user to get the stats of."),
+            archived: typing.Optional[str] = commands.parameter(description = "Use 'archived' to use the archived data.")
+            ):
         #print("stats called for user "+str(user))
 
         check_archive = False
@@ -761,7 +764,10 @@ class Bread_cog(commands.Cog, name="Bread"):
         brief="Stats about bread.",
         help="Gives bread stats about either the person calling it or the named user. Call as '$bread stats [user]' to get stats about another person. Call as '$bread stats [user] archive' to get stats about the user's archive, or as '$bread stats [user] chess' to get stats about the user's chess piece collection."
     )
-    async def stats(self, ctx, user: typing.Optional[discord.Member], modifier: typing.Optional[str]):
+    async def stats(self, ctx,
+            user: typing.Optional[discord.Member] = commands.parameter(description = "The user to get the stats of."),
+            modifier: typing.Optional[str] = commands.parameter(description = "The modifier for the stats. Like 'chess' or 'gambit'.")
+            ):
         #print("stats called for user "+str(user))
 
         # make sure we're in the right channel to preven spam
@@ -1008,7 +1014,10 @@ multiroller
 loaf_converter""",
         aliases = ["leaderboards", "lb"]
     )
-    async def leaderboard(self, ctx, person: typing.Optional[discord.User], *args):
+    async def leaderboard(self, ctx,
+            person: typing.Optional[discord.User] = commands.parameter(description = "The person to highlight in the leaderboard."),
+            *args # Can't use argument parameters here.
+            ):
 
         print(f"Leaderboard called by {ctx.author} for {args}")
 
@@ -1248,7 +1257,10 @@ loaf_converter""",
         """,
         aliases = ["blackhole"]
     )
-    async def black_hole(self, ctx, state: typing.Optional[bool], *, args: typing.Optional[str]):
+    async def black_hole(self, ctx,
+            state: typing.Optional[bool] = commands.parameter(description = "Whether to turn the black hole 'on' or 'off'."), 
+            *, args: typing.Optional[str] = commands.parameter(description = "A list of items to show in the black hole.")
+            ):
         # booleans here allow converting from "on" and "off" to True and False, neat!
 
         user_account = self.json_interface.get_account(ctx.author, guild=ctx.guild.id)
@@ -1698,7 +1710,9 @@ loaf_converter""",
         brief="Toggle auto chessatron on or off."
 
     )
-    async def chessatron(self, ctx, arg: typing.Optional[str] = None) -> None:
+    async def chessatron(self, ctx,
+            arg: typing.Optional[str] = commands.parameter(description = "Turn Auto Chessatron 'on' or 'off', or a number to make that many trons.")
+            ) -> None:
         """Toggle auto chessatron on or off."""
         
         user_account = self.json_interface.get_account(ctx.author, guild = ctx.guild.id)
@@ -1732,7 +1746,9 @@ loaf_converter""",
     @bread.command(
         help="Create a chessatron from red gems.",
     )
-    async def gem_chessatron(self, ctx, arg = None):
+    async def gem_chessatron(self, ctx,
+            arg: typing.Optional[str] = commands.parameter(description = "The number of chessatrons to create.")
+            ):
 
         user_account = self.json_interface.get_account(ctx.author, guild = ctx.guild.id)
         gem_count = user_account.get(values.gem_red.text)
@@ -1785,7 +1801,9 @@ loaf_converter""",
         brief="Toggle spellcheck on or off."
 
     )
-    async def spellcheck(self, ctx, toggle: typing.Optional[str] = None):
+    async def spellcheck(self, ctx,
+            toggle: typing.Optional[str] = commands.parameter(description = "Whether to turn spellcheck 'on' or 'off'.")
+            ):
         """Toggle spellcheck on or off."""
 
         user_account = self.json_interface.get_account(ctx.author, guild = ctx.guild.id)
@@ -2035,7 +2053,9 @@ loaf_converter""",
         help= "Usage: $bread buy [item name]\n\nBuys an item from the bread store. Only works in #bread-rolls.",
         brief= "Buy an item from the bread shop.",
     )
-    async def buy(self, ctx, *, item_name: typing.Optional[str]):
+    async def buy(self, ctx,
+            *, item_name: typing.Optional[str] = commands.parameter(description = "The item you would like to purchase.")
+            ):
 
         if item_name is None:
             await ctx.reply("Please specify an item to buy.")
@@ -2297,9 +2317,9 @@ For example, "$bread gift Melodie all chess_pieces" would gift all your chess pi
         help="Usage: $bread gift [person] [amount] [item]\n"+bread_gift_text,
         aliases=["pay"]
     )
-    async def gift(self, ctx, target: typing.Optional[discord.Member], 
-                    arg1: typing.Optional[typing.Union[parse_int, str]], 
-                    arg2: typing.Optional[typing.Union[parse_int, str]]):
+    async def gift(self, ctx, target: typing.Optional[discord.Member] = commands.parameter(description = "The person to gift to."), 
+                    arg1: typing.Optional[typing.Union[parse_int, str]] = commands.parameter(description = "The amount you want to gift.", displayed_name = "amount"), 
+                    arg2: typing.Optional[typing.Union[parse_int, str]] = commands.parameter(description = "The item you're gifting.", displayed_name = "item")):
         # await ctx.reply("This function isn't ready yet.")
 
         if target is None: #then it's empty and we'll tell them how to use it.
@@ -2533,7 +2553,9 @@ For example, "$bread gift Melodie all chess_pieces" would gift all your chess pi
         brief="Disables being gifted items.",
         aliases=["disable_gift, disablegifts, disablegift"]
     )
-    async def disable_gifts(self, ctx, toggle: typing.Optional[str] = None):
+    async def disable_gifts(self, ctx,
+            toggle: typing.Optional[str] = commands.parameter(description = "Whether to disable gifts. 'on' or 'off'.")
+            ):
         user_account = self.json_interface.get_account(ctx.author, guild = ctx.guild.id)
         state = user_account.get("gifts_disabled")
 
@@ -2578,7 +2600,9 @@ anarchy - 1000% of your wager.
         brief= "Risk / Reward.",
         help=bread_gamble_info
     )
-    async def gamble(self, ctx, amount: typing.Optional[parse_int] ):
+    async def gamble(self, ctx,
+            amount: typing.Optional[parse_int] = commands.parameter(description = "The amount of dough to lay on the table.")
+            ):
         if amount is None:
             await ctx.send(self.bread_gamble_info)
             return
@@ -2968,9 +2992,15 @@ anarchy - 1000% of your wager.
         brief="Buy into a stonk.",
         help="You can either use the stonk name or the stonk emoji.\nUse as \"$bread invest <amount> <stonk>\". You can also invest a certain amount of dough by using \"$bread invest <amount> dough <stonk>\".",
     )
-    async def invest(self, ctx, *, args):
+    async def invest(self, ctx,
+            *, args: typing.Optional[str] = commands.parameter(description = "See above for command syntax.")
+            ):
         if get_channel_permission_level(ctx) < PERMISSION_LEVEL_ACTIVITIES:
             await ctx.reply(f"Thank you for your interest in stonks. They are available for you in {self.json_interface.get_rolling_channel(ctx.guild.id)}.")
+            return
+        
+        if args is None:
+            await ctx.reply("Needs an amount and what to invest in.\nUse as \"$bread invest <amount> <stonk>\"")
             return
 
         amount = None
@@ -3163,9 +3193,16 @@ anarchy - 1000% of your wager.
         brief="Get out of a stonk.",
         help="You can either use the stonk name or the stonk emoji.\nUse as \"$bread divest <amount> <stonk>\". You can also divest a certain amount of dough by using \"$bread divest <amount> dough <stonk>\".",
     )
-    async def divest(self, ctx, *, args):
+    async def divest(self, ctx,
+            *, args: typing.Optional[str] = commands.parameter(description = "See above for command syntax.")
+            ):
         if get_channel_permission_level(ctx) < PERMISSION_LEVEL_ACTIVITIES:
             await ctx.reply(f"Thank you for your interest in buying high and selling low. You can do so in {self.json_interface.get_rolling_channel(ctx.guild.id)}.")
+            return
+        
+        print(args)
+        if args is None:
+            await ctx.reply("Needs an amount and what to divest from.\nUse as \"$bread divest <amount> <stonk>\"")
             return
 
         stonks_file = self.json_interface.get_custom_file("stonks", guild = ctx.guild.id)
@@ -3261,7 +3298,9 @@ anarchy - 1000% of your wager.
         aliases = ["investments"],
         brief="See your investments.",
     )
-    async def portfolio(self, ctx, user: typing.Optional[discord.Member] = None):
+    async def portfolio(self, ctx,
+            user: typing.Optional[discord.Member] = commands.parameter(description = "Who you want to get the portfolio of.")
+            ):
         print(f"{ctx.author.name} requested their portfolio.")
 
         if get_channel_permission_level(ctx) < PERMISSION_LEVEL_BASIC:
@@ -3464,7 +3503,12 @@ anarchy - 1000% of your wager.
         help="Creates more advanced materials from basic ones. Call the command and follow the instructions, keeping in mind what you would like to create."
     )
     #@commands.is_owner()
-    async def alchemy(self, ctx, count: typing.Optional[parse_int] = None, target_item: typing.Optional[str] = None, recipe_num: typing.Optional[parse_int] = None, confirm: typing.Optional[str] = None):
+    async def alchemy(self, ctx,
+            count: typing.Optional[parse_int] = commands.parameter(description = "The amount of the item you want to make."),
+            target_item: typing.Optional[str] = commands.parameter(description = "The item to create."),
+            recipe_num: typing.Optional[parse_int] = commands.parameter(description = "The recipe number to use."),
+            confirm: typing.Optional[str] = commands.parameter(description = "Whether to confirm automatically.")
+            ):
         
         if count is None:
             count = 1
