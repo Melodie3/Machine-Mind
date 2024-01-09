@@ -653,7 +653,7 @@ class Bread_cog(commands.Cog, name="Bread"):
         brief="Links to the wiki."
     )
     async def wiki(self, ctx):
-        await ctx.send("The bread wiki is a repository of all information so far collected about the bread game. It can be found here:\nhttps://bread.miraheze.org/wiki/Main_Page")
+        await ctx.send("The bread wiki is a repository of all information so far collected about the bread game. It can be found here:\nhttps://bread.miraheze.org/wiki/The_Bread_Game_Wiki")
 
     ###########################################################################################################################
     ######## STATS OLD
