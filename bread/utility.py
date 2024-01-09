@@ -1,6 +1,7 @@
 import random
 import math
 import typing
+import discord
 
 def smart_number(number: int) -> str:
     shrink_large_numbers = False
