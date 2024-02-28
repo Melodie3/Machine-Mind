@@ -45,6 +45,7 @@ V portfolio command now shows how your portfolio changed in the last tick
 V multirollers now require compound rollers at higher levels
 
 """
+from __future__ import annotations
 
 import asyncio
 from datetime import datetime
@@ -54,6 +55,8 @@ import typing
 import os
 import importlib
 import math
+import traceback
+import re
 
 from os import getenv
 from dotenv import load_dotenv
@@ -74,6 +77,8 @@ import bread.store as store
 import bread.utility as utility
 import bread.alchemy as alchemy
 import bread.stonks as stonks
+import bread.space as space
+import bread.generation as generation
 
 # roles
 # average bread enjoyer
@@ -190,7 +195,13 @@ def get_guild_from_id(guild_id: typing.Union[discord.Guild, int, str]) -> discor
 
 def get_name_from_guild(guild: typing.Union[discord.Guild, int, str]) -> str:
     guild_id = get_id_from_guild(guild)
-    return bot_ref.get_guild(int(guild_id)).name
+    guild_object = bot_ref.get_guild(int(guild_id))
+
+    # If the bot doesn't have access to this guild (like if it got kicked), then guild will be None.
+    if guild_object is None:
+        return f"<unknown guild {guild}>"
+    
+    return guild_object.name
 
 def get_display_name(member):
     return (member.global_name if (member.global_name is not None and member.name == member.display_name) else member.display_name)
@@ -369,6 +380,42 @@ class JSON_interface:
 
     def get_list_of_all_guilds(self) -> list:
         return list(self.all_guilds)
+    
+    ####################################
+    #####      BREAD SPACE
+
+    def get_space_data(self, guild: typing.Union[discord.Guild, int, str]) -> dict:
+        return self.get_custom_file("space", guild=guild)
+
+    def get_ascension_seed(self, ascension_id: typing.Union[int, str], guild: typing.Union[discord.Guild, int, str]) -> str:
+        space_data = self.get_space_data(guild=guild)
+
+        ascension_id = str(ascension_id)
+
+        seeds = space_data.get("ascension_seeds", dict())
+
+        if ascension_id in seeds.keys():
+            return seeds[ascension_id]
+        
+        # If this ascension doesn't yet have a seed, create one
+
+        new_seed = str(random.randint(10, 10 ** 30))
+        
+        seeds[ascension_id] = new_seed
+        space_data["ascension_seeds"] = seeds
+
+        self.set_custom_file("space", file_data=space_data, guild=guild)
+
+        return new_seed
+    
+    def get_modifier_seed(self, guild: typing.Union[discord.Guild, int, str]):
+        space_data = self.get_space_data(guild=guild)
+
+        return space_data.get("modifier_seed", 31004150)
+        
+            
+        
+
 
     ####################################
     #####      INTERFACE NICHE
@@ -390,8 +437,9 @@ class JSON_interface:
         guild_id = get_id_from_guild(guild)
         if "guild_info" not in self.data[guild_id].keys():
             self.data[guild_id]["guild_info"] = dict()
-            guild = bot_ref.get_guild(int(guild_id))
-            self.data[guild_id]["guild_info"]["name"] = guild.name
+
+            guild_name = get_name_from_guild(guild_id)
+            self.data[guild_id]["guild_info"]["name"] = guild_name
 
 
         return self.data[guild_id]["guild_info"]
@@ -524,7 +572,7 @@ class Bread_cog(commands.Cog, name="Bread"):
 
     previous_messages = dict()
 
-    async def announce(self, key, message: str):
+    async def announce(self, key, content: str):
 
         print("announce called")
         # load_dotenv()
@@ -552,7 +600,7 @@ class Bread_cog(commands.Cog, name="Bread"):
                 print(f"message deletion failed for {save_key}")
                 pass
             try:
-                message = await channel.send(message)
+                message = await channel.send(content)
                 self.previous_messages[save_key] = message
             except:
                 print(f"message sending failed for {save_key}")
@@ -588,6 +636,11 @@ class Bread_cog(commands.Cog, name="Bread"):
         for guild_id in self.json_interface.get_list_of_all_guilds():
             # guild = self.bot.get_guild(default_guild)
             guild = self.bot.get_guild(int(guild_id))
+
+            # If the bot doesn't have access to the guild. For example, if the bot was kicked.
+            if guild is None:
+                continue
+
             all_members = guild.members
             
             print(f"synchronizing usernames for guild {get_name_from_guild(guild)}")
@@ -766,7 +819,7 @@ class Bread_cog(commands.Cog, name="Bread"):
     )
     async def stats(self, ctx,
             user: typing.Optional[discord.Member] = commands.parameter(description = "The user to get the stats of."),
-            modifier: typing.Optional[str] = commands.parameter(description = "The modifier for the stats. Like 'chess' or 'gambit'.")
+            modifier: typing.Optional[str] = commands.parameter(description = "The modifier for the stats. Like 'chess', 'gambit', or 'space'.")
             ):
         #print("stats called for user "+str(user))
 
@@ -794,11 +847,23 @@ class Bread_cog(commands.Cog, name="Bread"):
         # get account
         account = self.json_interface.get_account(user, ctx.guild.id)
 
+        # bread stats space
+        if (modifier is not None) and (modifier.lower() in ["space"]):
+            await self.space_stats(ctx, user)
+            return
+
         # bread stats chess
         if (modifier is not None) and (modifier.lower() == "chess" or modifier.lower() == "chess pieces" or modifier.lower() == "pieces"):
             output = f"Chess pieces of {account.get_display_name()}:\n\n"
             for chess_piece in values.all_chess_pieces:
                 output += f"{chess_piece.text} - {account.get(chess_piece.text)}\n"
+            
+            if any(account.has(piece.text) for piece in values.all_anarchy_pieces):
+                output += "\n"
+                for anarchy_piece in values.all_anarchy_pieces:
+                    output += f"{anarchy_piece.text} - {account.get(anarchy_piece.text)}\n"
+
+
             await ctx.send(output)
             return
 
@@ -1381,9 +1446,12 @@ loaf_converter""",
         ######
         ############################################################
 
-        result = rolls.bread_roll(roll_luck= user_luck, 
-                                    roll_count= user_multiroll,
-                                    user_account=user_account)
+        result = rolls.bread_roll(
+            roll_luck= user_luck, 
+            roll_count= user_multiroll,
+            user_account=user_account,
+            json_interface=self.json_interface
+        )
 
         ############################################################
         ######
@@ -1595,6 +1663,7 @@ loaf_converter""",
             pass
 
         await self.do_chessboard_completion(ctx)
+        await self.anarchy_chessatron_completion(ctx)
 
         # self.json_interface.set_account(ctx.author, user_account, ctx.guild.id)
 
@@ -2275,6 +2344,7 @@ loaf_converter""",
             return
         self.currently_interacting.append(ctx.author.id)
         await self.do_chessboard_completion(ctx)
+        await self.anarchy_chessatron_completion(ctx)
         self.currently_interacting.remove(ctx.author.id)
 
         return
@@ -3752,6 +3822,7 @@ anarchy - 1000% of your wager.
             await ctx.reply(output)
 
             await self.do_chessboard_completion(ctx)
+            await self.anarchy_chessatron_completion(ctx)
 
         except:
             pass
@@ -3769,6 +3840,422 @@ anarchy - 1000% of your wager.
     async def dough(self, ctx):
         user_account = self.json_interface.get_account(ctx.author, guild = ctx.guild.id)
         await ctx.reply(f"You have **{utility.smart_number(user_account.get_dough())} dough**.")
+        
+    ########################################################################################################################
+    #####      BREAD SPACE
+
+    @bread.group(
+        brief = "Space travel in the Bread Game.",
+    )
+    async def space(self, ctx):
+        # Ensure no subcommands have been run.
+        if ctx.invoked_subcommand is not None:
+            return
+        
+        if get_channel_permission_level(ctx) < PERMISSION_LEVEL_ACTIVITIES:
+            await ctx.reply(f"Thank you for your interest in space travel! The nearest launch site is over in {self.json_interface.get_rolling_channel(ctx.guild.id)}.")
+            return
+
+        
+        account = self.json_interface.get_account(ctx.author, guild = ctx.guild.id)
+
+        if account.get_space_level() < 1:
+            await ctx.reply("You do not yet have a rocket.\nYou can purchase one from the Space Shop.")
+            return
+        
+        
+        
+    ########################################################################################################################
+    #####      BREAD SPACE STATS
+
+    @bread.command(
+        name = "space_stats",
+        brief = "The Space Shop.",
+        description = "Shortcut to '$bread space shop'.",
+        hidden = True
+    )
+    async def space_stats_shortcut(self, ctx,
+            user: typing.Optional[discord.Member] = commands.parameter(description = "The user to get the stats of.")
+        ):
+        await self.space_stats(ctx, user)
+
+    @space.command(
+        name = "stats",
+        brief = "See your space stats."
+    )
+    async def space_stats(self, ctx,
+            user: typing.Optional[discord.Member] = commands.parameter(description = "The user to get the stats of.")
+        ):
+        # Ensure you can actually get your stats here.
+        if get_channel_permission_level(ctx) < PERMISSION_LEVEL_BASIC:
+            await ctx.send("Sorry, you can't do that here.")
+            return
+        
+        if user is None:
+            user = ctx.author
+        
+        account = self.json_interface.get_account(user, guild = ctx.guild.id)
+
+        if account.get_space_level() < 1:
+            await ctx.reply("You do not yet have any space stats.")
+            return
+        
+        sn = utility.smart_number
+
+        output = []
+
+        # The items in the output list get joined with a new line in the middle, so only a single \n is required here.
+        output.append(f"Space stats for: {account.get_display_name()}:\n")
+
+        output.append(f"You have reached the rocket tier {sn(account.get_space_level())}.")
+
+        output.append(f"With a level {sn(account.get('fuel_tank'))} fuel tank, you can store up to {store.Fuel_Tank.tank_values[account.get('fuel_tank')]} {values.fuel.text}.")
+
+        if account.has("fuel_research"):
+            output.append(f"By having {account.write_count('fuel_research', 'level')} of fuel research, you can use {store.Fuel_Research.highest_gem[account.get('fuel_research')]} or any lower gem for making fuel.")
+
+        if account.has("telescope_level"):
+            output.append(f"With {account.write_count('telescope_level', 'telescope level')}, you can see in a {sn(account.get('telescope_level') + 2)} tile radius area.")
+        
+
+
+
+        # Anarchy pieces.
+
+        output.append("") # Add a blank item to add an extra new line.
+        output.append(self.format_anarchy_pieces(account.values))
+
+        await utility.smart_reply(ctx, "\n".join(output))
+
+
+
+
+
+
+        
+        
+        
+    ########################################################################################################################
+    #####      BREAD SPACE SHOP
+
+    @bread.command(
+        name = "space_shop",
+        brief = "The Space Shop.",
+        description = "Shortcut to '$bread space shop'.",
+        hidden = True
+    )
+    async def space_shop_shortcut(self, ctx):
+        await ctx.invoke(self.space_shop)
+
+    @space.command(
+        name = "shop",
+        brief = "The Space Shop."
+    )
+    async def space_shop(self, ctx):
+
+        # first we make sure this is a valid channel
+        if get_channel_permission_level(ctx) < PERMISSION_LEVEL_ACTIVITIES:
+            await ctx.reply(f"Hello! Thanks for flying to the Space Shop. The nearest Space Shop Port is in {self.json_interface.get_rolling_channel(ctx.guild.id)}.")
+            return
+        
+        # we get the account of the user who called it
+        user_account = self.json_interface.get_account(ctx.author, guild = ctx.guild.id)
+
+        # now we get the list of items
+        items = self.get_buyable_items(user_account, store.space_shop_items)
+
+        output = ""
+        output += f"Welcome to the Space Shop! You have **{user_account.get('total_dough')} dough**.\n\*Prices subject to change.\nHere are the items available for purchase:\n\n"
+        for item in items:
+            output += f"\t**{item.display_name}** - {item.get_price_description(user_account)}\n{item.description(user_account)}\n\n"
+        
+        if len(items) == 0:
+            output += "Sorry, but you can't buy anything right now. Please try again later."
+        else:
+            output += 'To buy an item, just type "$bread buy [item name]".'
+
+        await ctx.reply(output)
+        
+    ########################################################################################################################
+    #####      BREAD SPACE MAP
+    
+    @space.command(
+        name = "map",
+        aliases = ["view"],
+        brief = "View the space map.",
+        description = "View the space map.\nYou can use the 'galaxy' mode to view the galaxy map."
+    )
+    async def space_map(self, ctx,
+            mode: typing.Optional[str] = commands.parameter(description="The map mode to use.")
+        ):
+        if get_channel_permission_level(ctx) < PERMISSION_LEVEL_ACTIVITIES:
+            await ctx.reply(f"I appreciate your interest in the space map! You can find the telescopes in {self.json_interface.get_rolling_channel(ctx.guild.id)}.")
+            return
+        
+        user_account = self.json_interface.get_account(ctx.author, guild = ctx.guild.id)
+
+        if user_account.get_space_level() < 1:
+            await ctx.reply("You do not yet have a rocket that can help you map the vast reaches of space.\nYou can purchase the required rocket from the Space Shop.")
+            return
+        
+        map_data = space.space_map(
+            account=user_account,
+            json = self.json_interface,
+            mode=mode
+        )
+
+        corruption_chance = round(user_account.get_corruption_chance() * 100, 2)
+
+        if mode == "galaxy":
+            prefix = "Galaxy map:"
+            middle = f"Your current galaxy location: ({user_account.get_galaxy_location()}).\nCorruption chance: {corruption_chance}%."
+            suffix = "You can use '$bread space map' to view the map for the system you're in."
+        else:
+            prefix = "System map:"
+            middle = f"Your current galaxy location: ({user_account.get_galaxy_location()}).\nYour current system location: {user_account.get_system_location()}.\nCorruption chance: {corruption_chance}%."
+            suffix = "You can use '$bread space map galaxy' to view the galaxy map."
+
+        lines = ["".join(item) for item in map_data]
+        lines = "\n".join(lines)
+
+
+        unfortunate_embed = discord.Embed( # It's unfortunate that we have to use one.
+            title = prefix,
+            description = lines + "\n" + middle + "\n\n" + suffix,
+            color=8884479
+        )
+        await ctx.reply(embed=unfortunate_embed)
+        
+    ########################################################################################################################
+    #####      BREAD SPACE ANALYZE
+    
+    @space.command(
+        name = "analyze",
+        aliases = ["analyse", "analysis"],
+        brief = "Analyze and get information about planets.",
+        description = "Analyze and get information about planets.\n\nTo get a guide for the point parameter, look at the system map."
+    )
+    async def space_analyze(self, ctx,
+            point: typing.Optional[str] = commands.parameter(description="The point around you to analyze.")
+        ):
+        if get_channel_permission_level(ctx) < PERMISSION_LEVEL_ACTIVITIES:
+            await ctx.reply(f"Thank you for trying to analyze a system! The nearest science center is in {self.json_interface.get_rolling_channel(ctx.guild.id)}.")
+            return
+        
+        user_account = self.json_interface.get_account(ctx.author, guild = ctx.guild.id)
+
+        if user_account.get_space_level() < 1:
+            await ctx.reply("You do not yet have a rocket that can help you analyze the many planets in space.\nYou can purchase the required rocket from the Space Shop.")
+            return
+        
+        ##########################################################
+        ##### Ensuring the arguments are properly passed.
+        
+        HELP_MSG = "You must provide the point to analyze in the form of '<letter><number>'.\nYou can find a guide in the system map."
+        
+        if point is None:
+            await ctx.reply(HELP_MSG)
+            return
+        
+        if len(point) != 2:
+            await ctx.reply(HELP_MSG)
+            return
+
+        telescope_level = user_account.get("telescope_level")
+        radius = telescope_level + 1
+        diameter = radius * 2 + 1
+
+        letters = "abcdefghi"
+
+        pattern = "([a-{letter_end}])([1-{number_end}])".format(
+            letter_end = letters[diameter - 1],
+            number_end = diameter
+        )
+        
+        matched = re.match(pattern, point.lower())
+
+        if matched is None:
+            await ctx.reply(HELP_MSG)
+            return
+        
+        x_modifier = "abcdefghi".index(matched.group(1)) # group 1 is the letter.
+        y_modifier = int(matched.group(2)) - 1 # group 2 is the number.
+
+        if round(math.hypot(abs(x_modifier - radius), abs(y_modifier - radius))) > radius:
+            await ctx.reply("You cannot see that point.")
+            return
+        
+        ##########################################################
+        ##### Generating and modifying the map.
+
+        map_lines = space.space_map(
+            account = user_account,
+            json = self.json_interface,
+            mode = "system"
+        )
+
+        red_line = ":red_square:"
+
+        for i in range(len(map_lines) - 2 - y_modifier):
+            map_lines[(i + 1) * -1][0] = red_line
+
+        for i in range(x_modifier + 1):
+            map_lines[y_modifier + 2][i + 1] = red_line
+        
+        for xmod, ymod in [(-1, -1), (0, -1), (1, -1), (1, 0), (1, 1), (0, 1), (-1, 1)]:
+            map_lines[y_modifier + 2 + ymod][x_modifier + 2 + xmod] = red_line
+
+        map_lines.append(red_line)
+        map_lines.append(red_line)
+
+        map_lines = ["".join(line) for line in map_lines]
+
+        ##########################################################
+        ##### Getting the analysis data.
+
+        galaxy_x, galaxy_y = user_account.get_galaxy_location()
+
+        system_data = space.get_galaxy_coordinate(
+            json = self.json_interface,
+            galaxy_seed = self.json_interface.get_ascension_seed(user_account.get_prestige_level(), guild=user_account.get("guild_id")),
+            xpos = galaxy_x,
+            ypos = galaxy_y,
+            load_planets = False
+        )
+
+        player_x, player_y = user_account.get_system_location()
+
+        if system_data.system:
+            tile_analyze = system_data.get_system_tile(
+                system_x = x_modifier - radius + player_x,
+                system_y = y_modifier - radius + player_y
+            )
+
+            analysis_lines = tile_analyze.get_analysis(self.json_interface)
+        else:
+            analysis_lines = ["There is nothing here."]
+
+        line_emoji = ":arrow_forward:"
+
+        for index, item in enumerate(analysis_lines):
+            analysis_lines[index] = f"{line_emoji} {item}"
+
+        ##########################################################        
+        ##### Sending the message.
+
+        # Join the map lines and the analysis lines together.
+        analysis_lines = map_lines + analysis_lines
+
+        embed_send = discord.Embed(
+            title = "Tile Analysis",
+            description = "\n".join(analysis_lines),
+            color=8884479
+        )
+        await ctx.reply(embed=embed_send)
+
+        
+
+
+                    
+
+        
+
+
+        
+    ########################################################################################################################
+    #####      ANARCHY CHESSATRON COMPLETION
+    
+    async def anarchy_chessatron_completion(self, ctx, force: bool = False, amount = None):
+        user_account = self.json_interface.get_account(ctx.author, guild=ctx.guild.id)
+
+        if user_account.get("auto_chessatron") is False and force is False:
+            return
+        
+        full_chess_set = values.anarchy_pieces_black_biased + values.anarchy_pieces_white_biased
+
+        # pointwise integer division between the full chess set and the set of the user's pieces.
+        valid_trons = min([user_account.get(x.text) // full_chess_set.count(x) for x in values.all_anarchy_pieces])
+
+        # iteration ends at the minimum value, make sure amount is never the minimum. 'amount is None' should mean no max ...
+        # ... has been specified, so make as many trons as possible.
+        if amount is None: 
+            amount = valid_trons + 1
+
+        trons_to_make = min(valid_trons, amount)
+
+        # Nothing to do if we're not making any anarchy trons.
+        if trons_to_make == 0:
+            return
+        
+        chessatron_value = user_account.get_anarchy_chessatron_dough_amount(include_prestige_boost=False)
+        board = board = self.format_anarchy_pieces(user_account.values)
+
+        # Remove the anarchy pieces from the account.
+        for anarchy_piece in full_chess_set:
+            user_account.increment(anarchy_piece, -trons_to_make)
+
+        
+
+        # first we add the dough and attributes
+        total_dough_value = user_account.add_dough_intelligent(chessatron_value * trons_to_make)
+        user_account.add_item_attributes(values.anarchy_chessatron, trons_to_make)
+
+        # we save the account
+        self.json_interface.set_account(ctx.author, user_account, ctx.guild.id)
+
+        # then we send the tron messages
+        if trons_to_make < 3:
+            print(board)
+            for _ in range(trons_to_make):
+                await utility.smart_reply(ctx, f"You've collected all the anarchy pieces! Congratulations!")
+                await asyncio.sleep(1)
+
+                await utility.smart_reply(ctx, board)
+                await asyncio.sleep(1)
+
+                await utility.smart_reply(ctx, f"For an incredible feat like this, you have been awared the Anarchy Chessatron!")
+                await asyncio.sleep(1)
+
+                await utility.smart_reply(ctx, values.anarchy_chessatron.text)
+                await asyncio.sleep(1)
+
+                await utility.smart_reply(ctx, f"Amazing work! You have also been awarded {total_dough_value//trons_to_make} dough!")
+                await asyncio.sleep(1)
+
+        elif trons_to_make < 20:
+            for _ in range(trons_to_make):
+                await utility.smart_reply(ctx, f"Very well done! You have collected all the anarchy pieces!\n\n{board}")
+                await asyncio.sleep(1)
+
+                await utility.smart_reply(ctx, f"Not only have you been awarded the prestigious {values.anarchy_chessatron.text}, but you also have been awarded **{total_dough_value//trons_to_make} dough**!")
+                await asyncio.sleep(1)
+
+        elif trons_to_make < 5000:
+            await utility.smart_reply(ctx, f"You've collected all the anarchy pieces again! Great job! You have enough pieces to make {utility.smart_number(trons_to_make)} Anarchy Chessatrons! Here's your reward of **{total_dough_value//trons_to_make} dough**!")
+            await asyncio.sleep(1)
+
+            max_per = 1800 // len(values.anarchy_chessatron.text)
+            
+            full_messages = trons_to_make // max_per
+            extra = trons_to_make % max_per
+            
+            if full_messages >= 1:
+                send = values.anarchy_chessatron.text * max_per
+                for _ in range(full_messages):
+                    await utility.smart_reply(ctx, send)
+                    await asyncio.sleep(1)
+            
+            if extra >= 1:
+                await utility.smart_reply(ctx, values.anarchy_chessatron.text * extra)
+                await asyncio.sleep(1)
+
+
+        else:
+            await utility.smart_reply(ctx, f"Wow! You have so many anarchy pieces! In fact, you have enough to make a shocking {utility.smart_number(trons_to_make)} Anarchy Chessatrons!")
+            await asyncio.sleep(1)
+
+            await utility.smart_reply(ctx, f"Here are your new Anarchy Chessatrons:\n{values.anarchy_chessatron.text} x {utility.smart_number(trons_to_make)}\n\nAnd here is your **{utility.smart_number(total_dough_value)} dough**!")
+            await asyncio.sleep(1)
 
     #############################################################################################################################
     ##########      ADMIN   #################
@@ -3977,9 +4464,12 @@ anarchy - 1000% of your wager.
         #first get user account
         user_account = self.json_interface.get_account(user, guild = ctx.guild.id)
 
-        result = rolls.bread_roll(roll_luck= user_account.get("loaf_converter")+1, 
-                                    roll_count= user_account.get("max_daily_rolls"),
-                                    user_account=user_account)
+        result = rolls.bread_roll(
+            roll_luck= user_account.get("loaf_converter")+1, 
+            roll_count= user_account.get("max_daily_rolls"),
+            user_account=user_account,
+            json_interface=self.json_interface
+        )
 
         value = result.get("value")
 
@@ -4144,6 +4634,14 @@ anarchy - 1000% of your wager.
                 for account in self.json_interface.get_all_user_accounts(guild_id):
                     account.daily_reset()
                     self.json_interface.set_account(account.get("id"), account, guild_id)
+        
+        ###########################
+        #### Bread Space.
+        # Set a new modifier seed.
+        space_data = self.json_interface.get_space_data(guild=guild)
+
+        space_data["modifier_seed"] = random.randint(10, 10 ** 30)
+        self.json_interface.set_custom_file("space", file_data=space_data, guild=guild)
 
         """
         #wipe the accounts cache since we'll be direcly manipulating data. 
@@ -4529,6 +5027,26 @@ anarchy - 1000% of your wager.
         await ctx.reply("Done.")
 
     ########################################################################################################################
+    #####      ADMIN ADD_ANARCHY_SET
+
+    @admin.command()
+    @commands.is_owner()
+    async def add_anarchy_set(self, ctx, target : typing.Optional[discord.Member], count : typing.Optional[int] = 1):
+        if target is None:
+            target = ctx.author
+
+        user_account = self.json_interface.get_account(target, guild = ctx.guild.id)
+        full_chess_set = values.anarchy_pieces_black_biased + values.anarchy_pieces_white_biased
+
+        # add all pieces to the account
+        for emote in full_chess_set:
+            user_account.increment(emote.text, count)
+
+        self.json_interface.set_account(target, user_account, guild = ctx.guild.id)
+
+        await ctx.reply("Done.")
+
+    ########################################################################################################################
     #####      ADMIN INCREASE_PRESTIGE
 
     @admin.command()
@@ -4674,6 +5192,40 @@ anarchy - 1000% of your wager.
             output += "\n"
         
         return output
+    
+    def format_anarchy_pieces(self, account_values: dict):
+        lines = []
+        
+        components = [["" for _ in range(8)] for _ in range(2)]
+
+        white_minor_pieces = [values.anarchy_white_rook, values.anarchy_white_knight, values.anarchy_white_bishop]
+        black_minor_pieces = [values.anarchy_black_rook, values.anarchy_black_knight, values.anarchy_black_bishop]
+
+        for index, piece in enumerate(white_minor_pieces + black_minor_pieces):
+            amount = account_values.get(piece.text, 0)
+            if amount >= 1:
+                components[index // 3][index % 3] = piece.text
+            if amount >= 2:
+                components[index // 3][7 - (index % 3)] = piece.text
+
+        for index, piece in enumerate([values.anarchy_white_queen, values.anarchy_white_king, values.anarchy_black_queen, values.anarchy_black_king]):
+            amount = account_values.get(piece.text, 0)
+            if amount >= 1:
+                components[index // 2][(index % 2) + 3] = piece.text
+        
+        lines.append(" ".join(components[0]))
+
+        pawn = min(account_values.get(values.anarchy_white_pawn.text, 0), 8)
+        lines.append(pawn * (values.anarchy_white_pawn.text + " "))
+
+        pawn = min(account_values.get(values.anarchy_black_pawn.text, 0), 8)
+        lines.append(pawn * (values.anarchy_black_pawn.text + " "))
+        
+        lines.append(" ".join(components[1]))
+
+        return "\n".join(lines)
+        
+
 
     
 
@@ -4701,6 +5253,8 @@ async def setup(bot):
     importlib.reload(utility)
     importlib.reload(alchemy)
     importlib.reload(stonks)
+    importlib.reload(space)
+    importlib.reload(generation)
 
     try:
         #Bread_cog.internal_load(bot)
@@ -4721,7 +5275,7 @@ def teardown(bot):
         print("Done.")
     except BaseException as err:
         print("An error occurred saving bread data.")
-        print(err)
+        print(traceback.format_exc())
 
     #Bread_cog.internal_save(bot)
     #await bot.graceful_shutdown()

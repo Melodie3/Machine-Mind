@@ -75,6 +75,14 @@ normal_bread =  Emote(
     emoji= "🍞",
 )
 
+############ corrupted bread
+
+corrupted_bread = Emote(
+    text = "<:corrupted_bread:1129289000843235378>",
+    value = 1,
+    name = "corrupted_bread"
+)
+
 ############ speacial breads
 
 # flatbread = { "value" : 5,
@@ -280,7 +288,6 @@ chessatron = Emote(
     name="chessatron",
     attributes=["unique", "full_chess_set"],
     awards_value = True
-
 )
 
 omega_chessatron = Emote(
@@ -291,6 +298,15 @@ omega_chessatron = Emote(
     awards_value = True,
     giftable=False,
     alternate_names = ["omega"]
+)
+
+anarchy_chessatron = Emote(
+    text=":hourglass:", # temporary, until we have an emoji for it
+    value=100_000,
+    emoji="⌛", # temporary, until we have an emoji for it
+    name="anarchy_chessatron",
+    attributes=["unique", "full_anarchy_set"],
+    awards_value = True
 )
 
 # "<:anarchy_chess:960772054746005534>",
@@ -438,20 +454,154 @@ black_king = Chess_Emote(
 )
 
 all_chess_pieces = [black_king, black_queen, black_knight, black_bishop, black_rook, black_pawn, white_pawn, white_rook, white_bishop, white_knight, white_queen, white_king]
-chess_pieces_black_biased = [black_pawn,black_pawn,black_pawn,black_pawn,black_pawn,black_pawn,black_pawn,black_pawn,
-                             black_rook, black_rook,
-                             black_bishop, black_bishop,
-                             black_knight, black_knight,
-                             black_queen, 
-                             black_king]
-chess_pieces_white_biased = [white_pawn,white_pawn,white_pawn,white_pawn,white_pawn,white_pawn,white_pawn,white_pawn,
-                             white_rook, white_rook,
-                             white_bishop, white_bishop,
-                             white_knight, white_knight,
-                             white_queen,
-                             white_king]
+chess_pieces_black_biased = [
+    black_pawn,black_pawn,black_pawn,black_pawn,black_pawn,black_pawn,black_pawn,black_pawn,
+    black_rook, black_rook,
+    black_bishop, black_bishop,
+    black_knight, black_knight,
+    black_queen, 
+    black_king
+]
+chess_pieces_white_biased = [
+    white_pawn,white_pawn,white_pawn,white_pawn,white_pawn,white_pawn,white_pawn,white_pawn,
+    white_rook, white_rook,
+    white_bishop, white_bishop,
+    white_knight, white_knight,
+    white_queen,
+    white_king
+]
+chess_pieces_black = [black_pawn, black_rook, black_bishop, black_knight, black_queen, black_king]
+chess_pieces_white = [white_pawn, white_rook, white_bishop, white_knight, white_queen, white_king]
 
 ##################### CHESS END
+
+##################### ANARCHY PIECES
+
+class Anarchy_Piece_Emote(Emote):
+    def __init__(
+            self: typing.Self,
+            name: str,
+            text: str,
+            isWhite: bool,
+            alternate_names: list[str] = []
+        ):
+        self.text = text
+        self.name = name
+        if isWhite:
+            self.value = 360
+        else:
+            self.value = 180
+        self.attributes = ["anarchy_pieces"]
+        self.awards_value = False
+        self.alchemy_value = self.value
+        self.alternate_names = alternate_names
+
+anarchy_white_pawn = Anarchy_Piece_Emote(
+    name="Wpawnanarchy",
+    text = "<:Wpawnanarchy:971046978349858936>",
+    isWhite=True 
+)
+
+anarchy_white_rook = Anarchy_Piece_Emote(
+    name="Wrookanarchy",
+    text = "<:Wrookanarchy:971047003402403862>",
+    isWhite=True 
+)
+
+anarchy_white_bishop = Anarchy_Piece_Emote(
+    name="Wbishopanarchy",
+    text = "<:Wbishopanarchy:971046928395665448>",
+    isWhite=True 
+)
+
+anarchy_white_knight = Anarchy_Piece_Emote(
+    name="Wknightanarchy",
+    text = "<:Wknightanarchy:971046961811714158>",
+    isWhite=True 
+)
+
+anarchy_white_queen = Anarchy_Piece_Emote(
+    name="Wqueenanarchy",
+    text = "<:Wqueenanarchy:971046990312013844>",
+    isWhite=True 
+)
+
+anarchy_white_king = Anarchy_Piece_Emote(
+    name="Wkinganarchy",
+    text = "<:Wkinganarchy:971046942144602172>",
+    isWhite=True 
+)
+
+anarchy_black_pawn = Anarchy_Piece_Emote(
+    name="Bpawnanarchy",
+    text = "<:Bpawnanarchy:971046900038004736>",
+    isWhite=False 
+)
+
+anarchy_black_rook = Anarchy_Piece_Emote(
+    name="Brookanarchy",
+    text = "<:Brookanarchy:971046920166457364>",
+    isWhite=False 
+)
+
+anarchy_black_bishop = Anarchy_Piece_Emote(
+    name="Bbishopanarchy",
+    text = "<:Bbishopanarchy:971046862134050887>",
+    isWhite=False 
+)
+
+anarchy_black_knight = Anarchy_Piece_Emote(
+    name="Bknightanarchy",
+    text =  "<:Bknightanarchy:971046888486891642>",
+    isWhite=False 
+)
+
+anarchy_black_queen = Anarchy_Piece_Emote(
+    name="Bqueenanarchy",
+    text =  "<:Bqueenanarchy:971046911551356948>",
+    isWhite=False 
+)
+
+anarchy_black_king = Anarchy_Piece_Emote(
+    name="Bkinganarchy",
+    text =  "<:Bkinganarchy:971046879540445275>",
+    isWhite=False 
+)
+
+all_anarchy_pieces = [
+    anarchy_black_king,
+    anarchy_black_queen,
+    anarchy_black_knight,
+    anarchy_black_bishop,
+    anarchy_black_rook,
+    anarchy_black_pawn,
+    anarchy_white_pawn,
+    anarchy_white_rook,
+    anarchy_white_bishop,
+    anarchy_white_knight,
+    anarchy_white_queen,
+    anarchy_white_king
+]
+
+anarchy_pieces_black_biased = [
+    anarchy_black_pawn,anarchy_black_pawn,anarchy_black_pawn,anarchy_black_pawn,anarchy_black_pawn,anarchy_black_pawn,anarchy_black_pawn,anarchy_black_pawn,
+    anarchy_black_rook, anarchy_black_rook,
+    anarchy_black_bishop, anarchy_black_bishop,
+    anarchy_black_knight, anarchy_black_knight,
+    anarchy_black_queen, 
+    anarchy_black_king
+]
+
+anarchy_pieces_white_biased = [
+    anarchy_white_pawn,anarchy_white_pawn,anarchy_white_pawn,anarchy_white_pawn,anarchy_white_pawn,anarchy_white_pawn,anarchy_white_pawn,anarchy_white_pawn,
+    anarchy_white_rook, anarchy_white_rook,
+    anarchy_white_bishop, anarchy_white_bishop,
+    anarchy_white_knight, anarchy_white_knight,
+    anarchy_white_queen, 
+    anarchy_white_king
+]
+anarchy_pieces_black = [anarchy_black_pawn, anarchy_black_rook, anarchy_black_bishop, anarchy_black_knight, anarchy_black_queen, anarchy_black_king]
+anarchy_pieces_white = [anarchy_white_pawn, anarchy_white_rook, anarchy_white_bishop, anarchy_white_knight, anarchy_white_queen, anarchy_white_king]
 
 ##################### SHINIES
 
@@ -728,9 +878,17 @@ ascension_token = Emote(
     giftable = False
 )
 
+fuel = Emote(
+    text = ":oil:",
+    name = "fuel",
+    emoji= "🛢️",
+    alternate_names = ["oil"],
+    attributes = ["misc"]
+)
+
 all_bricks = [brick, brick_gold, fide_brick, brick_fide]
 all_bricks_weighted = [brick] * 10 + [brick_gold] * 1 + [fide_brick] * 5 + [brick_fide] * 5
-misc_emotes = [ascension_token, middle_finger, cherry, brick, brick_gold, fide_brick, brick_fide, lemon, grapes, rigged, bcapy, wcapy]
+misc_emotes = [ascension_token, middle_finger, cherry, brick, brick_gold, fide_brick, brick_fide, lemon, grapes, rigged, bcapy, wcapy, corrupted_bread, fuel]
 
 ##################### CODE
 
@@ -738,7 +896,7 @@ all_emotes = [normal_bread,
     flatbread, stuffed_flatbread, french_bread, croissant, sandwich, 
     doughnut, bagel, waffle, 
     lottery_win,
-    ] + all_chess_pieces + misc_emotes + misc_bread_emotes + all_uniques + all_shinies + shadow_emotes
+    ] + all_chess_pieces + all_anarchy_pieces + misc_emotes + misc_bread_emotes + all_uniques + all_shinies + shadow_emotes
 
 def get_emote(text: str) -> typing.Optional[Emote]:
     # return None

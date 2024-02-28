@@ -16,8 +16,8 @@ New way to store alchemy recipes.
 Example item:
 {
 	"cost": [(values.anarchy_chess, 1)],
-        "requirement": [("loaf_converter", 128)],
-        "provide_no_dough": True,
+    "requirement": [("loaf_converter", 128)],
+    "provide_no_dough": True,
 	"result": 5
 }
 This would be a recipe that has a cost of 1 MoaK, has a requirement of at least 128 Loaf Converters, will not provide dough when made (if it did in the first place), and will produce 5 of the output item.
@@ -126,6 +126,8 @@ recipes = {
 		}
     ],
 
+    ######################################################################################
+
     "Bpawn" : [
         {
 			"cost": [(values.white_pawn, 1)]
@@ -180,6 +182,8 @@ recipes = {
 		}
     ],
 
+    ######################################################################################
+
 
     "gem_gold" : [
         {
@@ -231,6 +235,8 @@ recipes = {
 		}
     ],
 
+    ######################################################################################
+
     "omega_chessatron" : [
         {
 			"cost": [(values.chessatron, 5), (values.anarchy_chess, 1), 
@@ -238,6 +244,35 @@ recipes = {
 			]
 		}
     ],
+
+    "fuel": [
+        {
+            "cost": [(values.gem_red, 2)],
+            "requirement": [("space_level", 1)]
+        },
+        {
+            "cost": [(values.gem_blue, 2)],
+            "requirement": [("space_level", 1), ("fuel_research", 1)],
+            "result": 3
+        },
+        {
+            "cost": [(values.gem_purple, 2)],
+            "requirement": [("space_level", 1), ("fuel_research", 2)],
+            "result": 9
+        },
+        {
+            "cost": [(values.gem_green, 2)],
+            "requirement": [("space_level", 1), ("fuel_research", 3)],
+            "result": 27
+        },
+        {
+            "cost": [(values.gem_gold, 2)],
+            "requirement": [("space_level", 1), ("fuel_research", 4)],
+            "result": 150
+        }
+    ],
+
+    ######################################################################################
 
     "holy_hell" : [
         {
@@ -257,53 +292,295 @@ recipes = {
 		}
     ],
 
+    ######################################################################################
+
     "doughnut" : [
         {
 			"cost": [(values.normal_bread, 25)]
-		}
+		},
+        {
+            "cost": [(values.corrupted_bread, 75)],
+            "requirement": [("space_level", 1)]
+        }
     ],
 
     "bagel" : [
         {
 			"cost": [(values.normal_bread, 25)]
-		}
+		},
+        {
+            "cost": [(values.corrupted_bread, 75)],
+            "requirement": [("space_level", 1)]
+        }
     ],
 
     "waffle" : [
         {
 			"cost": [(values.normal_bread, 25)]
-		}
+		},
+        {
+            "cost": [(values.corrupted_bread, 75)],
+            "requirement": [("space_level", 1)]
+        }
     ],
+
+    ######################################################################################
 
     "flatbread" : [
         {
 			"cost": [(values.normal_bread, 10)]
-		}
+		},
+        {
+            "cost": [(values.corrupted_bread, 25)],
+            "requirement": [("space_level", 1)]
+        }
     ],
 
     "stuffed_flatbread" : [
         {
 			"cost": [(values.normal_bread, 10)]
-		}
+		},
+        {
+            "cost": [(values.corrupted_bread, 25)],
+            "requirement": [("space_level", 1)]
+        }
     ],
 
     "sandwich" : [
         {
 			"cost": [(values.normal_bread, 10)]
-		}
+		},
+        {
+            "cost": [(values.corrupted_bread, 25)],
+            "requirement": [("space_level", 1)]
+        }
     ],
 
     "french_bread" : [
         {
 			"cost": [(values.normal_bread, 10)]
-		}
+		},
+        {
+            "cost": [(values.corrupted_bread, 25)],
+            "requirement": [("space_level", 1)]
+        }
     ],
 
     "croissant" : [
         {
 			"cost": [(values.normal_bread, 10)]
-		}
-    ]
+		},
+        {
+            "cost": [(values.corrupted_bread, 25)],
+            "requirement": [("space_level", 1)]
+        }
+    ],
+
+    ######################################################################################
+
+    "Wpawnanarchy": [
+        {
+            "cost": [(values.anarchy_black_pawn, 250), (values.white_pawn, 100), (values.doughnut, 1250), (values.bagel, 1250), (values.waffle, 1250), (values.gem_purple, 3)],
+            "requirement": [("space_level", 1)]
+        },
+        {
+            "cost": [(values.anarchy_black_pawn, 250), (values.white_pawn, 100), (values.croissant, 1250), (values.stuffed_flatbread, 1250), (values.flatbread, 1250), (values.sandwich, 1250), (values.french_bread, 1250), (values.gem_purple, 3)],
+            "requirement": [("space_level", 1)]
+        },
+        {
+            "cost": [(values.anarchy_black_pawn, 375), (values.white_pawn, 100), (values.gem_purple, 3)],
+            "requirement": [("space_level", 1)]
+        },
+        {
+            "cost": [(values.white_pawn, 250), (values.gem_green, 10)],
+            "requirement": [("space_level", 1)]
+        }
+    ],
+
+    "Wknightanarchy": [
+        {
+            "cost": [(values.anarchy_black_knight, 125), (values.white_knight, 100), (values.croissant, 2500), (values.bagel, 3125), (values.gem_purple, 3)],
+            "requirement": [("space_level", 1)]
+        },
+        {
+            "cost": [(values.anarchy_black_knight, 250), (values.white_knight, 100), (values.croissant, 2500), (values.gem_purple, 3)],
+            "requirement": [("space_level", 1)]
+        },
+        {
+            "cost": [(values.anarchy_black_knight, 375), (values.white_knight, 100), (values.gem_purple, 3)],
+            "requirement": [("space_level", 1)]
+        },
+        {
+            "cost": [(values.anarchy_black_knight, 125), (values.white_knight, 100), (values.bagel, 9375), (values.gem_purple, 3)],
+            "requirement": [("space_level", 1)]
+        },
+        {
+            "cost": [(values.white_knight, 250), (values.gem_green, 10)],
+            "requirement": [("space_level", 1)]
+        }
+    ],
+
+    "Wbishopanarchy": [
+        {
+            "cost": [(values.anarchy_black_bishop, 125), (values.white_bishop, 100), (values.french_bread, 2500), (values.doughnut, 3125), (values.gem_purple, 3)],
+            "requirement": [("space_level", 1)]
+        },
+        {
+            "cost": [(values.anarchy_black_bishop, 250), (values.white_bishop, 100), (values.french_bread, 2500), (values.gem_purple, 3)],
+            "requirement": [("space_level", 1)]
+        },
+        {
+            "cost": [(values.anarchy_black_bishop, 375), (values.white_bishop, 100), (values.gem_purple, 3)],
+            "requirement": [("space_level", 1)]
+        },
+        {
+            "cost": [(values.anarchy_black_bishop, 125), (values.white_bishop, 100), (values.doughnut, 9375), (values.gem_purple, 3)],
+            "requirement": [("space_level", 1)]
+        },
+        {
+            "cost": [(values.white_bishop, 250), (values.gem_green, 10)],
+            "requirement": [("space_level", 1)]
+        }
+    ],
+
+    "Wrookanarchy": [
+        {
+            "cost": [(values.anarchy_black_rook, 125), (values.white_rook, 100), (values.sandwich, 2500), (values.waffle, 3125), (values.gem_purple, 3)],
+            "requirement": [("space_level", 1)]
+        },
+        {
+            "cost": [(values.anarchy_black_rook, 250), (values.white_rook, 100), (values.sandwich, 2500), (values.gem_purple, 3)],
+            "requirement": [("space_level", 1)]
+        },
+        {
+            "cost": [(values.anarchy_black_rook, 375), (values.white_rook, 100), (values.gem_purple, 3)],
+            "requirement": [("space_level", 1)]
+        },
+        {
+            "cost": [(values.anarchy_black_rook, 125), (values.white_rook, 100), (values.waffle, 9375), (values.gem_purple, 3)],
+            "requirement": [("space_level", 1)]
+        },
+        {
+            "cost": [(values.white_rook, 250), (values.gem_green, 10)],
+            "requirement": [("space_level", 1)]
+        }
+    ],
+
+    "Wqueenanarchy": [
+        {
+            "cost": [(values.anarchy_black_queen, 125), (values.white_queen, 100), (values.stuffed_flatbread, 2500), (values.doughnut, 3125), (values.gem_purple, 3)],
+            "requirement": [("space_level", 1)]
+        },
+        {
+            "cost": [(values.anarchy_black_queen, 250), (values.white_queen, 100), (values.stuffed_flatbread, 2500), (values.gem_purple, 3)],
+            "requirement": [("space_level", 1)]
+        },
+        {
+            "cost": [(values.anarchy_black_queen, 375), (values.white_queen, 100), (values.gem_purple, 3)],
+            "requirement": [("space_level", 1)]
+        },
+        {
+            "cost": [(values.anarchy_black_queen, 125), (values.white_queen, 100), (values.doughnut, 9375), (values.gem_purple, 3)],
+            "requirement": [("space_level", 1)]
+        },
+        {
+            "cost": [(values.white_queen, 250), (values.gem_green, 10)],
+            "requirement": [("space_level", 1)]
+        }
+    ],
+
+    "Wkinganarchy": [
+        {
+            "cost": [(values.anarchy_black_king, 125), (values.white_king, 100), (values.flatbread, 2500), (values.bagel, 3125), (values.gem_purple, 3)],
+            "requirement": [("space_level", 1)]
+        },
+        {
+            "cost": [(values.anarchy_black_king, 250), (values.white_king, 100), (values.flatbread, 2500), (values.gem_purple, 3)],
+            "requirement": [("space_level", 1)]
+        },
+        {
+            "cost": [(values.anarchy_black_king, 375), (values.white_king, 100), (values.gem_purple, 3)],
+            "requirement": [("space_level", 1)]
+        },
+        {
+            "cost": [(values.anarchy_black_king, 125), (values.white_king, 100), (values.bagel, 9375), (values.gem_purple, 3)],
+            "requirement": [("space_level", 1)]
+        },
+        {
+            "cost": [(values.white_king, 250), (values.gem_green, 10)],
+            "requirement": [("space_level", 1)]
+        }
+    ],
+
+    ######################################################################################
+
+    "Bpawnanarchy": [
+        {
+            "cost": [(values.anarchy_white_pawn, 125), (values.black_pawn, 100), (values.gem_purple, 3)],
+            "requirement": [("space_level", 1)]
+        },
+        {
+            "cost": [(values.black_pawn, 250), (values.gem_green, 10)],
+            "requirement": [("space_level", 1)]
+        }
+    ],
+
+    "Bknightanarchy": [
+        {
+            "cost": [(values.anarchy_white_knight, 125), (values.black_knight, 100), (values.gem_purple, 3)],
+            "requirement": [("space_level", 1)]
+        },
+        {
+            "cost": [(values.black_knight, 250), (values.gem_green, 10)],
+            "requirement": [("space_level", 1)]
+        }
+    ],
+
+    "Bbishopanarchy": [
+        {
+            "cost": [(values.anarchy_white_bishop, 125), (values.black_bishop, 100), (values.gem_purple, 3)],
+            "requirement": [("space_level", 1)]
+        },
+        {
+            "cost": [(values.black_bishop, 250), (values.gem_green, 10)],
+            "requirement": [("space_level", 1)]
+        }
+    ],
+
+    "Brookanarchy": [
+        {
+            "cost": [(values.anarchy_white_rook, 125), (values.black_rook, 100), (values.gem_purple, 3)],
+            "requirement": [("space_level", 1)]
+        },
+        {
+            "cost": [(values.black_rook, 250), (values.gem_green, 10)],
+            "requirement": [("space_level", 1)]
+        }
+    ],
+
+    "Bqueenanarchy": [
+        {
+            "cost": [(values.anarchy_white_queen, 125), (values.black_queen, 100), (values.gem_purple, 3)],
+            "requirement": [("space_level", 1)]
+        },
+        {
+            "cost": [(values.black_queen, 250), (values.gem_green, 10)],
+            "requirement": [("space_level", 1)]
+        }
+    ],
+
+    "Bkinganarchy": [
+        {
+            "cost": [(values.anarchy_white_king, 125), (values.black_king, 100), (values.gem_purple, 3)],
+            "requirement": [("space_level", 1)]
+        },
+        {
+            "cost": [(values.black_king, 250), (values.gem_green, 10)],
+            "requirement": [("space_level", 1)]
+        }
+    ],
+
+    ######################################################################################
 }
 
 # Old recipe storage.

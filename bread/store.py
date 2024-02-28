@@ -1,3 +1,4 @@
+from __future__ import annotations
 
 import typing
 import random 
@@ -1230,7 +1231,269 @@ class First_Catch(Prestige_Store_Item):
         user_account.increment("first_catch_remaining", 1)
         return f"Congratulations! You unlocked a level of First Catch of the Day."
 
+class Fuel_Refinement(Prestige_Store_Item):
+    name = "fuel_refinement"
+    display_name = "Fuel Refinement"
+
+    costs = [0, 1, 1, 1, 1, 2, 2, 2, 2]
+
+    @classmethod
+    def cost(cls, user_account: account.Bread_Account) -> int:
+        level = user_account.get(cls.name) + 1
+        return cls.costs[level]
+
+    @classmethod
+    def description(cls, user_account: account.Bread_Account) -> str:
+        level = user_account.get(cls.name) + 1
+        return f"Increases the amount of fuel you create to {100 + (25 * level)}% of base."
+
+    @classmethod
+    def max_level(cls, user_account: account.Bread_Account = None) -> typing.Optional[int]:
+        return len(cls.costs) - 1
+    
+    @classmethod
+    def can_be_purchased(cls, user_account: account.Bread_Account) -> bool:
+        if user_account.get_space_level() < 1:
+            return False
+        
+        return super().can_be_purchased(user_account)
+
+class Corruption_Negation(Prestige_Store_Item):
+    name = "corruption_negation"
+    display_name = "Corruption Negation"
+
+    costs = [0, 1, 1, 2, 2, 3]
+
+    @classmethod
+    def cost(cls, user_account: account.Bread_Account) -> int:
+        level = user_account.get(cls.name) + 1
+        return cls.costs[level]
+
+    @classmethod
+    def description(cls, user_account: account.Bread_Account) -> str:
+        level = user_account.get(cls.name) + 1
+        return f"Decreases the amount of corrupted loaves by 10%, to {100 - (level * 10)}% of base."
+
+    @classmethod
+    def max_level(cls, user_account: account.Bread_Account = None) -> typing.Optional[int]:
+        return len(cls.costs) - 1
+    
+    @classmethod
+    def can_be_purchased(cls, user_account: account.Bread_Account) -> bool:
+        if user_account.get_prestige_level() >= 5:
+            level = user_account.get(cls.name) + 1
+            if level <= cls.max_level(user_account):
+                return True
+        return False
+
+    @classmethod
+    def do_purchase(cls, user_account: account.Bread_Account):
+        super().do_purchase(user_account)
+        return f"You have bought a level of Corruption Negation, be careful out there."
+
 prestige_store_items = [Daily_Discount_Card, Self_Converting_Yeast, MoaK_Booster, Chess_Piece_Equalizer, High_Roller_Table, Chessatron_Contraption, Ethereal_Shine, First_Catch]
+
+#############################################################################################################
+#############################################################################################################
+#############################################################################################################
+# Space Shop items
+
+class Space_Shop_Item(Custom_price_item):
+    name = "space_shop_item"
+    display_name = "Space Shop Item"
+
+    #required
+    @classmethod
+    def can_be_purchased(cls, user_account: account.Bread_Account) -> bool:
+        if user_account.get_space_level() < 1:
+            return False
+        
+        level = user_account.get(cls.name) 
+        if level >= cls.max_level(user_account):
+            return False
+        return True
+
+    #required
+    @classmethod
+    def get_price_description(cls, user_account: account.Bread_Account) -> str:
+        cost = cls.cost(user_account)
+        output = ""
+        for i in range(len(cost)):
+            # for pair in cost:
+            pair = cost[i]
+            output += f"{pair[1]} {pair[0]}"
+            if i != len(cost) - 1:
+                output += " ,  "
+        return output
+
+    #required
+    @classmethod
+    def description(cls, user_account: account.Bread_Account) -> str:
+        return "An item in the space shop"
+
+    #required
+    @classmethod
+    def do_purchase(cls, user_account: account.Bread_Account):
+        cost = cls.cost(user_account)
+
+        for pair in cost:
+            user_account.increment(pair[0], -pair[1])
+
+        user_account.increment(cls.name, 1)
+        return None
+
+    #required
+    @classmethod
+    def is_affordable_for(cls, user_account: account.Bread_Account) -> bool:
+        cost = cls.cost(user_account)
+        for pair in cost:
+            if user_account.get(pair[0]) < pair[1]:
+                return False
+        return True
+
+    #optional
+    @classmethod
+    def max_level(cls, user_account: account.Bread_Account = None) -> typing.Optional[int]:
+        costs = cls.get_costs()
+        return len(costs) - 1
+
+    #required for subclasses
+    @classmethod
+    def get_costs(cls):
+        costs = [
+            [],
+            [(values.gem_red.text, 1), ("total_dough", 1000)],
+        ]
+        return costs
+
+    #optional
+    @classmethod
+    def cost(cls, user_account: account.Bread_Account) -> int:
+        level = user_account.get(cls.name)
+        costs = cls.get_costs()
+        return costs[level + 1]
+
+class Bread_Rocket(Space_Shop_Item):
+    name = "space_level"
+    display_name = "Bread Rocket"
+
+    @classmethod
+    def get_costs(cls):
+        return [
+            [],
+            [(values.croissant.text, 5000), (values.flatbread.text, 5000), (values.stuffed_flatbread.text, 5000), (values.sandwich.text, 5000), (values.french_bread.text, 5000), \
+             (values.doughnut.text, 1000), (values.bagel.text, 1000), (values.waffle.text, 1000), \
+             (values.chessatron.text, 150), (values.gem_gold.text, 15)],
+        ]
+    
+    @classmethod
+    def description(cls, user_account: account.Bread_Account) -> str:
+        return "An upgraded Bread Rocket that can take your further in the vast reaches of space."
+    
+    @classmethod
+    def can_be_purchased(cls, user_account: account.Bread_Account) -> bool:
+        level = user_account.get(cls.name)
+        if level >= cls.max_level(user_account):
+            return False
+        if level < (user_account.get_prestige_level() - 2):
+            return True
+        return False
+        
+class Fuel_Tank(Space_Shop_Item):
+    name = "fuel_tank"
+    display_name = "Upgraded Fuel Tank"
+    tank_values = [100, 150, 200, 300, 400, 500, 600]
+
+    @classmethod
+    def get_costs(cls):
+        return [
+            [],
+            [(values.gem_red.text, 400)],
+            [(values.gem_blue.text, 300)],
+            [(values.gem_purple.text, 200)],
+            [(values.gem_green.text, 100)],
+            [(values.gem_gold.text, 50)],
+            [(values.anarchy_chess.text, 5)],
+        ]
+    
+    @classmethod
+    def description(cls, user_account: account.Bread_Account) -> str:
+        level = user_account.get(cls.name)
+        return f"An upgraded fuel tank that can store up to {cls.tank_values[level + 1]} {values.fuel.text}."
+
+class Fuel_Research(Space_Shop_Item):
+    name = "fuel_research"
+    display_name = "Fuel Research"
+
+    highest_gem = [values.gem_red.text, values.gem_blue.text,values.gem_purple.text, values.gem_green.text, values.gem_gold.text]
+
+    @classmethod
+    def get_costs(cls):
+        return [
+            [],
+            [(values.gem_blue.text, 100)],
+            [(values.gem_purple.text, 100)],
+            [(values.gem_green.text, 100)],
+            [(values.gem_gold.text, 100)],
+        ]
+    
+    @classmethod
+    def description(cls, user_account: account.Bread_Account) -> str:
+        level = user_account.get(cls.name)
+        items = [values.gem_blue.text, values.gem_purple.text, values.gem_green.text, values.gem_gold.text]
+        return f"Breakthroughs in chemistry research allowing use of {items[level]} for creating {values.fuel.text}."
+
+class Upgraded_Telescopes(Space_Shop_Item):
+    name = "telescope_level"
+    display_name = "Upgraded Telescopes"
+
+    @classmethod
+    def get_costs(cls):
+        return [
+            [],
+            [(values.gem_purple.text, 50), (values.chessatron.text, 75)],
+            [(values.gem_green.text, 75), (values.chessatron.text, 225), (values.anarchy_chessatron.text, 3)],
+            [(values.gem_gold.text, 100), (values.chessatron.text, 675), (values.anarchy_chessatron.text, 27)],
+        ]
+    
+    @classmethod
+    def description(cls, user_account: account.Bread_Account) -> str:
+        level = user_account.get(cls.name)
+        size = level + 2
+
+        return f"An improved set of telescopes that allows you to see {size} spaces in any direction."
+
+class Multiroller_Terminal(Space_Shop_Item):
+    name = "multiroller_terminal"
+    display_name = "Multiroller Terminal"
+
+    @classmethod
+    def get_costs(cls):
+        return [
+            [],
+            [(values.gem_green.text, 10)]
+        ]
+    
+    @classmethod
+    def description(cls, user_account: account.Bread_Account) -> str:
+        return "A handy little terminal that allows you to change the number of multirollers to use when rolling."
+    
+    @classmethod
+    def can_be_purchased(cls, user_account: account.Bread_Account) -> bool:
+        if not super().can_be_purchased(user_account): # If can_be_purchased from the parent class returns False.
+            return False
+        
+        if 2 ** user_account.get("multiroller") >= 1000 + user_account.get_prestige_level() * 100:
+            return True
+        
+        return False
+
+    @classmethod
+    def do_purchase(cls, user_account: account.Bread_Account):
+        super().do_purchase(user_account)
+        return "You have acquired the Multiroller Terminal, you can configure it with '$bread multiroller`."
+
+space_shop_items = [Bread_Rocket, Fuel_Tank, Fuel_Research, Upgraded_Telescopes, Multiroller_Terminal]
 
 #############################################################################################################
 #############################################################################################################
@@ -1247,10 +1510,12 @@ class Gambit_Shop_Level(Custom_price_item):
     def get_costs(cls):
         return [
             [],
-            [(values.doughnut.text, 10), (values.bagel.text, 10), (values.waffle.text, 10)],
-            [(values.gem_red.text, 3)],
-            [(values.gem_blue.text, 3)],
-            [(values.gem_purple.text, 3)],
+            [(values.doughnut.text, 10), (values.bagel.text, 10), (values.waffle.text, 10)], # Special & Rare bread
+            [(values.gem_red.text, 3)], # Black chess pieces
+            [(values.gem_blue.text, 3)], # White chess pieces
+            [(values.gem_purple.text, 3)], # Gems
+            [(values.anarchy_chessatron.text, 3), (values.gem_green.text, 100)], # Black anarchy pieces
+            [(values.anarchy_chessatron.text, 15), (values.gem_gold.text, 100)] # White anarchy pieces
         ]
 
     @classmethod
@@ -1315,6 +1580,8 @@ class Gambit_shop_Item(Custom_price_item):
 
         return retval
 
+##########################################################################################
+
 class Gambit_Shop_Flatbread(Gambit_shop_Item):
     name = "gambit_shop_flatbread"
     display_name = "Rolling Pin"
@@ -1375,6 +1642,8 @@ class Gambit_Shop_Croissant(Gambit_shop_Item):
                 (values.french_bread.text, 320),
                 (values.croissant.text, 320),]
 
+##########################################################################################
+    
 class Gambit_Shop_Bagel(Gambit_shop_Item):
     name = "gambit_shop_bagel"
     display_name = "Cream Cheese"
@@ -1508,6 +1777,8 @@ class Gambit_Shop_White_King(Gambit_shop_Item):
     boost_amount = 40
     raw_cost = [(values.white_pawn.text, 25), (values.white_king.text, 10), (values.gem_blue.text, 1)]
 
+##########################################################################################
+
 class Gambit_Shop_Gem_Red(Gambit_shop_Item):
     name = "gambit_shop_gem_red"
     display_name = "Refined Ruby"
@@ -1548,10 +1819,121 @@ class Gambit_Shop_Gem_Gold(Gambit_shop_Item):
     boost_amount = 5000
     raw_cost = [(values.gem_red.text, 160), (values.gem_blue.text, 80), (values.gem_purple.text, 40), (values.gem_green.text, 20), (values.gem_gold.text, 10)]
 
-gambit_shop_items = [Gambit_Shop_Level, Gambit_Shop_Flatbread, Gambit_Shop_Stuffed_Flatbread, Gambit_Shop_Sandwich, Gambit_Shop_French_Bread, Gambit_Shop_Croissant, 
-                        Gambit_Shop_Bagel, Gambit_Shop_Doughnut, Gambit_Shop_Waffle,
-                        Gambit_Shop_Black_Pawn, Gambit_Shop_Black_Knight, Gambit_Shop_Black_Bishop, Gambit_Shop_Black_Rook, Gambit_Shop_Black_Queen, Gambit_Shop_Black_King,
-                        Gambit_Shop_White_Pawn, Gambit_Shop_White_Knight, Gambit_Shop_White_Bishop, Gambit_Shop_White_Rook, Gambit_Shop_White_Queen, Gambit_Shop_White_King,
-                        Gambit_Shop_Gem_Red, Gambit_Shop_Gem_Blue, Gambit_Shop_Gem_Purple, Gambit_Shop_Gem_Green, Gambit_Shop_Gem_Gold]
+##########################################################################################
 
-all_store_items = prestige_store_items + normal_store_items + gambit_shop_items
+class Gambit_Shop_Anarchy_Black_Pawn(Gambit_shop_Item):
+    name = "gambit_shop_anarchy_black_pawn"
+    display_name = "<AnarchyBpawnGambitName>"
+    level_required = 5
+    boost_item = values.anarchy_black_pawn
+    boost_amount = 90
+    raw_cost = [(values.anarchy_black_pawn.text, 100), (values.black_pawn.text, 250), (values.gem_purple.text, 50)]
+
+class Gambit_Shop_Anarchy_Black_Knight(Gambit_shop_Item):
+    name = "gambit_shop_anarchy_black_knight"
+    display_name = "<AnarchyBknightGambitName>"
+    level_required = 5
+    boost_item = values.anarchy_black_knight
+    boost_amount = 90
+    raw_cost = [(values.anarchy_black_pawn.text, 100), (values.anarchy_black_knight.text, 75), (values.black_knight.text, 250), (values.gem_purple.text, 50)]
+
+class Gambit_Shop_Anarchy_Black_Bishop(Gambit_shop_Item):
+    name = "gambit_shop_anarchy_black_bishop"
+    display_name = "<AnarchyBbishopGambitName>"
+    level_required = 5
+    boost_item = values.anarchy_black_bishop
+    boost_amount = 90
+    raw_cost = [(values.anarchy_black_pawn.text, 100), (values.anarchy_black_bishop.text, 75), (values.black_bishop.text, 250), (values.gem_purple.text, 50)]
+
+class Gambit_Shop_Anarchy_Black_Rook(Gambit_shop_Item):
+    name = "gambit_shop_anarchy_black_rook"
+    display_name = "<AnarchyBrookGambitName>"
+    level_required = 5
+    boost_item = values.anarchy_black_rook
+    boost_amount = 90
+    raw_cost = [(values.anarchy_black_pawn.text, 100), (values.anarchy_black_rook.text, 75), (values.black_rook.text, 250), (values.gem_purple.text, 50)]
+
+class Gambit_Shop_Anarchy_Black_Queen(Gambit_shop_Item):
+    name = "gambit_shop_anarchy_black_queen"
+    display_name = "<AnarchyBqueenGambitName>"
+    level_required = 5
+    boost_item = values.anarchy_black_queen
+    boost_amount = 90
+    raw_cost = [(values.anarchy_black_pawn.text, 100), (values.anarchy_black_queen.text, 75), (values.black_queen.text, 250), (values.gem_purple.text, 50)]
+
+class Gambit_Shop_Anarchy_Black_King(Gambit_shop_Item):
+    name = "gambit_shop_anarchy_black_king"
+    display_name = "<AnarchyBkingGambitName>"
+    level_required = 5
+    boost_item = values.anarchy_black_king
+    boost_amount = 90
+    raw_cost = [(values.anarchy_black_pawn.text, 100), (values.anarchy_black_king.text, 75), (values.black_king.text, 250), (values.gem_purple.text, 50)]
+
+##########################################################################################
+
+class Gambit_Shop_Anarchy_White_Pawn(Gambit_shop_Item):
+    name = "gambit_shop_anarchy_white_pawn"
+    display_name = "En Passant"
+    level_required = 6
+    boost_item = values.anarchy_white_pawn
+    boost_amount = 180
+    raw_cost = [(values.anarchy_white_pawn.text, 100), (values.white_pawn.text, 250), (values.gem_green.text, 50)]
+
+    @classmethod
+    def description(cls, user_account: account.Bread_Account) -> str:
+        return super().description(user_account) + "\nHoly Hell!"
+
+class Gambit_Shop_Anarchy_White_Knight(Gambit_shop_Item):
+    name = "gambit_shop_anarchy_white_knight"
+    display_name = "Knight Boost"
+    level_required = 6
+    boost_item = values.anarchy_white_knight
+    boost_amount = 180
+    raw_cost = [(values.anarchy_white_pawn.text, 100), (values.anarchy_white_knight.text, 75), (values.white_knight.text, 250), (values.gem_green.text, 50)]
+
+class Gambit_Shop_Anarchy_White_Bishop(Gambit_shop_Item):
+    name = "gambit_shop_anarchy_white_bishop"
+    display_name = "il Vaticano"
+    level_required = 6
+    boost_item = values.anarchy_white_bishop
+    boost_amount = 180
+    raw_cost = [(values.anarchy_white_pawn.text, 100), (values.anarchy_white_bishop.text, 75), (values.white_bishop.text, 250), (values.gem_green.text, 50)]
+
+class Gambit_Shop_Anarchy_White_Rook(Gambit_shop_Item):
+    name = "gambit_shop_anarchy_white_rook"
+    display_name = "Siberian Swipe"
+    level_required = 6
+    boost_item = values.anarchy_white_rook
+    boost_amount = 180
+    raw_cost = [(values.anarchy_white_pawn.text, 100), (values.anarchy_white_rook.text, 75), (values.white_rook.text, 250), (values.gem_green.text, 50)]
+
+class Gambit_Shop_Anarchy_White_Queen(Gambit_shop_Item):
+    name = "gambit_shop_anarchy_white_queen"
+    display_name = "Radioactive beta decay"
+    level_required = 6
+    boost_item = values.anarchy_white_queen
+    boost_amount = 180
+    raw_cost = [(values.anarchy_white_pawn.text, 100), (values.anarchy_white_queen.text, 75), (values.white_queen.text, 250), (values.gem_green.text, 50)]
+
+class Gambit_Shop_Anarchy_White_King(Gambit_shop_Item):
+    name = "gambit_shop_anarchy_white_king"
+    display_name = "La Bastarda"
+    level_required = 6
+    boost_item = values.anarchy_white_king
+    boost_amount = 180
+    raw_cost = [(values.anarchy_white_pawn.text, 100), (values.anarchy_white_king.text, 75), (values.white_king.text, 250), (values.gem_green.text, 50)]
+
+##########################################################################################
+
+gambit_shop_items = [
+    Gambit_Shop_Level, # Static, shows up whenever there's another level to purchase.
+    Gambit_Shop_Flatbread, Gambit_Shop_Stuffed_Flatbread, Gambit_Shop_Sandwich, Gambit_Shop_French_Bread, Gambit_Shop_Croissant, # Special bread (level 1)
+    Gambit_Shop_Bagel, Gambit_Shop_Doughnut, Gambit_Shop_Waffle, # Rare bread (level 1)
+    Gambit_Shop_Black_Pawn, Gambit_Shop_Black_Knight, Gambit_Shop_Black_Bishop, Gambit_Shop_Black_Rook, Gambit_Shop_Black_Queen, Gambit_Shop_Black_King, # Black chess pieces (level 2)
+    Gambit_Shop_White_Pawn, Gambit_Shop_White_Knight, Gambit_Shop_White_Bishop, Gambit_Shop_White_Rook, Gambit_Shop_White_Queen, Gambit_Shop_White_King, # White chess pieces (level 3)
+    Gambit_Shop_Gem_Red, Gambit_Shop_Gem_Blue, Gambit_Shop_Gem_Purple, Gambit_Shop_Gem_Green, Gambit_Shop_Gem_Gold, # Gems (level 4)
+    Gambit_Shop_Anarchy_Black_Pawn, Gambit_Shop_Anarchy_Black_Knight, Gambit_Shop_Anarchy_Black_Bishop, Gambit_Shop_Anarchy_Black_Rook, Gambit_Shop_Anarchy_Black_Queen, Gambit_Shop_Anarchy_Black_King, # Black anarchy pieces (level 5)
+    Gambit_Shop_Anarchy_White_Pawn, Gambit_Shop_Anarchy_White_Knight, Gambit_Shop_Anarchy_White_Bishop, Gambit_Shop_Anarchy_White_Rook, Gambit_Shop_Anarchy_White_Queen, Gambit_Shop_Anarchy_White_King, # White anarchy pieces (level 6)
+]
+
+all_store_items = prestige_store_items + normal_store_items + gambit_shop_items + space_shop_items

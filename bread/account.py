@@ -1,10 +1,12 @@
 #bread account
+from __future__ import annotations
 
 import typing 
 
 from bread.values import Emote
 import bread.utility as utility
 import bread.values as values
+import bread.space as space
 # import bread.store as store
 import bread_cog
 bread_cog_ref = None
@@ -208,16 +210,22 @@ class Bread_Account:
         return dough_value
 
     def add_item_attributes(self, item: Emote, amount: int = 1):
+        """Adds an item to the account, but also adds its attributes as stats.
+
+        Args:
+            item (Emote): The item to add.
+            amount (int, optional): The amount to add. Defaults to 1.
+        """
         self.increment(item.text, amount)
         for attribute in item.attributes:
             self.increment(attribute, amount)
 
     ##############################################################
 
-    def get_dough(self):
+    def get_dough(self) -> int:
         return self.get("total_dough")
 
-    def add_dough_intelligent(self, amount: int):
+    def add_dough_intelligent(self, amount: int) -> int:
         prestige_mult = self.get_prestige_multiplier()
         amount = round(amount * prestige_mult)
         self.increment("total_dough", amount)
@@ -225,8 +233,17 @@ class Bread_Account:
         self.increment("earned_dough", amount)
         return amount
 
-    def get_prestige_level(self):
+    def get_prestige_level(self) -> int:
         return self.get("prestige_level")
+
+    def get_space_level(self) -> int:
+        return self.get("space_level")
+    
+    def get_galaxy_location(self) -> tuple[int, int]:
+        return (self.get("galaxy_xpos"), self.get("galaxy_ypos"))
+    
+    def get_system_location(self) -> tuple[int, int]:
+        return (self.get("system_xpos"), self.get("system_ypos"))
 
     def get_prestige_multiplier(self):
         # return prestige_multiplier[self.get_prestige_level()]
@@ -284,6 +301,10 @@ class Bread_Account:
             value = stonk_count * stonk_value
             total_value += value
         return total_value
+    
+    def get_corruption_negation_multiplier(self) -> float:
+        level = self.get("corruption_negation")
+        return 1 - (level * 0.1)
 
     def get_shadowmega_boost_count(self):
         # from bread.store import chessatron_shadow_booster_levels
@@ -336,7 +357,16 @@ class Bread_Account:
         if include_prestige_boost:
             prestige_mult = self.get_prestige_multiplier()
             amount = round(amount * prestige_mult)  
-        return amount   
+        return amount
+    
+    def get_anarchy_chessatron_dough_amount(self, include_prestige_boost = True):
+        amount = values.anarchy_chessatron.value
+        
+        if include_prestige_boost:
+            prestige_mult = self.get_prestige_multiplier()
+            amount = round(amount * prestige_mult)
+
+        return amount
 
     def has_category(self, category_name: str):
         if len(self.get_category(category_name)) > 0:
@@ -354,6 +384,60 @@ class Bread_Account:
                     if category_name.lower() in item.attributes:
                         items.append(item)
         return items
+
+    ##############################################################
+    # Space related methods.
+    
+    def get_corruption_chance(self) -> float:
+        """Provides the chance of a loaf becoming corrupted, accounting for Corruption Negation. Is going to be a float between 0 and 1."""
+        if self.get_space_level() < 1:
+            return 0.0
+        
+        xpos, ypos = self.get_galaxy_location()
+
+        base_chance = space.get_corruption_chance(
+            xpos - space.map_radius,
+            ypos - space.map_radius
+        )
+
+        multiplier = self.get_corruption_negation_multiplier()
+
+        return base_chance * multiplier
+
+    def get_galaxy_tile(
+            self: typing.Self,
+            json_interface: bread_cog.JSON_interface
+        ) -> space.GalaxyTile:
+        """Returns a GalaxyTile object for the tile within the galaxy this account is currently on."""
+        xpos, ypos = self.get_galaxy_location()
+
+        return space.get_galaxy_coordinate(
+            json = json_interface,
+            galaxy_seed = self.get_galaxy_seed(json_interface),
+            xpos = xpos,
+            ypos = ypos
+        )
+    
+    def get_system_tile(
+            self: typing.Self,
+            json_interface: bread_cog.JSON_interface
+        ) -> space.SystemTile:
+        """Returns a SystemTile object for the tile within the system this account is in."""
+        galaxy_tile = self.get_galaxy_tile(json_interface)
+
+        xpos, ypos = self.get_system_location()
+
+        return galaxy_tile.get_system_tile(
+            system_x = xpos,
+            system_y = ypos
+        )
+    
+    def get_galaxy_seed(
+            self: typing.Self,
+            json_interface: bread_cog.JSON_interface
+        ) -> str:
+        """Returns the seed of the galaxy this account is in."""
+        return json_interface.get_ascension_seed(self.get_prestige_level(), guild=self.get("guild_id"))
 
     ##############################################################
 
