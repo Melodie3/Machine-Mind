@@ -741,6 +741,8 @@ all_emotes = [normal_bread,
     ] + all_chess_pieces + misc_emotes + misc_bread_emotes + all_uniques + all_shinies + shadow_emotes
 
 def get_emote(text: str) -> typing.Optional[Emote]:
+    if len(text) == 0:
+        return None
     # return None
 
     text = text.lower()
