@@ -220,8 +220,8 @@ def bread_roll(
             ######
 
 
-            value = roll["emote"].value + roll["extra_profit"]
-            gambit_shop_bonus += roll["extra_profit"]
+            value = roll["emote"].value + roll["extra_profit"] + roll["gambit_bonus"]
+            gambit_shop_bonus += roll["gambit_bonus"]
             # emote_text = roll["emote"].get_representation(None)
             emote_text = roll["emote"].text
             profit += value
@@ -461,7 +461,10 @@ def loaf_roll(
         
     if "extra_profit" not in output:
         output["extra_profit"] = 0
-    output["extra_profit"] += user_account.get_dough_boost_for_item(output["emote"])
+        
+    if "gambit_bonus" not in output:
+        output["gambit_bonus"] = 0
+    output["gambit_bonus"] += user_account.get_dough_boost_for_item(output["emote"])
 
     return output
 

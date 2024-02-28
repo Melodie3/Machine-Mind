@@ -1,6 +1,9 @@
 """
 Patch Notes: 
-
+(All patches submitted by Duck)
+- MoaKs no longer add to the gambit shop bonus in the multiroller
+- Fixed tier one multiroller to have a cost of 128
+- First Catch count now resets properly
 
 
 (todo) test reply ping
