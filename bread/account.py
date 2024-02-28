@@ -142,6 +142,13 @@ class Bread_Account:
             if emote.text in self.values.keys():
                 self.set(emote.text, 0)
 
+        # Reset the amount of times First Catch of the Day has been used to the level of FCotD.
+        if self.has("first_catch_level"):
+            self.set(
+                name = "first_catch_remaining",
+                value = self.get("first_catch_level")
+            )
+
         # reset boosts file
         self.set("dough_boosts", dict())
 

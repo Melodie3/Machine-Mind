@@ -342,7 +342,7 @@ class Multiroller(Store_Item):
 
     @classmethod
     def cost(cls, user_account: account.Bread_Account, level:int = None) -> int:
-        if level is not None:
+        if level is None:
             level = user_account.get(cls.name) + 1
 
         if level == 1:
@@ -401,7 +401,7 @@ class Compound_Roller(Store_Item):
 
     @classmethod
     def cost(cls, user_account: account.Bread_Account, level:int = None) -> int:
-        if level is not None:
+        if level is None:
             level = user_account.get(cls.name) + 1
         return 128
 
