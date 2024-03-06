@@ -3835,14 +3835,25 @@ anarchy - 1000% of your wager.
     ########################################################################################################################
     #####      BREAD DOUGH
 
-    # get the user's amount of dough and display it
+    # get someone's amount of dough and display it
     @bread.command(
         aliases = ["liquid_dough"],
         brief = "Shows how much dough you have.",
     )
-    async def dough(self, ctx):
-        user_account = self.json_interface.get_account(ctx.author, guild = ctx.guild.id)
-        await ctx.reply(f"You have **{utility.smart_number(user_account.get_dough())} dough**.")
+    async def dough(self, ctx,
+            target: typing.Optional[discord.Member] = commands.parameter(description="The player to get the dough of.")
+        ):
+        if target is None:
+            target = ctx.author
+
+        user_account = self.json_interface.get_account(target, guild = ctx.guild.id)
+
+        if target == ctx.author:
+            name = "You have"
+        else:
+            name = user_account.get_display_name() + " has"
+        
+        await ctx.reply(f"{name} **{utility.smart_number(user_account.get_dough())} dough**.")
         
     ########################################################################################################################
     #####      BREAD SPACE
