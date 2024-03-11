@@ -105,7 +105,7 @@ class Custom_price_item(Store_Item):
         for i in range(len(cost)):
             # for pair in cost:
             pair = cost[i]
-            output += f"{pair[1]} {pair[0]}"
+            output += f"{utility.smart_number(pair[1])} {pair[0]}"
             if i != len(cost) - 1:
                 output += " ,  "
         return output
@@ -1296,7 +1296,53 @@ prestige_store_items = [Daily_Discount_Card, Self_Converting_Yeast, MoaK_Booster
 #############################################################################################################
 #############################################################################################################
 #############################################################################################################
-# Space Shop items
+# Space related items.
+
+class Trade_Hub(Custom_price_item):
+    name = "trade_hub"
+    display_name = "Trade Hub"
+
+    @classmethod
+    def costs(cls):
+        return [
+            [
+                (values.anarchy_chess.text, 1),
+                (values.gem_gold.text, 100), (values.gem_green.text, 200), (values.gem_purple.text, 400), (values.gem_blue.text, 800), (values.gem_red.text, 1600),
+                (values.doughnut.text, 10000), (values.waffle.text, 10000), (values.bagel.text, 10000),
+                (values.croissant.text, 20000), (values.french_bread.text, 20000), (values.sandwich.text, 20000), (values.stuffed_flatbread.text, 20000), (values.flatbread.text, 20000)
+            ]
+        ]
+    
+    @classmethod
+    def cost(cls, level: int):
+        return cls.costs()[level]
+    
+    @classmethod
+    def get_price_description(cls, level: int) -> str:
+        cost = cls.cost(level)
+        output = ""
+        for i in range(len(cost)):
+            # for pair in cost:
+            pair = cost[i]
+            output += f"{utility.smart_number(pair[1])} {pair[0]}"
+            if i != len(cost) - 1:
+                output += " ,  "
+        return output
+    
+    @classmethod
+    def is_affordable_for(cls, level: int, user_account: account.Bread_Account) -> bool:
+        cost = cls.cost(level)
+        for pair in cost:
+            if user_account.get(pair[0]) < pair[1]:
+                return False
+        return True
+    
+    @classmethod
+    def do_purchase(cls, level: int, user_account: account.Bread_Account):
+        cost = cls.cost(level)
+
+        for pair in cost:
+            user_account.increment(pair[0], -pair[1])
 
 class Space_Shop_Item(Custom_price_item):
     name = "space_shop_item"
@@ -1321,7 +1367,7 @@ class Space_Shop_Item(Custom_price_item):
         for i in range(len(cost)):
             # for pair in cost:
             pair = cost[i]
-            output += f"{pair[1]} {pair[0]}"
+            output += f"{utility.smart_number(pair[1])} {pair[0]}"
             if i != len(cost) - 1:
                 output += " ,  "
         return output

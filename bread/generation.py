@@ -13,6 +13,16 @@ import hashlib
 
 import bread.values as values
 
+patterns = ['SVS', 'VSV', 'SVVS', 'VSVS', 'SVSV']
+
+syllables = [
+    'Vah', 'Nab', 'Or', 'Is', 'Ter', 'Pho', 'Qua', 'Cos', 'Tek', 'Glo', 'Zor', 'Yul', 'Kor', 'Vex', 'Dra', 'Plu', 'Fyr', 
+    'Bla', 'Grav', 'Hyp', 'Jex', 'Klyn', 'Morph', 'Nyx', 'Plex', 'Rhyn', 'Spect', 'Vex', 'Zyph', 'Grim', 'Slyth',
+    'Xen', 'Chro', 'Drex', 'Kryp', 'Ryze', 'Shrym', 'Trex', 'Vex', 'Wrym', 'Xylo', 'Zygo', 'Myth', 'Glo', 'Vra', 'Zar'
+]
+
+vowels = ['a', 'e', 'i', 'o', 'u']
+
 map_size = 256
 
 map_radius = map_size // 2
@@ -421,14 +431,16 @@ def generate_system(
         asteroid_belt_distance = planet_count + 2
 
     for planet_id in range(planet_count):
-        planet_type = rng.choices(
+        planet_rng = random.Random(hashlib.sha256(str(galaxy_seed + str(galaxy_ypos) + str(galaxy_xpos) + "planet" + str(planet_id)).encode()).digest())
+
+        planet_type = planet_rng.choices(
             population = list(planet_weights.keys()),
             weights = list(planet_weights.values())
         )[0]
 
-        planet_type = rng.choice(planet_options[planet_type])
+        planet_type = planet_rng.choice(planet_options[planet_type])
 
-        deviation = rng.normalvariate(
+        deviation = planet_rng.normalvariate(
             mu = 1,
             sigma = 0.1
         )
@@ -437,9 +449,9 @@ def generate_system(
 
         planet_distance = 2 + (modified_id + 1.5)# ** 1.712 # dont ask why that number lol
 
-        distance_mod = rng.normalvariate(mu = 1, sigma = 0.1)
+        distance_mod = planet_rng.normalvariate(mu = 1, sigma = 0.1)
 
-        planet_angle = rng.randrange(0, 360) # Orbiting code here?
+        planet_angle = planet_rng.randrange(0, 360) # Orbiting code here?
 
         planet_distance = planet_distance * distance_mod
 
@@ -470,3 +482,28 @@ def generate_system(
         "asteroid_belt_distance": asteroid_belt_distance,
         "planets": planets
     }
+
+def get_trade_hub_name(
+        galaxy_seed: str,
+        galaxy_x: int,
+        galaxy_y: int
+    ) -> str:
+    rng = random.Random(hashlib.sha256(str(galaxy_seed + str(galaxy_x) + str(galaxy_y) + "trade_hub").encode()).digest())
+    pattern = rng.choice(patterns)
+    name_parts = []
+    for char in pattern:
+        if char == 'S':
+            name_parts.append(rng.choice(syllables))
+        elif char == 'V':
+            name_parts.append(rng.choice(vowels))
+    
+    if rng.random() < 0.3:
+        num_words = rng.randint(2, 3)
+        for i in range(num_words - 1):
+            name_parts.insert(rng.randrange(len(name_parts)), " ")
+    
+    result = ''.join(name_parts).lower().title()
+    
+    result = result.replace("  ", " ").strip()
+    
+    return result

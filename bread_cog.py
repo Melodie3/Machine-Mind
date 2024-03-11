@@ -82,6 +82,7 @@ import bread.alchemy as alchemy
 import bread.stonks as stonks
 import bread.space as space
 import bread.generation as generation
+import bread.projects as projects
 
 # roles
 # average bread enjoyer
@@ -211,7 +212,7 @@ def get_display_name(member):
 
 def parse_int(argument) -> int:
     """Converts an argument to an integer, will remove commas along the way."""
-    return int(float(str(argument).replace(",", "")))
+    return int(str(argument).replace(",", ""))
 
 def is_digit(string) -> bool:
     """Same as str.isdigit(), but will remove commas first."""
@@ -387,34 +388,103 @@ class JSON_interface:
     ####################################
     #####      BREAD SPACE
 
-    def get_space_data(self, guild: typing.Union[discord.Guild, int, str]) -> dict:
+    def get_space_data(
+            self: typing.Self,
+            guild: typing.Union[discord.Guild, int, str]
+        ) -> dict:
         return self.get_custom_file("space", guild=guild)
-
-    def get_ascension_seed(self, ascension_id: typing.Union[int, str], guild: typing.Union[discord.Guild, int, str]) -> str:
+    
+    def get_space_ascension(
+            self: typing.Self,
+            ascension_id: typing.Union[int, str],
+            guild: typing.Union[discord.Guild, int, str],
+            default: typing.Any = dict()
+        ) -> dict:
         space_data = self.get_space_data(guild=guild)
 
-        ascension_id = str(ascension_id)
+        return space_data.get(f"ascension_{ascension_id}", default)
 
-        seeds = space_data.get("ascension_seeds", dict())
+    def get_ascension_seed(
+            self: typing.Self,
+            ascension_id: typing.Union[int, str],
+            guild: typing.Union[discord.Guild, int, str]
+        ) -> str:
+        ascension_data = self.get_space_ascension(ascension_id, guild)
 
-        if ascension_id in seeds.keys():
-            return seeds[ascension_id]
+        if "seed" in ascension_data.keys():
+            return ascension_data["seed"]
         
         # If this ascension doesn't yet have a seed, create one
 
-        new_seed = str(random.randint(10, 10 ** 30))
+        space_data = self.get_space_data(guild=guild)
+
+        new_seed = space.generate_galaxy_seed()
+
+        # The chance of this being needed is incredibly low, but just in case...
+        if self.ascension_from_seed(guild, new_seed) is not None:
+            while self.ascension_from_seed(guild, new_seed) is not None:
+                new_seed = space.generate_galaxy_seed()
         
-        seeds[ascension_id] = new_seed
-        space_data["ascension_seeds"] = seeds
+        ascension_data["seed"] = new_seed
+        space_data[f"ascension_{ascension_id}"] = ascension_data
 
         self.set_custom_file("space", file_data=space_data, guild=guild)
 
         return new_seed
     
-    def get_modifier_seed(self, guild: typing.Union[discord.Guild, int, str]):
+    def ascension_from_seed(
+            self: typing.Self,
+            guild: typing.Union[discord.Guild, int, str],
+            galaxy_seed: str
+        ) -> typing.Union[int, None]:
         space_data = self.get_space_data(guild=guild)
 
-        return space_data.get("modifier_seed", 31004150)
+        for key, value in space_data.items():
+            try:
+                if value.get("seed", None) == galaxy_seed:
+                    return int(key.replace("ascension_", ""))
+            except AttributeError:
+                continue
+        
+        return None
+
+    
+    def get_day_seed(
+            self: typing.Self,
+            guild: typing.Union[discord.Guild, int, str]
+        ):
+        space_data = self.get_space_data(guild=guild)
+
+        return space_data.get("day_seed", "31004150_will_rule_the_world")
+    
+    def update_project_data(
+            self: typing.Self,
+            guild: typing.Union[discord.Guild, int, str],
+            ascension: int,
+            galaxy_x: int,
+            galaxy_y: int,
+            project_id: int, # Should be between 1 and 3.
+            new_data: dict
+        ):
+        space_data = self.get_space_data(guild)
+
+        ascension_data = space_data.get(f"ascension_{ascension}", {})
+
+        trade_hub_data = ascension_data.get("trade_hubs", {})
+
+        tile_data = trade_hub_data.get(f"{galaxy_x} {galaxy_y}", {})
+
+        project_progress = tile_data.get("project_progress", {})
+
+        project_progress[f"project_{project_id}"] = new_data
+
+        tile_data["project_progress"] = project_progress
+        trade_hub_data[f"{galaxy_x} {galaxy_y}"] = tile_data
+        ascension_data["trade_hubs"] = trade_hub_data
+        space_data[f"ascension_{ascension}"] = ascension_data
+
+        self.set_custom_file("space", space_data, guild=guild)
+        
         
             
         
@@ -511,6 +581,9 @@ class Bread_cog(commands.Cog, name="Bread"):
     currently_interacting = list()
 
     def __init__(self, bot):
+        # Scramble the random seed.
+        random.seed(os.urandom(1024))
+        
         #print("bread __init__ called")
         self.bot = bot
         self.daily_task.start()
@@ -529,6 +602,10 @@ class Bread_cog(commands.Cog, name="Bread"):
         # NOTE: THIS LOOP CANNOT BE ALTERED ONCE STARTED, EVEN BY RELOADING. MUST BE STOPPED MANUALLY
         time = datetime.now()
         print (time.strftime("Hourly bread loop running at %H:%M:%S"))
+        
+        # Scramble the random seed.
+        # The seed doesn't really need to be scrambled every hour, but it doesn't hurt.
+        random.seed(os.urandom(1024))
 
         self.synchronize_usernames_internal()
         self.json_interface.internal_save() # Save every hour
@@ -4022,11 +4099,11 @@ anarchy - 1000% of your wager.
 
         if mode == "galaxy":
             prefix = "Galaxy map:"
-            middle = f"Your current galaxy location: ({user_account.get_galaxy_location()}).\nCorruption chance: {corruption_chance}%."
+            middle = f"Your current galaxy location: {user_account.get_galaxy_location()}.\nCorruption chance: {corruption_chance}%."
             suffix = "You can use '$bread space map' to view the map for the system you're in."
         else:
             prefix = "System map:"
-            middle = f"Your current galaxy location: ({user_account.get_galaxy_location()}).\nYour current system location: {user_account.get_system_location()}.\nCorruption chance: {corruption_chance}%."
+            middle = f"Your current galaxy location: {user_account.get_galaxy_location()}.\nYour current system location: {user_account.get_system_location()}.\nCorruption chance: {corruption_chance}%."
             suffix = "You can use '$bread space map galaxy' to view the galaxy map."
 
         lines = ["".join(item) for item in map_data]
@@ -4131,7 +4208,9 @@ anarchy - 1000% of your wager.
 
         system_data = space.get_galaxy_coordinate(
             json = self.json_interface,
+            guild = ctx.guild.id,
             galaxy_seed = self.json_interface.get_ascension_seed(user_account.get_prestige_level(), guild=user_account.get("guild_id")),
+            ascension = user_account.get_ascension_level(),
             xpos = galaxy_x,
             ypos = galaxy_y,
             load_planets = False
@@ -4141,6 +4220,7 @@ anarchy - 1000% of your wager.
 
         if system_data.system:
             tile_analyze = system_data.get_system_tile(
+                json = self.json_interface,
                 system_x = x_modifier - radius + player_x,
                 system_y = y_modifier - radius + player_y
             )
@@ -4166,6 +4246,371 @@ anarchy - 1000% of your wager.
             color=8884479
         )
         await ctx.reply(embed=embed_send)
+
+
+
+
+
+
+
+        
+    ########################################################################################################################
+    #####      BREAD SPACE HUB
+    
+    @space.command(
+        name = "hub",
+        brief = "Interact with Trade Hubs.",
+        description = "Interact with Trade Hubs."
+    )
+    async def space_hub(self, ctx,
+            *, action: typing.Optional[str] = commands.parameter(description = "The action to perform at the Trade Hub.")
+        ):
+        if get_channel_permission_level(ctx) < PERMISSION_LEVEL_ACTIVITIES:
+            await ctx.reply(f"I appreciate your interest in Trade Hubs, the nearest access point is in {self.json_interface.get_rolling_channel(ctx.guild.id)}.")
+            return
+        
+        user_account = self.json_interface.get_account(ctx.author, guild = ctx.guild.id)
+
+        if user_account.get_space_level() < 1:
+            await ctx.reply("You do not yet have a rocket that can access Trade Hubs. You can purchase a Space Rocket from the Space Shop.")
+            return
+        
+        galaxy_x, galaxy_y = user_account.get_galaxy_location()
+
+        
+        system = space.get_galaxy_coordinate(
+            json = self.json_interface,
+            guild = ctx.guild.id,
+            galaxy_seed = self.json_interface.get_ascension_seed(user_account.get_prestige_level(), guild=user_account.get("guild_id")),
+            ascension = user_account.get_prestige_level(),
+            xpos = galaxy_x,
+            ypos = galaxy_y,
+            load_planets = False
+        )
+
+        if not system.system:
+            await ctx.reply("There is no Trade Hub here, and you are not close enough to a star to create a Trade Hub.")
+            return
+        
+        system_x, system_y = user_account.get_system_location()
+        
+        system.load_system_data(json=self.json_interface, guild=ctx.guild.id)
+
+        if not (abs(system_x) <= 1 and abs(system_y) <= 1):
+            await ctx.reply("You are not close enough to a star to create a Trade Hub.")
+            return
+        
+        if action is not None:
+            actions = action.split(" ")
+            action = actions[0]
+        
+        if system.trade_hub is None:
+            if system_x == 0 and system_y == 0:
+                await ctx.reply("You cannot create a Trade Hub on a star.")
+                return
+            
+            if action == "create":
+                if not store.Trade_Hub.is_affordable_for(level=0, user_account=user_account):
+                    await ctx.reply("Sorry, you don't have the resources to create a Trade Hub.")
+                    return
+                
+                print(f"User {ctx.author} creating trade hub in system ({galaxy_x}, {galaxy_y})")
+                
+                store.Trade_Hub.do_purchase(level=0, user_account=user_account)
+
+                self.json_interface.set_account(ctx.author, user_account, guild = ctx.guild.id)
+
+                space.create_trade_hub(
+                    json = self.json_interface,
+                    user_account = user_account,
+                    galaxy_x = galaxy_x,
+                    galaxy_y = galaxy_y,
+                    system_x = system_x,
+                    system_y = system_y
+                )
+
+                await ctx.reply("Well done, you have created a Trade Hub!")
+                return
+
+            cost = store.Trade_Hub.get_price_description(0)
+            
+            await ctx.reply(f"To create a Trade Hub here, you must have the following resources:\n{cost}\n\nOnce you have the resources, use '$bread space hub create' to create the Trade Hub.")
+            return
+        
+        if action == "create":
+            await ctx.reply("There is already a Trade Hub in this system.")
+            return
+        
+        if not (system_x == system.trade_hub.system_xpos and system_y == system.trade_hub.system_ypos):
+            await ctx.reply("You must be on the Trade Hub to use it.")
+            return
+        
+        ##############################################################################################################
+        # Can interact with the trade hub!
+            
+        day_seed = self.json_interface.get_day_seed(guild=ctx.guild.id)
+
+        projects = space.get_trade_hub_projects(
+            json = self.json_interface,
+            user_account = user_account,
+            galaxy_x = galaxy_x,
+            galaxy_y = galaxy_y
+        )
+
+        hub = system.trade_hub
+        
+        ##############################################################################################################
+
+        if action == "contribute":
+            actions += [" ", " ", " "]
+
+            try:
+                project_number = parse_int(actions[1])
+                amount = parse_int(actions[2])
+                item = values.get_emote(actions[3])
+            except ValueError:
+                await ctx.reply("To contribute to a project, use this format:\n'$bread space hub contribute [project number] [amount] [item]'")
+                return
+
+            if item is None:
+                await ctx.reply("To contribute to a project, use this format:\n'$bread space hub contribute [project number] [amount] [item]'")
+                return
+
+            if not (1 <= project_number <= 3):
+                await ctx.reply("That is an unrecognized project number.")
+                return
+            
+            project_data = projects[project_number - 1]
+
+            if project_data.get("completed", False):
+                await ctx.reply("This project has already been completed.")
+                return
+            
+            if amount < 0:
+                await ctx.reply("Trying to steal resources? Mum won't be very happy about that.")
+                await ctx.invoke(self.bot.get_command('brick'), member=ctx.author, duration="1")
+                return
+            
+            if amount == 0:
+                await ctx.reply("That's not much of a contribution.")
+                return
+            
+            if amount > user_account.get(item.text):
+                await ctx.reply("You don't have enough of that to contribute.")
+                return
+            
+            project = project_data.get("project")
+
+            remaining = project.get_remaining_items(
+                day_seed = day_seed,
+                system_tile = hub,
+                progress_data = project_data.get("contributions", {})
+            )
+
+            if len(remaining) == 0:
+                out_data = {
+                    "completed": True,
+                    "contributions": project_data.get("contributions")
+                }
+                
+                self.json_interface.update_project_data(
+                    guild = ctx.guild.id,
+                    ascension = user_account.get_prestige_level(),
+                    galaxy_x = galaxy_x,
+                    galaxy_y = galaxy_y,
+                    project_id = project_number,
+                    new_data = out_data
+                )
+
+                await ctx.reply("This project has already been completed.")
+                return
+            
+            if item.text not in remaining:
+                await ctx.reply("The project doesn't need any more of that item.")
+                return
+            
+            amount_contribute = min(remaining[item.text], amount)
+
+            contribution_data = project_data.get("contributions", [])
+
+            player_data = contribution_data.get(str(ctx.author.id), {"items": {}})
+            
+            user_account.increment(item.text, -amount_contribute)
+
+            if item.text in player_data["items"]:
+                player_data["items"][item.text] += amount_contribute
+            else:
+                player_data["items"][item.text] = amount_contribute
+            
+            contribution_data[str(ctx.author.id)] = player_data
+
+            out_data = {
+                "completed": False,
+                "contributions": contribution_data
+            }
+
+            self.json_interface.set_account(ctx.author, user_account, guild = ctx.guild.id)
+            self.json_interface.update_project_data(
+                guild = ctx.guild.id,
+                ascension = user_account.get_prestige_level(),
+                galaxy_x = galaxy_x,
+                galaxy_y = galaxy_y,
+                project_id = project_number,
+                new_data = out_data
+            )
+
+            amount_left = user_account.get(item.text)
+            
+            await ctx.reply(f"You have contributed {amount_contribute} {item.text} to the {project.name(day_seed, hub)} project.\nYou now have {amount_left} {item.text} remaining.")
+
+            updated_required = project.get_remaining_items(
+                day_seed = day_seed,
+                system_tile = hub,
+                progress_data = out_data.get("contributions", {})
+            )
+            if len(updated_required) != 0:
+                # It hasn't been completed. :(
+                return
+            
+            ########################################
+            # It's been completed! :o
+
+            out_data["completed"] = True
+
+            self.json_interface.update_project_data(
+                guild = ctx.guild.id,
+                ascension = user_account.get_prestige_level(),
+                galaxy_x = galaxy_x,
+                galaxy_y = galaxy_y,
+                project_id = project_number,
+                new_data = out_data
+            )
+
+            send_lines = "Project completed!\n\n"
+            send_lines += project.completion(day_seed, hub)
+            send_lines += "\n\nIndividual earnings:"
+
+            total_items = project.total_items_required(day_seed, hub)
+            reward = project.get_reward(day_seed, hub)
+
+            for player_id, contributions in out_data.get("contributions", {}).items():
+                items = contributions.get("items", {})
+
+                items_contributed = sum(items.values())
+
+                percent_cut = items_contributed / total_items
+
+                player_account = self.json_interface.get_account(player_id, guild=ctx.guild.id)
+
+                items_added = []
+
+                for win_item, win_amount in reward:
+                    amount = math.ceil(win_amount * percent_cut)
+                    player_account.increment(win_item, amount)
+
+                    items_added.append(f"{amount} {win_item}")
+
+                self.json_interface.set_account(player_id, player_account, guild = ctx.guild.id)
+                
+                send_lines += f"\n- <@{player_id}>: {' ,  '.join(items_added)}"
+            
+            await asyncio.sleep(1)
+
+            await ctx.send(send_lines)
+            return
+
+        ##############################################################################################################
+
+        if action == "info":
+            actions.append(" ")
+
+            try:
+                project_number = parse_int(actions[1])
+            except ValueError:
+                await ctx.reply("To get information about a project, use '$bread space hub info [project number]'")
+                return
+            
+            if not (1 <= project_number <= 3):
+                await ctx.reply("That is an unrecognized project number.")
+                return
+            
+            project_data = projects[project_number - 1]
+            project = project_data.get("project")
+
+            contributions = project_data.get('contributions')
+            amount_contributed = project.total_items_collected(day_seed, hub, contributions)
+            amount_needed = project.total_items_required(day_seed, hub)
+
+            message_lines = f"# -- Project {project.name(day_seed, hub)}: --"
+            message_lines += f"\n{project.description(day_seed, hub)}"
+            message_lines += f"\n\nCompleted: {':white_check_mark:' if project_data.get('completed', False) else ':x:'}"
+            message_lines += "\nCollected items: {have}/{total} ({percent}%)".format(
+                have = amount_contributed,
+                total = amount_needed,
+                percent = round(100 * project.get_progress_percent(day_seed, hub, contributions), 2)
+            )
+            if amount_contributed != amount_needed:
+                message_lines += f"\nRemaining items:\n{project.get_remaining_description(day_seed, hub, contributions)}"
+
+            if amount_contributed > 0:
+                message_lines += f"\nIndividual contributions:"
+
+                for player_id, data in project_data.get("contributions", {}).items():
+                    player_account = self.json_interface.get_account(player_id, guild=ctx.guild.id)
+
+                    player_line = []
+
+                    for item, amount in data.get("items", {}).items():
+                        player_line.append(f"{amount} {item}")
+
+                    username = utility.sanitize_ping(player_account.get_display_name())
+                    player_line = " ,  ".join(player_line)
+                    
+                    message_lines += f"\n- {username}: {player_line}"
+            
+            if amount_contributed != amount_needed:
+                message_lines += f"\n\nTo contribute to this project, use '$bread space hub contribute {project_number} [amount] [item]'."
+
+
+            await ctx.reply(message_lines)
+            return
+        
+        ##############################################################################################################
+
+        name = generation.get_trade_hub_name(
+            galaxy_seed = self.json_interface.get_ascension_seed(user_account.get_prestige_level(), guild=user_account.get("guild_id")),
+            galaxy_x = galaxy_x,
+            galaxy_y = galaxy_y
+        )
+
+        message_lines = f"**# -- Trade Hub {name} --**"
+
+        message_lines += f"\nLevel: {hub.trade_hub_level}"
+        message_lines += f"\nGalaxy location: ({hub.galaxy_xpos}, {hub.galaxy_ypos})"
+        message_lines += f"\nSystem location: ({hub.system_xpos}, {hub.system_ypos})"
+
+        if hub.trade_hub_level != len(store.Trade_Hub.costs()):
+            message_lines += f"\n\nUse '$bread space hub level' to view the progress to level {hub.trade_hub_level + 1}"
+        
+        ### Projects.
+        
+        message_lines += "\n\n**# -- Projects --**"
+
+        for project_id, data in enumerate(projects):
+            message_lines += f"#{project_id + 1}: "
+            message_lines += data.get("project").display_info(day_seed=day_seed, system_tile=hub, completed=data.get("completed", False))
+            message_lines += "\n\n"
+        
+        message_lines += "To contribute to a project, use '$bread space hub contribute [project number] [amount] [item]'"
+
+        await ctx.reply(message_lines)
+            
+            
+            
+            
+
+
+
 
         
 
@@ -4651,10 +5096,26 @@ anarchy - 1000% of your wager.
         
         ###########################
         #### Bread Space.
-        # Set a new modifier seed.
+        # Set a new day seed.
         space_data = self.json_interface.get_space_data(guild=guild)
 
-        space_data["modifier_seed"] = random.randint(10, 10 ** 30)
+        space_data["day_seed"] = space.generate_galaxy_seed()
+
+        # Reset project contributions.
+        blank_projects = {
+            "project_1": {},
+            "project_2": {},
+            "project_3": {}
+        }
+        for ascension_key, ascension_data in space_data.copy().items():
+            if not ascension_key.startswith("ascension"):
+                continue
+
+            for trade_hub_key in ascension_data.get("trade_hubs", {}):
+                ascension_data["trade_hubs"][trade_hub_key]["project_progress"] = blank_projects
+            
+            space_data[ascension_key] = ascension_data
+
         self.json_interface.set_custom_file("space", file_data=space_data, guild=guild)
 
         """
@@ -4746,23 +5207,32 @@ anarchy - 1000% of your wager.
 
         account.set("total_dough", 10000000000000000000000000000)
         account.set("loaf_converter", 128)
-        account.set("max_daily_rolls", 1000)
+        account.set("max_daily_rolls", 1600)
+
+        account.set("space_level", 1)
+        account.set("telescope_level", 3)
+        account.set("system_xpos", 1)
+        account.set("system_ypos", 1)
+        account.set("galaxy_xpos", 38)
+        account.set("galaxy_ypos", 156)
+        account.set("fuel_tank", 3)
+        account.set("fuel_research", 4)
 
         account.set("multiroller", 7)
         account.set("compound_roller", 5)
         account.set("roll_summarizer", 1)
 
-        account.set("prestige_level", 0)
+        account.set("prestige_level", 6)
         account.set(values.ascension_token.text, 50)
         account.set(values.chessatron.text, 250)
 
         for word in [values.gem_red.text, values.gem_blue.text, values.gem_purple.text, values.gem_green.text, values.gem_gold.text]:
-            account.set(word, 50)
+            account.set(word, 1600)
 
         account.set(values.anarchy_chess.text, 5)
 
         for word in [":doughnut:", ":bagel:", ":waffle:", ":croissant:", ":flatbread:", ":stuffed_flatbread:", ":sandwich:", ":french_bread:"]:
-            account.set(word, 5000)
+            account.set(word, 20000)
 
         self.json_interface.set_account(user, account, guild = ctx.guild.id)
         await ctx.send("Done.")
@@ -5269,6 +5739,7 @@ async def setup(bot):
     importlib.reload(stonks)
     importlib.reload(space)
     importlib.reload(generation)
+    importlib.reload(projects)
 
     try:
         #Bread_cog.internal_load(bot)

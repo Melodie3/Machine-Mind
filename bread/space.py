@@ -1,11 +1,15 @@
 from __future__ import annotations
 
+import discord
+
 import math
 import typing
+import random
 
 import bread.account as account
 import bread.generation as generation
 import bread.values as values
+import bread.projects as projects
 
 import bread_cog
 
@@ -105,6 +109,9 @@ class SystemTile:
     def __repr__(self: typing.Self):
         return self.__str__()
     
+    def tile_seed(self: typing.Self) -> str:
+        return f"{self.galaxy_seed}{self.galaxy_xpos}{self.galaxy_ypos}{self.system_xpos}{self.system_ypos}"
+    
     ###############################################################################
     ##### Interaction methods.
     
@@ -195,6 +202,8 @@ class GalaxyTile:
     def __init__(
             self: typing.Self,
             galaxy_seed: str,
+            ascension: int,
+            guild: typing.Union[discord.Guild, int, str],
             xpos: int,
             ypos: int,
             system: bool,
@@ -209,6 +218,7 @@ class GalaxyTile:
 
         Args:
             galaxy_seed (str): The seed of this galaxy.
+            ascension (int): The ascension of this galaxy.
             xpos (int): The x position of this tile in the galaxy.
             ypos (int): The y position of this tile in the galaxy.
             system (bool): A boolean for whether this tile has a star system on it.
@@ -223,6 +233,8 @@ class GalaxyTile:
             planets (list[SystemTile], optional): A list of SystemTile objects for each planet in this system. Defaults to None.
         """
         self.galaxy_seed = galaxy_seed
+        self.ascension = ascension
+        self.guild = guild
 
         self.xpos = xpos
         self.ypos = ypos
@@ -259,12 +271,20 @@ class GalaxyTile:
     ###############################################################################
     ##### Methods for the loading of system data.
     
-    def smart_load(self: typing.Self) -> None:
+    def smart_load(
+            self: typing.Self,
+            json: bread_cog.JSON_interface,
+            guild: typing.Union[discord.Guild, int, str]
+        ) -> None:
         """Loads the system data, only if it has not already been loaded."""
         if not self.loaded:
-            self.load_system_data()
+            self.load_system_data(json=json, guild=guild)
     
-    def load_system_data(self: typing.Self) -> None:
+    def load_system_data(
+            self: typing.Self,
+            json: bread_cog.JSON_interface,
+            guild: typing.Union[discord.Guild, int, str]
+        ) -> None:
         """Loads the specific system data for this tile, including the star type, planets, asteroids, and trade hub level."""
 
         # If this tile is not a system, then there's nothing to load.
@@ -297,20 +317,14 @@ class GalaxyTile:
             star_type = raw_data.get("star_type")
         )
 
-        # If there's a trade hub here, then add that.
-        if raw_data["trade_hub"].get("exists", False):
-            self.trade_hub = SystemTile(
-                galaxy_seed = self.galaxy_seed,
-
-                galaxy_xpos = self.xpos,
-                galaxy_ypos = self.ypos,
-                system_xpos = raw_data["trade_hub"].get("xpos", 1),
-                system_ypos = raw_data["trade_hub"].get("ypos", 1),
-
-                tile_type = "trade_hub",
-
-                trade_hub_level = raw_data["trade_hub"].get("level", 0)
-            )
+        # Set the trade hub to get_trade_hub, which will return None if there is no trade hub here.
+        self.trade_hub = get_trade_hub(
+            json = json,
+            guild = guild,
+            ascension = self.ascension,
+            galaxy_xpos = self.xpos,
+            galaxy_ypos = self.ypos
+        )
         
         # If there's an asteroid belt, then add an object for the asteroids it contains.
         if raw_data.get("asteroid_belt", False):
@@ -397,13 +411,16 @@ class GalaxyTile:
     ###############################################################################
     ##### Interaction methods.
     
-    def get_emoji(self: typing.Self) -> str:
+    def get_emoji(
+            self: typing.Self,
+            json: bread_cog.JSON_interface
+        ) -> str:
         """Returns an emoji that represents this galaxy tile."""
 
         # If this tile has a system, then get whatever
         if self.system:
             # Load the system data if it has not already been loaded.
-            self.smart_load()
+            self.smart_load(json=json, guild=self.guild)
             
             # Get the emoji of the star.
             return self.star.get_emoji()
@@ -418,6 +435,7 @@ class GalaxyTile:
     
     def get_system_tile(
             self: typing.Self,
+            json: bread_cog.JSON_interface,
             system_x: int,
             system_y: int
         ) -> SystemTile:
@@ -440,7 +458,7 @@ class GalaxyTile:
         # Due to the previous if statement, if it gets here then this tile has a system.
 
         # Load the system data if it has not already been loaded.
-        self.smart_load()
+        self.smart_load(json=json, guild=self.guild)
 
         # If the given coords are (0, 0), then it's going to be the star.
         if system_x == 0 and system_y == 0:
@@ -494,7 +512,6 @@ def get_corruption_chance(
 
 def space_map(
         account: account.Bread_Account,
-        # galaxy_seed: str,
         json: bread_cog.JSON_interface,
         mode: typing.Union[str, None] = None
     ) -> list[list[str]]:
@@ -509,6 +526,8 @@ def space_map(
     """
     galaxy_seed = json.get_ascension_seed(account.get_prestige_level(), guild=account.get("guild_id"))
 
+    guild = account.get("guild_id")
+
     sensor_level = account.get("telescope_level")
 
     # Position in the galaxy.
@@ -516,12 +535,16 @@ def space_map(
 
     radius = sensor_level + 1
 
+    ascension = account.get_prestige_level()
+
     if mode == "galaxy":
         return galaxy_map(
             json = json,
+            guild = guild,
             galaxy_x = x_galaxy,
             galaxy_y = y_galaxy,
             galaxy_seed = galaxy_seed,
+            ascension = ascension,
             telescope_level = sensor_level,
             radius = radius
         )
@@ -531,11 +554,13 @@ def space_map(
 
         return system_map(
             json = json,
+            guild = guild,
             galaxy_x = x_galaxy,
             galaxy_y = y_galaxy,
             system_x = x_system,
             system_y = y_system,
             galaxy_seed = galaxy_seed,
+            ascension = ascension,
             telescope_level = sensor_level,
             radius = radius
         )
@@ -545,9 +570,11 @@ def space_map(
 
 def galaxy_map(
         json: bread_cog.JSON_interface,
+        guild: typing.Union[discord.Guild, int, str],
         galaxy_x: int,
         galaxy_y: int,
         galaxy_seed: str,
+        ascension: int,
         telescope_level: int,
         radius: int
     ) -> list[list[str]]:
@@ -585,13 +612,15 @@ def galaxy_map(
 
             tile_object = get_galaxy_coordinate(
                 json = json,
+                guild = guild,
                 galaxy_seed = galaxy_seed,
+                ascension = ascension,
                 xpos = mod_x,
                 ypos = mod_y,
                 load_planets = False
             )
 
-            grid[y_pos + 2][x_pos + 2] = tile_object.get_emoji()
+            grid[y_pos + 2][x_pos + 2] = tile_object.get_emoji(json=json)
     
     grid[radius + 2][radius + 2] = map_emojis.get("rocket", "R")
         
@@ -602,14 +631,32 @@ def galaxy_map(
 
 def system_map(
         json: bread_cog.JSON_interface,
+        guild: typing.Union[discord.Guild, int, str],
         galaxy_x: int,
         galaxy_y: int,
         system_x: int,
         system_y: int,
         galaxy_seed: str,
+        ascension: int,
         telescope_level: int,
         radius: int
     ) -> list[list[str]]:
+    """Generates the emojis for the space map.
+
+    Args:
+        json (bread_cog.JSON_interface): The JSON interface.
+        galaxy_x (int): The x coordinate in the galaxy to center on.
+        galaxy_y (int): The y coordinate in the galaxy to center on.
+        system_x (int): The x coordinate in the system to center on.
+        system_y (int): The y coordinate in the system to center on.
+        galaxy_seed (str): The seed of the galaxy.
+        ascension (int): The ascension of the galaxy.
+        telescope_level (int): The telescope level the player has.
+        radius (int): The radius of the viewable area.
+
+    Returns:
+        list[list[str]]: _description_
+    """
     
     top_right = (system_x + radius, system_y + radius)
     bottom_left = (system_x - radius, system_y - radius)
@@ -672,7 +719,9 @@ def system_map(
 
     system_data = get_galaxy_coordinate(
         json = json,
+        guild = guild,
         galaxy_seed = galaxy_seed,
+        ascension = ascension,
         xpos = galaxy_x,
         ypos = galaxy_y,
         load_planets = False
@@ -683,7 +732,7 @@ def system_map(
         grid[radius + 2][radius + 2] = map_emojis.get("rocket", "R")
         return grid
     
-    system_data.load_system_data()
+    system_data.load_system_data(json=json, guild=guild)
 
     # Star
     star_x = system_data.star.system_xpos
@@ -691,14 +740,6 @@ def system_map(
 
     if (star_x, star_y) in visible_coordinates:
         grid[star_y + 2 - system_y + radius][star_x + 2 - system_x + radius] = system_data.star.get_emoji()
-
-    # Potential trade hub.
-    if system_data.trade_hub is not None:
-        trade_hub_x = system_data.trade_hub.system_xpos
-        trade_hub_y = system_data.trade_hub.system_ypos
-
-        if (trade_hub_x, trade_hub_y) in visible_coordinates:
-            grid[trade_hub_y + 2 - system_y + radius][trade_hub_x + 2 - system_x + radius] = system_data.trade_hub.get_emoji()
     
     # Asteroids (if there are any)
     if system_data.asteroids is not None:
@@ -710,6 +751,14 @@ def system_map(
     for planet in system_data.planets:
         if (planet.system_xpos, planet.system_ypos) in visible_coordinates:
             grid[planet.system_ypos + 2 - system_y + radius][planet.system_xpos + 2 - system_x + radius] = planet.get_emoji()
+            
+    # Potential trade hub.
+    if system_data.trade_hub is not None:
+        trade_hub_x = system_data.trade_hub.system_xpos
+        trade_hub_y = system_data.trade_hub.system_ypos
+
+        if (trade_hub_x, trade_hub_y) in visible_coordinates:
+            grid[trade_hub_y + 2 - system_y + radius][trade_hub_x + 2 - system_x + radius] = system_data.trade_hub.get_emoji()
 
     # Add the rocket and return.
     grid[radius + 2][radius + 2] = map_emojis.get("rocket", "R")
@@ -725,10 +774,15 @@ def system_map(
 ###################################################################################################################################
 ###################################################################################################################################
 ###################################################################################################################################
+    
+def generate_galaxy_seed() -> str:
+    return "{:050x}".format(random.randrange(16 ** 64)) # Random 64 digit hexadecimal number.
 
 def get_galaxy_coordinate(
         json: bread_cog.JSON_interface,
+        guild: typing.Union[discord.Guild, int, str],
         galaxy_seed: str,
+        ascension: int,
         xpos: int,
         ypos: int,
         load_planets: bool = False
@@ -738,6 +792,7 @@ def get_galaxy_coordinate(
     Args:
         json (bread_cog.JSON_interface): The JSON interface to use.
         galaxy_seed (str): The galaxy seed to use.
+        ascension (int): The ascension of this galaxy.
         xpos (int): The x position of the coordinate to get.
         ypos (int): The y position of the coordinate to get.
         load_planets (bool, optional): Whether to load the planets when making the GalaxyTile object. Defaults to True.
@@ -753,31 +808,31 @@ def get_galaxy_coordinate(
 
     in_nebula = position_data.get("in_nebula", False)
 
-    if not position_data.get("system", False):
-        return GalaxyTile(
-            galaxy_seed = galaxy_seed,
-            xpos = xpos,
-            ypos = ypos,
-            system = False,
-            in_nebula = in_nebula
-        )
+    is_system = position_data.get("system", False)
 
     out = GalaxyTile(
         galaxy_seed = galaxy_seed,
+        ascension = ascension,
+        guild = guild,
         xpos = xpos,
         ypos = ypos,
-        system = True,
+        system = is_system,
         in_nebula = in_nebula
     )
 
+    if not is_system:
+        return out
+
     if load_planets:
-        out.load_system_data()
+        out.load_system_data(json=json, guild=guild)
 
     return out
 
 def get_system_coordinate(
         json: bread_cog.JSON_interface,
+        guild: typing.Union[discord.Guild, int, str],
         galaxy_seed: str,
+        ascension: int,
         galaxy_x: int,
         galaxy_y: int,
         system_x: int,
@@ -788,6 +843,7 @@ def get_system_coordinate(
     Args:
         json (bread_cog.JSON_interface): The JSON interface.
         galaxy_seed (str): The seed of the galaxy the tile is in.
+        ascension (int): The ascension of the galaxy this system is in.
         galaxy_x (int): The x position in the galaxy the tile is on.
         galaxy_y (int): The y position in the galaxy the tile is on.
         system_x (int): X position of the tile within the system.
@@ -799,7 +855,9 @@ def get_system_coordinate(
 
     galaxy_tile = get_galaxy_coordinate(
         json = json,
+        guild = guild,
         galaxy_seed = galaxy_seed,
+        ascension = ascension,
         xpos = galaxy_x,
         ypos = galaxy_y
     )
@@ -847,3 +905,160 @@ def get_planet_modifiers(
         result[wpiece] = 1
 
     return result
+    
+def get_trade_hub(
+        json: bread_cog.JSON_interface,
+        guild: typing.Union[discord.Guild, int, str],
+        ascension: int,
+        galaxy_xpos: int,
+        galaxy_ypos: int
+    ) -> typing.Union[SystemTile, None]:
+    """Returns a SystemTile object for the trade hub in the given galaxy coordinate.
+
+    Args:
+        json (bread_cog.JSON_interface): The JSON interface.
+        guild (typing.Union[discord.Guild, int, str]): The guild to get the trade hub for.
+        ascension (int): The ascension to use.
+        galaxy_xpos (int): The x position in the galaxy to use.
+        galaxy_ypos (int): The y position in the galaxy to use.
+
+    Returns:
+        typing.Union[SystemTile, None]: The SystemTile object for the trade hub, or None if there is no trade hub.
+    """
+    space_data = json.get_custom_file("space", guild=guild)
+
+    ascension_data = space_data.get(f"ascension_{ascension}", dict())
+
+    trade_hub_data = ascension_data.get("trade_hubs", dict())
+
+    galaxy_seed = json.get_ascension_seed(ascension, guild=guild)
+
+    if f"{galaxy_xpos} {galaxy_ypos}" in trade_hub_data.keys():
+        trade_hub = trade_hub_data.get(f"{galaxy_xpos} {galaxy_ypos}")
+        return SystemTile(
+            galaxy_seed = galaxy_seed,
+            galaxy_xpos = galaxy_xpos,
+            galaxy_ypos = galaxy_ypos,
+            system_xpos = trade_hub["location"][0],
+            system_ypos = trade_hub["location"][1],
+            tile_type = "trade_hub",
+            trade_hub_level = trade_hub["level"]
+        )
+    
+    generated = generation.generate_system(
+        galaxy_seed = galaxy_seed,
+        galaxy_xpos = galaxy_xpos,
+        galaxy_ypos = galaxy_ypos
+    )
+
+    if generated is None:
+        return None
+    
+    if not generated["trade_hub"].get("exists", False):
+        return None
+    
+    return SystemTile(
+        galaxy_seed = galaxy_seed,
+        galaxy_xpos = galaxy_xpos,
+        galaxy_ypos = galaxy_ypos,
+        system_xpos = generated["trade_hub"]["xpos"],
+        system_ypos = generated["trade_hub"]["ypos"],
+        tile_type = "trade_hub",
+        trade_hub_level = generated["trade_hub"]["level"]
+    )
+
+            
+
+        
+
+
+
+
+###################################################################################################################################
+###################################################################################################################################
+###################################################################################################################################
+
+def create_trade_hub(
+        json: bread_cog.JSON_interface,
+        user_account: account.Bread_Account,
+        galaxy_x: int,
+        galaxy_y: int,
+        system_x: int,
+        system_y: int
+    ):
+    guild_id = user_account.get("guild_id")
+
+    ascension_data = json.get_space_ascension(ascension_id=user_account.get_prestige_level(), guild=guild_id)
+
+    trade_hub_data = ascension_data.get("trade_hubs", dict())
+
+    trade_hub_data[f"{galaxy_x} {galaxy_y}"] = {
+        "location": [system_x, system_y],
+        "level": 1,
+        "project_progress": {
+            "project_1": [],
+            "project_2": [],
+            "project_3": []
+        }
+    }
+
+    ascension_data["trade_hubs"] = trade_hub_data
+
+    space_data = json.get_space_data(guild=guild_id)
+
+    space_data[f"ascension_{user_account.get_prestige_level()}"] = ascension_data
+
+    json.set_custom_file("space", space_data, guild=guild_id)
+
+def get_trade_hub_projects(
+        json: bread_cog.JSON_interface,
+        user_account: account.Bread_Account,
+        galaxy_x: int,
+        galaxy_y: int
+    ) -> list[dict[str, typing.Union[projects.Project, int, str, bool]]]:
+    prestige_level = user_account.get_prestige_level()
+    guild_id = user_account.get("guild_id")
+    seed = json.get_ascension_seed(prestige_level, guild_id)
+
+    out_projects = []
+
+    trade_hub_data = json.get_space_ascension(prestige_level, guild_id)
+    trade_hub_data = trade_hub_data.get("trade_hubs", {})
+    trade_hub_data = trade_hub_data.get(f"{galaxy_x} {galaxy_y}", {})
+
+    project_data = trade_hub_data.get("project_progress", {})
+
+    used_names = []
+
+    project_id = -1
+    while len(out_projects) < 3:
+        project_id += 1
+
+        key = f"project_{project_id + 1}"
+        rng = random.Random(projects.hash_args(seed, galaxy_x, galaxy_y, key))
+
+        if len(out_projects) == 0 or (len(out_projects) == 2 and rng.randint(1, 2) == 1):
+            project = rng.choice(projects.item_project_lists) # Full list -> Give/Take
+            project = rng.choice(project) # Give/Take -> Item type
+            project = rng.choice(project) # Item type -> Specific item
+        else:
+            project = rng.choice(projects.story_projects)
+
+        # Prevent duplicates.
+        if project.internal in used_names:
+            continue
+
+        project_progress = project_data.get(key, {}).get("contributions", {})
+        completed = project_data.get(key, {}).get("completed", False)
+
+        used_names.append(project.internal)
+
+        out_projects.append(
+            {
+                "project": project,
+                "contributions": project_progress,
+                "completed": completed
+            }
+        )
+    
+    return out_projects

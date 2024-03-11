@@ -51,6 +51,7 @@ class Bread_Account:
     def reset_to_default(self):
         username = self.get("username")
         display_name = self.get("display_name")
+        guild_id = self.get("guild_id")
         self.values = {
             "total_dough" : 0,
             "earned_dough" : 0,
@@ -58,6 +59,7 @@ class Bread_Account:
             "daily_rolls" : 0,
             "username": username,
             "display_name": display_name,
+            "guild_id": guild_id
         }
 
     def daily_reset(self):
@@ -420,7 +422,9 @@ class Bread_Account:
 
         return space.get_galaxy_coordinate(
             json = json_interface,
+            guild = self.get("guild_id"),
             galaxy_seed = self.get_galaxy_seed(json_interface),
+            ascension = self.get_prestige_level(),
             xpos = xpos,
             ypos = ypos
         )
@@ -435,6 +439,7 @@ class Bread_Account:
         xpos, ypos = self.get_system_location()
 
         return galaxy_tile.get_system_tile(
+            json = json_interface,
             system_x = xpos,
             system_y = ypos
         )
