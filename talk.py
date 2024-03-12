@@ -228,23 +228,23 @@ async def say(ctx, *, words):
         await ctx.send("Nice try.")
         return
 
-    #check if those bad emoji are there
-    if not ((not "<:why:959245770119319593>"   in words_unfiltered) and
-            (not "<:whytf:959327131219947541>" in words_unfiltered)):
-        await ctx.send("I will not say that.")
-        return
+    #check if those bad emoji are there (they have been removed)
+    #if not ((not "<:why:959245770119319593>"   in words_unfiltered) and
+            #(not "<:whytf:959327131219947541>" in words_unfiltered)):
+        #await ctx.send("I will not say that.")
+        #return
     
     #Wanker, bitch, twat, slut, fucker.
     # check if there are bad words
     exclusion_list = [ "fuck", "fucking", "fucker", "shit", "dumb", "wank", "bitch", 
                         "frick", "fricking", "frack"
                         "twat", "slut", "penis", "sex", "cum", "balls",
-                        "crap", "hell", "ass", 
-                        "tbh", "wtf", "lol", "lmao", "imao", "lol",
-                        "daddy", "uwu"]
+                        "crap", "hell", "ass", "heck",
+                        "tbh", "wtf", "lol", "lmao", "imao", "lol", "sussy baka", "dude", "bro", "bruh",
+                        "daddy", "uwu", "holding hands",]
     for word in exclusion_list:
         if word in words_filtered:
-            await ctx.send("No chatspeak or swearing, please.")
+            await ctx.send("No chatspeak or vulgarity, please.")
             return
 
     if ("love" in words_filtered) or ("hate" in words_filtered):
@@ -281,7 +281,13 @@ async def say(ctx, *, words):
         ("wont" in words_filtered) or
         ("dont" in words_filtered) or
         ("shouldnt" in words_filtered) or
-        ("im" in words_filtered)):
+        ("im" in words_filtered) or 
+        ("aint" in words_filtered) or
+        ("isnt" in words_filtered) or
+        ("doesnt" in words_filtered) or
+        ("shouldve" in words_filtered) or
+        ("couldve" in words_filtered) or
+        ("wouldve" in words_filtered)):
         await ctx.send("Please use proper grammar.")
         return
     
@@ -293,6 +299,12 @@ async def say(ctx, *, words):
     full_phrase = full_phrase.replace("I've", "I have")
     full_phrase = full_phrase.replace("I'll", "I will")
     full_phrase = full_phrase.replace("I'd", "I would")
+    full_phrase = full_phrase.replace("ain't", "is not")
+    full_phrase = full_phrase.replace("isn't", "is not")
+    full_phrase = full_phrase.replace("doesn't", "does not")
+    full_phrase = full_phrase.replace("should've", "should have")
+    full_phrase = full_phrase.replace("would've", "would have")
+    full_phrase = full_phrase.replace("could've", "could have")
 
 
     
@@ -365,6 +377,20 @@ async def verify(ctx, user: typing.Optional[discord.Member]):
     if "addicted to gambling" in [y.name.lower() for y in user.roles]:
         descriptors.append("I hope you're not gambling with your life savings.")
         descriptors.append("Remember, gambling is a sin.")
+    if "addicted to milk" in [y.name.lower() for y in user.roles]:
+        descriptors.append("Your bones are looking strong!")
+    if "addicted to evangelion" in [y.name.lower() for y in user.roles]:
+        descriptors.append("You're the lowest of the low.")
+    if "addicted to counting" in [y.name.lower() for y in user.roles]:
+        descriptors.append("Think fast! What comes after 1841492?")
+        descriptors.append("Think fast! What comes after 24905427502745?")
+        descriptors.append("Think fast! What comes after 4241?")
+        descriptors.append("Think fast! What comes after 2492482975?")
+        descriptors.append("Think fast! What comes after 2?")
+    if "not a role" in [y.name.lower() for y in user.roles]:
+        descriptors.append("Why are you reading through the $verify response list?")
+    if "addicted to chonny jash" in [y.name.lower() for y in user.roles]:
+        descriptors.append("Call me the soul, or call me my name.")
     #Seriously Addicted to _____ Roles
     if "seriously addicted to bricks" in [y.name.lower() for y in user.roles]:
         descriptors.append("How many times will you decline en passant?")
@@ -372,6 +398,25 @@ async def verify(ctx, user: typing.Optional[discord.Member]):
         descriptors.append("Positive outcome on average.")
     if "seriously addicted to bread" in [y.name.lower() for y in user.roles]:
         descriptors.append("You remember when bread was rolled on one line, don't you?")
+    #Pride roles
+    if "Garlic Bread Enjoyer" in [y.name.lower() for y in user.roles]:
+        descriptors.append("You seem to be a very valid person.")
+    if "Fast Walker" in [y.name.lower() for y in user.roles]:
+        descriptors.append("You seem to be a very valid person.")
+    if "Good at Archery" in [y.name.lower() for y in user.roles]:
+        descriptors.append("You seem to be a very valid person.")
+    if "Kitchen Pan-ic" in [y.name.lower() for y in user.roles]:
+        descriptors.append("You seem to be a very valid person.")
+    if "Bisexual Mess" in [y.name.lower() for y in user.roles]:
+        descriptors.append("You seem to be a very valid person.")
+    if "Transbian Thirst-Trap" in [y.name.lower() for y in user.roles]:
+        descriptors.append("You seem to be a very valid person.")
+    if "Useless Lesbian" in [y.name.lower() for y in user.roles]:
+        descriptors.append("You seem to be a very valid person.")
+    if "Scared of Computers" in [y.name.lower() for y in user.roles]:
+        descriptors.append("You seem to be a very valid person.")
+    if "Blahaj Enjoyer" in [y.name.lower() for y in user.roles]:
+        descriptors.append("You seem to be a very valid person.")
     #Miscellaneous roles
     if "bread" in [y.name.lower() for y in user.roles]:
         descriptors.append("Bread club!")
@@ -393,14 +438,14 @@ async def verify(ctx, user: typing.Optional[discord.Member]):
         descriptors.append("ghomerl vs. cmauhin")
     if "literally does care" in [y.name.lower() for y in user.roles]:
         descriptors.append("Thank you for signing up to be notified of server events!")
-    if "transbian thirst-trap" in [y.name.lower() for y in user.roles]:
-        descriptors.append("You seem to be a very valid person.")
     if "gets pinged too much" in [y.name.lower() for y in user.roles]:
         descriptors.append("<@&967443956659019786>")
     if "hapy capy :heart:" in [y.name.lower() for y in user.roles]:
         descriptors.append("A fellow supporter of the capybaras. I tip my hat to you.")
     if "r/chess mod" in [y.name.lower() for y in user.roles]:
         descriptors.append("Hey, OP! Did your game end in a stalemate? Did you encounter a weird pawn move? Are you trying to move a piece and it's not going? We have just the resource for you!")
+    if "r/anarchychess mod!!" in [y.name.lower() for y in user.roles]:
+        descriptors.append("Look, it's the 1984 police.")
     if "gvc commentator" in [y.name.lower() for y in user.roles]:
         descriptors.append("Will you be returning for the rematch, commentator?")
     if "in debt" in [y.name.lower() for y in user.roles]:
@@ -433,7 +478,54 @@ async def verify(ctx, user: typing.Optional[discord.Member]):
         descriptors.append("What does the Ghost Council even mean?")
     if "sus" in [y.name.lower() for y in user.roles]:
         descriptors.append("<:sus:961517169424883722>")
-                           
+    if "lunatic" in [y.name.lower() for y in user.roles]:
+        descriptors.append("I AM NOT CRAZY!")
+    if "chess club" in [y.name.lower() for y in user.roles]:
+        descriptors.append("What's your favorite opening?")
+    if "strongest player in the server" in [y.name.lower() for y in user.roles]:
+        descriptors.append("What's your rating?")
+    if "snacqk attacqk" in [y.name.lower() for y in user.roles]:
+        descriptors.append("Snacqk attacqk stays winning!")
+    if "blahaj enjoyer" in [y.name.lower() for y in user.roles]:
+        descriptors.append("You seem to be a very valid person.")
+    if "onion rebel" in [y.name.lower() for y in user.roles]:
+        descriptors.append(":onion:")
+    if "very chill" in [y.name.lower() for y in user.roles]:
+        descriptors.append("You're cool.")
+    if "the garry chess!! real!!" in [y.name.lower() for y in user.roles]:
+        descriptors.append("When is your next NFT drop?")
+    if "pasta cult" in [y.name.lower() for y in user.roles]:
+        descriptors.append("What's your favorite pasta? I like fettucine alfredo.")
+    if "furry" in [y.name.lower() for y in user.roles]:
+        descriptors.append("OwO")
+    if "gives bread facts" in [y.name.lower() for y in user.roles]:
+        descriptors.append("Can I have a bread fact?")
+    if "gives water facts" in [y.name.lower() for y in user.roles]:
+        descriptors.append("Can I have a water fact?")
+    if "blahaj enjoyer" in [y.name.lower() for y in user.roles]:
+        descriptors.append("You seem to be a very valid person.")
+    if "CVC gang" in [y.name.lower() for y in user.roles]:
+        descriptors.append("Chess variants are super fun!")
+    if "relevant" in [y.name.lower() for y in user.roles]:
+        descriptors.append("You are relevant.")
+    if "likes the rain" in [y.name.lower() for y in user.roles]:
+        descriptors.append("What is it that's so great about the rain? The ambience? The feel of the water on your face? The peaceful feeling of cleansing?")
+    if "some dumb shit like that" in [y.name.lower() for y in user.roles]:
+        descriptors.append("W")
+    if "brick dodger" in [y.name.lower() for y in user.roles]:
+        descriptors.append("I'll get you next time!") 
+    if "murderer" in [y.name.lower() for y in user.roles]:
+        descriptors.append("Why would you do such a thing?")
+    if "en passant enabler" in [y.name.lower() for y in user.roles]:
+        descriptors.append("Holy Hell!")
+    if "spunchrole" in [y.name.lower() for y in user.roles]:
+        descriptors.append("Who lives in a pineapple under the sea?")
+    if "actual redditor" in [y.name.lower() for y in user.roles]:
+        descriptors.append("This!!!\nEdit: Thank for the gold!")
+    if "guessed correctly" in [y.name.lower() for y in user.roles]:
+        descriptors.append("What number am I holding up?")
+    
+        
     if len(descriptors) == 0:
         await ctx.send("Verification failed.")
     else:
