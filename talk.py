@@ -399,23 +399,23 @@ async def verify(ctx, user: typing.Optional[discord.Member]):
     if "seriously addicted to bread" in [y.name.lower() for y in user.roles]:
         descriptors.append("You remember when bread was rolled on one line, don't you?")
     #Pride roles
-    if "Garlic Bread Enjoyer" in [y.name.lower() for y in user.roles]:
+    if "garlic bread enjoyer" in [y.name.lower() for y in user.roles]:
         descriptors.append("You seem to be a very valid person.")
-    if "Fast Walker" in [y.name.lower() for y in user.roles]:
+    if "fast walker" in [y.name.lower() for y in user.roles]:
         descriptors.append("You seem to be a very valid person.")
-    if "Good at Archery" in [y.name.lower() for y in user.roles]:
+    if "good at archery" in [y.name.lower() for y in user.roles]:
         descriptors.append("You seem to be a very valid person.")
-    if "Kitchen Pan-ic" in [y.name.lower() for y in user.roles]:
+    if "kitchen pan-ic" in [y.name.lower() for y in user.roles]:
         descriptors.append("You seem to be a very valid person.")
-    if "Bisexual Mess" in [y.name.lower() for y in user.roles]:
+    if "bisexual mess" in [y.name.lower() for y in user.roles]:
         descriptors.append("You seem to be a very valid person.")
-    if "Transbian Thirst-Trap" in [y.name.lower() for y in user.roles]:
+    if "transbian thirst-trap" in [y.name.lower() for y in user.roles]:
         descriptors.append("You seem to be a very valid person.")
-    if "Useless Lesbian" in [y.name.lower() for y in user.roles]:
+    if "useless lesbian" in [y.name.lower() for y in user.roles]:
         descriptors.append("You seem to be a very valid person.")
-    if "Scared of Computers" in [y.name.lower() for y in user.roles]:
+    if "scared of computers" in [y.name.lower() for y in user.roles]:
         descriptors.append("You seem to be a very valid person.")
-    if "Blahaj Enjoyer" in [y.name.lower() for y in user.roles]:
+    if "blahaj enjoyer" in [y.name.lower() for y in user.roles]:
         descriptors.append("You seem to be a very valid person.")
     #Miscellaneous roles
     if "bread" in [y.name.lower() for y in user.roles]:
@@ -504,7 +504,7 @@ async def verify(ctx, user: typing.Optional[discord.Member]):
         descriptors.append("Can I have a water fact?")
     if "blahaj enjoyer" in [y.name.lower() for y in user.roles]:
         descriptors.append("You seem to be a very valid person.")
-    if "CVC gang" in [y.name.lower() for y in user.roles]:
+    if "cvc gang" in [y.name.lower() for y in user.roles]:
         descriptors.append("Chess variants are super fun!")
     if "relevant" in [y.name.lower() for y in user.roles]:
         descriptors.append("You are relevant.")
