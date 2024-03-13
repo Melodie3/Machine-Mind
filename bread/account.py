@@ -421,7 +421,7 @@ class Bread_Account:
         xpos, ypos = self.get_galaxy_location()
 
         return space.get_galaxy_coordinate(
-            json = json_interface,
+            json_interface = json_interface,
             guild = self.get("guild_id"),
             galaxy_seed = self.get_galaxy_seed(json_interface),
             ascension = self.get_prestige_level(),
@@ -439,7 +439,7 @@ class Bread_Account:
         xpos, ypos = self.get_system_location()
 
         return galaxy_tile.get_system_tile(
-            json = json_interface,
+            json_interface = json_interface,
             system_x = xpos,
             system_y = ypos
         )

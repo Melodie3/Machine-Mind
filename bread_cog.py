@@ -4091,7 +4091,7 @@ anarchy - 1000% of your wager.
         
         map_data = space.space_map(
             account=user_account,
-            json = self.json_interface,
+            json_interface = self.json_interface,
             mode=mode
         )
 
@@ -4181,7 +4181,7 @@ anarchy - 1000% of your wager.
 
         map_lines = space.space_map(
             account = user_account,
-            json = self.json_interface,
+            json_interface = self.json_interface,
             mode = "system"
         )
 
@@ -4207,7 +4207,7 @@ anarchy - 1000% of your wager.
         galaxy_x, galaxy_y = user_account.get_galaxy_location()
 
         system_data = space.get_galaxy_coordinate(
-            json = self.json_interface,
+            json_interface = self.json_interface,
             guild = ctx.guild.id,
             galaxy_seed = self.json_interface.get_ascension_seed(user_account.get_prestige_level(), guild=user_account.get("guild_id")),
             ascension = user_account.get_ascension_level(),
@@ -4220,7 +4220,7 @@ anarchy - 1000% of your wager.
 
         if system_data.system:
             tile_analyze = system_data.get_system_tile(
-                json = self.json_interface,
+                json_interface = self.json_interface,
                 system_x = x_modifier - radius + player_x,
                 system_y = y_modifier - radius + player_y
             )
@@ -4279,7 +4279,7 @@ anarchy - 1000% of your wager.
 
         
         system = space.get_galaxy_coordinate(
-            json = self.json_interface,
+            json_interface = self.json_interface,
             guild = ctx.guild.id,
             galaxy_seed = self.json_interface.get_ascension_seed(user_account.get_prestige_level(), guild=user_account.get("guild_id")),
             ascension = user_account.get_prestige_level(),
@@ -4294,7 +4294,7 @@ anarchy - 1000% of your wager.
         
         system_x, system_y = user_account.get_system_location()
         
-        system.load_system_data(json=self.json_interface, guild=ctx.guild.id)
+        system.load_system_data(json_interface=self.json_interface, guild=ctx.guild.id)
 
         if not (abs(system_x) <= 1 and abs(system_y) <= 1):
             await ctx.reply("You are not close enough to a star to create a Trade Hub.")
@@ -4321,7 +4321,7 @@ anarchy - 1000% of your wager.
                 self.json_interface.set_account(ctx.author, user_account, guild = ctx.guild.id)
 
                 space.create_trade_hub(
-                    json = self.json_interface,
+                    json_interface = self.json_interface,
                     user_account = user_account,
                     galaxy_x = galaxy_x,
                     galaxy_y = galaxy_y,
@@ -4351,7 +4351,7 @@ anarchy - 1000% of your wager.
         day_seed = self.json_interface.get_day_seed(guild=ctx.guild.id)
 
         projects = space.get_trade_hub_projects(
-            json = self.json_interface,
+            json_interface = self.json_interface,
             user_account = user_account,
             galaxy_x = galaxy_x,
             galaxy_y = galaxy_y
