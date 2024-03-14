@@ -457,6 +457,63 @@ class JSON_interface:
 
         return space_data.get("day_seed", "31004150_will_rule_the_world")
     
+    def get_trade_hub_data(
+            self: typing.Self,
+            guild: typing.Union[discord.Guild, int, str],
+            ascension: int,
+            galaxy_x: int,
+            galaxy_y: int
+        ) -> dict:
+        """Fetches a trade hub's data from the database. An empty dict will be returned if the trade hub is not found."""
+        space_data = self.get_space_data(guild)
+
+        ascension_data = space_data.get(f"ascension_{ascension}", {})
+
+        trade_hub_data = ascension_data.get("trade_hubs", {})
+
+        return trade_hub_data.get(f"{galaxy_x} {galaxy_y}", {})
+    
+    def update_trade_hub_data(
+            self: typing.Self,
+            guild: typing.Union[discord.Guild, int, str],
+            ascension: int,
+            galaxy_x: int,
+            galaxy_y: int,
+            new_data: dict
+        ) -> None:
+        space_data = self.get_space_data(guild)
+
+        ascension_data = space_data.get(f"ascension_{ascension}", {})
+
+        trade_hub_data = ascension_data.get("trade_hubs", {})
+
+        trade_hub_data[f"{galaxy_x} {galaxy_y}"] = new_data
+        ascension_data["trade_hubs"] = trade_hub_data
+        space_data[f"ascension_{ascension}"] = ascension_data
+
+        self.set_custom_file("space", space_data, guild=guild)
+    
+    def update_trade_hub_levelling_data(
+            self: typing.Self,
+            guild: typing.Union[discord.Guild, int, str],
+            ascension: int,
+            galaxy_x: int,
+            galaxy_y: int,
+            new_data: dict
+        ):
+        existing = self.get_trade_hub_data(guild, ascension, galaxy_x, galaxy_y)
+
+        existing["level_progress"] = new_data
+
+        self.update_trade_hub_data(
+            guild = guild,
+            ascension = ascension,
+            galaxy_x = galaxy_x,
+            galaxy_y = galaxy_y,
+            new_data = existing
+        )
+
+    
     def update_project_data(
             self: typing.Self,
             guild: typing.Union[discord.Guild, int, str],
@@ -4336,6 +4393,459 @@ anarchy - 1000% of your wager.
     ########################################################################################################################
     #####      BREAD SPACE HUB
     
+    async def trade_hub_contribute_level(
+            self: typing.Self,
+            ctx: commands.Context,
+            user_account: account.Bread_Account,
+            day_seed: str,
+            hub_projects: list[projects.Project],
+            hub: space.SystemTile,
+            actions: tuple[str],
+
+            galaxy_x: int,
+            galaxy_y: int,
+
+            item: values.Emote,
+            amount: int
+        ):
+        level_project = projects.Trade_Hub
+        max_level = len(level_project.all_costs())
+
+        if hub.trade_hub_level == max_level:
+            await ctx.reply("This Trade Hub is already at the max level!")
+            return
+
+        ascension_data = self.json_interface.get_space_ascension(
+            ascension_id = user_account.get_prestige_level(),
+            guild = ctx.guild.id
+        )
+
+        all_trade_hubs = ascension_data.get("trade_hubs", dict())
+        trade_hub_data = all_trade_hubs.get(f"{galaxy_x} {galaxy_y}", dict())
+
+        level_progress = trade_hub_data.get("level_progress", dict())
+
+        remaining = level_project.get_remaining_items(
+            day_seed = day_seed,
+            system_tile = hub,
+            progress_data = level_progress
+        )
+    
+        if item.text not in remaining:
+            await ctx.reply("We don't need any more of that to level up the Trade Hub.")
+            return
+    
+        amount_contribute = min(remaining[item.text], amount)
+
+        player_data = level_progress.get(str(ctx.author.id), {"items": {}})
+        
+        user_account.increment(item.text, -amount_contribute)
+
+        if item.text in player_data["items"]:
+            player_data["items"][item.text] += amount_contribute
+        else:
+            player_data["items"][item.text] = amount_contribute
+        
+        level_progress[str(ctx.author.id)] = player_data
+
+        self.json_interface.set_account(ctx.author, user_account, guild = ctx.guild.id)
+
+        self.json_interface.update_trade_hub_levelling_data(
+            guild = ctx.guild.id,
+            ascension = user_account.get_prestige_level(),
+            galaxy_x = galaxy_x,
+            galaxy_y = galaxy_y,
+            new_data = level_progress
+        )
+
+        amount_left = user_account.get(item.text)
+        
+        await ctx.reply(f"You have contributed {amount_contribute} {item.text} to levelling up the Trade Hub!\nYou now have {amount_left} {item.text} remaining.")
+
+        # Check for completion.
+
+        remaining = level_project.get_remaining_items(
+            day_seed = day_seed,
+            system_tile = hub,
+            progress_data = level_progress
+        )
+
+        if len(remaining) != 0:
+            # No completion :(
+            return
+
+        existing = self.json_interface.get_trade_hub_data(
+            guild = ctx.guild.id,
+            ascension = user_account.get_prestige_level(),
+            galaxy_x = galaxy_x,
+            galaxy_y = galaxy_y
+        )
+
+        if "level" in existing:
+            existing["level"] += 1
+        else:
+            # If the key doesn't exist, then we know it's a natural one.
+            # All natural trade hubs have a level of 1, so update it to 2.
+            existing["level"] = 2
+
+        # Reset the progress dict.
+        existing["level_progress"] = {}
+        
+        self.json_interface.update_trade_hub_data(
+            guild = ctx.guild.id,
+            ascension = user_account.get_prestige_level(),
+            galaxy_x = galaxy_x,
+            galaxy_y = galaxy_y,
+            new_data = existing
+        )
+
+        send_lines = "Trade Hub levelled up!"
+        send_lines += level_project.completion(day_seed, hub)
+
+        send_lines += "\n\n"
+        for player_id in level_progress.keys():
+            send_lines += f"<@{player_id}> "
+            
+        await asyncio.sleep(1)
+
+        await ctx.send(send_lines)
+        return
+        
+
+
+
+
+
+
+
+    ##############################################################################################################
+        
+    async def trade_hub_contribute(
+            self: typing.Self,
+            ctx: commands.Context,
+            user_account: account.Bread_Account,
+            day_seed: str,
+            hub_projects: list[projects.Project],
+            hub: space.SystemTile,
+            actions: tuple[str]
+        ):
+        galaxy_x, galaxy_y = user_account.get_galaxy_location(json_interface=self.json_interface)
+
+        actions += [" ", " ", " "]
+
+        try:
+            if actions[1] == "level":
+                project_number = "level"
+            else:
+                project_number = parse_int(actions[1])
+
+            amount = parse_int(actions[2])
+            item = values.get_emote(actions[3])
+        except ValueError:
+            if project_number == "level":
+                await ctx.reply("To help level up the Trade Hub, use this format:\n'$bread space hub contribute level [amount] [item]'")
+            else:
+                await ctx.reply("To contribute to a project, use this format:\n'$bread space hub contribute [project number] [amount] [item]'")
+            return
+
+        if item is None:
+            if project_number == "level":
+                await ctx.reply("To help level up the Trade Hub, use this format:\n'$bread space hub contribute level [amount] [item]'")
+            else:
+                await ctx.reply("To contribute to a project, use this format:\n'$bread space hub contribute [project number] [amount] [item]'")
+            return
+        
+        if amount < 0:
+            await ctx.reply("Trying to steal resources? Mum won't be very happy about that.")
+            await ctx.invoke(self.bot.get_command('brick'), member=ctx.author, duration="1")
+            return
+        
+        if amount == 0:
+            await ctx.reply("That's not much of a contribution.")
+            return
+        
+        if amount > user_account.get(item.text):
+            await ctx.reply("You don't have enough of that to contribute.")
+            return
+        
+        if project_number == "level":
+            await self.trade_hub_contribute_level(
+                ctx = ctx,
+                user_account = user_account,
+                day_seed = day_seed,
+                hub_projects = hub_projects,
+                hub = hub,
+                actions = actions,
+                galaxy_x = galaxy_x,
+                galaxy_y = galaxy_y,
+                item = item,
+                amount = amount
+            )
+            return
+
+        if not (1 <= project_number <= 3):
+            await ctx.reply("That is an unrecognized project number.")
+            return
+        
+        project_data = hub_projects[project_number - 1]
+
+        if project_data.get("completed", False):
+            await ctx.reply("This project has already been completed.")
+            return
+        
+        project = project_data.get("project")
+
+        remaining = project.get_remaining_items(
+            day_seed = day_seed,
+            system_tile = hub,
+            progress_data = project_data.get("contributions", {})
+        )
+
+        if len(remaining) == 0:
+            out_data = {
+                "completed": True,
+                "contributions": project_data.get("contributions")
+            }
+            
+            self.json_interface.update_project_data(
+                guild = ctx.guild.id,
+                ascension = user_account.get_prestige_level(),
+                galaxy_x = galaxy_x,
+                galaxy_y = galaxy_y,
+                project_id = project_number,
+                new_data = out_data
+            )
+
+            await ctx.reply("This project has already been completed.")
+            return
+        
+        if item.text not in remaining:
+            await ctx.reply("The project doesn't need any more of that item.")
+            return
+        
+        amount_contribute = min(remaining[item.text], amount)
+
+        contribution_data = project_data.get("contributions", [])
+
+        player_data = contribution_data.get(str(ctx.author.id), {"items": {}})
+        
+        user_account.increment(item.text, -amount_contribute)
+
+        if item.text in player_data["items"]:
+            player_data["items"][item.text] += amount_contribute
+        else:
+            player_data["items"][item.text] = amount_contribute
+        
+        contribution_data[str(ctx.author.id)] = player_data
+
+        out_data = {
+            "completed": False,
+            "contributions": contribution_data
+        }
+
+        self.json_interface.set_account(ctx.author, user_account, guild = ctx.guild.id)
+        self.json_interface.update_project_data(
+            guild = ctx.guild.id,
+            ascension = user_account.get_prestige_level(),
+            galaxy_x = galaxy_x,
+            galaxy_y = galaxy_y,
+            project_id = project_number,
+            new_data = out_data
+        )
+
+        amount_left = user_account.get(item.text)
+        
+        await ctx.reply(f"You have contributed {amount_contribute} {item.text} to the {project.name(day_seed, hub)} project.\nYou now have {amount_left} {item.text} remaining.")
+
+        updated_required = project.get_remaining_items(
+            day_seed = day_seed,
+            system_tile = hub,
+            progress_data = out_data.get("contributions", {})
+        )
+        if len(updated_required) != 0:
+            # It hasn't been completed. :(
+            return
+        
+        ########################################
+        # It's been completed! :o
+
+        out_data["completed"] = True
+
+        self.json_interface.update_project_data(
+            guild = ctx.guild.id,
+            ascension = user_account.get_prestige_level(),
+            galaxy_x = galaxy_x,
+            galaxy_y = galaxy_y,
+            project_id = project_number,
+            new_data = out_data
+        )
+
+        send_lines = "Project completed!\n\n"
+        send_lines += project.completion(day_seed, hub)
+        send_lines += "\n\nIndividual earnings:"
+
+        total_items = project.total_items_required(day_seed, hub)
+        reward = project.get_reward(day_seed, hub)
+
+        for player_id, contributions in out_data.get("contributions", {}).items():
+            items = contributions.get("items", {})
+
+            items_contributed = sum(items.values())
+
+            percent_cut = items_contributed / total_items
+
+            player_account = self.json_interface.get_account(player_id, guild=ctx.guild.id)
+
+            items_added = []
+
+            for win_item, win_amount in reward:
+                amount = math.ceil(win_amount * percent_cut)
+                player_account.increment(win_item, amount)
+
+                items_added.append(f"{amount} {win_item}")
+
+            self.json_interface.set_account(player_id, player_account, guild = ctx.guild.id)
+            
+            send_lines += f"\n- <@{player_id}>: {' ,  '.join(items_added)}"
+        
+        await asyncio.sleep(1)
+
+        await ctx.send(send_lines)
+        return
+
+    ##############################################################################################################
+        
+    async def trade_hub_info(
+            self: typing.Self,
+            ctx: commands.Context,
+            user_account: account.Bread_Account,
+            day_seed: str,
+            hub_projects: list[projects.Project],
+            hub: space.SystemTile,
+            actions: tuple[str]
+        ):
+        actions.append(" ")
+
+        try:
+            project_number = parse_int(actions[1])
+        except ValueError:
+            await ctx.reply("To get information about a project, use '$bread space hub info [project number]'")
+            return
+        
+        if not (1 <= project_number <= 3):
+            await ctx.reply("That is an unrecognized project number.")
+            return
+        
+        project_data = hub_projects[project_number - 1]
+        project = project_data.get("project")
+
+        contributions = project_data.get('contributions')
+        amount_contributed = project.total_items_collected(day_seed, hub, contributions)
+        amount_needed = project.total_items_required(day_seed, hub)
+
+        message_lines = f"# -- Project {project.name(day_seed, hub)}: --"
+        message_lines += f"\n{project.description(day_seed, hub)}"
+        message_lines += f"\n\nCompleted: {':white_check_mark:' if project_data.get('completed', False) else ':x:'}"
+        message_lines += "\nCollected items: {have}/{total} ({percent}%)".format(
+            have = amount_contributed,
+            total = amount_needed,
+            percent = round(100 * project.get_progress_percent(day_seed, hub, contributions), 2)
+        )
+        if amount_contributed != amount_needed:
+            message_lines += f"\nRemaining items:\n{project.get_remaining_description(day_seed, hub, contributions)}"
+
+        if amount_contributed > 0:
+            message_lines += f"\nIndividual contributions:"
+
+            for player_id, data in project_data.get("contributions", {}).items():
+                player_account = self.json_interface.get_account(player_id, guild=ctx.guild.id)
+
+                player_line = []
+
+                for item, amount in data.get("items", {}).items():
+                    player_line.append(f"{amount} {item}")
+
+                username = utility.sanitize_ping(player_account.get_display_name())
+                player_line = " ,  ".join(player_line)
+                
+                message_lines += f"\n- {username}: {player_line}"
+        
+        if amount_contributed != amount_needed:
+            message_lines += f"\n\nTo contribute to this project, use '$bread space hub contribute {project_number} [amount] [item]'."
+
+
+        await ctx.reply(message_lines)
+
+    ##############################################################################################################
+    
+    async def trade_hub_level(
+            self: typing.Self,
+            ctx: commands.Context,
+            user_account: account.Bread_Account,
+            day_seed: str,
+            hub_projects: list[projects.Project],
+            hub: space.SystemTile,
+            actions: tuple[str]
+        ):
+        galaxy_x, galaxy_y = user_account.get_galaxy_location(json_interface=self.json_interface)
+        level_project = projects.Trade_Hub
+        max_level = len(level_project.all_costs())
+
+        if hub.trade_hub_level == max_level:
+            await ctx.reply("This Trade Hub is already at the max level!")
+            return
+        
+        cost = level_project.get_price_description(
+            day_seed = day_seed,
+            system_tile = hub
+        )
+
+        ascension_data = self.json_interface.get_space_ascension(
+            ascension_id = user_account.get_prestige_level(),
+            guild = ctx.guild.id
+        )
+
+        all_trade_hubs = ascension_data.get("trade_hubs", dict())
+        trade_hub_data = all_trade_hubs.get(f"{galaxy_x} {galaxy_y}", dict())
+        
+        message_lines = "# -- Trade Hub Levelling --"
+        message_lines += f"\nCurrent Trade Hub level: {hub.trade_hub_level}"
+        message_lines += f"\nNext level cost: {cost}"
+
+        level_progress = trade_hub_data.get("level_progress", dict())
+        amount_contributed = level_project.total_items_collected(day_seed, hub, level_progress)
+        amount_needed = level_project.total_items_required(day_seed, hub)
+
+        message_lines += "\nCollected items: {have}/{total} ({percent}%)".format(
+            have = amount_contributed,
+            total = amount_needed,
+            percent = round(100 * level_project.get_progress_percent(day_seed, hub, level_progress), 2)
+        )
+
+        if amount_contributed > 0:
+            message_lines += f"\nIndividual contributions:"
+
+            for player_id, data in level_progress.items():
+                player_account = self.json_interface.get_account(player_id, guild=ctx.guild.id)
+
+                player_line = []
+
+                for item, amount in data.get("items", {}).items():
+                    player_line.append(f"{amount} {item}")
+
+                username = utility.sanitize_ping(player_account.get_display_name())
+                player_line = " ,  ".join(player_line)
+                
+                message_lines += f"\n- {username}: {player_line}"
+        
+        if amount_contributed != amount_needed:
+            message_lines += f"\n\nTo help level up this Trade Hub, use '$bread space hub contribute level [amount] [item]'."
+
+        await ctx.reply(message_lines)
+        return
+
+    ##############################################################################################################
+    
     @space.command(
         name = "hub",
         brief = "Interact with Trade Hubs.",
@@ -4389,13 +4899,21 @@ anarchy - 1000% of your wager.
                 return
             
             if action == "create":
-                if not store.Trade_Hub.is_affordable_for(level=0, user_account=user_account):
+                if not projects.Trade_Hub.is_affordable_for(
+                        day_seed = day_seed,
+                        system_tile = hub,
+                        user_account=user_account
+                    ):
                     await ctx.reply("Sorry, you don't have the resources to create a Trade Hub.")
                     return
                 
                 print(f"User {ctx.author} creating trade hub in system ({galaxy_x}, {galaxy_y})")
                 
-                store.Trade_Hub.do_purchase(level=0, user_account=user_account)
+                projects.Trade_Hub.do_purchase(
+                    day_seed = day_seed,
+                    system_tile = hub,
+                    user_account = user_account
+                )
 
                 self.json_interface.set_account(ctx.author, user_account, guild = ctx.guild.id)
 
@@ -4411,7 +4929,7 @@ anarchy - 1000% of your wager.
                 await ctx.reply("Well done, you have created a Trade Hub!")
                 return
 
-            cost = store.Trade_Hub.get_price_description(0)
+            cost = projects.Trade_Hub.get_cost(day_seed, hub)
             
             await ctx.reply(f"To create a Trade Hub here, you must have the following resources:\n{cost}\n\nOnce you have the resources, use '$bread space hub create' to create the Trade Hub.")
             return
@@ -4429,7 +4947,7 @@ anarchy - 1000% of your wager.
             
         day_seed = self.json_interface.get_day_seed(guild=ctx.guild.id)
 
-        projects = space.get_trade_hub_projects(
+        hub_projects = space.get_trade_hub_projects(
             json_interface = self.json_interface,
             user_account = user_account,
             galaxy_x = galaxy_x,
@@ -4441,220 +4959,46 @@ anarchy - 1000% of your wager.
         ##############################################################################################################
 
         if action == "contribute":
-            actions += [" ", " ", " "]
-
-            try:
-                project_number = parse_int(actions[1])
-                amount = parse_int(actions[2])
-                item = values.get_emote(actions[3])
-            except ValueError:
-                await ctx.reply("To contribute to a project, use this format:\n'$bread space hub contribute [project number] [amount] [item]'")
-                return
-
-            if item is None:
-                await ctx.reply("To contribute to a project, use this format:\n'$bread space hub contribute [project number] [amount] [item]'")
-                return
-
-            if not (1 <= project_number <= 3):
-                await ctx.reply("That is an unrecognized project number.")
-                return
-            
-            project_data = projects[project_number - 1]
-
-            if project_data.get("completed", False):
-                await ctx.reply("This project has already been completed.")
-                return
-            
-            if amount < 0:
-                await ctx.reply("Trying to steal resources? Mum won't be very happy about that.")
-                await ctx.invoke(self.bot.get_command('brick'), member=ctx.author, duration="1")
-                return
-            
-            if amount == 0:
-                await ctx.reply("That's not much of a contribution.")
-                return
-            
-            if amount > user_account.get(item.text):
-                await ctx.reply("You don't have enough of that to contribute.")
-                return
-            
-            project = project_data.get("project")
-
-            remaining = project.get_remaining_items(
+            await self.trade_hub_contribute(
+                ctx = ctx,
+                user_account = user_account,
                 day_seed = day_seed,
-                system_tile = hub,
-                progress_data = project_data.get("contributions", {})
+                hub_projects = hub_projects,
+                hub = hub,
+                actions = actions
             )
-
-            if len(remaining) == 0:
-                out_data = {
-                    "completed": True,
-                    "contributions": project_data.get("contributions")
-                }
-                
-                self.json_interface.update_project_data(
-                    guild = ctx.guild.id,
-                    ascension = user_account.get_prestige_level(),
-                    galaxy_x = galaxy_x,
-                    galaxy_y = galaxy_y,
-                    project_id = project_number,
-                    new_data = out_data
-                )
-
-                await ctx.reply("This project has already been completed.")
-                return
-            
-            if item.text not in remaining:
-                await ctx.reply("The project doesn't need any more of that item.")
-                return
-            
-            amount_contribute = min(remaining[item.text], amount)
-
-            contribution_data = project_data.get("contributions", [])
-
-            player_data = contribution_data.get(str(ctx.author.id), {"items": {}})
-            
-            user_account.increment(item.text, -amount_contribute)
-
-            if item.text in player_data["items"]:
-                player_data["items"][item.text] += amount_contribute
-            else:
-                player_data["items"][item.text] = amount_contribute
-            
-            contribution_data[str(ctx.author.id)] = player_data
-
-            out_data = {
-                "completed": False,
-                "contributions": contribution_data
-            }
-
-            self.json_interface.set_account(ctx.author, user_account, guild = ctx.guild.id)
-            self.json_interface.update_project_data(
-                guild = ctx.guild.id,
-                ascension = user_account.get_prestige_level(),
-                galaxy_x = galaxy_x,
-                galaxy_y = galaxy_y,
-                project_id = project_number,
-                new_data = out_data
-            )
-
-            amount_left = user_account.get(item.text)
-            
-            await ctx.reply(f"You have contributed {amount_contribute} {item.text} to the {project.name(day_seed, hub)} project.\nYou now have {amount_left} {item.text} remaining.")
-
-            updated_required = project.get_remaining_items(
-                day_seed = day_seed,
-                system_tile = hub,
-                progress_data = out_data.get("contributions", {})
-            )
-            if len(updated_required) != 0:
-                # It hasn't been completed. :(
-                return
-            
-            ########################################
-            # It's been completed! :o
-
-            out_data["completed"] = True
-
-            self.json_interface.update_project_data(
-                guild = ctx.guild.id,
-                ascension = user_account.get_prestige_level(),
-                galaxy_x = galaxy_x,
-                galaxy_y = galaxy_y,
-                project_id = project_number,
-                new_data = out_data
-            )
-
-            send_lines = "Project completed!\n\n"
-            send_lines += project.completion(day_seed, hub)
-            send_lines += "\n\nIndividual earnings:"
-
-            total_items = project.total_items_required(day_seed, hub)
-            reward = project.get_reward(day_seed, hub)
-
-            for player_id, contributions in out_data.get("contributions", {}).items():
-                items = contributions.get("items", {})
-
-                items_contributed = sum(items.values())
-
-                percent_cut = items_contributed / total_items
-
-                player_account = self.json_interface.get_account(player_id, guild=ctx.guild.id)
-
-                items_added = []
-
-                for win_item, win_amount in reward:
-                    amount = math.ceil(win_amount * percent_cut)
-                    player_account.increment(win_item, amount)
-
-                    items_added.append(f"{amount} {win_item}")
-
-                self.json_interface.set_account(player_id, player_account, guild = ctx.guild.id)
-                
-                send_lines += f"\n- <@{player_id}>: {' ,  '.join(items_added)}"
-            
-            await asyncio.sleep(1)
-
-            await ctx.send(send_lines)
             return
 
         ##############################################################################################################
 
         if action == "info":
-            actions.append(" ")
-
-            try:
-                project_number = parse_int(actions[1])
-            except ValueError:
-                await ctx.reply("To get information about a project, use '$bread space hub info [project number]'")
-                return
-            
-            if not (1 <= project_number <= 3):
-                await ctx.reply("That is an unrecognized project number.")
-                return
-            
-            project_data = projects[project_number - 1]
-            project = project_data.get("project")
-
-            contributions = project_data.get('contributions')
-            amount_contributed = project.total_items_collected(day_seed, hub, contributions)
-            amount_needed = project.total_items_required(day_seed, hub)
-
-            message_lines = f"# -- Project {project.name(day_seed, hub)}: --"
-            message_lines += f"\n{project.description(day_seed, hub)}"
-            message_lines += f"\n\nCompleted: {':white_check_mark:' if project_data.get('completed', False) else ':x:'}"
-            message_lines += "\nCollected items: {have}/{total} ({percent}%)".format(
-                have = amount_contributed,
-                total = amount_needed,
-                percent = round(100 * project.get_progress_percent(day_seed, hub, contributions), 2)
+            await self.trade_hub_info(
+                ctx = ctx,
+                user_account = user_account,
+                day_seed = day_seed,
+                hub_projects = hub_projects,
+                hub = hub,
+                actions = actions
             )
-            if amount_contributed != amount_needed:
-                message_lines += f"\nRemaining items:\n{project.get_remaining_description(day_seed, hub, contributions)}"
-
-            if amount_contributed > 0:
-                message_lines += f"\nIndividual contributions:"
-
-                for player_id, data in project_data.get("contributions", {}).items():
-                    player_account = self.json_interface.get_account(player_id, guild=ctx.guild.id)
-
-                    player_line = []
-
-                    for item, amount in data.get("items", {}).items():
-                        player_line.append(f"{amount} {item}")
-
-                    username = utility.sanitize_ping(player_account.get_display_name())
-                    player_line = " ,  ".join(player_line)
-                    
-                    message_lines += f"\n- {username}: {player_line}"
-            
-            if amount_contributed != amount_needed:
-                message_lines += f"\n\nTo contribute to this project, use '$bread space hub contribute {project_number} [amount] [item]'."
-
-
-            await ctx.reply(message_lines)
             return
         
         ##############################################################################################################
+
+        if action == "level":
+            await self.trade_hub_level(
+                ctx = ctx,
+                user_account = user_account,
+                day_seed = day_seed,
+                hub_projects = hub_projects,
+                hub = hub,
+                actions = actions
+            )
+            return
+
+        ##############################################################################################################
+
+        level_project = projects.Trade_Hub
+        max_level = len(level_project.all_costs())
 
         name = generation.get_trade_hub_name(
             galaxy_seed = self.json_interface.get_ascension_seed(user_account.get_prestige_level(), guild=user_account.get("guild_id")),
@@ -4665,17 +5009,18 @@ anarchy - 1000% of your wager.
         message_lines = f"**# -- Trade Hub {name} --**"
 
         message_lines += f"\nLevel: {hub.trade_hub_level}"
+        message_lines += f"\nMaximum trade distance: {store.trade_hub_distances[hub.trade_hub_level]}"
         message_lines += f"\nGalaxy location: ({hub.galaxy_xpos}, {hub.galaxy_ypos})"
         message_lines += f"\nSystem location: ({hub.system_xpos}, {hub.system_ypos})"
 
-        if hub.trade_hub_level != len(store.Trade_Hub.costs()):
+        if hub.trade_hub_level != max_level:
             message_lines += f"\n\nUse '$bread space hub level' to view the progress to level {hub.trade_hub_level + 1}"
         
         ### Projects.
         
         message_lines += "\n\n**# -- Projects --**"
 
-        for project_id, data in enumerate(projects):
+        for project_id, data in enumerate(hub_projects):
             message_lines += f"#{project_id + 1}: "
             message_lines += data.get("project").display_info(day_seed=day_seed, system_tile=hub, completed=data.get("completed", False))
             message_lines += "\n\n"
@@ -5502,7 +5847,7 @@ anarchy - 1000% of your wager.
         all_guilds = self.json_interface.get_list_of_all_guilds()
         for guild_id in all_guilds:
             for account in self.json_interface.get_all_user_accounts(guild_id):
-                if starting_name in account.keys():
+                if starting_name in account.values.keys():
                     account.set(ending_name, account.get(starting_name))
                     del account.values[starting_name]
                     self.json_interface.set_account(account.get("id"), account, guild_id)

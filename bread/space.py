@@ -989,14 +989,29 @@ def get_trade_hub(
 
     if f"{galaxy_xpos} {galaxy_ypos}" in trade_hub_data.keys():
         trade_hub = trade_hub_data.get(f"{galaxy_xpos} {galaxy_ypos}")
+
+        if "location" in trade_hub:
+            xpos = trade_hub["location"][0]
+            ypos = trade_hub["location"][1]
+        else:
+            generated = generation.generate_system(
+                galaxy_seed = galaxy_seed,
+                galaxy_xpos = galaxy_xpos,
+                galaxy_ypos = galaxy_ypos
+            )
+
+            xpos = generated["trade_hub"]["xpos"]
+            ypos = generated["trade_hub"]["ypos"]
+        
+
         return SystemTile(
             galaxy_seed = galaxy_seed,
             galaxy_xpos = galaxy_xpos,
             galaxy_ypos = galaxy_ypos,
-            system_xpos = trade_hub["location"][0],
-            system_ypos = trade_hub["location"][1],
+            system_xpos = xpos,
+            system_ypos = ypos,
             tile_type = "trade_hub",
-            trade_hub_level = trade_hub["level"]
+            trade_hub_level = trade_hub.get("level", 1)
         )
     
     generated = generation.generate_system(
@@ -1196,10 +1211,10 @@ def allowed_gifting(
     if p1_location == p2_location:
         return True
 
-    # Get the distance between the players. Then convert to int for a tad bit of forgiveness.
-    distance = int(math.hypot(
-        abs(p1_location[0] - p2_location[0]),
-        abs(p1_location[1] - p2_location[1])
+    # Get the distance between the players.
+    distance = len(utility.plot_line(
+        start = p1_location,
+        end = p2_location
     ))
 
     # Run the code that checks the player's location for a trade hub for both players.

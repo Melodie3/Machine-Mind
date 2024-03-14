@@ -11,6 +11,7 @@ import bread.space as space
 import bread.values as values
 import bread.account as account
 import bread.utility as utility
+import bread.store as store
 
 def hash_args(*args) -> str:
     return hashlib.sha256("".join([str(arg) for arg in args]).encode()).digest()
@@ -236,6 +237,76 @@ class Project:
             output.append(f"{utility.smart_number(amount)} {item}")
 
         return " ,  ".join(output)
+        
+
+
+#######################################################################################################
+##### Trade hub levelling. ############################################################################
+#######################################################################################################
+    
+class Trade_Hub(Project):
+    internal = "trade_hub"
+    
+    @classmethod
+    def name(
+            cls,
+            day_seed: str,
+            system_tile: space.SystemTile
+        ) -> str:
+        return f"Trade Hub Level {system_tile.trade_hub_level + 1}"
+
+    @classmethod
+    def description(
+            cls,
+            day_seed: str,
+            system_tile: space.SystemTile
+        ) -> str:
+        distance = store.trade_hub_distances[system_tile.trade_hub_level]
+        return f"A better Trade Hub that allows trading with those {distance} tiles away."
+
+    @classmethod
+    def all_costs(cls) -> list[tuple[str, int]]:
+        return [
+            # Level 1:
+            [
+                (values.anarchy_chess.text, 1),
+                (values.gem_gold.text, 100), (values.gem_green.text, 200), (values.gem_purple.text, 400), (values.gem_blue.text, 800), (values.gem_red.text, 1600),
+                (values.doughnut.text, 10000), (values.waffle.text, 10000), (values.bagel.text, 10000),
+                (values.croissant.text, 20000), (values.french_bread.text, 20000), (values.sandwich.text, 20000), (values.stuffed_flatbread.text, 20000), (values.flatbread.text, 20000)
+            ],
+            # Level 2:
+            [(values.anarchy_chess.text, 5)],
+            # Level 3:
+            [(values.anarchy_chess.text, 5)],
+            # Level 4:
+            [(values.anarchy_chess.text, 5)],
+            # Level 5:
+            [(values.anarchy_chess.text, 5)]
+        ]
+    
+    @classmethod
+    def completion(
+            cls: typing.Type[typing.Self],
+            day_seed: str,
+            system_tile: space.SystemTile
+        ) -> str:
+        return "Nice job! This Trade Hub is now more powerful!"
+    
+    @classmethod
+    def get_cost(
+            cls,
+            day_seed: str,
+            system_tile: space.SystemTile
+        ) -> list[tuple[str, int]]:
+        return cls.all_costs()[system_tile.trade_hub_level]
+    
+    @classmethod
+    def get_reward(
+            cls: typing.Type[typing.Self],
+            day_seed: str,
+            system_tile: space.SystemTile
+        ) -> list[tuple[str, int]]:
+        return [("total_dough", 2000000)] # Award 2 million dough on completion.
         
 
 
