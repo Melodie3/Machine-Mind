@@ -748,6 +748,13 @@ hotdog = Emote(
     attributes=["misc_bread"]
 )
 
+bacon = Emote(
+    text=":bacon:",
+    name="bacon",
+    emoji="🥓",
+    attributes=["misc_bread"]
+)
+
 taco = Emote(
     text=":taco:",
     name="taco",
