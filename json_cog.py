@@ -233,7 +233,7 @@ class JSON_cog(commands.Cog, name="JSON"):
             os.makedirs(folder_path)
         
         #then, we make the file
-        file_name = datetime.now().strftime('database_backup_%Y:%m:%d_%X.json')
+        file_name = datetime.now().strftime('database_backup_%Y:%m:%d_%X.json').replace(":", "-") # Switch colons to hyphens to avoid filename restrictions.
         with open(folder_path+file_name, 'w') as outfile:
             print('created ', file_name)
             #json_string = json.dumps(self.data, indent=2)
