@@ -30,6 +30,8 @@ moak_booster_multipliers = [1, 1.3, 1.7, 2.1, 2.8,3.7]
 # chessatron_shadow_booster_levels = [0, 5, 10, 15, 20]
 # shadow_gold_gem_luck_boost_levels = [0, 10, 20, 30, 40]
 
+trade_hub_distances = [0, 2, 8, 32, 128, 512]
+
 class Store_Item:
     name = "generic_item"
     display_name = "Generic Item" # did you just say "generic excuse"??

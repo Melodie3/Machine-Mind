@@ -2497,6 +2497,17 @@ For example, "$bread gift Melodie all chess_pieces" would gift all your chess pi
         if sender_account.get("gifts_disabled") == True:
             await ctx.reply("Sorry, you can't gift right now. Please reenable gifting with \"$bread disable_gifts off\".")
             return
+        
+        # Space gifting checks.
+        if sender_account.get_space_level() != 0 or receiver_account.get_space_level() != 0:
+            gifting_allowed = space.allowed_gifting(
+                player_1 = sender_account,
+                player_2 = receiver_account,
+                json_interface = self.json_interface
+            )
+            if not gifting_allowed:
+                await ctx.reply("Sorry, you are too far away from that player to gift to them.")
+                return
 
         #shitty way of converting to int
         try:
@@ -5482,12 +5493,13 @@ anarchy - 1000% of your wager.
 
         account.set("space_level", 1)
         account.set("telescope_level", 3)
-        account.set("system_xpos", 1)
-        account.set("system_ypos", 1)
-        account.set("galaxy_xpos", 38)
-        account.set("galaxy_ypos", 156)
+        account.set("system_xpos", -1)
+        account.set("system_ypos", 0)
+        account.set("galaxy_xpos", 203)
+        account.set("galaxy_ypos", 89)
         account.set("fuel_tank", 3)
         account.set("fuel_research", 4)
+        account.set("galaxy_move_count", 1)
 
         account.set("multiroller", 7)
         account.set("compound_roller", 5)
@@ -5502,7 +5514,7 @@ anarchy - 1000% of your wager.
 
         account.set(values.anarchy_chess.text, 5)
 
-        for word in [":doughnut:", ":bagel:", ":waffle:", ":croissant:", ":flatbread:", ":stuffed_flatbread:", ":sandwich:", ":french_bread:"]:
+        for word in [":doughnut:", ":bagel:", ":waffle:", ":croissant:", ":flatbread:", ":stuffed_flatbread:", ":sandwich:", ":french_bread:", values.fuel.text]:
             account.set(word, 20000)
 
         self.json_interface.set_account(user, account, guild = ctx.guild.id)

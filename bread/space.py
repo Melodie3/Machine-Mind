@@ -11,6 +11,7 @@ import bread.generation as generation
 import bread.values as values
 import bread.projects as projects
 import bread.utility as utility
+import bread.store as store
 
 import bread_cog
 
@@ -1182,3 +1183,47 @@ def get_move_cost_system(
     points.pop(0)
 
     return len(points) * move_fuel_system
+
+def allowed_gifting(
+        json_interface: bread_cog.JSON_interface,
+        player_1: account.Bread_Account,
+        player_2: account.Bread_Account
+    ) -> bool:
+    p1_location = player_1.get_galaxy_location(json_interface=json_interface)
+    p2_location = player_2.get_galaxy_location(json_interface=json_interface)
+
+    # If the locations match, then they're in the same system and can gift to each other.
+    if p1_location == p2_location:
+        return True
+
+    # Get the distance between the players. Then convert to int for a tad bit of forgiveness.
+    distance = int(math.hypot(
+        abs(p1_location[0] - p2_location[0]),
+        abs(p1_location[1] - p2_location[1])
+    ))
+
+    # Run the code that checks the player's location for a trade hub for both players.
+    for player in [player_1, player_2]:
+        player_tile = player.get_galaxy_tile(json_interface=json_interface)
+
+        # If the tile is not a system it cannot have a trade hub.
+        if not player_tile.system:
+            continue
+
+        player_tile.smart_load(
+            json_interface = json_interface,
+            guild = player_1.get("guild_id")
+        )
+
+        # If player_tile.trade_hub is None, then there is no trade hub on this tile.
+        if player_tile.trade_hub is None:
+            continue
+
+        level = player_tile.trade_hub.trade_hub_level
+
+        # If the distance is less than or equal to the max distance of the trade hub, then gifting is possible.
+        if distance <= store.trade_hub_distances[level]:
+            return True
+    
+    # If nothing fired, then gifting is not possible.
+    return False
