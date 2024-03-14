@@ -4090,6 +4090,15 @@ anarchy - 1000% of your wager.
             await ctx.reply("You do not yet have a rocket.\nYou can purchase one from the Space Shop.")
             return
         
+        # Player has a rocket!
+
+        message = "Nice job getting a rocket!\n\nHere's a handy list of things you can do:\n"
+
+        for cmd in self.space.commands:
+            message += f"  '$bread space {cmd.name}': {cmd.brief}\n"
+        
+        await ctx.reply(message)
+        
         
         
     ########################################################################################################################
