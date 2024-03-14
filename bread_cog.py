@@ -3931,6 +3931,14 @@ anarchy - 1000% of your wager.
             name = user_account.get_display_name() + " has"
         
         await ctx.reply(f"{name} **{utility.smart_number(user_account.get_dough())} dough**.")
+
+
+
+
+
+
+
+
         
     ########################################################################################################################
     #####      BREAD SPACE
@@ -4095,15 +4103,15 @@ anarchy - 1000% of your wager.
             mode=mode
         )
 
-        corruption_chance = round(user_account.get_corruption_chance() * 100, 2)
+        corruption_chance = round(user_account.get_corruption_chance(json_interface=self.json_interface) * 100, 2)
 
         if mode == "galaxy":
             prefix = "Galaxy map:"
-            middle = f"Your current galaxy location: {user_account.get_galaxy_location()}.\nCorruption chance: {corruption_chance}%."
+            middle = f"Your current galaxy location: {user_account.get_galaxy_location(json_interface=self.json_interface)}.\nCorruption chance: {corruption_chance}%."
             suffix = "You can use '$bread space map' to view the map for the system you're in."
         else:
             prefix = "System map:"
-            middle = f"Your current galaxy location: {user_account.get_galaxy_location()}.\nYour current system location: {user_account.get_system_location()}.\nCorruption chance: {corruption_chance}%."
+            middle = f"Your current galaxy location: {user_account.get_galaxy_location(json_interface=self.json_interface)}.\nYour current system location: {user_account.get_system_location()}.\nCorruption chance: {corruption_chance}%."
             suffix = "You can use '$bread space map galaxy' to view the galaxy map."
 
         lines = ["".join(item) for item in map_data]
@@ -4204,13 +4212,13 @@ anarchy - 1000% of your wager.
         ##########################################################
         ##### Getting the analysis data.
 
-        galaxy_x, galaxy_y = user_account.get_galaxy_location()
+        galaxy_x, galaxy_y = user_account.get_galaxy_location(json_interface=self.json_interface)
 
         system_data = space.get_galaxy_coordinate(
             json_interface = self.json_interface,
             guild = ctx.guild.id,
             galaxy_seed = self.json_interface.get_ascension_seed(user_account.get_prestige_level(), guild=user_account.get("guild_id")),
-            ascension = user_account.get_ascension_level(),
+            ascension = user_account.get_prestige_level(),
             xpos = galaxy_x,
             ypos = galaxy_y,
             load_planets = False
@@ -4275,7 +4283,7 @@ anarchy - 1000% of your wager.
             await ctx.reply("You do not yet have a rocket that can access Trade Hubs. You can purchase a Space Rocket from the Space Shop.")
             return
         
-        galaxy_x, galaxy_y = user_account.get_galaxy_location()
+        galaxy_x, galaxy_y = user_account.get_galaxy_location(json_interface=self.json_interface)
 
         
         system = space.get_galaxy_coordinate(
@@ -4601,9 +4609,272 @@ anarchy - 1000% of your wager.
             message_lines += data.get("project").display_info(day_seed=day_seed, system_tile=hub, completed=data.get("completed", False))
             message_lines += "\n\n"
         
-        message_lines += "To contribute to a project, use '$bread space hub contribute [project number] [amount] [item]'"
+        message_lines += "To contribute to a project, use '$bread space hub contribute [project number] [amount] [item]'\nYou can get more information about a project with '$bread space hub info [project number]'"
 
         await ctx.reply(message_lines)
+
+
+
+
+
+
+
+        
+    ########################################################################################################################
+    #####      BREAD SPACE MOVE
+    
+    @space.command(
+        name = "move",
+        brief = "Move around in space.",
+        description = "Move around in space by commanding the autopilot."
+    )
+    async def space_move(self, ctx,
+            move_map: typing.Optional[typing.Literal["galaxy", "system"]] = commands.parameter(description = "Which map to move on."),
+            move_location: typing.Optional[str] = commands.parameter(description = "The location to move to."),
+            confirm: typing.Optional[str] = commands.parameter(description = "Whether to confirm automatically.")
+        ):
+        # Check if the player is in the interacting list.
+        if ctx.author.id in self.currently_interacting:
+            return
+        
+        # Add the player to the interacting list.
+        self.currently_interacting.append(ctx.author.id)
+
+
+        if get_channel_permission_level(ctx) < PERMISSION_LEVEL_ACTIVITIES:
+            await ctx.reply(f"Thank you for trying to use the autopilot! The closest autopilot terminal is in {self.json_interface.get_rolling_channel(ctx.guild.id)}.")
+
+            self.currently_interacting.remove(ctx.author.id)
+            return
+        
+        user_account = self.json_interface.get_account(ctx.author, guild = ctx.guild.id)
+
+        if user_account.get_space_level() < 1:
+            await ctx.reply("You do not have access to any rockets with autopilot systems.\nYou can purchase the required rocket from the Space Shop.")
+
+            self.currently_interacting.remove(ctx.author.id)
+            return
+        
+        #########################################################
+        
+        if move_map is None: # The typing.Literal["galaxy", "system"] in the function declaration forces it to be either "galaxy" or "system".
+            await ctx.reply("Autopilot error:\nFailure to specify the 'galaxy' or 'system' map.")
+
+            self.currently_interacting.remove(ctx.author.id)
+            return
+        
+        HELP_MSG = "Autopilot error:\nUnrecoginized location. Locations should be in the format of '[letter][number]'. A guide can be found on the system and galaxy maps."
+        
+        if move_location is None:
+            await ctx.reply(HELP_MSG)
+
+            self.currently_interacting.remove(ctx.author.id)
+            return
+        
+        if len(move_location) != 2:
+            await ctx.reply(HELP_MSG)
+
+            self.currently_interacting.remove(ctx.author.id)
+            return
+
+        telescope_level = user_account.get("telescope_level")
+        radius = telescope_level + 1
+        diameter = radius * 2 + 1
+
+        letters = "abcdefghi"
+
+        pattern = "([a-{letter_end}])([1-{number_end}])".format(
+            letter_end = letters[diameter - 1],
+            number_end = diameter
+        )
+        
+        matched = re.match(pattern, move_location.lower())
+
+        if matched is None:
+            await ctx.reply(HELP_MSG)
+
+            self.currently_interacting.remove(ctx.author.id)
+            return
+        
+        x_modifier = "abcdefghi".index(matched.group(1)) # group 1 is the letter.
+        y_modifier = int(matched.group(2)) - 1 # group 2 is the number.
+
+        if round(math.hypot(abs(x_modifier - radius), abs(y_modifier - radius))) > radius:
+            await ctx.reply("Autopilot error:\nUnrecognized location.")
+
+            self.currently_interacting.remove(ctx.author.id)
+            return
+        
+        #########################################################
+        
+        galaxy_seed = self.json_interface.get_ascension_seed(
+            ascension_id = user_account.get_prestige_level(),
+            guild = ctx.guild.id
+        )
+
+        if move_map == "system":
+            start_location = user_account.get_system_location()
+
+            # Check if the galaxy tile the player is on is actually a system.
+            # If it is, great! If it isn't, the player shouldn't be moving on the system map.
+            galaxy_location = user_account.get_galaxy_location(json_interface=self.json_interface)
+
+            current_data = generation.galaxy_single(
+                galaxy_seed = galaxy_seed,
+                x = galaxy_location[0],
+                y = galaxy_location[1]
+            )
+
+            if not current_data.get("system", False):
+                await ctx.reply("Autopilot error:\nNo matter found in current system location, cannot move.")
+
+                self.currently_interacting.remove(ctx.author.id)
+                return
+
+            # Ensure the location the player is moving to is a part of this system.   
+            system_data = generation.generate_system(
+                galaxy_seed = galaxy_seed,
+                galaxy_xpos = galaxy_location[0],
+                galaxy_ypos = galaxy_location[1]
+            )
+        
+            end_location = (
+                start_location[0] + x_modifier - radius,
+                start_location[1] + y_modifier - radius
+            )
+
+            if math.hypot(*end_location) >= system_data.get("radius") + 2:
+                await ctx.reply("Autopilot error:\nProvided location outside of system bounds.")
+
+                self.currently_interacting.remove(ctx.author.id)
+                return
+            
+            # In the end, determine how much fuel it'll cost to make the move.
+            move_cost = space.get_move_cost_system(
+                start_position = start_location,
+                end_position = end_location
+            )
+        else:
+            start_location = user_account.get_galaxy_location(json_interface=self.json_interface)
+        
+            end_location = (
+                start_location[0] + x_modifier - radius,
+                start_location[1] + y_modifier - radius
+            )
+
+            move_cost = space.get_move_cost_galaxy(
+                galaxy_seed = galaxy_seed,
+                start_position = start_location,
+                end_position = end_location
+            )
+
+        confirm_text = ["yes", "y", "confirm"]
+        cancel_text = ["no", "n", "cancel"]
+
+        if confirm not in confirm_text:
+            await utility.smart_reply(ctx, f"You are trying to move from {start_location} to {end_location}.\nThis will require {move_cost} {values.fuel.text}.\nAre you sure you want to move? Yes or No.")
+            
+            def check(m: discord.Message):
+                return m.author.id == ctx.author.id and m.channel.id == ctx.channel.id 
+        
+
+            try:
+                msg = await self.bot.wait_for('message', check = check, timeout = 60.0)
+            except asyncio.TimeoutError: 
+                await utility.smart_reply(ctx, f"Autopilot error:\nConfirmation timeout, aborting.")
+                self.currently_interacting.remove(ctx.author.id)
+                return
+            
+            if msg.content.lower() in cancel_text:
+                await utility.smart_reply(ctx, "Autopilot error:\nCancelled.")
+
+                self.currently_interacting.remove(ctx.author.id)
+                return
+            elif msg.content.lower() not in confirm_text:
+                await utility.smart_reply(ctx, "Autopilot error:\nUnrecognized confirmation response, aborting.")
+
+                self.currently_interacting.remove(ctx.author.id)
+                return
+        
+        player_fuel = user_account.get(values.fuel.text)
+
+        if player_fuel < move_cost:
+            await utility.smart_reply(ctx, "Autopilot error:\nLacking required fuel, aborting.")
+
+            self.currently_interacting.remove(ctx.author.id)
+            return
+        
+        # Remove the fuel.
+        user_account.increment(values.fuel.text, -move_cost)
+
+        if move_map == "system":
+            x_key = "system_xpos"
+            y_key = "system_ypos"
+        else:
+            x_key = "galaxy_xpos"
+            y_key = "galaxy_ypos"
+
+            # Increment galaxy_move_count so get_galaxy_location knows to use galaxy_xpos and galaxy_ypos instead of the spawn location.
+            user_account.increment("galaxy_move_count", 1)
+
+            # Time to figure out what to set the system position to.
+            # This is based on the angle the player is moving at.
+            # However, if the target location isn't a system then we can just set it to (0, 0)
+            end_data = generation.galaxy_single(
+                galaxy_seed = galaxy_seed,
+                x = end_location[0],
+                y = end_location[1]
+            )
+
+            if not end_data.get("system", False):
+                # If the end location is not a system, then set the system x and y to 0.
+                user_account.set("system_xpos", 0)
+                user_account.set("system_ypos", 0)
+            else:
+                # If the location is a system, then determine the size of the system and the angle of attack.
+                x_diff = end_location[0] - start_location[0]
+                y_diff = end_location[1] - start_location[1]
+
+                if x_diff == 0:
+                    if y_diff < 0:
+                        angle = math.pi / -2
+                    else:
+                        angle = math.pi
+                else:
+                    angle = math.atan(y_diff / x_diff)
+
+                    if x_diff > 0:
+                        angle -= math.pi
+                
+                system_data = generation.generate_system(
+                    galaxy_seed = galaxy_seed,
+                    galaxy_xpos = end_location[0],
+                    galaxy_ypos = end_location[1]
+                )
+
+                system_radius = system_data.get("radius")
+
+                out_x = int(math.cos(angle) * system_radius + 2)
+                out_y = int(math.sin(angle) * system_radius + 2)
+
+                user_account.set("system_xpos", out_x)
+                user_account.set("system_ypos", out_y)
+
+
+
+        # Update the player's location.
+        user_account.set(x_key, end_location[0])
+        user_account.set(y_key, end_location[1])
+
+        # Save the player account.
+        self.json_interface.set_account(ctx.author.id, user_account, guild = ctx.guild.id)
+
+        await utility.smart_reply(ctx, f"Autopilot success:\nSuccessfully moved to {end_location} on the {move_map} map, using {move_cost} {values.fuel.text}.")
+
+        self.currently_interacting.remove(ctx.author.id)
+        
+            
+    
             
             
             

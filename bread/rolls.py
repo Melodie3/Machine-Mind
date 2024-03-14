@@ -44,7 +44,7 @@ def bread_roll(
     if lc_booster > 0:
         lc_boost = 2 ** lc_booster
 
-    corruption_chance = user_account.get_corruption_chance()
+    corruption_chance = user_account.get_corruption_chance(json_interface=json_interface)
     
     # If the user has access to space.
     if user_account.get_space_level() >= 1:

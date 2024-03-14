@@ -110,6 +110,7 @@ class Bread_Account:
                                 "daily_gambles", "daily_rolls",
                                 "multiroller", "compound_roller", "roll_summarizer", "black_hole",
                                 "investment_profit", "gamble_winnings",
+                                "galaxy_move_count", "galaxy_xpos", "galaxy_ypos", "system_xpos", "system_ypos",
         ]
         untouched =            ["lifetime_earned_dough", "lifetime_dough", "lifetime_gambles","highest_roll", ]
 
@@ -248,8 +249,20 @@ class Bread_Account:
     def get_space_level(self) -> int:
         return self.get("space_level")
     
-    def get_galaxy_location(self) -> tuple[int, int]:
-        return (self.get("galaxy_xpos"), self.get("galaxy_ypos"))
+    def get_galaxy_location(
+            self: typing.Self,
+            json_interface: bread_cog.JSON_interface
+        ) -> tuple[int, int]:
+        # If the player has moved before, then return their position.
+        if self.get("galaxy_move_count") > 0:
+            return (self.get("galaxy_xpos"), self.get("galaxy_ypos"))
+        
+        # If the player hasn't moved, then return the spawn point.
+        return space.get_spawn_location(
+            json_interface = json_interface,
+            user_account = self
+        )
+            
     
     def get_system_location(self) -> tuple[int, int]:
         return (self.get("system_xpos"), self.get("system_ypos"))
@@ -397,12 +410,15 @@ class Bread_Account:
     ##############################################################
     # Space related methods.
     
-    def get_corruption_chance(self) -> float:
+    def get_corruption_chance(
+            self: typing.Self,
+            json_interface: bread_cog.JSON_interface
+        ) -> float:
         """Provides the chance of a loaf becoming corrupted, accounting for Corruption Negation. Is going to be a float between 0 and 1."""
         if self.get_space_level() < 1:
             return 0.0
         
-        xpos, ypos = self.get_galaxy_location()
+        xpos, ypos = self.get_galaxy_location(json_interface=json_interface)
 
         base_chance = space.get_corruption_chance(
             xpos - space.map_radius,
@@ -418,7 +434,7 @@ class Bread_Account:
             json_interface: bread_cog.JSON_interface
         ) -> space.GalaxyTile:
         """Returns a GalaxyTile object for the tile within the galaxy this account is currently on."""
-        xpos, ypos = self.get_galaxy_location()
+        xpos, ypos = self.get_galaxy_location(json_interface=json_interface)
 
         return space.get_galaxy_coordinate(
             json_interface = json_interface,

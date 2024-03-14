@@ -10,6 +10,7 @@ import bread.account as account
 import bread.generation as generation
 import bread.values as values
 import bread.projects as projects
+import bread.utility as utility
 
 import bread_cog
 
@@ -18,12 +19,21 @@ map_size = 256
 map_radius = map_size // 2
 map_radius_squared = map_radius ** 2
 
+## Fuel requirements:
+# This is the amount of fuel required for each jump in their respective areas.
+move_fuel_system = 25
+move_fuel_galaxy = 200
+move_fuel_galaxy_nebula = 400
+
+## Emojis:
+
 map_emojis = {
     # Backgrounds.
     "empty": ":black_large_square:",
     "nebula": ":purple_square:",
     "fog": ":fog:",
     "border": ":blue_square:",
+    "no_entry": ":no_entry_sign:",
 
     # Stars.
     "star1": ":sunny:",
@@ -209,6 +219,7 @@ class GalaxyTile:
             system: bool,
             in_nebula: bool = False,
 
+            system_radius: int = None,
             star: SystemTile = None,
             trade_hub: SystemTile = False,
             asteroids: list[SystemTile] = None,
@@ -242,6 +253,7 @@ class GalaxyTile:
 
         self.system = system
 
+        self.system_radius = system_radius
         self.star = star
         self.asteroids = asteroids
         self.trade_hub = trade_hub
@@ -302,6 +314,9 @@ class GalaxyTile:
         # It should only be None if there isn't a system here, which should be prevented earlier, but just in case.
         if raw_data is None:
             return None
+        
+        # Set the system radius.
+        self.system_radius = raw_data.get("radius")
 
         # Set self.star to the star. It's assuming there's a star here, which would be impressive if there wasn't.
         self.star = SystemTile(
@@ -494,10 +509,10 @@ def get_corruption_chance(
     dist = math.hypot(xpos, ypos)
 
     # The band where the chance is 0 is between 72.844 and 91.850.
-    if 72.844 <= dist <= 91.850:
+    if 80 <= dist <= 87.774:
         return 0.0
 
-    return ((dist ** 2.1572014209 / 1000) + 118 * math.e ** (-0.25 * (dist / 22.5) ** 2) - 19) / 100
+    return ((dist ** 2.15703654359 / 1000) + 118 * math.e ** (-0.232232152965 * (dist / 22.5) ** 2) - 19) / 100
 
             
 
@@ -531,7 +546,7 @@ def space_map(
     sensor_level = account.get("telescope_level")
 
     # Position in the galaxy.
-    x_galaxy, y_galaxy = account.get_galaxy_location()
+    x_galaxy, y_galaxy = account.get_galaxy_location(json_interface=json_interface)
 
     radius = sensor_level + 1
 
@@ -579,27 +594,54 @@ def galaxy_map(
         radius: int
     ) -> list[list[str]]:
 
-    top_right = (galaxy_x + radius, galaxy_y + radius)
-    bottom_left = (galaxy_x - radius, galaxy_y - radius)
+    bottom_right = (galaxy_x + radius, galaxy_y + radius)
+    top_left = (galaxy_x - radius, galaxy_y - radius)
 
-    x_size = max(top_right[0], bottom_left[0]) - min(top_right[0], bottom_left[0]) + 1
-    y_size = max(top_right[1], bottom_left[1]) - min(top_right[1], bottom_left[1]) + 1
+    x_size = max(bottom_right[0], top_left[0]) - min(bottom_right[0], top_left[0]) + 1
+    y_size = max(bottom_right[1], top_left[1]) - min(bottom_right[1], top_left[1]) + 1
 
     fill_emoji = "fog"
     border_emoji = "border"
 
+    numbers = [":one:", ":two:", ":three:", ":four:", ":five:", ":six:", ":seven:", ":eight:", ":nine:"]
+    letters = "abcdefghi"
+
+    corners = [
+        (0, 0), (0, 1), (1, 0),
+        (0, y_size + 3), (1, y_size + 3), (0, y_size + 2),
+        (x_size + 3, 0), (x_size + 2, 0), (x_size + 3, 1),
+        (x_size + 3, y_size + 3), (x_size + 3, y_size + 2), (x_size + 2, y_size + 3),
+    ]
+    
+    size_check = x_size - round(2.1 * (telescope_level ** 0.3)) # https://www.desmos.com/calculator/hanhwjrrhc
+
     def get_fill_emoji(grid_x, grid_y):
-        if grid_y == 0 or grid_y == y_size + 3:
+        # Handling the corners.
+        if (grid_x, grid_y) in corners:
             return map_emojis.get(border_emoji)
         
-        elif grid_x == 0 or grid_x == x_size + 3:
-            return map_emojis.get(border_emoji)
-
+        # The numbers and letters.
+        if grid_y == 0 or grid_y == y_size + 3:
+            return f":regional_indicator_{letters[grid_x - 2]}:"
+        
+        if grid_x == 0 or grid_x == x_size + 3:
+            return numbers[grid_y - 2]
+        
+        # The ring of fog emojis just inside the outer blue border.
+        if grid_x == 1 or grid_x == x_size + 2:
+            return map_emojis.get(fill_emoji)
+        
+        if grid_y == 1 or grid_y == y_size + 2:
+            return map_emojis.get(fill_emoji)
+        
+        # Whether this is in the visible area or not.
+        if abs(grid_x - 2 - radius) + abs(grid_y - 2 - radius) <= size_check:
+            return map_emojis.get("empty")
+        
+        # If nothing activates, fog emoji.
         return map_emojis.get(fill_emoji)
 
     grid = [[get_fill_emoji(grid_x, grid_y) for grid_x in range(x_size + 4)] for grid_y in range(y_size + 4)]
-
-    size_check = x_size - round(2.1 * (telescope_level ** 0.3)) # https://www.desmos.com/calculator/hanhwjrrhc
 
     for y_pos in range(y_size):
         for x_pos in range(x_size):
@@ -607,8 +649,8 @@ def galaxy_map(
                 grid[y_pos + 2][x_pos + 2] = map_emojis.get("fog")
                 continue
 
-            mod_x = x_pos + min(top_right[0], bottom_left[0])
-            mod_y = y_pos + min(top_right[1], bottom_left[1])
+            mod_x = x_pos + min(bottom_right[0], top_left[0])
+            mod_y = y_pos + min(bottom_right[1], top_left[1])
 
             tile_object = get_galaxy_coordinate(
                 json_interface = json_interface,
@@ -658,11 +700,11 @@ def system_map(
         list[list[str]]: _description_
     """
     
-    top_right = (system_x + radius, system_y + radius)
-    bottom_left = (system_x - radius, system_y - radius)
+    bottom_right = (system_x + radius, system_y + radius)
+    top_left = (system_x - radius, system_y - radius)
 
-    x_size = max(top_right[0], bottom_left[0]) - min(top_right[0], bottom_left[0]) + 1
-    y_size = max(top_right[1], bottom_left[1]) - min(top_right[1], bottom_left[1]) + 1
+    x_size = max(bottom_right[0], top_left[0]) - min(bottom_right[0], top_left[0]) + 1
+    y_size = max(bottom_right[1], top_left[1]) - min(bottom_right[1], top_left[1]) + 1
 
     fill_emoji = "fog"
     border_emoji = "border"
@@ -733,6 +775,17 @@ def system_map(
         return grid
     
     system_data.load_system_data(json_interface=json_interface, guild=guild)
+
+    # Place down the border.
+    system_radius = system_data.system_radius
+
+    for tile_y in range(y_size):
+        for tile_x in range(x_size):
+            if grid[tile_y + 2][tile_x + 2] == map_emojis.get(fill_emoji):
+                continue
+            
+            if math.hypot(tile_x + top_left[0], tile_y + top_left[1]) >= system_radius + 2:
+                grid[tile_y + 2][tile_x + 2] = map_emojis.get("no_entry")
 
     # Star
     star_x = system_data.star.system_xpos
@@ -996,9 +1049,9 @@ def create_trade_hub(
         "location": [system_x, system_y],
         "level": 1,
         "project_progress": {
-            "project_1": [],
-            "project_2": [],
-            "project_3": []
+            "project_1": {},
+            "project_2": {},
+            "project_3": {}
         }
     }
 
@@ -1062,3 +1115,70 @@ def get_trade_hub_projects(
         )
     
     return out_projects
+
+
+            
+
+        
+
+
+
+
+###################################################################################################################################
+###################################################################################################################################
+###################################################################################################################################
+
+def get_spawn_location(
+        json_interface: bread_cog.JSON_interface,
+        user_account: account.Bread_Account
+    ) -> tuple[int, int]:
+    seed = json_interface.get_ascension_seed(
+        ascension_id = user_account.get_prestige_level(),
+        guild = user_account.get("guild_id")
+    )
+
+    return generation.get_galaxy_spawn(galaxy_seed=seed)
+
+def get_move_cost_galaxy(
+        galaxy_seed: str,
+        start_position: tuple[int, int],
+        end_position: tuple[int, int]
+    ) -> int:
+    points = utility.plot_line(
+        start = start_position,
+        end = end_position
+    )
+
+    # Remove the first item, which is the starting location.
+    points.pop(0)
+
+    cost_sum = 0
+
+    for x, y in points:
+        tile_data = generation.galaxy_single(
+            galaxy_seed = galaxy_seed,
+            x = x,
+            y = y
+        )
+
+        if tile_data.get("in_nebula", False):
+            cost_sum += move_fuel_galaxy_nebula
+        else:
+            cost_sum += move_fuel_galaxy
+    
+    return cost_sum
+
+
+def get_move_cost_system(
+        start_position: tuple[int, int],
+        end_position: tuple[int, int]
+    ) -> int:
+    points = utility.plot_line(
+        start = start_position,
+        end = end_position
+    )
+
+    # Remove the first item, which is the starting location.
+    points.pop(0)
+
+    return len(points) * move_fuel_system

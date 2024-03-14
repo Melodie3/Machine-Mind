@@ -183,3 +183,37 @@ async def smart_reply(ctx, message: str, ping_reply: bool = True):
         raise
         
     return message
+
+def plot_line(
+        start: tuple[int, int],
+        end: tuple[int, int]
+    ) -> list[tuple[int, int]]:
+    points = []
+
+    x1, y1 = start
+    x2, y2 = end
+
+    dx = abs(x2 - x1)
+    dy = abs(y2 - y1)
+
+    sx = 1 if x1 < x2 else -1
+    sy = 1 if y1 < y2 else -1
+
+    error = dx - dy
+    x, y = x1, y1
+
+    while True:
+        points.append((x, y))
+
+        if x == x2 and y == y2:
+            break
+
+        e2 = 2 * error
+        if e2 > -dy:
+            error -= dy
+            x += sx
+        if e2 < dx:
+            error += dx
+            y += sy
+
+    return points

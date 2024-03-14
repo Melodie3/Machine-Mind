@@ -488,6 +488,16 @@ def get_trade_hub_name(
         galaxy_x: int,
         galaxy_y: int
     ) -> str:
+    """Generates a name for the trade hub at a given location.
+
+    Args:
+        galaxy_seed (str): The seed of the galaxy this trade hub is in.
+        galaxy_x (int): The x position within the galaxy.
+        galaxy_y (int): The y position within the galaxy.
+
+    Returns:
+        str: The generated name.
+    """
     rng = random.Random(hashlib.sha256(str(galaxy_seed + str(galaxy_x) + str(galaxy_y) + "trade_hub").encode()).digest())
     pattern = rng.choice(patterns)
     name_parts = []
@@ -507,3 +517,64 @@ def get_trade_hub_name(
     result = result.replace("  ", " ").strip()
     
     return result
+
+def get_galaxy_spawn(galaxy_seed: str) -> tuple[int, int]:
+    """Returns the spawn location of a galaxy.
+
+    Args:
+        galaxy_seed (str): The seed of the galaxy.
+
+    Returns:
+        tuple[int, int]: The x and y positions of the spawn point.
+    """
+
+    rng = random.Random(galaxy_seed)
+
+    # Get a random angle from the galaxy seed.
+    angle = rng.randrange(0, 360)
+
+    # Calculate the exact location from the angle via sine and cosine.
+    spawn_x = math.cos(math.radians(angle)) * 83
+    spawn_y = math.sin(math.radians(angle)) * 83
+
+    spawn_data = galaxy_single(galaxy_seed, round(spawn_x + map_radius), round(spawn_y + map_radius))
+
+    # If the initially chosen point is in a nebula, then move it to not be in a nebula.
+    if spawn_data.get("in_nebula", False):
+        for attempts in range(25):
+            # Make 25 attempts to move it. If this doesn't work, oh well.
+            rng = random.Random(f"{galaxy_seed} attempt {attempts}")
+            angle = rng.randrange(0, 360)
+
+            spawn_x = math.cos(math.radians(angle)) * 83
+            spawn_y = math.sin(math.radians(angle)) * 83
+
+            spawn_data = galaxy_single(galaxy_seed, round(spawn_x + map_radius), round(spawn_y + map_radius))
+            if not spawn_data.get("in_nebula", False):
+                # If this new point is not in a nebula, break out of the loop.
+                break
+    
+    # We have found an open point, now to try and find a nearby system.
+    if not spawn_data.get("system", False):
+        # The initially chosen point was not a system, big surprise.
+        for angle_mod_amount in range(359):
+            angle_mod = (angle_mod_amount + 1) // 2 * (1 if angle_mod_amount % 2 == 0 else -1)
+
+            for mod_amount in range(6):
+                check_distance = 83 + ((mod_amount + 2) // 2 * (1 if mod_amount % 2 == 0 else -1))
+
+                spawn_x = math.cos(math.radians(angle + angle_mod)) * check_distance
+                spawn_y = math.sin(math.radians(angle + angle_mod)) * check_distance
+
+                spawn_data = galaxy_single(galaxy_seed, round(spawn_x + map_radius), round(spawn_y + map_radius))
+
+                if spawn_data.get("system", False):
+                    # We found a system!!
+                    break
+            else: # If it did not break out of the loop, so if it did not find a system.
+                continue
+            
+            # If the `else` did not run, then it means it did break out of the inner loop, and thus it found a system.
+            break
+    
+    return (round(spawn_x + map_radius), round(spawn_y + map_radius))
