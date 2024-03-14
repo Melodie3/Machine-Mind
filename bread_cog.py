@@ -3516,19 +3516,19 @@ anarchy - 1000% of your wager.
         if count is None:
             count = 1
         if count == 0:
-            await ctx.reply("Alright, I have made zero of those for you...")
+            await utility.smart_reply(ctx, "Alright, I have made zero of those for you...")
             return
         if count < 0:
-            await ctx.reply("The laws of alchemy prevent me from utilizing negative energy.")
+            await utility.smart_reply(ctx, "The laws of alchemy prevent me from utilizing negative energy.")
             return
         if count > 1000000000000000:
-            await ctx.reply("That is an unreasonable number of items to alchemize. Please try again with a smaller number.")
+            await utility.smart_reply(ctx, "That is an unreasonable number of items to alchemize. Please try again with a smaller number.")
             return
 
         # print(f"{ctx.author.name} requested to alchemize {count} {target_item}.")
 
         if get_channel_permission_level(ctx) < PERMISSION_LEVEL_ACTIVITIES:
-            await ctx.reply(f"Thank you for your interest in bread alchemy. Please find the alchemical circle is present in {self.json_interface.get_rolling_channel(ctx.guild.id)}.")
+            await utility.smart_reply(ctx, f"Thank you for your interest in bread alchemy. Please find the alchemical circle is present in {self.json_interface.get_rolling_channel(ctx.guild.id)}.")
             return
 
         #check if they're already alchemizing
@@ -3554,12 +3554,12 @@ anarchy - 1000% of your wager.
             #####      GET ITEM
 
             if (target_item is None):
-                await ctx.reply("Welcome to the alchemy circle. Please say the item you would like to create.")
+                await utility.smart_reply(ctx, "Welcome to the alchemy circle. Please say the item you would like to create.")
                 try:
                     msg = await self.bot.wait_for('message', check = check, timeout = 60.0)
                 except asyncio.TimeoutError: 
                     # at this point, the check didn't become True, let's handle it.
-                    await ctx.reply(f"My patience is limited. Come back when you know what you want.")
+                    await utility.smart_reply(ctx, f"My patience is limited. Come back when you know what you want.")
                     self.currently_interacting.remove(ctx.author.id)
                     return
                 target_item = msg.content #values.get_emote(msg.content)
@@ -3571,7 +3571,7 @@ anarchy - 1000% of your wager.
             target_emote = values.get_emote(target_item)
 
             if (target_emote is None):
-                await ctx.reply(f"I do not recognize that item. Please start over.")
+                await utility.smart_reply(ctx, f"I do not recognize that item. Please start over.")
                 self.currently_interacting.remove(ctx.author.id)
                 return
 
@@ -3580,7 +3580,7 @@ anarchy - 1000% of your wager.
 
             if target_emote.name in alchemy.recipes.keys():
                 if user_account.get("max_daily_rolls") < store.Daily_rolls.max_level(user_account) and target_emote.name in [emote.name for emote in values.all_one_of_a_kind]:  
-                    await ctx.reply(f"I'm sorry, but you cannot alchemize any {target_emote.text} right now.")
+                    await utility.smart_reply(ctx, f"I'm sorry, but you cannot alchemize any {target_emote.text} right now.")
                     self.currently_interacting.remove(ctx.author.id)
                     return
                 recipe_list = alchemy.recipes[target_emote.name].copy()
@@ -3601,11 +3601,11 @@ anarchy - 1000% of your wager.
                                 
                 if len(recipe_list) == 0:
                     # Either the recipe list was initially blank, in which there is some issue, or the user has not unlocked any recipes for the item yet.
-                    await ctx.reply(f"I'm sorry, but your technology has not yet found a way to create {target_emote.text}.")
+                    await utility.smart_reply(ctx, f"I'm sorry, but your technology has not yet found a way to create {target_emote.text}.")
                     self.currently_interacting.remove(ctx.author.id)
                     return
             else:
-                await ctx.reply(f"There are no recipes to create {target_emote.text}. Perhaps research has not progressed far enough.")
+                await utility.smart_reply(ctx, f"There are no recipes to create {target_emote.text}. Perhaps research has not progressed far enough.")
                 self.currently_interacting.remove(ctx.author.id)
                 return
 
@@ -3639,30 +3639,30 @@ anarchy - 1000% of your wager.
                     recipes_description += f"{ingredient.text}: {user_account.get(ingredient.text)}\n"
             
                 recipes_description += "\nPlease reply with either the number of the recipe you would like to use, or \"cancel\"."
-                await ctx.reply(recipes_description)
+                await utility.smart_reply(ctx, recipes_description)
                 
                 try:
                     msg = await self.bot.wait_for('message', check = check, timeout = 60.0)
                 except asyncio.TimeoutError: 
                     # at this point, the check didn't become True, let's handle it.
-                    await ctx.reply(f"My patience is limited. This offering is rejected.")
+                    await utility.smart_reply(ctx, f"My patience is limited. This offering is rejected.")
                     self.currently_interacting.remove(ctx.author.id)
                     return
 
                 if "cancel" in msg.content.lower():
-                    await ctx.reply("You have cancelled this transaction.")
+                    await utility.smart_reply(ctx, "You have cancelled this transaction.")
                     self.currently_interacting.remove(ctx.author.id)
                     return
 
                 try:
                     recipe_num = parse_int(msg.content)
                 except ValueError:
-                    await ctx.reply(f"I do not recognize that as a number. Please try again from the beginning.")
+                    await utility.smart_reply(ctx, f"I do not recognize that as a number. Please try again from the beginning.")
                     self.currently_interacting.remove(ctx.author.id)
                     return
             
             if recipe_num > len(recipe_list) or recipe_num < 1:
-                await ctx.reply(f"That is not a valid recipe number. Please start over.")
+                await utility.smart_reply(ctx, f"That is not a valid recipe number. Please start over.")
                 self.currently_interacting.remove(ctx.author.id)
                 return
 
@@ -3691,23 +3691,23 @@ anarchy - 1000% of your wager.
                     question_text += f"{pair[0].text}: {user_account.get(pair[0].text)} of {pair[1] * count}\n"
                         
                 question_text += "\nWould you like to proceed? Yes or No."
-                await ctx.reply(question_text)
+                await utility.smart_reply(ctx, question_text)
 
                 try:
                     msg = await self.bot.wait_for('message', check = check, timeout = 60.0)
                 except asyncio.TimeoutError:
-                    await ctx.reply(f"My patience is limited. This offering is rejected.")
+                    await utility.smart_reply(ctx, f"My patience is limited. This offering is rejected.")
                     self.currently_interacting.remove(ctx.author.id)
                     return
                 
                 if "yes" in msg.content.lower():
                     pass
                 elif "no" in msg.content.lower():
-                    await ctx.reply("You have rejected this recipe.")
+                    await utility.smart_reply(ctx, "You have rejected this recipe.")
                     self.currently_interacting.remove(ctx.author.id)
                     return
                 else:
-                    await ctx.reply("I do not recognize your response. You may come back when you are feeling more decisive.")
+                    await utility.smart_reply(ctx, "I do not recognize your response. You may come back when you are feeling more decisive.")
                     self.currently_interacting.remove(ctx.author.id)
                     return
 
@@ -3723,7 +3723,7 @@ anarchy - 1000% of your wager.
                 # print(f"{ctx.author.display_name} is attempting to alchemize {count} {target_emote.name}")
                 # print(f"cost is {cost} and posessions is {posessions}")
                 if posessions < cost:
-                    await ctx.reply(f"You do not have enough {pair[0].text} to create {count} {target_emote.text}. This offering is rejected.")
+                    await utility.smart_reply(ctx, f"You do not have enough {pair[0].text} to create {count} {target_emote.text}. This offering is rejected.")
                     self.currently_interacting.remove(ctx.author.id)
                     return
             
@@ -3752,7 +3752,7 @@ anarchy - 1000% of your wager.
             if target_emote.gives_alchemy_award() and not override_dough:
                 output += f"\nYou have also been awarded **{value} dough** for your efforts."
 
-            await ctx.reply(output)
+            await utility.smart_reply(ctx, output)
 
             await self.do_chessboard_completion(ctx)
 
