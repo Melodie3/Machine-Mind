@@ -1531,6 +1531,7 @@ class Multiroller_Terminal(Space_Shop_Item):
         if not super().can_be_purchased(user_account): # If can_be_purchased from the parent class returns False.
             return False
         
+        # If the player has max multirollers.
         if 2 ** user_account.get("multiroller") >= 1000 + user_account.get_prestige_level() * 100:
             return True
         

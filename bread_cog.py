@@ -1470,6 +1470,65 @@ loaf_converter""",
         
         # set the account
         self.json_interface.set_account(ctx.author, user_account, ctx.guild.id)
+
+
+    ########################################################################################################################
+    #####      BREAD MUTLIROLLER
+
+    @bread.command(
+        name = "multiroller",
+        brief = "Modify your Multiroller Terminal settings.",
+        description = "Modify your Multiroller Terminal settings.",
+        aliases = ["multiroller_terminal"]
+    )
+    async def multiroller(self, ctx,
+            setting: typing.Optional[str] = commands.parameter(description = "The number of multirollers to set as active, or 'off'.")
+        ):
+        user_account = self.json_interface.get_account(ctx.author.id, ctx.guild.id)
+
+        if user_account.get("multiroller_terminal") == 0:
+            await ctx.reply("You do not yet possess the Multiroller Terminal.")
+            return
+
+        if get_channel_permission_level(ctx) < PERMISSION_LEVEL_ACTIVITIES:
+            await ctx.reply(f"Thank you for trying to use the Multiroller Terminal, please move to {self.json_interface.get_rolling_channel(ctx.guild.id)} for configuring the terminal.")
+            return
+        
+        if setting is None:
+            await ctx.reply("Please provide a Multiroller Terminal setting.\nEither a number of active Multirollers to set or 'off' to shutdown the terminal.")
+            return
+        
+        if setting == "off":
+            user_account.set("active_multirollers", -1)
+
+            self.json_interface.set_account(ctx.author.id, user_account, ctx.guild.id)
+
+            await ctx.reply("The Multiroller Terminal has been turned off.")
+            return
+        
+        try:
+            setting = parse_int(setting)
+        except:
+            await ctx.reply("I do not recognize that setting, the Multiroller Terminal settings have not been changed.")
+            return
+        
+        if setting < 0:
+            await ctx.reply("You cannot set a negative number of Multirollers to be active.")
+            return
+        
+        if setting > user_account.get("multiroller"):
+            await ctx.reply("You cannot have a number of active Multirollers that is greater than the number of Multirollers you have.")
+            return
+        
+        user_account.set("active_multirollers", setting)
+
+        self.json_interface.set_account(ctx.author.id, user_account, ctx.guild.id)
+
+        await ctx.reply(f"You have set the number of active Multirollers to {setting}.")
+        return
+        
+
+
         
 
 
@@ -1506,7 +1565,8 @@ loaf_converter""",
         rolls_remaining = user_account.get("max_daily_rolls") - user_account.get("daily_rolls")
         #if ctx.channel.name in earnable_channels:
         if get_channel_permission_level(ctx) == PERMISSION_LEVEL_MAX:
-            user_multiroll = 2 ** (user_account.get("multiroller")) # 2 to power of multiroller
+            multirollers = user_account.get_active_multirollers()
+            user_multiroll = 2 ** (multirollers) # 2 to power of multiroller
             user_multiroll = min(user_multiroll, rolls_remaining) 
             # kick user out if they're out of rolls
             if rolls_remaining == 0:
@@ -5358,26 +5418,11 @@ anarchy - 1000% of your wager.
     async def daily_reset(self, ctx):
         if await self.await_confirmation(ctx) is False:
             return
-        self.reset_internal(ctx.guild.id)
+        # self.reset_internal(ctx.guild.id)
+        self.reset_internal()
         await ctx.send("Done.")
 
-    def reset_internal(self, guild: typing.Optional[typing.Union[discord.Guild,str,int]] = None):
-        print("Internal daily reset called")
-        self.currently_interacting.clear()
-
-        if guild is not None:
-            guild_id = get_id_from_guild(guild)
-            for account in self.json_interface.get_all_user_accounts(guild_id):
-                account.daily_reset()
-                self.json_interface.set_account(account.get("id"), account, guild_id)
-        else: #call for all accounts
-            for guild_id in self.json_interface.get_list_of_all_guilds():
-                for account in self.json_interface.get_all_user_accounts(guild_id):
-                    account.daily_reset()
-                    self.json_interface.set_account(account.get("id"), account, guild_id)
-        
-        ###########################
-        #### Bread Space.
+    def reset_space(self, guild: typing.Optional[typing.Union[discord.Guild,str,int]]):
         # Set a new day seed.
         space_data = self.json_interface.get_space_data(guild=guild)
 
@@ -5399,6 +5444,25 @@ anarchy - 1000% of your wager.
             space_data[ascension_key] = ascension_data
 
         self.json_interface.set_custom_file("space", file_data=space_data, guild=guild)
+
+    def reset_internal(self, guild: typing.Optional[typing.Union[discord.Guild,str,int]] = None):
+        print("Internal daily reset called")
+        self.currently_interacting.clear()
+
+        if guild is not None:
+            guild_id = get_id_from_guild(guild)
+
+            self.reset_space(guild_id)
+            for account in self.json_interface.get_all_user_accounts(guild_id):
+                account.daily_reset()
+                self.json_interface.set_account(account.get("id"), account, guild_id)
+        else: #call for all accounts
+            for guild_id in self.json_interface.get_list_of_all_guilds():
+                self.reset_space(guild_id)
+
+                for account in self.json_interface.get_all_user_accounts(guild_id):
+                    account.daily_reset()
+                    self.json_interface.set_account(account.get("id"), account, guild_id)
 
         """
         #wipe the accounts cache since we'll be direcly manipulating data. 

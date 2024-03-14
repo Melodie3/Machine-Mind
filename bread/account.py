@@ -108,7 +108,7 @@ class Bread_Account:
         entries_to_remove = [   "total_dough",
                                 "bling", "LC_booster", "gambit_shop_level",
                                 "daily_gambles", "daily_rolls",
-                                "multiroller", "compound_roller", "roll_summarizer", "black_hole",
+                                "multiroller", "compound_roller", "roll_summarizer", "black_hole", "multiroller_terminal", "multiroller_active",
                                 "investment_profit", "gamble_winnings",
                                 "galaxy_move_count", "galaxy_xpos", "galaxy_ypos", "system_xpos", "system_ypos",
         ]
@@ -327,6 +327,19 @@ class Bread_Account:
     def get_corruption_negation_multiplier(self) -> float:
         level = self.get("corruption_negation")
         return 1 - (level * 0.1)
+    
+    def get_active_multirollers(self) -> int:
+        multiroller = self.get("multiroller")
+        if self.get("multiroller_terminal") < 1:
+            return multiroller
+
+        active = self.get("active_multirollers")
+
+        if active == -1:
+            return multiroller
+        else:
+            return active
+            
 
     def get_shadowmega_boost_count(self):
         # from bread.store import chessatron_shadow_booster_levels
