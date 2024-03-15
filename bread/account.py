@@ -324,10 +324,6 @@ class Bread_Account:
             total_value += value
         return total_value
     
-    def get_corruption_negation_multiplier(self) -> float:
-        level = self.get("corruption_negation")
-        return 1 - (level * 0.1)
-    
     def get_active_multirollers(self) -> int:
         multiroller = self.get("multiroller")
         if self.get("multiroller_terminal") < 1:
@@ -339,6 +335,14 @@ class Bread_Account:
             return multiroller
         else:
             return active
+        
+    def get_corruption_negation_multiplier(self) -> float:
+        level = self.get("corruption_negation")
+        return 1 - (level * 0.1)
+    
+    def get_fuel_refinement_boost(self) -> float:
+        level = self.get("fuel_refinement")
+        return 1 + (level * 0.25)
             
 
     def get_shadowmega_boost_count(self):

@@ -4002,6 +4002,24 @@ anarchy - 1000% of your wager.
                     self.currently_interacting.remove(ctx.author.id)
                     return
             
+            ##### If the person is making fuel, ensure if it's fuel the person has enough fuel in their fuel tank.
+            
+            output_amount = item_multiplier
+            
+            if target_emote.text == values.fuel.text:
+                output_fuel = int(item_multiplier * count * user_account.get_fuel_refinement_boost())
+
+                output_amount = int(output_amount * user_account.get_fuel_refinement_boost())
+
+                current_fuel = user_account.get(values.fuel.text)
+                fuel_tank = user_account.get("fuel_tank")
+                max_fuel = store.Fuel_Tank.tank_values[fuel_tank]
+
+                if output_fuel + current_fuel > max_fuel:
+                    await ctx.reply("I am sorry, but you do not have a large enough fuel tank to store that much fuel.")
+                    self.currently_interacting.remove(ctx.author.id)
+                    return
+            
             value = 0
 
             override_dough = False
@@ -4015,7 +4033,7 @@ anarchy - 1000% of your wager.
 
                 # then we add the item
                 
-                user_account.add_item_attributes(target_emote, item_multiplier)
+                user_account.add_item_attributes(target_emote, output_amount)
                 if target_emote.gives_alchemy_award() and not override_dough:
                     value += user_account.add_dough_intelligent((target_emote.get_alchemy_value() + user_account.get_dough_boost_for_item(target_emote)) * item_multiplier)
 
@@ -4023,7 +4041,7 @@ anarchy - 1000% of your wager.
             # finally, we save the account
             self.json_interface.set_account(ctx.author, user_account, guild = ctx.guild.id)
 
-            output = f"Well done. You have created {count * item_multiplier} {target_emote.text}. You now have {user_account.get(target_emote.text)} of them."
+            output = f"Well done. You have created {count * output_amount} {target_emote.text}. You now have {user_account.get(target_emote.text)} of them."
             if target_emote.gives_alchemy_award() and not override_dough:
                 output += f"\nYou have also been awarded **{value} dough** for your efforts."
 
@@ -4033,6 +4051,7 @@ anarchy - 1000% of your wager.
             await self.anarchy_chessatron_completion(ctx)
 
         except:
+            print(traceback.format_exc())
             pass
 
         self.currently_interacting.remove(ctx.author.id)
@@ -4094,6 +4113,7 @@ anarchy - 1000% of your wager.
 
         message = "Nice job getting a rocket!\n\nHere's a handy list of things you can do:\n"
 
+        # Generate a list of the bread space subcommands and their help text.
         for cmd in self.space.commands:
             message += f"  '$bread space {cmd.name}': {cmd.brief}\n"
         
@@ -5197,7 +5217,8 @@ anarchy - 1000% of your wager.
         cancel_text = ["no", "n", "cancel"]
 
         if confirm not in confirm_text:
-            await utility.smart_reply(ctx, f"You are trying to move from {start_location} to {end_location}.\nThis will require {move_cost} {values.fuel.text}.\nAre you sure you want to move? Yes or No.")
+            current_fuel = user_account.get(values.fuel.text)
+            await utility.smart_reply(ctx, f"You are trying to move from {start_location} to {end_location}.\nThis will require **{move_cost}** {values.fuel.text}.\nYou have {current_fuel} {values.fuel.text}.\nAre you sure you want to move? Yes or No.")
             
             def check(m: discord.Message):
                 return m.author.id == ctx.author.id and m.channel.id == ctx.channel.id 
@@ -5294,7 +5315,9 @@ anarchy - 1000% of your wager.
         # Save the player account.
         self.json_interface.set_account(ctx.author.id, user_account, guild = ctx.guild.id)
 
-        await utility.smart_reply(ctx, f"Autopilot success:\nSuccessfully moved to {end_location} on the {move_map} map, using {move_cost} {values.fuel.text}.")
+        fuel_left = user_account.get(values.fuel.text)
+
+        await utility.smart_reply(ctx, f"Autopilot success:\nSuccessfully moved to {end_location} on the {move_map} map, using {move_cost} {values.fuel.text}.\n\nYou have **{fuel_left} {values.fuel.text}** remaining.")
 
         self.currently_interacting.remove(ctx.author.id)
         

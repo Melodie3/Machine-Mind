@@ -890,7 +890,8 @@ fuel = Emote(
     name = "fuel",
     emoji= "🛢️",
     alternate_names = ["oil"],
-    attributes = ["misc"]
+    attributes = ["misc"],
+    giftable = False
 )
 
 all_bricks = [brick, brick_gold, fide_brick, brick_fide]

@@ -1293,7 +1293,7 @@ class Corruption_Negation(Prestige_Store_Item):
         super().do_purchase(user_account)
         return f"You have bought a level of Corruption Negation, be careful out there."
 
-prestige_store_items = [Daily_Discount_Card, Self_Converting_Yeast, MoaK_Booster, Chess_Piece_Equalizer, High_Roller_Table, Chessatron_Contraption, Ethereal_Shine, First_Catch]
+prestige_store_items = [Daily_Discount_Card, Self_Converting_Yeast, MoaK_Booster, Chess_Piece_Equalizer, High_Roller_Table, Chessatron_Contraption, Ethereal_Shine, First_Catch, Fuel_Refinement, Corruption_Negation]
 
 #############################################################################################################
 ##### Space shop. ###########################################################################################
@@ -1403,7 +1403,7 @@ class Bread_Rocket(Space_Shop_Item):
 class Fuel_Tank(Space_Shop_Item):
     name = "fuel_tank"
     display_name = "Upgraded Fuel Tank"
-    tank_values = [100, 150, 200, 300, 400, 500, 600]
+    tank_values = [100, 150, 200, 300, 400, 500, 600, 700]
 
     @classmethod
     def get_costs(cls):
@@ -1415,6 +1415,7 @@ class Fuel_Tank(Space_Shop_Item):
             [(values.gem_green.text, 100)],
             [(values.gem_gold.text, 50)],
             [(values.anarchy_chess.text, 5)],
+            [(values.anarchy_chessatron, 5)],
         ]
     
     @classmethod
@@ -1443,6 +1444,13 @@ class Fuel_Research(Space_Shop_Item):
         level = user_account.get(cls.name)
         items = [values.gem_blue.text, values.gem_purple.text, values.gem_green.text, values.gem_gold.text]
         return f"Breakthroughs in chemistry research allowing use of {items[level]} for creating {values.fuel.text}."
+    
+    @classmethod
+    def can_be_purchased(cls, user_account: account.Bread_Account) -> bool:
+        if not super().can_be_purchased(user_account):
+            return False
+        
+
 
 class Upgraded_Telescopes(Space_Shop_Item):
     name = "telescope_level"
