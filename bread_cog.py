@@ -4390,7 +4390,10 @@ anarchy - 1000% of your wager.
                 system_y = y_modifier - radius + player_y
             )
 
-            analysis_lines = tile_analyze.get_analysis(self.json_interface)
+            analysis_lines = tile_analyze.get_analysis(
+                guild = ctx.guild.id,
+                json_interface = self.json_interface
+            )
         else:
             analysis_lines = ["There is nothing here."]
 

@@ -137,12 +137,39 @@ class SystemTile:
             return map_emojis.get(self.tile_type)
         
         return map_emojis.get("empty")
+    
+    def get_priority_item(self: typing.Self) -> typing.Union[values.Emote, str, None]:
+        if self.tile_type != "planet":
+            return None
+        
+        if self.planet_type.text == values.anarchy_chess.text:
+            return self.planet_type.name
+        
+        elif self.planet_type in values.all_shinies:
+            return self.planet_type.name
+        
+        elif self.planet_type in values.chess_pieces_white:
+            return "chess_piece"
+        
+        elif self.planet_type in values.chess_pieces_black:
+            return "chess_piece"
+        
+        elif self.planet_type in values.rare_breads:
+            return "rare_bread"
+        
+        elif self.planet_type in values.all_special_breads:
+            return "special_bread"
+        
+        return self.planet_type.name
+        
+        
 
     ###############################################################################
     ##### Analysis methods.
 
     def get_analysis(
             self: typing.Self,
+            guild: typing.Union[discord.Guild, int, str],
             json_interface: bread_cog.JSON_interface
         ) -> list[str]:
         """Generates a list of strings that describe this tile, to be used by the analysis command."""
@@ -169,8 +196,10 @@ class SystemTile:
             ]
         
         if self.tile_type == "planet":
+            day_seed = json_interface.get_day_seed(guild=guild)
+
             planet_modifiers = get_planet_modifiers(
-                json_interface = json_interface,
+                day_seed = day_seed,
                 tile = self
             )
 
@@ -178,7 +207,11 @@ class SystemTile:
                 "Special Bread": values.croissant,
                 "Rare Bread": values.bagel,
                 "Chess Piece": values.black_pawn,
-                "Gems": values.gem_red,
+                "Red Gems": values.gem_red,
+                "Blue Gems": values.gem_blue,
+                "Purple Gems": values.gem_purple,
+                "Green Gems": values.gem_green,
+                "Gold Gems": values.gem_gold,
                 "Many of a Kind": values.anarchy_chess,
                 "Anarchy Piece": values.anarchy_black_pawn
             }
@@ -186,9 +219,9 @@ class SystemTile:
             result = [
                 "Object type: Planet",
                 f"Planet type: {self.planet_type.text}",
-                f"Distance: {self.planet_distance}",
+                f"Distance: {round(self.planet_distance, 3)}",
                 f"Angle: {self.planet_angle}",
-                f"Deviation: {self.planet_deviation}",
+                f"Deviation: {round(self.planet_deviation, 3)}",
                 "", # Blank item to add line break.
                 "Item modifiers:"
             ]
@@ -196,7 +229,7 @@ class SystemTile:
             # Items in categories have the same chance. e.g., every rare special has the same modifier.
             # This means we only need to get one item in each category.
             for name, item in categories.items():
-                result.append(f"- {name}: {planet_modifiers.get(item)}")
+                result.append(f"- {name}: {round(planet_modifiers.get(item), 3)}")
 
             return result
         
@@ -922,7 +955,7 @@ def get_system_coordinate(
     )
 
 def get_planet_modifiers(
-        json_interface: bread_cog.JSON_interface,
+        day_seed: str,
         tile: SystemTile
     ) -> dict[typing.Type[values.Emote], typing.Union[int, float]]:
     """Generates the item modifiers for the given tile.
@@ -933,30 +966,83 @@ def get_planet_modifiers(
     Returns:
         dict[Type[Emote], int | float]: A dictionary of item modifiers.
     """
+
+    # The keys in this need to line up with the possible return values in SystemTile.get_priority_item()
+    odds = {
+        "special_bread": 1,
+        "rare_bread": 1,
+        "chess_piece": 1,
+        "gem_red": 1,
+        "gem_blue": 1,
+        "gem_purple": 1,
+        "gem_green": 1,
+        "gem_gold": 1,
+        "anarchy_chess": 1,
+        "anarchy_piece": 1
+    }
+
+    # If it isn't a planet, then use the defaults of 1.
+    if tile.tile_type == "planet":
+        priority = tile.get_priority_item()
+
+        galaxy_tile = generation.galaxy_single(
+            galaxy_seed = tile.galaxy_seed,
+            x = tile.galaxy_xpos,
+            y = tile.galaxy_ypos
+        )
+
+        if galaxy_tile.get("in_nebula", False):
+            divisor = 2.5
+        else:
+            divisor = math.tau
+
+        deviation = (1 - tile.planet_deviation) / divisor
+
+        raw_seed = tile.tile_seed()
+        tile_seed = tile.tile_seed() + day_seed
+
+        phi = (1 + math.sqrt(5)) / 2
+
+        # Get the planet seed for each category.
+        # These do not change per day.
+        for key in odds.copy():
+            odds[key] = random.Random(f"{raw_seed}{key}").gauss(mu=1, sigma=deviation)
+
+            if key == priority:
+                odds[key] = (abs(odds[key] - 1) + 1) * phi
+
+        # Now to get the actual modifiers.
+        # These do change per day, but tend to be around the default seeds calculated above.
+        for key, value in odds.copy().items():
+            odds[key] = random.Random(f"{tile_seed}{key}").gauss(mu=value, sigma=deviation / 2.5)
+
+
     result = {}
 
     for special in values.all_special_breads:
-        result[special] = 1
+        result[special] = odds.get("special_bread", 1)
 
     for rare in values.all_rare_breads:
-        result[rare] = 1
+        result[rare] = odds.get("rare_bread", 1)
     
     for bpiece in values.chess_pieces_black:
-        result[bpiece] = 1
+        result[bpiece] = odds.get("chess_piece", 1)
     
     for wpiece in values.chess_pieces_white:
-        result[wpiece] = 1
+        result[wpiece] = odds.get("chess_piece", 1)
     
-    for gem in values.all_shinies:
-        result[gem] = 1
-    
-    result[values.anarchy_chess] = 1
+    result[values.gem_red] = odds.get("gem_red", 1)
+    result[values.gem_blue] = odds.get("gem_blue", 1)
+    result[values.gem_purple] = odds.get("gem_purple", 1)
+    result[values.gem_green] = odds.get("gem_green", 1)
+    result[values.gem_gold] = odds.get("gem_gold", 1)
+    result[values.anarchy_chess] = odds.get("anarchy_chess", 1)
     
     for bpiece in values.anarchy_pieces_black:
-        result[bpiece] = 1
+        result[bpiece] = odds.get("anarchy_piece", 1)
     
     for wpiece in values.anarchy_pieces_white:
-        result[wpiece] = 1
+        result[wpiece] = odds.get("anarchy_piece", 1)
 
     return result
     

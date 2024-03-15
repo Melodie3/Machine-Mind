@@ -54,9 +54,10 @@ def bread_roll(
         #### Planet-based roll modifiers.
 
         system_tile = user_account.get_system_tile(json_interface)
+        day_seed = json_interface.get_day_seed(guild=user_account.get("guild_id"))
 
         rarity_modifiers = space.get_planet_modifiers(
-            json_interface = json_interface,
+            day_seed = day_seed,
             tile = system_tile
         )
 
