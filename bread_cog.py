@@ -4163,7 +4163,7 @@ anarchy - 1000% of your wager.
         # The items in the output list get joined with a new line in the middle, so only a single \n is required here.
         output.append(f"Space stats for: {account.get_display_name()}:\n")
 
-        output.append(f"You have reached the rocket tier {sn(account.get_space_level())}.")
+        output.append(f"You have a tier {sn(account.get_space_level())} Bread Rocket.")
 
         output.append(f"With a level {sn(account.get('fuel_tank'))} fuel tank, you can store up to {store.Fuel_Tank.tank_values[account.get('fuel_tank')]} {values.fuel.text}.")
 
@@ -4221,7 +4221,7 @@ anarchy - 1000% of your wager.
         items = self.get_buyable_items(user_account, store.space_shop_items)
 
         output = ""
-        output += f"Welcome to the Space Shop! You have **{user_account.get('total_dough')} dough**.\n\*Prices subject to change.\nHere are the items available for purchase:\n\n"
+        output += f"Welcome to the Space Shop!\nHere are the items available for purchase:\n\n"
         for item in items:
             output += f"\t**{item.display_name}** - {item.get_price_description(user_account)}\n{item.description(user_account)}\n\n"
         

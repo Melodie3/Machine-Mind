@@ -23,8 +23,9 @@ map_radius_squared = map_radius ** 2
 ## Fuel requirements:
 # This is the amount of fuel required for each jump in their respective areas.
 move_fuel_system = 25
-move_fuel_galaxy = 125
-move_fuel_galaxy_nebula = 250
+move_fuel_galaxy = 175
+move_fuel_galaxy_nebula = 350
+move_fuel_wormhole = 700
 
 ## Emojis:
 

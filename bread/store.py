@@ -1380,25 +1380,71 @@ class Bread_Rocket(Space_Shop_Item):
 
     @classmethod
     def get_costs(cls):
-        return [
-            [],
-            [(values.croissant.text, 5000), (values.flatbread.text, 5000), (values.stuffed_flatbread.text, 5000), (values.sandwich.text, 5000), (values.french_bread.text, 5000), \
+        base = [(values.croissant.text, 5000), (values.flatbread.text, 5000), (values.stuffed_flatbread.text, 5000), (values.sandwich.text, 5000), (values.french_bread.text, 5000), \
              (values.doughnut.text, 1000), (values.bagel.text, 1000), (values.waffle.text, 1000), \
-             (values.chessatron.text, 150), (values.gem_gold.text, 15)],
-        ]
+             (values.chessatron.text, 150), (values.gem_gold.text, 15)]
+        
+        out = [[]]
+        for level in range(8):
+            out.append(
+                [
+                    (item, amount * 2 ** level)
+                    for item, amount in base
+                ]
+            )
+
+        return out
     
     @classmethod
     def description(cls, user_account: account.Bread_Account) -> str:
-        return "An upgraded Bread Rocket that can take your further in the vast reaches of space."
+        level = user_account.get(cls.name)
+        # (a2 locked) Tier 1: Access to space.
+        #             Tier 2: Fuel tank 1, Upgraded telescopes 1, Fuel research 4
+        #             Tier 3: Fuel tank 2
+        # (a3 locked) Tier 4: Fuel tank 3 (Galaxy travel)
+        #             Tier 5: Fuel tank 4, Upgraded telescopes 2
+        # (a4 locked) Tier 6: Fuel tank 5 (Nebula travel)
+        #             Tier 7: Fuel tank 6
+        # (a5 locked) Tier 8: Fuel tank 7 (Wormhole travel?), Upgraded telescopes 3
+
+        if level == 0:
+            return "A Bread Rocket that allows access to space."
+        
+        upgrades = [
+            "go to space.",
+            f"upgrade your fuel tank, upgrade your telescopes and research new methods of creating {values.fuel.text}.",
+            "upgrade your fuel tank.",
+            "upgrade your fuel tank and traverse through the galaxy.",
+            "upgrade your fuel tank and upgrade your telescopes.",
+            "upgrade your fuel tank and adventure through nebulae.",
+            "upgrade your fuel tank.",
+            "upgrade your fuel tank and upgrade your telescopes.",
+        ]
+        return f"An upgraded Bread Rocket that can take your further in the vast reaches of space.\nThis upgraded rocket will allow you to {upgrades[level]}"
     
     @classmethod
     def can_be_purchased(cls, user_account: account.Bread_Account) -> bool:
-        level = user_account.get(cls.name)
-        if level >= cls.max_level(user_account):
+        level = user_account.get(cls.name) + 1
+
+        if level > cls.max_level(user_account):
             return False
-        if level < (user_account.get_prestige_level() - 2):
-            return True
-        return False
+
+        ascension = user_account.get_prestige_level()
+        if ascension < 2:
+            return False
+        
+
+        if level >= 8:
+            return ascension >= 5
+
+        elif level >= 6:
+            return ascension >= 4
+
+        elif level >= 4:
+            return ascension >= 3
+        
+        return True
+
         
 class Fuel_Tank(Space_Shop_Item):
     name = "fuel_tank"
@@ -1422,6 +1468,19 @@ class Fuel_Tank(Space_Shop_Item):
     def description(cls, user_account: account.Bread_Account) -> str:
         level = user_account.get(cls.name)
         return f"An upgraded fuel tank that can store up to {cls.tank_values[level + 1]} {values.fuel.text}."
+
+    @classmethod
+    def can_be_purchased(cls, user_account: account.Bread_Account) -> bool:
+        if not super().can_be_purchased(user_account):
+            return False
+        
+        level = user_account.get(cls.name) + 1
+        space_level = user_account.get_space_level()
+
+        if level > space_level - 1:
+            return False
+        
+        return True
 
 class Fuel_Research(Space_Shop_Item):
     name = "fuel_research"
@@ -1450,6 +1509,15 @@ class Fuel_Research(Space_Shop_Item):
         if not super().can_be_purchased(user_account):
             return False
         
+        conversion_rates = [1, 3, 9, 27, 150]
+        level = user_account.get(cls.name) + 1
+        fuel_tank = user_account.get(Fuel_Tank.name)
+
+        # Only allow the purchase if the amount you'd get from the next item is less than the amount of fuel you can store.
+        if conversion_rates[level] > Fuel_Tank.tank_values[fuel_tank]:
+            return False
+        
+        return True
 
 
 class Upgraded_Telescopes(Space_Shop_Item):
