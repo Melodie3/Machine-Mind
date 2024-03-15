@@ -110,7 +110,7 @@ class Bread_Account:
                                 "daily_gambles", "daily_rolls",
                                 "multiroller", "compound_roller", "roll_summarizer", "black_hole", "multiroller_terminal", "multiroller_active",
                                 "investment_profit", "gamble_winnings",
-                                "galaxy_move_count", "galaxy_xpos", "galaxy_ypos", "system_xpos", "system_ypos",
+                                "galaxy_move_count", "galaxy_xpos", "galaxy_ypos", "system_xpos", "system_ypos", "projects_completed",
         ]
         untouched =            ["lifetime_earned_dough", "lifetime_dough", "lifetime_gambles","highest_roll", ]
 
@@ -120,6 +120,7 @@ class Bread_Account:
                                 "special_bread", "rare_bread", "unique", "chess_pieces", "shiny",
                                 "full_chess_set", "many_of_a_kind", 
                                 "lottery_win",
+                                "projects_completed",
 
         ]
 

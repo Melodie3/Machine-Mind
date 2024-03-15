@@ -4736,6 +4736,8 @@ anarchy - 1000% of your wager.
 
                 items_added.append(f"{amount} {win_item}")
 
+            user_account.increment("projects_completed", 1)
+
             self.json_interface.set_account(player_id, player_account, guild = ctx.guild.id)
             
             send_lines += f"\n- <@{player_id}>: {' ,  '.join(items_added)}"
