@@ -197,8 +197,12 @@ class SystemTile:
         
         if self.tile_type == "planet":
             day_seed = json_interface.get_day_seed(guild=guild)
+            ascension = json_interface.ascension_from_seed(guild=guild, galaxy_seed=self.galaxy_seed)
 
             planet_modifiers = get_planet_modifiers(
+                json_interface = json_interface,
+                ascension = ascension,
+                guild=guild,
                 day_seed = day_seed,
                 tile = self
             )
@@ -955,6 +959,9 @@ def get_system_coordinate(
     )
 
 def get_planet_modifiers(
+        json_interface: bread_cog.JSON_interface,
+        ascension: int,
+        guild: typing.Union[discord.Guild, int, str],
         day_seed: str,
         tile: SystemTile
     ) -> dict[typing.Type[values.Emote], typing.Union[int, float]]:
@@ -985,18 +992,26 @@ def get_planet_modifiers(
     if tile.tile_type == "planet":
         priority = tile.get_priority_item()
 
-        galaxy_tile = generation.galaxy_single(
+        galaxy_tile = get_galaxy_coordinate(
+            json_interface = json_interface,
             galaxy_seed = tile.galaxy_seed,
-            x = tile.galaxy_xpos,
-            y = tile.galaxy_ypos
-        )
+            guild = guild,
+            ascension = ascension,
+            xpos = tile.galaxy_xpos,
+            ypos = tile.galaxy_ypos,
+            load_planets = True
+        ) # type: GalaxyTile
 
-        if galaxy_tile.get("in_nebula", False):
-            divisor = 2.5
+        if galaxy_tile.in_nebula:
+            denominator = 2.5
         else:
-            divisor = math.tau
+            denominator = math.tau
 
-        deviation = (1 - tile.planet_deviation) / divisor
+        if galaxy_tile.star.star_type == "black_hole":
+            # If it's a black hole, make it a little crazier by dividing the denominator by 2.
+            denominator /= 2
+
+        deviation = (1 - tile.planet_deviation) / denominator
 
         raw_seed = tile.tile_seed()
         tile_seed = tile.tile_seed() + day_seed
