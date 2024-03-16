@@ -365,7 +365,8 @@ def get_all_wormholes(
     raw_locations = []
     full_point_data = []
 
-    wormhole_count = random.Random(galaxy_seed).gauss(mu=25, sigma=5)
+    # wormhole_count = random.Random(galaxy_seed).gauss(mu=25, sigma=5)
+    wormhole_count = random.Random(galaxy_seed).gauss(mu=100, sigma=20)
 
     if wormhole_count < 1:
         wormhole_count = 1 - wormhole_count
@@ -425,7 +426,6 @@ def get_wormhole_points(
         initial_angle = point_angle
         initial_distance = point_distance
         if not check_data.get("system", False):
-
             while True:
                 point_angle += 1
                 
@@ -475,7 +475,9 @@ def get_wormhole_points(
 def generate_system(
         galaxy_seed: str,
         galaxy_xpos: int,
-        galaxy_ypos: int
+        galaxy_ypos: int,
+        get_wormholes: bool = True,
+        all_wormholes: typing.Optional[list[dict]] = None
     ) -> typing.Union[dict, None]:
     """Generates the data for a system.
 
@@ -483,6 +485,8 @@ def generate_system(
         galaxy_seed (str): The seed of the galaxy this system is in.
         galaxy_xpos (int): The x position of the system within the galaxy.
         galaxy_ypos (int): The y position of the system within the galaxy.
+        get_wormholes (bool, optional): Whether to determine whether there are wormholes in this system. Defaults to True.
+        all_wormholes (typing.Optional[list[dict]], optional): The list of wormholes in this galaxy. If None is passed it will generate them. Defaults to None.
 
     Returns:
         typing.Union[dict, None]: The data for the system in a dict if the tile has a system on it, otherwise None.
@@ -589,76 +593,77 @@ def generate_system(
     
     ###############################################################
     #### Wormholes.
+    wormhole_data = {
+        "exists": False,
+        "xpos": None,
+        "ypos": None,
+        "link_galaxy": None
+    }
     
-    all_wormholes = get_all_wormholes(
-        galaxy_seed = galaxy_seed,
-        gradient_data = gradient_info,
-        nebula_data = nebula_info
-    )
-    
-    pair_data = None
-    angle = None
-    distance = None
-    for point1, point2 in all_wormholes:
-        if point1.get("location") == system_position:
-            angle = point1.get("angle")
-            distance = point1.get("distance")
-            pair_data = point2
-            break
-        elif point2.get("location") == system_position:
-            angle = point2.get("angle")
-            distance = point2.get("distance")
-            pair_data = point1
-            break
-    
-    if pair_data is not None:
-        final_distance = largest_distance * distance
-
-        wormhole_x = round(math.cos(math.radians(angle)) * final_distance)
-        wormhole_y = round(math.sin(math.radians(angle)) * final_distance)
-
-        wormhole_position = (wormhole_x, wormhole_y)
-
-        trade_hub_pos = (trade_hub_xpos, trade_hub_ypos)
-        planet_positions = [(planet.get("xpos"), planet.get("ypos")) for planet in planets]
-
-        # If this tile is already taken up, then move the wormhole.
-        # Asteroids are ignored here, since other things can overwrite them.
-        if wormhole_position == trade_hub_pos or \
-           wormhole_position in planet_positions or \
-           wormhole_position == (0, 0):
-            attempt_number = 0
-            
-            while True:
-                attempt_number += 1
-
-                wormhole_rng = random.Random(hashlib.sha256(str(galaxy_seed + str(galaxy_ypos) + str(galaxy_xpos) + "wormhole" + str(attempt_number)).encode()).digest())
-
-                distance = wormhole_rng.uniform(178 / 180, 92 / 180)
-                angle = wormhole_rng.randrange(0, 360)
-
-                wormhole_x = round(math.cos(math.radians(angle)) * final_distance)
-                wormhole_y = round(math.sin(math.radians(angle)) * final_distance)
-
-                wormhole_position = (wormhole_x, wormhole_y)
-                if not(wormhole_position == trade_hub_pos or \
-                   wormhole_position in planet_positions or \
-                   wormhole_position == (0, 0)):
-                    break
+    if get_wormholes:
+        if all_wormholes is None:
+            all_wormholes = get_all_wormholes(
+                galaxy_seed = galaxy_seed,
+                gradient_data = gradient_info,
+                nebula_data = nebula_info
+            )
         
-        wormhole_data = {
-            "exists": True,
-            "xpos": wormhole_x,
-            "ypos": wormhole_y,
-            "link_galaxy": pair_data.get("location")
-        }
-    else:
-        wormhole_data = {
-            "exists": False,
-            "xpos": None,
-            "ypos": None,
-            "link_galaxy": None
-        }
+        pair_data = None
+        angle = None
+        distance = None
+        for point1, point2 in all_wormholes:
+            if point1.get("location") == system_position:
+                angle = point1.get("angle")
+                distance = point1.get("distance")
+                pair_data = point2
+                break
+            elif point2.get("location") == system_position:
+                angle = point2.get("angle")
+                distance = point2.get("distance")
+                pair_data = point1
+                break
+        
+        if pair_data is not None:
+            final_distance = largest_distance * distance
+
+            wormhole_x = round(math.cos(math.radians(angle)) * final_distance)
+            wormhole_y = round(math.sin(math.radians(angle)) * final_distance)
+
+            wormhole_position = (wormhole_x, wormhole_y)
+
+            trade_hub_pos = (trade_hub_xpos, trade_hub_ypos)
+            planet_positions = [(planet.get("xpos"), planet.get("ypos")) for planet in planets]
+
+            # If this tile is already taken up, then move the wormhole.
+            # Asteroids are ignored here, since other things can overwrite them.
+            if wormhole_position == trade_hub_pos or \
+            wormhole_position in planet_positions or \
+            wormhole_position == (0, 0):
+                attempt_number = 0
+                
+                while True:
+                    attempt_number += 1
+
+                    wormhole_rng = random.Random(hashlib.sha256(str(galaxy_seed + str(galaxy_ypos) + str(galaxy_xpos) + "wormhole" + str(attempt_number)).encode()).digest())
+
+                    distance = wormhole_rng.uniform(178 / 180, 92 / 180)
+                    angle = wormhole_rng.randrange(0, 360)
+
+                    wormhole_x = round(math.cos(math.radians(angle)) * final_distance)
+                    wormhole_y = round(math.sin(math.radians(angle)) * final_distance)
+
+                    wormhole_position = (wormhole_x, wormhole_y)
+                    if not(wormhole_position == trade_hub_pos or \
+                    wormhole_position in planet_positions or \
+                    wormhole_position == (0, 0)):
+                        break
+            
+            wormhole_data = {
+                "exists": True,
+                "xpos": wormhole_x,
+                "ypos": wormhole_y,
+                "link_galaxy": pair_data.get("location")
+            }
 
 
     

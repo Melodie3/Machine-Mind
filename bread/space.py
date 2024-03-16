@@ -442,7 +442,8 @@ class GalaxyTile:
         raw_data = generation.generate_system(
             galaxy_seed = self.galaxy_seed,
             galaxy_xpos = self.xpos,
-            galaxy_ypos = self.ypos
+            galaxy_ypos = self.ypos,
+            get_wormholes = False
         )
 
         # If the generated data is None, then return.
