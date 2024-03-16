@@ -143,6 +143,7 @@ class SystemEmpty(SystemTile):
             system_ypos: int
         ) -> None:
         super().__init__(galaxy_seed, galaxy_xpos, galaxy_ypos, system_xpos, system_ypos)
+        self.type = "empty"
     
     def get_emoji(self: typing.Self) -> str:
         return map_emojis.get("empty")
@@ -171,6 +172,7 @@ class SystemStar(SystemTile):
         super().__init__(galaxy_seed, galaxy_xpos, galaxy_ypos, system_xpos, system_ypos)
 
         self.star_type = star_type
+        self.type = "star"
     
     def get_emoji(self: typing.Self) -> str:
         return map_emojis.get(self.star_type)
@@ -198,6 +200,7 @@ class SystemAsteroid(SystemTile):
             system_ypos: int
         ) -> None:
         super().__init__(galaxy_seed, galaxy_xpos, galaxy_ypos, system_xpos, system_ypos)
+        self.type = "asteroid"
     
     def get_emoji(self: typing.Self) -> str:
         return map_emojis.get("asteroid")
@@ -229,6 +232,7 @@ class SystemTradeHub(SystemTile):
         super().__init__(galaxy_seed, galaxy_xpos, galaxy_ypos, system_xpos, system_ypos)
 
         self.trade_hub_level = trade_hub_level
+        self.type = "trade_hub"
     
     def get_emoji(self: typing.Self) -> str:
         return map_emojis.get("trade_hub")
@@ -267,6 +271,7 @@ class SystemPlanet(SystemTile):
         self.planet_distance = planet_distance
         self.planet_angle = planet_angle
         self.planet_deviation = planet_deviation
+        self.type = "planet"
     
     def get_emoji(self: typing.Self) -> str:
         return self.planet_type.text
@@ -355,6 +360,7 @@ class SystemWormhole(SystemTile):
         super().__init__(galaxy_seed, galaxy_xpos, galaxy_ypos, system_xpos, system_ypos)
 
         self.wormhole_link_location = wormhole_link_location
+        self.type = "wormhole"
     
     def get_emoji(self: typing.Self) -> str:
         return map_emojis.get("wormhole")
@@ -366,6 +372,7 @@ class SystemWormhole(SystemTile):
         ) -> list[str]:
         return [
                 "Object type: Wormhole",
+                "Use '$bread space move wormhole' when above.",
                 "Futher information: Unavailable."
             ]
     
@@ -695,6 +702,10 @@ class GalaxyTile:
         for planet in self.planets:
             if planet.system_xpos == system_x and planet.system_ypos == system_y:
                 return planet
+        
+        if self.wormhole is not None:
+            if self.wormhole.system_xpos == system_x and self.wormhole.system_ypos == system_y:
+                return self.wormhole
         
         # Lastly, check if any asteroids match up.
         for asteroid in self.asteroids:

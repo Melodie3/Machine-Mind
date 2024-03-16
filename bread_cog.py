@@ -5083,7 +5083,7 @@ anarchy - 1000% of your wager.
         description = "Move around in space by commanding the autopilot."
     )
     async def space_move(self, ctx,
-            move_map: typing.Optional[typing.Literal["galaxy", "system"]] = commands.parameter(description = "Which map to move on."),
+            move_map: typing.Optional[str] = commands.parameter(description = "Which map to move on."),
             move_location: typing.Optional[str] = commands.parameter(description = "The location to move to."),
             confirm: typing.Optional[str] = commands.parameter(description = "Whether to confirm automatically.")
         ):
@@ -5110,12 +5110,99 @@ anarchy - 1000% of your wager.
             return
         
         #########################################################
+
+        acceptable_maps = [
+            "system",
+            "galaxy",
+            "wormhole"
+        ]
+        if move_map not in acceptable_maps:
+            move_map = None
         
-        if move_map is None: # The typing.Literal["galaxy", "system"] in the function declaration forces it to be either "galaxy" or "system".
+        if move_map is None:
             await ctx.reply("Autopilot error:\nFailure to specify the 'galaxy' or 'system' map.")
 
             self.currently_interacting.remove(ctx.author.id)
             return
+
+        confirm_text = ["yes", "y", "confirm"]
+        cancel_text = ["no", "n", "cancel"]
+            
+        ###################################
+
+        if move_map == "wormhole":
+            # Wormhole travel :o
+            system_tile = user_account.get_system_tile(json_interface=self.json_interface) # type: space.SystemWormhole
+
+            if system_tile.type != "wormhole":
+                await ctx.reply("Autopilot error:\nNo wormhole found.")
+
+                self.currently_interacting.remove(ctx.author.id)
+                return
+            
+            move_cost = space.move_fuel_wormhole
+            
+            if move_location not in confirm_text:
+                current_fuel = user_account.get(values.fuel.text)
+                await utility.smart_reply(ctx, f"You are trying to travel through the wormhole.\nThis will require **{move_cost}** {values.fuel.text}.\nYou have {current_fuel} {values.fuel.text}.\nAre you sure you want to move? Yes or No.")
+            
+                def check(m: discord.Message):
+                    return m.author.id == ctx.author.id and m.channel.id == ctx.channel.id 
+
+                try:
+                    msg = await self.bot.wait_for('message', check = check, timeout = 60.0)
+                except asyncio.TimeoutError: 
+                    await utility.smart_reply(ctx, f"Autopilot error:\nConfirmation timeout, aborting.")
+                    self.currently_interacting.remove(ctx.author.id)
+                    return
+                
+                if msg.content.lower() in cancel_text:
+                    await utility.smart_reply(ctx, "Autopilot error:\nCancelled.")
+
+                    self.currently_interacting.remove(ctx.author.id)
+                    return
+                elif msg.content.lower() not in confirm_text:
+                    await utility.smart_reply(ctx, "Autopilot error:\nUnrecognized confirmation response, aborting.")
+
+                    self.currently_interacting.remove(ctx.author.id)
+                    return
+        
+            player_fuel = user_account.get(values.fuel.text)
+
+            if player_fuel < move_cost:
+                await utility.smart_reply(ctx, "Autopilot error:\nLacking required fuel, aborting.")
+
+                self.currently_interacting.remove(ctx.author.id)
+                return
+            
+            end_galaxy_location = system_tile.wormhole_link_location
+
+            pair_tile = system_tile.get_pair()
+
+            end_system_location = (pair_tile.system_xpos, pair_tile.system_ypos)
+
+            # Remove the fuel.
+            user_account.increment(values.fuel.text, -move_cost)
+
+            # Update the player's galaxy location.
+            user_account.set("galaxy_xpos", end_galaxy_location[0])
+            user_account.set("galaxy_ypos", end_galaxy_location[1])
+
+            # Update the player's system location.
+            user_account.set("system_xpos", end_system_location[0])
+            user_account.set("system_ypos", end_system_location[1])
+
+            # Save the player account.
+            self.json_interface.set_account(ctx.author.id, user_account, guild = ctx.guild.id)
+
+            fuel_left = user_account.get(values.fuel.text)
+
+            await utility.smart_reply(ctx, f"Autopilot success:\nSucessfully travelled through the wormhole..\n\nYou have **{fuel_left} {values.fuel.text}** remaining.")
+
+            self.currently_interacting.remove(ctx.author.id)
+            return
+            
+        ###################################
         
         HELP_MSG = "Autopilot error:\nUnrecoginized location. Locations should be in the format of '[letter][number]'. A guide can be found on the system and galaxy maps."
         
@@ -5221,9 +5308,6 @@ anarchy - 1000% of your wager.
                 start_position = start_location,
                 end_position = end_location
             )
-
-        confirm_text = ["yes", "y", "confirm"]
-        cancel_text = ["no", "n", "cancel"]
 
         if confirm not in confirm_text:
             current_fuel = user_account.get(values.fuel.text)
