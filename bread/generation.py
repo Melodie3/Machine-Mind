@@ -359,14 +359,10 @@ def get_all_wormholes(
         gradient_data: list = None,
         nebula_data: list = None
     ) -> list[tuple[dict[str, int, float], ...]]:
-    
-    # return [({'location': (69, 227), 'distance': 0.9166666666666666, 'angle': 109}, {'location': (166, 223), 'distance': 0.8444444444444444, 'angle': 52})]
-    #####
     raw_locations = []
     full_point_data = []
 
-    # wormhole_count = random.Random(galaxy_seed).gauss(mu=25, sigma=5)
-    wormhole_count = random.Random(galaxy_seed).gauss(mu=100, sigma=20)
+    wormhole_count = random.Random(galaxy_seed).gauss(mu=25, sigma=5)
 
     if wormhole_count < 1:
         wormhole_count = 1 - wormhole_count

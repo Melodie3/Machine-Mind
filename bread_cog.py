@@ -4254,8 +4254,6 @@ anarchy - 1000% of your wager.
             await ctx.reply("You do not yet have a rocket that can help you map the vast reaches of space.\nYou can purchase the required rocket from the Space Shop.")
             return
         
-        import time
-        b = time.time()
         ###############################
 
         map_data = space.space_map(
@@ -4265,8 +4263,6 @@ anarchy - 1000% of your wager.
         )
 
         ###############################
-        a = time.time()
-        print(b, a, a - b)
 
         corruption_chance = round(user_account.get_corruption_chance(json_interface=self.json_interface) * 100, 2)
 
@@ -4925,7 +4921,7 @@ anarchy - 1000% of your wager.
         
         system_x, system_y = user_account.get_system_location()
         
-        system.load_system_data(json_interface=self.json_interface, guild=ctx.guild.id)
+        system.load_system_data(json_interface=self.json_interface, guild=ctx.guild.id, get_wormholes=False)
 
         if not (abs(system_x) <= 1 and abs(system_y) <= 1):
             await ctx.reply("You are not close enough to a star to create a Trade Hub.")

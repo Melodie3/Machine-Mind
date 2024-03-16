@@ -47,7 +47,7 @@ map_emojis = {
     "rocket": ":rocket:",
     "trade_hub": ":post_office:",
     "asteroid": ":rock:",
-    "wormhole": "hole"
+    "wormhole": ":hole:"
 }
 
 class SystemTile:
@@ -337,6 +337,60 @@ class SystemPlanet(SystemTile):
             return "special_bread"
         
         return self.planet_type.name
+    
+########################################################
+
+class SystemWormhole(SystemTile):
+    def __init__(
+            self: typing.Self,
+            galaxy_seed: str,
+
+            galaxy_xpos: int,
+            galaxy_ypos: int,
+            system_xpos: int,
+            system_ypos: int,
+
+            wormhole_link_location: tuple[int, int] = None
+        ) -> None:
+        super().__init__(galaxy_seed, galaxy_xpos, galaxy_ypos, system_xpos, system_ypos)
+
+        self.wormhole_link_location = wormhole_link_location
+    
+    def get_emoji(self: typing.Self) -> str:
+        return map_emojis.get("wormhole")
+    
+    def get_analysis(
+            self: typing.Self,
+            guild: typing.Union[discord.Guild, int, str],
+            json_interface: bread_cog.JSON_interface
+        ) -> list[str]:
+        return [
+                "Object type: Wormhole",
+                "Futher information: Unavailable."
+            ]
+    
+    def get_pair(self: typing.Self) -> SystemWormhole:
+        """Returns a SystemWormhole object for this wormhole's pair."""
+        xpos, ypos = self.wormhole_link_location
+        
+        pair_system = generation.generate_system(
+            galaxy_seed = self.galaxy_seed,
+            galaxy_xpos = xpos,
+            galaxy_ypos = ypos
+        )
+
+        return SystemWormhole(
+            galaxy_seed = self.galaxy_seed,
+            galaxy_xpos = xpos,
+            galaxy_ypos = ypos,
+            system_xpos = pair_system["wormhole"].get("xpos"),
+            system_ypos = pair_system["wormhole"].get("ypos"),
+            wormhole_link_location = (self.galaxy_xpos, self.galaxy_ypos)
+        )
+
+
+
+
 
 
 
@@ -358,7 +412,8 @@ class GalaxyTile:
             star: SystemStar = None,
             trade_hub: SystemTradeHub = False,
             asteroids: list[SystemAsteroid] = None,
-            planets: list[SystemPlanet] = None
+            planets: list[SystemPlanet] = None,
+            wormhole: SystemWormhole = None
         ) -> None:
         """Object that represents a tile within the galaxy.
 
@@ -373,10 +428,11 @@ class GalaxyTile:
             
             ##### These next ones are loaded by obj.load_system_data(). It's preferred if either all or none are passed when initializing.
 
-            star (SystemTile, optional): A SystemTile object for the star in this system. Defaults to None.
-            trade_hub (SystemTile, optional): SystemTile object for a trade hub in this system, if there is no trade hub then pass None. Defaults to False, this is not None so it can automatically determine whether the system data has been loaded or not.
-            asteroids (list[SystemTile], optional): List of SystemTile objects for each tile in this system that is part of an asteroid belt. If there are no asteroids then pass an empty list. Defaults to None.
-            planets (list[SystemTile], optional): A list of SystemTile objects for each planet in this system. Defaults to None.
+            star (SystemStar, optional): A SystemTile object for the star in this system. Defaults to None.
+            trade_hub (SystemTradeHub, optional): SystemTile object for a trade hub in this system, if there is no trade hub then pass None. Defaults to False, this is not None so it can automatically determine whether the system data has been loaded or not.
+            asteroids (list[SystemAsteroid], optional): List of SystemTile objects for each tile in this system that is part of an asteroid belt. If there are no asteroids then pass an empty list. Defaults to None.
+            planets (list[SystemPlanet], optional): A list of SystemTile objects for each planet in this system. Defaults to None.
+            wormhole (SystemWormhole, optional): A SystemWormhole object for a wormhole in this system. Defaults to None.
         """
         self.galaxy_seed = galaxy_seed
         self.ascension = ascension
@@ -393,6 +449,7 @@ class GalaxyTile:
         self.asteroids = asteroids
         self.trade_hub = trade_hub
         self.planets = planets
+        self.wormhole = wormhole
 
         if self.star is not None and \
                 self.asteroids is not None and \
@@ -421,16 +478,22 @@ class GalaxyTile:
     def smart_load(
             self: typing.Self,
             json_interface: bread_cog.JSON_interface,
-            guild: typing.Union[discord.Guild, int, str]
+            guild: typing.Union[discord.Guild, int, str],
+            get_wormholes: bool = True
         ) -> None:
         """Loads the system data, only if it has not already been loaded."""
         if not self.loaded:
-            self.load_system_data(json_interface=json_interface, guild=guild)
+            self.load_system_data(
+                json_interface = json_interface,
+                guild = guild,
+                get_wormholes = get_wormholes
+            )
     
     def load_system_data(
             self: typing.Self,
             json_interface: bread_cog.JSON_interface,
-            guild: typing.Union[discord.Guild, int, str]
+            guild: typing.Union[discord.Guild, int, str],
+            get_wormholes: bool = True
         ) -> None:
         """Loads the specific system data for this tile, including the star type, planets, asteroids, and trade hub level."""
 
@@ -443,7 +506,7 @@ class GalaxyTile:
             galaxy_seed = self.galaxy_seed,
             galaxy_xpos = self.xpos,
             galaxy_ypos = self.ypos,
-            get_wormholes = False
+            get_wormholes = get_wormholes
         )
 
         # If the generated data is None, then return.
@@ -474,6 +537,20 @@ class GalaxyTile:
             galaxy_xpos = self.xpos,
             galaxy_ypos = self.ypos
         )
+        
+        if raw_data.get("wormhole", {}).get("exists", False):
+            wormhole_data = raw_data.get("wormhole", {})
+
+            self.wormhole = SystemWormhole(
+                galaxy_seed = self.galaxy_seed,
+
+                galaxy_xpos = self.xpos,
+                galaxy_ypos = self.ypos,
+                system_xpos = wormhole_data.get("xpos", None),
+                system_ypos = wormhole_data.get("ypos", None),
+
+                wormhole_link_location = wormhole_data.get("link_galaxy", None)
+            )
         
         # If there's an asteroid belt, then add an object for the asteroids it contains.
         if raw_data.get("asteroid_belt", False):
@@ -564,7 +641,7 @@ class GalaxyTile:
         # If this tile has a system, then get whatever
         if self.system:
             # Load the system data if it has not already been loaded.
-            self.smart_load(json_interface=json_interface, guild=self.guild)
+            self.smart_load(json_interface=json_interface, guild=self.guild, get_wormholes=False)
             
             # Get the emoji of the star.
             return self.star.get_emoji()
@@ -602,7 +679,7 @@ class GalaxyTile:
         # Due to the previous if statement, if it gets here then this tile has a system.
 
         # Load the system data if it has not already been loaded.
-        self.smart_load(json_interface=json_interface, guild=self.guild)
+        self.smart_load(json_interface=json_interface, guild=self.guild, get_wormholes=True)
 
         # If the given coords are (0, 0), then it's going to be the star.
         if system_x == 0 and system_y == 0:
@@ -903,7 +980,7 @@ def system_map(
         grid[radius + 2][radius + 2] = map_emojis.get("rocket", "R")
         return grid
     
-    system_data.load_system_data(json_interface=json_interface, guild=guild)
+    system_data.load_system_data(json_interface=json_interface, guild=guild, get_wormholes=True)
 
     # Place down the border.
     system_radius = system_data.system_radius
@@ -941,6 +1018,15 @@ def system_map(
 
         if (trade_hub_x, trade_hub_y) in visible_coordinates:
             grid[trade_hub_y + 2 - system_y + radius][trade_hub_x + 2 - system_x + radius] = system_data.trade_hub.get_emoji()
+    
+    # Potential wormhole.
+    if system_data.wormhole is not None:
+        wormhole_x = system_data.wormhole.system_xpos
+        wormhole_y = system_data.wormhole.system_ypos
+
+        if (wormhole_x, wormhole_y) in visible_coordinates:
+            grid[wormhole_y + 2 - system_y + radius][wormhole_x + 2 - system_x + radius] = system_data.wormhole.get_emoji()
+
 
     # Add the rocket and return.
     grid[radius + 2][radius + 2] = map_emojis.get("rocket", "R")
@@ -1006,7 +1092,7 @@ def get_galaxy_coordinate(
         return out
 
     if load_planets:
-        out.load_system_data(json_interface=json_interface, guild=guild)
+        out.load_system_data(json_interface=json_interface, guild=guild, get_wormholes=True)
 
     return out
 
@@ -1417,7 +1503,8 @@ def allowed_gifting(
 
         player_tile.smart_load(
             json_interface = json_interface,
-            guild = player_1.get("guild_id")
+            guild = player_1.get("guild_id"),
+            get_wormholes = False
         )
 
         # If player_tile.trade_hub is None, then there is no trade hub on this tile.
