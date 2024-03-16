@@ -25,7 +25,7 @@ class Project:
     def display_info(
             cls: typing.Type[typing.Self],
             day_seed: str,
-            system_tile: space.SystemTile,
+            system_tile: space.SystemTradeHub,
             completed: bool = False
         ) -> str:
         name = cls.name(day_seed, system_tile)
@@ -41,7 +41,7 @@ class Project:
     def name(
             cls: typing.Type[typing.Self],
             day_seed: str,
-            system_tile: space.SystemTile
+            system_tile: space.SystemTradeHub
         ) -> str:
         return "Project name"
 
@@ -50,7 +50,7 @@ class Project:
     def description(
             cls: typing.Type[typing.Self],
             day_seed: str,
-            system_tile: space.SystemTile
+            system_tile: space.SystemTradeHub
         ) -> str:
         return "Project description"
 
@@ -59,7 +59,7 @@ class Project:
     def completion(
             cls: typing.Type[typing.Self],
             day_seed: str,
-            system_tile: space.SystemTile
+            system_tile: space.SystemTradeHub
         ) -> str:
         return "Project completion"
     
@@ -68,7 +68,7 @@ class Project:
     def get_cost(
             cls: typing.Type[typing.Self],
             day_seed: str,
-            system_tile: space.SystemTile
+            system_tile: space.SystemTradeHub
         ) -> list[tuple[str, int]]:
         return [(values.gem_red.text, 100), ("total_dough", 200)]
     
@@ -77,7 +77,7 @@ class Project:
     def get_reward(
             cls: typing.Type[typing.Self],
             day_seed: str,
-            system_tile: space.SystemTile
+            system_tile: space.SystemTradeHub
         ) -> list[tuple[str, int]]:
         return [(values.gem_red.text, 100), ("total_dough", 200)]
 
@@ -86,7 +86,7 @@ class Project:
     def do_purchase(
             cls: typing.Type[typing.Self],
             day_seed: str,
-            system_tile: space.SystemTile,
+            system_tile: space.SystemTradeHub,
             user_account: account.Bread_Account
         ) -> None:
         cost = cls.get_cost(day_seed, system_tile)
@@ -99,7 +99,7 @@ class Project:
     def is_affordable_for(
             cls: typing.Type[typing.Self],
             day_seed: str,
-            system_tile: space.SystemTile,
+            system_tile: space.SystemTradeHub,
             user_account: account.Bread_Account
         ) -> bool:
         cost = cls.get_cost(day_seed, system_tile)
@@ -115,7 +115,7 @@ class Project:
     def get_price_description(
             cls: typing.Type[typing.Self],
             day_seed: str,
-            system_tile: space.SystemTile
+            system_tile: space.SystemTradeHub
         ) -> str:
         cost = cls.get_cost(day_seed, system_tile)
 
@@ -134,7 +134,7 @@ class Project:
     def get_reward_description(
             cls: typing.Type[typing.Self],
             day_seed: str,
-            system_tile: space.SystemTile
+            system_tile: space.SystemTradeHub
         ) -> str:
         reward = cls.get_reward(day_seed, system_tile)
 
@@ -153,7 +153,7 @@ class Project:
     def total_items_required(
             cls: typing.Type[typing.Self],
             day_seed: str,
-            system_tile: space.SystemTile
+            system_tile: space.SystemTradeHub
         ) -> int:
         cost = cls.get_cost(day_seed, system_tile)
 
@@ -164,7 +164,7 @@ class Project:
     def total_items_collected(
             cls: typing.Type[typing.Self],
             day_seed: str,
-            system_tile: space.SystemTile,
+            system_tile: space.SystemTradeHub,
             progress_data: dict[str, dict[str, list[tuple[str, int]]]]
         ) -> int:
         cost_sum = cls.total_items_required(day_seed, system_tile)
@@ -178,7 +178,7 @@ class Project:
     def get_progress_percent(
             cls: typing.Type[typing.Self],
             day_seed: str,
-            system_tile: space.SystemTile,
+            system_tile: space.SystemTradeHub,
             progress_data: dict[str, dict[str, list[tuple[str, int]]]]
         ) -> float:
         cost_sum = cls.total_items_required(day_seed, system_tile)
@@ -194,7 +194,7 @@ class Project:
     def get_remaining_items(
             cls: typing.Type[typing.Self],
             day_seed: str,
-            system_tile: space.SystemTile,
+            system_tile: space.SystemTradeHub,
             progress_data: dict[str, dict[str, list[tuple[str, int]]]]
         ) -> dict[str, int]:
         """
@@ -227,7 +227,7 @@ class Project:
     def get_remaining_description(
             cls: typing.Type[typing.Self],
             day_seed: str,
-            system_tile: space.SystemTile,
+            system_tile: space.SystemTradeHub,
             progress_data: dict[str, dict[str, list[tuple[str, int]]]]
         ) -> str:
         remaining = cls.get_remaining_items(day_seed, system_tile, progress_data)
@@ -251,7 +251,7 @@ class Trade_Hub(Project):
     def name(
             cls,
             day_seed: str,
-            system_tile: space.SystemTile
+            system_tile: space.SystemTradeHub
         ) -> str:
         return f"Trade Hub Level {system_tile.trade_hub_level + 1}"
 
@@ -259,7 +259,7 @@ class Trade_Hub(Project):
     def description(
             cls,
             day_seed: str,
-            system_tile: space.SystemTile
+            system_tile: space.SystemTradeHub
         ) -> str:
         distance = store.trade_hub_distances[system_tile.trade_hub_level]
         return f"A better Trade Hub that allows trading with those {distance} tiles away."
@@ -288,7 +288,7 @@ class Trade_Hub(Project):
     def completion(
             cls: typing.Type[typing.Self],
             day_seed: str,
-            system_tile: space.SystemTile
+            system_tile: space.SystemTradeHub
         ) -> str:
         return "Nice job! This Trade Hub is now more powerful!"
     
@@ -296,7 +296,7 @@ class Trade_Hub(Project):
     def get_cost(
             cls,
             day_seed: str,
-            system_tile: space.SystemTile
+            system_tile: space.SystemTradeHub
         ) -> list[tuple[str, int]]:
         return cls.all_costs()[system_tile.trade_hub_level]
     
@@ -304,7 +304,7 @@ class Trade_Hub(Project):
     def get_reward(
             cls: typing.Type[typing.Self],
             day_seed: str,
-            system_tile: space.SystemTile
+            system_tile: space.SystemTradeHub
         ) -> list[tuple[str, int]]:
         return [("total_dough", 2000000)] # Award 2 million dough on completion.
         
@@ -321,7 +321,7 @@ class Essential_Oils(Project):
     def name(
             cls,
             day_seed: str,
-            system_tile: space.SystemTile
+            system_tile: space.SystemTradeHub
         ) -> str:
         rng = random.Random(hash_args(day_seed, system_tile.tile_seed()))
         
@@ -337,7 +337,7 @@ class Essential_Oils(Project):
     def description(
             cls,
             day_seed: str,
-            system_tile: space.SystemTile
+            system_tile: space.SystemTradeHub
         ) -> str:
         rng = random.Random(hash_args(day_seed, system_tile.tile_seed()))
 
@@ -385,7 +385,7 @@ class Essential_Oils(Project):
     def completion(
             cls: typing.Type[typing.Self],
             day_seed: str,
-            system_tile: space.SystemTile
+            system_tile: space.SystemTradeHub
         ) -> str:
         rng = random.Random(hash_args(day_seed, system_tile.tile_seed()))
         reward = cls.get_reward_description(day_seed, system_tile)
@@ -402,7 +402,7 @@ class Essential_Oils(Project):
     def get_cost(
             cls,
             day_seed: str,
-            system_tile: space.SystemTile
+            system_tile: space.SystemTradeHub
         ) -> list[tuple[str, int]]:
         rng = random.Random(hash_args(day_seed, system_tile.tile_seed()))
 
@@ -414,7 +414,7 @@ class Essential_Oils(Project):
     def get_reward(
             cls,
             day_seed: str,
-            system_tile: space.SystemTile
+            system_tile: space.SystemTradeHub
         ) -> list[tuple[str, int]]:
         rng = random.Random(hash_args(day_seed, system_tile.tile_seed()))
 
@@ -453,7 +453,7 @@ class Flatbread_Feast(Project):
     def name(
             cls,
             day_seed: str,
-            system_tile: space.SystemTile
+            system_tile: space.SystemTradeHub
         ) -> str:
         rng = random.Random(hash_args(day_seed, system_tile.tile_seed()))
         
@@ -469,7 +469,7 @@ class Flatbread_Feast(Project):
     def description(
             cls,
             day_seed: str,
-            system_tile: space.SystemTile
+            system_tile: space.SystemTradeHub
         ) -> str:
         rng = random.Random(hash_args(day_seed, system_tile.tile_seed()))
 
@@ -519,7 +519,7 @@ class Flatbread_Feast(Project):
     def completion(
             cls: typing.Type[typing.Self],
             day_seed: str,
-            system_tile: space.SystemTile
+            system_tile: space.SystemTradeHub
         ) -> str:
         rng = random.Random(hash_args(day_seed, system_tile.tile_seed()))
         reward = cls.get_reward_description(day_seed, system_tile)
@@ -537,7 +537,7 @@ class Flatbread_Feast(Project):
     def get_cost(
             cls,
             day_seed: str,
-            system_tile: space.SystemTile
+            system_tile: space.SystemTradeHub
         ) -> list[tuple[str, int]]:
         rng = random.Random(hash_args(day_seed, system_tile.tile_seed()))
 
@@ -549,7 +549,7 @@ class Flatbread_Feast(Project):
     def get_reward(
             cls,
             day_seed: str,
-            system_tile: space.SystemTile
+            system_tile: space.SystemTradeHub
         ) -> list[tuple[str, int]]:
         rng = random.Random(hash_args(day_seed, system_tile.tile_seed()))
 
@@ -574,7 +574,7 @@ class Emergency_Fuel(Project):
     def name(
             cls,
             day_seed: str,
-            system_tile: space.SystemTile
+            system_tile: space.SystemTradeHub
         ) -> str:
         rng = random.Random(hash_args(day_seed, system_tile.tile_seed()))
         
@@ -590,7 +590,7 @@ class Emergency_Fuel(Project):
     def description(
             cls,
             day_seed: str,
-            system_tile: space.SystemTile
+            system_tile: space.SystemTradeHub
         ) -> str:
         rng = random.Random(hash_args(day_seed, system_tile.tile_seed()))
 
@@ -639,7 +639,7 @@ class Emergency_Fuel(Project):
     def completion(
             cls: typing.Type[typing.Self],
             day_seed: str,
-            system_tile: space.SystemTile
+            system_tile: space.SystemTradeHub
         ) -> str:
         rng = random.Random(hash_args(day_seed, system_tile.tile_seed()))
         reward = cls.get_reward_description(day_seed, system_tile)
@@ -656,7 +656,7 @@ class Emergency_Fuel(Project):
     def get_cost(
             cls,
             day_seed: str,
-            system_tile: space.SystemTile
+            system_tile: space.SystemTradeHub
         ) -> list[tuple[str, int]]:
         rng = random.Random(hash_args(day_seed, system_tile.tile_seed()))
 
@@ -668,7 +668,7 @@ class Emergency_Fuel(Project):
     def get_reward(
             cls,
             day_seed: str,
-            system_tile: space.SystemTile
+            system_tile: space.SystemTradeHub
         ) -> list[tuple[str, int]]:
         rng = random.Random(hash_args(day_seed, system_tile.tile_seed()))
 
@@ -685,7 +685,7 @@ class Chessatron_Repair(Project):
     def name(
             cls,
             day_seed: str,
-            system_tile: space.SystemTile
+            system_tile: space.SystemTradeHub
         ) -> str:
         rng = random.Random(hash_args(day_seed, system_tile.tile_seed()))
         
@@ -701,7 +701,7 @@ class Chessatron_Repair(Project):
     def description(
             cls,
             day_seed: str,
-            system_tile: space.SystemTile
+            system_tile: space.SystemTradeHub
         ) -> str:
         rng = random.Random(hash_args(day_seed, system_tile.tile_seed()))
 
@@ -760,7 +760,7 @@ class Chessatron_Repair(Project):
     def completion(
             cls: typing.Type[typing.Self],
             day_seed: str,
-            system_tile: space.SystemTile
+            system_tile: space.SystemTradeHub
         ) -> str:
         rng = random.Random(hash_args(day_seed, system_tile.tile_seed()))
         reward = cls.get_reward_description(day_seed, system_tile)
@@ -777,7 +777,7 @@ class Chessatron_Repair(Project):
     def get_cost(
             cls,
             day_seed: str,
-            system_tile: space.SystemTile
+            system_tile: space.SystemTradeHub
         ) -> list[tuple[str, int]]:
         rng = random.Random(hash_args(day_seed, system_tile.tile_seed()))
 
@@ -789,7 +789,7 @@ class Chessatron_Repair(Project):
     def get_reward(
             cls,
             day_seed: str,
-            system_tile: space.SystemTile
+            system_tile: space.SystemTradeHub
         ) -> list[tuple[str, int]]:
         rng = random.Random(hash_args(day_seed, system_tile.tile_seed()))
 

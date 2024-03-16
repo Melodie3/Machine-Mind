@@ -94,7 +94,7 @@ def gradients_and_nebulae(galaxy_seed: str) -> tuple[list, list]:
         try:
             previous = sum(previous_angles) // len(previous_angles) * math.pi
         except ZeroDivisionError:
-            previous = 0
+            previous = math.tau
         
         angle = (seeded.randrange(0, 360) + previous) % 360
         
@@ -107,7 +107,7 @@ def gradients_and_nebulae(galaxy_seed: str) -> tuple[list, list]:
         if point <= 3:
             gradient_points.append((x, y, fold, rotation))
         else:
-            nebulae_points.append((x, y, 1, rotation))
+            nebulae_points.append((x, y, fold, rotation))
 
         previous_angles.append(angle)
     
@@ -354,6 +354,119 @@ def galaxy_bulk(
     
     return out
 
+def get_all_wormholes(
+        galaxy_seed: str,
+        gradient_data: list = None,
+        nebula_data: list = None
+    ) -> list[tuple[dict[str, int, float], ...]]:
+    
+    # return [({'location': (69, 227), 'distance': 0.9166666666666666, 'angle': 109}, {'location': (166, 223), 'distance': 0.8444444444444444, 'angle': 52})]
+    #####
+    raw_locations = []
+    full_point_data = []
+
+    wormhole_count = random.Random(galaxy_seed).gauss(mu=25, sigma=5)
+
+    if wormhole_count < 1:
+        wormhole_count = 1 - wormhole_count
+    if wormhole_count > 49:
+        wormhole_count = 49 - (wormhole_count - 49)
+
+    wormhole_count = round(wormhole_count)
+
+    for wormhole_id in range(wormhole_count):
+        point_data = get_wormhole_points(
+            galaxy_seed = galaxy_seed,
+            existing_points = raw_locations,
+            gradient_data = gradient_data,
+            nebula_data = nebula_data
+        )
+
+        full_point_data.append(tuple(point_data))
+        
+        for data in point_data:
+            raw_locations.append(data["location"])
+    
+    return full_point_data
+
+    
+
+def get_wormhole_points(
+        galaxy_seed: str,
+        existing_points: list[tuple[tuple[int, int], tuple[int, int]]],
+        gradient_data: list = None,
+        nebula_data: list = None
+    ) -> list[dict[str, int, float]]:
+    wormhole_id = len(existing_points) + 1
+    
+    if gradient_data is None or nebula_data is None:
+        gradient_data, nebula_data = gradients_and_nebulae(galaxy_seed)
+
+    points = []
+    out_data = []
+
+    for point_id in range(2):
+        seeded = random.Random(f"{galaxy_seed} wormhole {wormhole_id} point {point_id}")
+
+        point_angle = seeded.randrange(0, 360)
+        point_distance = seeded.randint(42, 128)
+
+        check_x = round(math.cos(math.radians(point_angle)) * point_distance) + map_radius
+        check_y = round(math.sin(math.radians(point_angle)) * point_distance) + map_radius
+
+        check_data = galaxy_single(
+            galaxy_seed = galaxy_seed,
+            x = check_x,
+            y = check_y,
+            gradient_info = gradient_data,
+            nebulae_info = nebula_data
+        )
+
+        initial_angle = point_angle
+        initial_distance = point_distance
+        if not check_data.get("system", False):
+
+            while True:
+                point_angle += 1
+                
+                if point_angle >= 360:
+                    point_angle = 0
+                
+                if point_angle == initial_angle:
+                    if initial_distance > 85:
+                        point_distance -= 1
+                    else:
+                        point_distance += 1
+
+                check_x = round(math.cos(math.radians(point_angle)) * point_distance) + map_radius
+                check_y = round(math.sin(math.radians(point_angle)) * point_distance) + map_radius
+
+                check_data = galaxy_single(
+                    galaxy_seed = galaxy_seed,
+                    x = check_x,
+                    y = check_y,
+                    gradient_info = gradient_data,
+                    nebulae_info = nebula_data
+                )
+                if check_data.get("system", False):
+                    point = (check_x, check_y)
+
+                    if not (point in points) and not (point in existing_points):
+                        break
+        else:
+            point = (check_x, check_y)
+
+        data = {
+            "location": point,
+            "distance": (initial_distance + 50) / 180,
+            "angle": initial_angle
+        }
+        out_data.append(data)
+
+        points.append(point)
+        
+    return out_data
+
 
 
 ###############################
@@ -384,10 +497,12 @@ def generate_system(
     ##### Depending on where the change is made asteroid belts & planets may change. #####
     ######################################################################################
 
-    gradient_info = gradients_and_nebulae(galaxy_seed)[0]
+    gradient_info, nebula_info = gradients_and_nebulae(galaxy_seed)
+
+    system_position = (galaxy_xpos, galaxy_ypos)
 
     system_type = get_spot(
-        galaxy_seed=galaxy_seed,
+        galaxy_seed = galaxy_seed,
         x = galaxy_xpos - map_radius,
         y = galaxy_ypos - map_radius,
         gradient_info = gradient_info
@@ -467,7 +582,89 @@ def generate_system(
             "deviation": deviation # how much variation there is in the roll multipliers
         })
     
+    ###############################################################
+    #### One quick thing in the middle.
+        
     largest_distance = max(planets, key=lambda x: x["distance"])["distance"]
+    
+    ###############################################################
+    #### Wormholes.
+    
+    all_wormholes = get_all_wormholes(
+        galaxy_seed = galaxy_seed,
+        gradient_data = gradient_info,
+        nebula_data = nebula_info
+    )
+    
+    pair_data = None
+    angle = None
+    distance = None
+    for point1, point2 in all_wormholes:
+        if point1.get("location") == system_position:
+            angle = point1.get("angle")
+            distance = point1.get("distance")
+            pair_data = point2
+            break
+        elif point2.get("location") == system_position:
+            angle = point2.get("angle")
+            distance = point2.get("distance")
+            pair_data = point1
+            break
+    
+    if pair_data is not None:
+        final_distance = largest_distance * distance
+
+        wormhole_x = round(math.cos(math.radians(angle)) * final_distance)
+        wormhole_y = round(math.sin(math.radians(angle)) * final_distance)
+
+        wormhole_position = (wormhole_x, wormhole_y)
+
+        trade_hub_pos = (trade_hub_xpos, trade_hub_ypos)
+        planet_positions = [(planet.get("xpos"), planet.get("ypos")) for planet in planets]
+
+        # If this tile is already taken up, then move the wormhole.
+        # Asteroids are ignored here, since other things can overwrite them.
+        if wormhole_position == trade_hub_pos or \
+           wormhole_position in planet_positions or \
+           wormhole_position == (0, 0):
+            attempt_number = 0
+            
+            while True:
+                attempt_number += 1
+
+                wormhole_rng = random.Random(hashlib.sha256(str(galaxy_seed + str(galaxy_ypos) + str(galaxy_xpos) + "wormhole" + str(attempt_number)).encode()).digest())
+
+                distance = wormhole_rng.uniform(178 / 180, 92 / 180)
+                angle = wormhole_rng.randrange(0, 360)
+
+                wormhole_x = round(math.cos(math.radians(angle)) * final_distance)
+                wormhole_y = round(math.sin(math.radians(angle)) * final_distance)
+
+                wormhole_position = (wormhole_x, wormhole_y)
+                if not(wormhole_position == trade_hub_pos or \
+                   wormhole_position in planet_positions or \
+                   wormhole_position == (0, 0)):
+                    break
+        
+        wormhole_data = {
+            "exists": True,
+            "xpos": wormhole_x,
+            "ypos": wormhole_y,
+            "link_galaxy": pair_data.get("location")
+        }
+    else:
+        wormhole_data = {
+            "exists": False,
+            "xpos": None,
+            "ypos": None,
+            "link_galaxy": None
+        }
+
+
+    
+    
+    
+    ###############################################################
     
     return {
         "trade_hub": {
@@ -476,6 +673,7 @@ def generate_system(
             "ypos": trade_hub_ypos,
             "level": int(has_trade_hub)
         },
+        "wormhole": wormhole_data,
         "radius": math.ceil(largest_distance) + 1,
         "star_type": star_type,
         "asteroid_belt": asteroid_belt,

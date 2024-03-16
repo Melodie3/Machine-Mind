@@ -4254,11 +4254,19 @@ anarchy - 1000% of your wager.
             await ctx.reply("You do not yet have a rocket that can help you map the vast reaches of space.\nYou can purchase the required rocket from the Space Shop.")
             return
         
+        import time
+        b = time.time()
+        ###############################
+
         map_data = space.space_map(
             account=user_account,
             json_interface = self.json_interface,
             mode=mode
         )
+
+        ###############################
+        a = time.time()
+        print(b, a, a - b)
 
         corruption_chance = round(user_account.get_corruption_chance(json_interface=self.json_interface) * 100, 2)
 
@@ -4431,7 +4439,7 @@ anarchy - 1000% of your wager.
             user_account: account.Bread_Account,
             day_seed: str,
             hub_projects: list[projects.Project],
-            hub: space.SystemTile,
+            hub: space.SystemTradeHub,
             actions: tuple[str],
 
             galaxy_x: int,
@@ -4558,7 +4566,7 @@ anarchy - 1000% of your wager.
             user_account: account.Bread_Account,
             day_seed: str,
             hub_projects: list[projects.Project],
-            hub: space.SystemTile,
+            hub: space.SystemTradeHub,
             actions: tuple[str]
         ):
         galaxy_x, galaxy_y = user_account.get_galaxy_location(json_interface=self.json_interface)
@@ -4755,7 +4763,7 @@ anarchy - 1000% of your wager.
             user_account: account.Bread_Account,
             day_seed: str,
             hub_projects: list[projects.Project],
-            hub: space.SystemTile,
+            hub: space.SystemTradeHub,
             actions: tuple[str]
         ):
         actions.append(" ")
@@ -4818,7 +4826,7 @@ anarchy - 1000% of your wager.
             user_account: account.Bread_Account,
             day_seed: str,
             hub_projects: list[projects.Project],
-            hub: space.SystemTile,
+            hub: space.SystemTradeHub,
             actions: tuple[str]
         ):
         galaxy_x, galaxy_y = user_account.get_galaxy_location(json_interface=self.json_interface)

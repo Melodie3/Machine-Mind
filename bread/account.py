@@ -466,8 +466,8 @@ class Bread_Account:
     def get_system_tile(
             self: typing.Self,
             json_interface: bread_cog.JSON_interface
-        ) -> space.SystemTile:
-        """Returns a SystemTile object for the tile within the system this account is in."""
+        ) -> typing.Type[space.SystemTile]:
+        """Returns a SystemTile subclass object for the tile within the system this account is in."""
         galaxy_tile = self.get_galaxy_tile(json_interface)
 
         xpos, ypos = self.get_system_location()

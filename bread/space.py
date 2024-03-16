@@ -46,7 +46,8 @@ map_emojis = {
     # Misc.
     "rocket": ":rocket:",
     "trade_hub": ":post_office:",
-    "asteroid": ":rock:"
+    "asteroid": ":rock:",
+    "wormhole": "hole"
 }
 
 class SystemTile:
@@ -57,19 +58,7 @@ class SystemTile:
             galaxy_xpos: int,
             galaxy_ypos: int,
             system_xpos: int,
-            system_ypos: int,
-
-            tile_type: str = "empty",
-
-            planet_type: typing.Optional[typing.Type[values.Emote]] = None,
-            planet_distance: typing.Union[int, float, None] = None,
-            planet_angle: typing.Union[int, float, None] = None,
-            planet_deviation: typing.Union[int, float, None] = None,
-
-            star_type: typing.Optional[str] = None,
-
-            trade_hub_level: typing.Optional[int] = None
-
+            system_ypos: int
         ) -> None:
         """Object that represents a tile within a system.
 
@@ -86,7 +75,6 @@ class SystemTile:
             galaxy_ypos (int): The y position of the system within the galaxy that this tile is in.
             system_xpos (int): The x position of this tile within the system.
             system_ypos (int): The y position of this tile within the system.
-            tile_type (str, optional): The type of object that's on this tile. Defaults to "empty".
 
             planet_type (typing.Optional[typing.Type[values.Emote]], optional): The type of planet that's on this tile. Defaults to None.
             planet_distance (typing.Union[int, float, None], optional): The distance of the planet from the center of the system. Defaults to None.
@@ -103,46 +91,233 @@ class SystemTile:
         self.galaxy_ypos = galaxy_ypos
         self.system_xpos = round(system_xpos)
         self.system_ypos = round(system_ypos)
-
-        self.tile_type = tile_type
-
-        self.planet_type = planet_type
-        self.planet_distance = planet_distance
-        self.planet_angle = planet_angle
-        self.planet_deviation = planet_deviation
-
-        self.star_type = star_type
-
-        self.trade_hub_level = trade_hub_level
     
+    # Optional for subclasses.
     def __str__(self: typing.Self):
         return f"<SystemTile: {self.tile_type} | system_x: {self.system_xpos} | system_y: {self.system_ypos} | galaxy_x: {self.galaxy_xpos} | galaxy_y: {self.galaxy_ypos}>"
     
+    # Optional for subclasses.
     def __repr__(self: typing.Self):
         return self.__str__()
     
+    # Optional for subclasses.
     def tile_seed(self: typing.Self) -> str:
         return f"{self.galaxy_seed}{self.galaxy_xpos}{self.galaxy_ypos}{self.system_xpos}{self.system_ypos}"
     
     ###############################################################################
     ##### Interaction methods.
     
+    # Should be overwitten by subclasses.
     def get_emoji(self: typing.Self) -> str:
-        if self.tile_type == "planet":
-            return self.planet_type.text
+        return map_emojis.get("empty")
+
+    # Should be overwitten by subclasses.
+    def get_priority_item(self: typing.Self) -> typing.Union[values.Emote, str, None]:
+        return None
         
-        if self.tile_type == "star":
-            return map_emojis.get(self.star_type)
         
-        if self.tile_type in map_emojis:
-            return map_emojis.get(self.tile_type)
-        
+
+    ###############################################################################
+    ##### Analysis methods.
+
+    # Should be overwitten by subclasses.
+    def get_analysis(
+            self: typing.Self,
+            guild: typing.Union[discord.Guild, int, str],
+            json_interface: bread_cog.JSON_interface
+        ) -> list[str]:
+        """Generates a list of strings that describe this tile, to be used by the analysis command."""
+        return [self.__str__()]
+
+########################################################################################
+##### SystemTile subclasses
+
+class SystemEmpty(SystemTile):
+    def __init__(
+            self: typing.Self,
+            galaxy_seed: str,
+
+            galaxy_xpos: int,
+            galaxy_ypos: int,
+            system_xpos: int,
+            system_ypos: int
+        ) -> None:
+        super().__init__(galaxy_seed, galaxy_xpos, galaxy_ypos, system_xpos, system_ypos)
+    
+    def get_emoji(self: typing.Self) -> str:
         return map_emojis.get("empty")
     
-    def get_priority_item(self: typing.Self) -> typing.Union[values.Emote, str, None]:
-        if self.tile_type != "planet":
-            return None
-        
+    def get_analysis(
+            self: typing.Self,
+            guild: typing.Union[discord.Guild, int, str],
+            json_interface: bread_cog.JSON_interface
+        ) -> list[str]:
+        return ["There seems to be nothing here."]
+    
+########################################################
+
+class SystemStar(SystemTile):
+    def __init__(
+            self: typing.Self,
+            galaxy_seed: str,
+
+            galaxy_xpos: int,
+            galaxy_ypos: int,
+            system_xpos: int,
+            system_ypos: int,
+
+            star_type: typing.Optional[str] = None
+        ) -> None:
+        super().__init__(galaxy_seed, galaxy_xpos, galaxy_ypos, system_xpos, system_ypos)
+
+        self.star_type = star_type
+    
+    def get_emoji(self: typing.Self) -> str:
+        return map_emojis.get(self.star_type)
+    
+    def get_analysis(
+            self: typing.Self,
+            guild: typing.Union[discord.Guild, int, str],
+            json_interface: bread_cog.JSON_interface
+        ) -> list[str]:
+        return [
+                "Object type: Star",
+                f"Star type: {self.star_type.title()}"
+            ]
+    
+########################################################
+
+class SystemAsteroid(SystemTile):
+    def __init__(
+            self: typing.Self,
+            galaxy_seed: str,
+
+            galaxy_xpos: int,
+            galaxy_ypos: int,
+            system_xpos: int,
+            system_ypos: int
+        ) -> None:
+        super().__init__(galaxy_seed, galaxy_xpos, galaxy_ypos, system_xpos, system_ypos)
+    
+    def get_emoji(self: typing.Self) -> str:
+        return map_emojis.get("asteroid")
+
+    def get_analysis(
+            self: typing.Self,
+            guild: typing.Union[discord.Guild, int, str],
+            json_interface: bread_cog.JSON_interface
+        ) -> list[str]:
+        return [
+                "Object type: Asteroid",
+                "Further details: None"
+            ]
+    
+########################################################
+
+class SystemTradeHub(SystemTile):
+    def __init__(
+            self: typing.Self,
+            galaxy_seed: str,
+
+            galaxy_xpos: int,
+            galaxy_ypos: int,
+            system_xpos: int,
+            system_ypos: int,
+
+            trade_hub_level: int = None
+        ) -> None:
+        super().__init__(galaxy_seed, galaxy_xpos, galaxy_ypos, system_xpos, system_ypos)
+
+        self.trade_hub_level = trade_hub_level
+    
+    def get_emoji(self: typing.Self) -> str:
+        return map_emojis.get("trade_hub")
+    
+    def get_analysis(
+            self: typing.Self,
+            guild: typing.Union[discord.Guild, int, str],
+            json_interface: bread_cog.JSON_interface
+        ) -> list[str]:
+        return [
+                "Object type: Trade Hub",
+                f"Trade Hub level: {self.trade_hub_level}",
+                "Use '$bread space hub' while over the trade hub to interact with it."
+            ]
+    
+########################################################
+
+class SystemPlanet(SystemTile):
+    def __init__(
+            self: typing.Self,
+            galaxy_seed: str,
+
+            galaxy_xpos: int,
+            galaxy_ypos: int,
+            system_xpos: int,
+            system_ypos: int,
+
+            planet_type: typing.Optional[typing.Type[values.Emote]] = None,
+            planet_distance: typing.Union[int, float, None] = None,
+            planet_angle: typing.Union[int, float, None] = None,
+            planet_deviation: typing.Union[int, float, None] = None
+        ) -> None:
+        super().__init__(galaxy_seed, galaxy_xpos, galaxy_ypos, system_xpos, system_ypos)
+
+        self.planet_type = planet_type
+        self.planet_distance = planet_distance
+        self.planet_angle = planet_angle
+        self.planet_deviation = planet_deviation
+    
+    def get_emoji(self: typing.Self) -> str:
+        return self.planet_type.text
+    
+    def get_analysis(
+            self: typing.Self,
+            guild: typing.Union[discord.Guild, int, str],
+            json_interface: bread_cog.JSON_interface
+        ) -> list[str]:
+        day_seed = json_interface.get_day_seed(guild=guild)
+        ascension = json_interface.ascension_from_seed(guild=guild, galaxy_seed=self.galaxy_seed)
+
+        planet_modifiers = get_planet_modifiers(
+            json_interface = json_interface,
+            ascension = ascension,
+            guild=guild,
+            day_seed = day_seed,
+            tile = self
+        )
+
+        categories = {
+            "Special Bread": values.croissant,
+            "Rare Bread": values.bagel,
+            "Chess Piece": values.black_pawn,
+            "Red Gems": values.gem_red,
+            "Blue Gems": values.gem_blue,
+            "Purple Gems": values.gem_purple,
+            "Green Gems": values.gem_green,
+            "Gold Gems": values.gem_gold,
+            "Many of a Kind": values.anarchy_chess,
+            "Anarchy Piece": values.anarchy_black_pawn
+        }
+
+        result = [
+            "Object type: Planet",
+            f"Planet type: {self.planet_type.text}",
+            f"Distance: {round(self.planet_distance, 3)}",
+            f"Angle: {self.planet_angle}",
+            f"Deviation: {round(self.planet_deviation, 3)}",
+            "", # Blank item to add line break.
+            "Item modifiers:"
+        ]
+
+        # Items in categories have the same chance. e.g., every rare special has the same modifier.
+        # This means we only need to get one item in each category.
+        for name, item in categories.items():
+            result.append(f"- {name}: {round(planet_modifiers.get(item), 3)}")
+
+        return result
+    
+    def get_priority_item(self: typing.Self) -> typing.Union[values.Emote, str, None]:        
         if self.planet_type.text == values.anarchy_chess.text:
             return self.planet_type.name
         
@@ -162,90 +337,11 @@ class SystemTile:
             return "special_bread"
         
         return self.planet_type.name
-        
-        
-
-    ###############################################################################
-    ##### Analysis methods.
-
-    def get_analysis(
-            self: typing.Self,
-            guild: typing.Union[discord.Guild, int, str],
-            json_interface: bread_cog.JSON_interface
-        ) -> list[str]:
-        """Generates a list of strings that describe this tile, to be used by the analysis command."""
-        if self.tile_type == "empty":
-            return ["There is nothing here."]
-        
-        if self.tile_type == "star":
-            return [
-                "Object type: Star",
-                f"Star type: {self.star_type.title()}"
-            ]
-        
-        if self.tile_type == "asteroid":
-            return [
-                "Object type: Asteroid",
-                "Further details: None"
-            ]
-        
-        if self.tile_type == "trade_hub":
-            return [
-                "Object type: Trade Hub",
-                f"Trade Hub level: {self.trade_hub_level}",
-                "Use '$bread space hub' while over the trade hub to interact with it."
-            ]
-        
-        if self.tile_type == "planet":
-            day_seed = json_interface.get_day_seed(guild=guild)
-            ascension = json_interface.ascension_from_seed(guild=guild, galaxy_seed=self.galaxy_seed)
-
-            planet_modifiers = get_planet_modifiers(
-                json_interface = json_interface,
-                ascension = ascension,
-                guild=guild,
-                day_seed = day_seed,
-                tile = self
-            )
-
-            categories = {
-                "Special Bread": values.croissant,
-                "Rare Bread": values.bagel,
-                "Chess Piece": values.black_pawn,
-                "Red Gems": values.gem_red,
-                "Blue Gems": values.gem_blue,
-                "Purple Gems": values.gem_purple,
-                "Green Gems": values.gem_green,
-                "Gold Gems": values.gem_gold,
-                "Many of a Kind": values.anarchy_chess,
-                "Anarchy Piece": values.anarchy_black_pawn
-            }
-
-            result = [
-                "Object type: Planet",
-                f"Planet type: {self.planet_type.text}",
-                f"Distance: {round(self.planet_distance, 3)}",
-                f"Angle: {self.planet_angle}",
-                f"Deviation: {round(self.planet_deviation, 3)}",
-                "", # Blank item to add line break.
-                "Item modifiers:"
-            ]
-
-            # Items in categories have the same chance. e.g., every rare special has the same modifier.
-            # This means we only need to get one item in each category.
-            for name, item in categories.items():
-                result.append(f"- {name}: {round(planet_modifiers.get(item), 3)}")
-
-            return result
-        
 
 
-        # If all else fails, just return self.__str__().
-        return [self.__str__()]
-        
-        
 
-
+########################################################################################
+##### GalaxyTile
 
 class GalaxyTile:
     def __init__(
@@ -259,10 +355,10 @@ class GalaxyTile:
             in_nebula: bool = False,
 
             system_radius: int = None,
-            star: SystemTile = None,
-            trade_hub: SystemTile = False,
-            asteroids: list[SystemTile] = None,
-            planets: list[SystemTile] = None
+            star: SystemStar = None,
+            trade_hub: SystemTradeHub = False,
+            asteroids: list[SystemAsteroid] = None,
+            planets: list[SystemPlanet] = None
         ) -> None:
         """Object that represents a tile within the galaxy.
 
@@ -358,15 +454,13 @@ class GalaxyTile:
         self.system_radius = raw_data.get("radius")
 
         # Set self.star to the star. It's assuming there's a star here, which would be impressive if there wasn't.
-        self.star = SystemTile(
+        self.star = SystemStar(
             galaxy_seed = self.galaxy_seed,
 
             galaxy_xpos = self.xpos,
             galaxy_ypos = self.ypos,
             system_xpos = 0,
             system_ypos = 0,
-
-            tile_type = "star",
 
             star_type = raw_data.get("star_type")
         )
@@ -395,15 +489,13 @@ class GalaxyTile:
                 if (asteroid_x, asteroid_y) in asteroid_added:
                     continue
                 
-                asteroids.append(SystemTile(
+                asteroids.append(SystemAsteroid(
                     galaxy_seed = self.galaxy_seed,
 
                     galaxy_xpos = self.xpos,
                     galaxy_ypos = self.ypos,
                     system_xpos = int(asteroid_x),
-                    system_ypos = int(asteroid_y),
-
-                    tile_type = "asteroid"
+                    system_ypos = int(asteroid_y)
                 ))
 
                 asteroid_added.append((asteroid_x, asteroid_y))
@@ -416,15 +508,13 @@ class GalaxyTile:
         planets = []
 
         for planet_data in raw_data.get("planets", []):
-            planets.append(SystemTile(
+            planets.append(SystemPlanet(
                 galaxy_seed = self.galaxy_seed,
 
                 galaxy_xpos = self.xpos,
                 galaxy_ypos = self.ypos,
                 system_xpos = planet_data.get("xpos", 1),
                 system_ypos = planet_data.get("ypos", 1),
-
-                tile_type = "planet",
 
                 planet_type = planet_data.get("type"),
                 planet_distance = planet_data.get("distance"),
@@ -443,7 +533,7 @@ class GalaxyTile:
             self: typing.Self,
             system_x: int,
             system_y: int
-        ) -> SystemTile:
+        ) -> SystemEmpty:
         """Returns an empty SystemTile object for the given system x and y in this galaxy tile.
 
         Args:
@@ -453,13 +543,12 @@ class GalaxyTile:
         Returns:
             SystemTile: The empty SystemTile object.
         """
-        return SystemTile(
+        return SystemEmpty(
             galaxy_seed = self.galaxy_seed,
             galaxy_xpos = self.xpos,
             galaxy_ypos = self.ypos,
             system_xpos = system_x,
-            system_ypos = system_y,
-            tile_type = "empty"
+            system_ypos = system_y
         )
     
     ###############################################################################
@@ -492,15 +581,15 @@ class GalaxyTile:
             json_interface: bread_cog.JSON_interface,
             system_x: int,
             system_y: int
-        ) -> SystemTile:
-        """Returns a SystemTile object for the given system x and y within this system.
+        ) -> typing.Type[SystemTile]:
+        """Returns a SystemTile subclass object for the given system x and y within this system.
 
         Args:
             system_x (int): The system x position within this system to get the SystemTile object for.
             system_y (int): The system y position within this system to get the SystemTile object for.
 
         Returns:
-            SystemTile: The found SystemTile object. Note that this may be an empty SystemTile object.
+            typing.Type[SystemTile]: The found SystemTile subclass object. Note that this may be a SystemEmpty object, representing an empty tile.
         """
 
         # If this galaxy tile does not have a system, then any tile on the system map is going to be empty.
@@ -929,8 +1018,8 @@ def get_system_coordinate(
         galaxy_y: int,
         system_x: int,
         system_y: int
-    ) -> SystemTile:
-    """Returns a SystemTile object for the specified tile within a system in a galaxy.
+    ) -> typing.Type[SystemTile]:
+    """Returns a SystemTile subclass object for the specified tile within a system in a galaxy.
 
     Args:
         json (bread_cog.JSON_interface): The JSON interface.
@@ -942,7 +1031,7 @@ def get_system_coordinate(
         system_y (int): Y position of the tile within the system.
 
     Returns:
-        SystemTile: The SystemTile object for the tile.
+        typing.Type[SystemTile]: The SystemTile subclass object for the tile.
     """
 
     galaxy_tile = get_galaxy_coordinate(
@@ -964,18 +1053,18 @@ def get_planet_modifiers(
         ascension: int,
         guild: typing.Union[discord.Guild, int, str],
         day_seed: str,
-        tile: SystemTile
+        tile: SystemPlanet
     ) -> dict[typing.Type[values.Emote], typing.Union[int, float]]:
     """Generates the item modifiers for the given tile.
 
     Args:
-        tile (SystemTile): The tile to generate modifiers for.
+        tile (SystemPlanet): The tile to generate modifiers for.
 
     Returns:
         dict[Type[Emote], int | float]: A dictionary of item modifiers.
     """
 
-    # The keys in this need to line up with the possible return values in SystemTile.get_priority_item()
+    # The keys in this need to line up with the possible return values in SystemPlanet.get_priority_item()
     odds = {
         "special_bread": 1,
         "rare_bread": 1,
@@ -990,7 +1079,7 @@ def get_planet_modifiers(
     }
 
     # If it isn't a planet, then use the defaults of 1.
-    if tile.tile_type == "planet":
+    if isinstance(tile, SystemPlanet):
         priority = tile.get_priority_item()
 
         galaxy_tile = get_galaxy_coordinate(
@@ -1068,8 +1157,8 @@ def get_trade_hub(
         ascension: int,
         galaxy_xpos: int,
         galaxy_ypos: int
-    ) -> typing.Union[SystemTile, None]:
-    """Returns a SystemTile object for the trade hub in the given galaxy coordinate.
+    ) -> typing.Union[SystemTradeHub, None]:
+    """Returns a SystemTradeHub object for the trade hub in the given galaxy coordinate.
 
     Args:
         json (bread_cog.JSON_interface): The JSON interface.
@@ -1079,7 +1168,7 @@ def get_trade_hub(
         galaxy_ypos (int): The y position in the galaxy to use.
 
     Returns:
-        typing.Union[SystemTile, None]: The SystemTile object for the trade hub, or None if there is no trade hub.
+        typing.Union[SystemTradeHub, None]: The SystemTradeHub object for the trade hub, or None if there is no trade hub.
     """
     space_data = json_interface.get_custom_file("space", guild=guild)
 
@@ -1106,13 +1195,12 @@ def get_trade_hub(
             ypos = generated["trade_hub"]["ypos"]
         
 
-        return SystemTile(
+        return SystemTradeHub(
             galaxy_seed = galaxy_seed,
             galaxy_xpos = galaxy_xpos,
             galaxy_ypos = galaxy_ypos,
             system_xpos = xpos,
             system_ypos = ypos,
-            tile_type = "trade_hub",
             trade_hub_level = trade_hub.get("level", 1)
         )
     
@@ -1128,13 +1216,12 @@ def get_trade_hub(
     if not generated["trade_hub"].get("exists", False):
         return None
     
-    return SystemTile(
+    return SystemTradeHub(
         galaxy_seed = galaxy_seed,
         galaxy_xpos = galaxy_xpos,
         galaxy_ypos = galaxy_ypos,
         system_xpos = generated["trade_hub"]["xpos"],
         system_ypos = generated["trade_hub"]["ypos"],
-        tile_type = "trade_hub",
         trade_hub_level = generated["trade_hub"]["level"]
     )
 
