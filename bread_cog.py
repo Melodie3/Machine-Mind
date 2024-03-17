@@ -1974,7 +1974,6 @@ loaf_converter""",
         help="Toggle auto chessatron on or off. If no argument is given, it will create as many chessatrons for you as it can.",
         usage="on/off",
         brief="Toggle auto chessatron on or off."
-
     )
     async def chessatron(self, ctx,
             arg: typing.Optional[str] = commands.parameter(description = "Turn Auto Chessatron 'on' or 'off', or a number to make that many trons.")
@@ -5413,30 +5412,44 @@ anarchy - 1000% of your wager.
         await utility.smart_reply(ctx, f"Autopilot success:\nSuccessfully moved to {end_location} on the {move_map} map, using {move_cost} {values.fuel.text}.\n\nYou have **{fuel_left} {values.fuel.text}** remaining.")
 
         self.currently_interacting.remove(ctx.author.id)
-        
-            
     
-            
-            
-            
-            
+    
 
-
-
-
+    @bread.command(
+        name="anarchy_chessatron", 
+        aliases=["anarchy_tron"],
+        help="Create Anarchy Chessatrons.\n\nAnarchy Chessatrons are affected by auto chessatron, which can be toggled with '$bread chessatron [on/off]'.",
+        brief="Create Anarchy Chessatrons."
+    )
+    async def anarchy_chessatron(self, ctx,
+            amount: typing.Optional[parse_int] = commands.parameter(description = "The amount of Anarchy Chessatrons to create.")
+        ):
+        if get_channel_permission_level(ctx) < PERMISSION_LEVEL_ACTIVITIES:
+            await utility.smart_reply(ctx, f"Thank you for your interest in creating anarchy chessatrons! You can do so over in {self.json_interface.get_rolling_channel(ctx.guild.id)}.")
+            return
         
-
-
-                    
-
-        
-
+        if amount is not None:
+            await self.anarchy_chessatron_completion(
+                ctx = ctx,
+                force = True,
+                amount = amount
+            )
+        else:
+            await self.anarchy_chessatron_completion(
+                ctx = ctx,
+                force = True
+            )
 
         
     ########################################################################################################################
     #####      ANARCHY CHESSATRON COMPLETION
     
-    async def anarchy_chessatron_completion(self, ctx, force: bool = False, amount = None):
+    async def anarchy_chessatron_completion(
+            self: typing.Self,
+            ctx: commands.Context,
+            force: bool = False,
+            amount = None
+        ):
         user_account = self.json_interface.get_account(ctx.author, guild=ctx.guild.id)
 
         if user_account.get("auto_chessatron") is False and force is False:
@@ -5490,7 +5503,7 @@ anarchy - 1000% of your wager.
                 await utility.smart_reply(ctx, values.anarchy_chessatron.text)
                 await asyncio.sleep(1)
 
-                await utility.smart_reply(ctx, f"Amazing work! You have also been awarded {total_dough_value//trons_to_make} dough!")
+                await utility.smart_reply(ctx, f"Amazing work! You have also been awarded **{utility.smart_number(total_dough_value//trons_to_make)} dough!**")
                 await asyncio.sleep(1)
 
         elif trons_to_make < 20:
@@ -5502,7 +5515,7 @@ anarchy - 1000% of your wager.
                 await asyncio.sleep(1)
 
         elif trons_to_make < 5000:
-            await utility.smart_reply(ctx, f"You've collected all the anarchy pieces again! Great job! You have enough pieces to make {utility.smart_number(trons_to_make)} Anarchy Chessatrons! Here's your reward of **{total_dough_value//trons_to_make} dough**!")
+            await utility.smart_reply(ctx, f"You've collected all the anarchy pieces again! Great job! You have enough pieces to make {utility.smart_number(trons_to_make)} Anarchy Chessatrons! Here's your reward of **{utility.smart_number(total_dough_value)} dough**!")
             await asyncio.sleep(1)
 
             max_per = 1800 // len(values.anarchy_chessatron.text)
