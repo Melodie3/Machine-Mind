@@ -315,6 +315,7 @@ class Trade_Hub(Project):
 #######################################################################################################
 
 class Essential_Oils(Project):
+    """Written by Duck."""
     internal = "essential_oils"
     
     @classmethod
@@ -447,6 +448,7 @@ class Essential_Oils(Project):
 ##### Special bread.
     
 class Flatbread_Feast(Project):
+    """Written by ChatGPT lol."""
     internal = "flatbread_feast"
     
     @classmethod
@@ -568,6 +570,7 @@ class Flatbread_Feast(Project):
 ##### Gems.
 
 class Emergency_Fuel(Project):
+    """Concept by Emily, written by Duck."""
     internal = "emergency_fuel"
     
     @classmethod
@@ -679,6 +682,7 @@ class Emergency_Fuel(Project):
 ##### Misc items.
 
 class Chessatron_Repair(Project):
+    """Written by Duck."""
     internal = "chessatron_repair"
     
     @classmethod
