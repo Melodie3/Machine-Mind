@@ -21,8 +21,7 @@ class Broken_Bead_cog(commands.Cog, name="Broken_Bread"):
 
         pass
 
-def setup(bot):
-    
+def setup(bot: commands.Bot):
     bread_cog = Broken_Bead_cog(bot)
     bot.add_cog(bread_cog)
     print("broken bread bot loaded")

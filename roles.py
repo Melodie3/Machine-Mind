@@ -90,5 +90,5 @@ async def promote(ctx):
         await ctx.send('Done.')
         print("Done.")
 
-async def setup(bot):
+async def setup(bot: commands.Bot):
     bot.add_command(promote)

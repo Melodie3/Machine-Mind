@@ -359,6 +359,16 @@ def get_all_wormholes(
         gradient_data: list = None,
         nebula_data: list = None
     ) -> list[tuple[dict[str, int, float], ...]]:
+    """Generates all wormholes in a galaxy.
+
+    Args:
+        galaxy_seed (str): The seed of the galaxy this point is in.
+        gradient_data (list, optional): Gradient data, will make this if nothing is passed. Defaults to None.
+        nebula_data (list, optional): Nebula data, will make this if nothing is passed. Defaults to None.
+
+    Returns:
+        list[tuple[dict[str, int, float], ...]]: The list of points, as a list of tuples of 2 dicts.
+    """
     raw_locations = []
     full_point_data = []
 
@@ -394,6 +404,17 @@ def get_wormhole_points(
         gradient_data: list = None,
         nebula_data: list = None
     ) -> list[dict[str, int, float]]:
+    """Generates a single set of wormhole points.
+
+    Args:
+        galaxy_seed (str): The galaxy seed.
+        existing_points (list[tuple[tuple[int, int], tuple[int, int]]]): Already generated wormholes, so it knows what to avoid.
+        gradient_data (list, optional): Gradient data, will make this if nothing is passed. Defaults to None.
+        nebula_data (list, optional): Nebula data, will make this if nothing is passed. Defaults to None.
+
+    Returns:
+        list[dict[str, int, float]]: The list of wormhole point data.
+    """
     wormhole_id = len(existing_points) + 1
     
     if gradient_data is None or nebula_data is None:

@@ -45,10 +45,14 @@ class Bread_Account:
     }
 
 
-    def __init__(self, user_id):
+    def __init__(
+            self: typing.Self,
+            user_id: str
+        ) -> None:
         self.user_id = user_id
 
-    def reset_to_default(self):
+    def reset_to_default(self: typing.Self) -> None:
+        """Resets the account to default values."""
         username = self.get("username")
         display_name = self.get("display_name")
         guild_id = self.get("guild_id")
@@ -62,7 +66,8 @@ class Bread_Account:
             "guild_id": guild_id
         }
 
-    def daily_reset(self):
+    def daily_reset(self: typing.Self) -> None:
+        """Runs the daily reset on the account."""
         # self.set("daily_rolls", 0)
 
         # we need to deal with stored daily rolls, so:
@@ -83,7 +88,8 @@ class Bread_Account:
         if self.has ("first_catch_level"):
             self.set("first_catch_remaining", self.get("first_catch_level"))
 
-    def increase_prestige_level(self):
+    def increase_prestige_level(self: typing.Self) -> None:
+        """Increases this account's prestige level by 1."""
 
         self.increment("prestige_level", 1)
         self.increment(values.ascension_token.text, 1)
@@ -151,7 +157,7 @@ class Bread_Account:
         # Reset the amount of times First Catch of the Day has been used to the level of FCotD.
         if self.has("first_catch_level"):
             self.set(
-                name = "first_catch_remaining",
+                key = "first_catch_remaining",
                 value = self.get("first_catch_level")
             )
 
@@ -167,76 +173,97 @@ class Bread_Account:
     
 
     # simply says if the value is there and nonzero
-    def has(self, value: typing.Union[str, Emote], amount: int = 1) -> bool:
-        if (type(value) is str):
-            if (value in self.values.keys()) and \
-                        (self.values[value] >= amount):
+    def has(
+            self: typing.Self,
+            key: typing.Union[str, Emote],
+            amount: int = 1
+        ) -> bool:
+        """Returns a boolean for whether the account has the given key and if it is greater than or equal to the given amount."""
+        # If the given key is an Emote, set it to the emote's text.
+        if isinstance(key, Emote):
+            key = key.text
 
-                return True
-        else: #is emote
-            if (value.text in self.values.keys()) and \
-                        (self.values[value.text] >= amount):
-
-                return True
+        if not key in self.values:
+            return False
         
-        return False
+        return self.values[key] >= amount
 
     #increases or decreases a value
-    def increment(self, value: typing.Union[str, Emote], amount: int = 1):
-        if (type(value) is str):
-            if (value in self.values.keys()):
-                self.values[value] += amount
-            elif value in self.default_values.keys():
-                self.values[value] = self.default_values[value] + amount
-            else:
-                self.values[value] = amount
-        else: #is emote
-            if (value.text in self.values.keys()):
-                self.values[value.text] += amount
-            elif value.text in self.default_values.keys():
-                self.values[value.text] = self.default_values[value.text] + amount
-            else:
-                self.values[value.text] = amount
+    def increment(
+            self: typing.Self,
+            key: typing.Union[str, Emote],
+            amount: int = 1
+        ) -> None:
+        """Increments a key by the given amount."""
+        # If the given key is an Emote, set it to the emote's text.
+        if isinstance(key, Emote):
+            key = key.text
+        
+        self.values[key] = self.get(key) + amount
 
-    def get(self, key: str):
+    def get(
+            self: typing.Self,
+            key: str,
+            default: typing.Any = 0
+        ) -> typing.Any:
+        """Gets a value from this account's values dict. If the account does not have it the default values will be returned, and, if all else fails, return the default."""
         if key in self.values.keys():
             return self.values[key]
         elif key in self.default_values.keys():
             return self.default_values[key]
-        return 0
+        
+        return default
 
-    def set(self, name: str, value):
-        self.values[name] = value
+    def set(
+            self: typing.Self,
+            key: str,
+            value: typing.Any
+        ) -> None:
+        """Sets a value in this account's values dict."""
+        self.values[key] = value
 
-    def boolean_is(self, value: str, default: bool = False):
+    def boolean_is(
+            self: typing.Self,
+            value: str,
+            default: bool = False
+        ) -> bool:
+        """The same as `.get()`, but used for booleans, and it won't use the default values dict."""
         if value in self.values.keys():
             return self.values[value]
         return default
 
-    def add_item(self, item: Emote):
+    def add_item(
+            self: typing.Self,
+            item: Emote
+        ) -> int:
+        """Adds 1 of the provided item to this account, and adds the item's value as well. Then it returns the dough added."""
         self.increment(item.text, 1),
         dough_value = self.add_dough_intelligent(item.value)
         for attribute in item.attributes:
             self.increment(attribute, 1)
         return dough_value
 
-    def add_item_attributes(self, item: Emote, amount: int = 1):
-        """Adds an item to the account, but also adds its attributes as stats.
-
-        Args:
-            item (Emote): The item to add.
-            amount (int, optional): The amount to add. Defaults to 1.
-        """
+    def add_item_attributes(
+            self: typing.Self,
+            item: Emote,
+            amount: int = 1
+        ) -> None:
+        """Adds an item to the account, but also adds its attributes as stats."""
         self.increment(item.text, amount)
         for attribute in item.attributes:
             self.increment(attribute, amount)
 
     ##############################################################
 
-    def get_dough(self) -> int:
+    def get_dough(self: typing.Self) -> int:
+        """Shortcut for `.get('total_dough')`."""
         return self.get("total_dough")
 
-    def add_dough_intelligent(self, amount: int) -> int:
+    def add_dough_intelligent(
+            self: typing.Self,
+            amount: int
+        ) -> int:
+        """Adds dough to an account, but accounts for the ascension multiplier. Also adds to the `earned_dough` stat. In the end, it returns the amount of dough added."""
         prestige_mult = self.get_prestige_multiplier()
         amount = round(amount * prestige_mult)
         self.increment("total_dough", amount)
@@ -244,16 +271,19 @@ class Bread_Account:
         self.increment("earned_dough", amount)
         return amount
 
-    def get_prestige_level(self) -> int:
+    def get_prestige_level(self: typing.Self) -> int:
+        """Shortcut for `.get('prestige_level')`."""
         return self.get("prestige_level")
 
-    def get_space_level(self) -> int:
+    def get_space_level(self: typing.Self) -> int:
+        """Shortcut for `.get('space_level')`."""
         return self.get("space_level")
     
     def get_galaxy_location(
             self: typing.Self,
             json_interface: bread_cog.JSON_interface
         ) -> tuple[int, int]:
+        """Returns this account's galaxy location in a 2D tuple. This will return the galaxy's spawn location if the player has not moved on the galaxy map."""
         # If the player has moved before, then return their position.
         if self.get("galaxy_move_count") > 0:
             return (self.get("galaxy_xpos"), self.get("galaxy_ypos"))
@@ -263,19 +293,20 @@ class Bread_Account:
             json_interface = json_interface,
             user_account = self
         )
-            
     
-    def get_system_location(self) -> tuple[int, int]:
+    def get_system_location(self: typing.Self) -> tuple[int, int]:
+        """Returns this player's system location in a 2D tuple."""
         return (self.get("system_xpos"), self.get("system_ypos"))
 
-    def get_prestige_multiplier(self):
+    def get_prestige_multiplier(self: typing.Self) -> float:
+        """Returns the ascension multiplier for the ascension this player is on. The equation is `1 + (ascension * 0.10)`."""
         # return prestige_multiplier[self.get_prestige_level()]
         presige_level = self.get_prestige_level()
         multiplier = 1 + (presige_level * 0.10)
         return multiplier
 
-    def get_display_name(self):
-
+    def get_display_name(self: typing.Self) -> str:
+        """Returns this player's display name, including upgrades like bling and the ascension indicator."""
         bling_emotes = ["",
                     values.gem_red.text,
                     values.gem_blue.text,
@@ -305,7 +336,8 @@ class Bread_Account:
 
         return output
 
-    def get_portfolio_value(self):
+    def get_portfolio_value(self: typing.Self) -> int:
+        """Returns this player's current portfolio value."""
         global bread_cog_ref
         if bread_cog_ref is None:
             bread_cog_ref = bread_cog.bread_cog_ref
@@ -325,7 +357,12 @@ class Bread_Account:
             total_value += value
         return total_value
     
-    def get_active_multirollers(self) -> int:
+    def get_active_multirollers(self: typing.Self) -> int:
+        """Returns the number of active multiroller this player has.
+        
+        The method for determining the number of active multirollers:
+        - If `multiroller_terminal` is less than 1, return `multiroller`.
+        - If `active_multirollers` is not -1, return it, otherwise return `multiroller`."""
         multiroller = self.get("multiroller")
         if self.get("multiroller_terminal") < 1:
             return multiroller
@@ -337,16 +374,19 @@ class Bread_Account:
         else:
             return active
         
-    def get_corruption_negation_multiplier(self) -> float:
+    def get_corruption_negation_multiplier(self: typing.Self) -> float:
+        """Returns the multiplier the Corruption Negation hidden bakery upgrade provides for this player. The equation is `1 - (cn * 0.1)`, where `cn` is the player's `corruption_negation` stat."""
         level = self.get("corruption_negation")
         return 1 - (level * 0.1)
     
-    def get_fuel_refinement_boost(self) -> float:
+    def get_fuel_refinement_boost(self: typing.Self) -> float:
+        """Returns the multiplier for fuel this player has. The eqution is `1 + (fr * 0.25)`, where `fr` is the player's `fuel_refinemnt` stat."""
         level = self.get("fuel_refinement")
         return 1 + (level * 0.25)
             
 
-    def get_shadowmega_boost_count(self):
+    def get_shadowmega_boost_count(self: typing.Self) -> int:
+        """Returns the amount of shadowmega chessatrons that can be used to get more dough, so the number of active shadowmegas."""
         # from bread.store import chessatron_shadow_booster_levels
         shadowmega_boost_level = self.get("chessatron_shadow_boost")
         # print (f"shadowmega_boost_level: {shadowmega_boost_level}")
@@ -359,10 +399,12 @@ class Bread_Account:
         # print (f"affecting_shadowmegas: {affecting_shadowmegas}")
         return affecting_shadowmegas
 
-    def get_shadowmega_boost_amount(self):
+    def get_shadowmega_boost_amount(self: typing.Self) -> int:
+        """Returns the amount of extra dough this player gets per chessatron from Chessatron Contraption and shadowmega chessatrons."""
         return self.get_shadowmega_boost_count() * 100
 
-    def get_shadow_gold_gem_boost_count(self):
+    def get_shadow_gold_gem_boost_count(self: typing.Self) -> int:
+        """Returns the amount of shadow gold gems that this player can use to increase their odds of finding gems. Essentially, this is the number of active shadow gold gems."""
         # from bread.store import shadow_gold_gem_luck_boost_levels
         boost_level = self.get("shadow_gold_gem_luck_boost")
         # max_gem_bonus = shadow_gold_gem_luck_boost_levels[boost_level]
@@ -371,25 +413,40 @@ class Bread_Account:
         affecting_gems = min(gem_count, max_gem_bonus)
         return affecting_gems
 
-    def get_maximum_daily_gifts(self):
+    def get_maximum_daily_gifts(self: typing.Self) -> int:
+        """Calculates the maximum amount of dough that can be gifted to this player, equal to 24 per daily roll and 1,000 per loaf converter."""
         return self.get("max_daily_rolls") * 24 + self.get("loaf_converter") * 1000
     
-    def get_maximum_stored_rolls(self):
+    def get_maximum_stored_rolls(self: typing.Self) -> int:
+        """Calculates the maximum amount of daily rolls this player can store, equal to max_daily_rolls multiplied by max_days_of_stored_rolls."""
         return self.get("max_daily_rolls") * self.get("max_days_of_stored_rolls")
 
-    def get_dough_boost_for_item(self, item: Emote):
+    def get_dough_boost_for_item(
+            self: typing.Self,
+            item: Emote
+        ) -> int:
+        """Returns the amount of extra dough this player gets from the Gambit Shop for the given item."""
         boosts_file = self.values.get("dough_boosts", dict())
         if item.text in boosts_file.keys():
             return boosts_file[item.text]
         else:
             return 0
 
-    def set_dough_boost_for_item(self, item: Emote, boost: int):
+    def set_dough_boost_for_item(
+            self: typing.Self,
+            item: Emote,
+            boost: int
+        ) -> None:
+        """Sets an item's dough boost for this player to the given value."""
         boosts_file = self.values.get("dough_boosts", dict())
         boosts_file[item.text] = boost
         self.values["dough_boosts"] = boosts_file
 
-    def get_chessatron_dough_amount(self, include_prestige_boost = True):
+    def get_chessatron_dough_amount(
+            self: typing.Self,
+            include_prestige_boost = True
+        ) -> int:
+        """Calculates the amount of dough this player gets for each chessatron."""
         amount = values.chessatron.value   
         amount += self.get_shadowmega_boost_amount()
         # then we add omegas
@@ -399,7 +456,11 @@ class Bread_Account:
             amount = round(amount * prestige_mult)  
         return amount
     
-    def get_anarchy_chessatron_dough_amount(self, include_prestige_boost = True):
+    def get_anarchy_chessatron_dough_amount(
+            self: typing.Self,
+            include_prestige_boost = True
+        ) -> int:
+        """Calulcates the amount of dough this player gets for each anarchy chessatron."""
         amount = values.anarchy_chessatron.value
         
         if include_prestige_boost:
@@ -408,13 +469,21 @@ class Bread_Account:
 
         return amount
 
-    def has_category(self, category_name: str):
+    def has_category(
+            self: typing.Self,
+            category_name: str
+        ) -> bool:
+        """Returns a boolean for whether this player has any item in the given category."""
         if len(self.get_category(category_name)) > 0:
             return True
         else:
             return False
                 
-    def get_category(self, category: str):
+    def get_category(
+            self: typing.Self,
+            category: str
+        ) -> list[Emote]:
+        """Returns a list of values.Emote objects that this player has."""
         items = []
         # we try with both the name and the name minus its last letter, in case there's an 's' at the end
         for category_name in [category, category[:-1]]:
@@ -488,7 +557,8 @@ class Bread_Account:
     ##############################################################
 
     #gets all items
-    def get_all_items(self):
+    def get_all_items(self: typing.Self) -> list[Emote]:
+        """Gets a list of every item this player has."""
         items = []
         for key in self.values.keys():
             item = values.get_emote(key)
@@ -496,7 +566,11 @@ class Bread_Account:
                 items.append(item)
         return items
 
-    def get_all_items_with_attribute(self, attribute: str):
+    def get_all_items_with_attribute(
+            self: typing.Self,
+            attribute: str
+        ) -> list[Emote]:
+        """Gets a list of every item this player has, that has the given attribute."""
         items = []
         for key in self.values.keys():
             item = values.get_emote(key)
@@ -505,7 +579,13 @@ class Bread_Account:
                     items.append(item)
         return items
 
-    def get_all_items_with_attribute_unrolled(self, attribute: str):
+    def get_all_items_with_attribute_unrolled(
+            self: typing.Self,
+            attribute: str
+        ) -> list[Emote]:
+        """Same as `.get_all_items_with_attribute()`, but each item is in the list an amount of times equal to the amount the player has.
+        
+        On some accounts this will completely freeze the bot."""
         items = []
         for key in self.values.keys():
             item = values.get_emote(key)
@@ -518,14 +598,27 @@ class Bread_Account:
         return items
 
     # output the number of times a value exists, as text
-    def write_number_of_times(self, value: str) -> str:
+    def write_number_of_times(
+            self: typing.Self,
+            value: str
+        ) -> str:
+        """Returns the times representation of a stat.
+        
+        For example, with `.write_number_of_times('lottery_win')`, and the player has 2 lottery_win, it will return `twice`, but with 5 lottery_win, it would return `5 times`."""
         amount = self.get(value)
         if type(amount) is not int:
             return str(amount)
         return utility.write_number_of_times(amount)
 
     # writes the pluralized count of a value
-    def write_count(self, value: str, pretty_name: str) -> str:
+    def write_count(
+            self: typing.Self,
+            value: str,
+            pretty_name: str
+        ) -> str:
+        """Writes the count of a stat, with `value` being the stat name and `pretty_name` being the text to put after it.
+        
+        For example, with `.write_count('loaf_converter', 'Loaf Converters')`, if the player has 2 loaf converters it will return `2 Loaf Converters`, but with 1 loaf converter it would return `1 Loaf Converter`."""
         amount = self.get(value)
         if type(amount) is not int:
             return str(amount)
@@ -534,22 +627,40 @@ class Bread_Account:
     ##############################################################
 
     # returns NoneType if value does not exist
-    def get_value_strict(self, name: str):
+    def get_value_strict(
+            self: typing.Self,
+            name: str
+        ) -> typing.Any:
+        """Stricter version of `.get()`, this doesn't refer to the default values dict, and returns None if the player does not have the stat."""
         if name in self.values.keys():
             return self.values[name]
         return None
 
     # returns 0 if value does not exist
-    def get_value_loose(self, name: str):
+    def get_value_loose(
+            self: typing.Self,
+            name: str
+        ) -> typing.Any:
+        """Slightly different version of `.get()`, this one returns 0 if the key is not found, but does not refer to the default values dict at all."""
         if name in self.values.keys():
             return self.values[name]
         return 0
 
-    def set_value(self, name: str, amount: int):
+    def set_value(
+            self: typing.Self,
+            name: str,
+            amount: int
+        ) -> None:
+        """Same as `.set()`, sets a value in this account's values dict."""
         #if name in self.values.keys():
         self.values[name] = amount
 
-    def increment_value(self, name: str, amount: int):
+    def increment_value(
+            self: typing.Self,
+            name: str,
+            amount: int
+        ) -> None:
+        """Similar to `.increment()`, but this sets the stat to 0 if the player doesn't have it, and this doesn't refer to the default values dict."""
         if name not in self.values.keys():
             self.values[name] = 0
         self.values[name] += amount
@@ -557,7 +668,11 @@ class Bread_Account:
     ##############################################################
     ######  INPUT / OUTPUT
 
-    def from_dict(account_id:str, entry: dict):
+    def from_dict(
+            account_id: str,
+            entry: dict
+        ) -> Bread_Account:
+        """Converts a dictionary and account id into a new Bread_Account object and returns said object."""
         account = Bread_Account(account_id)
         account.values = entry.copy()
         #if "lifetime_dough" not in account.values.keys() \
@@ -567,5 +682,6 @@ class Bread_Account:
             account.values["earned_dough"] = account.values["total_dough"]
         return account
 
-    def to_dict(self):
+    def to_dict(self: typing.Self) -> dict:
+        """Converts this account to a dict. This is just returning the `values` attribute."""
         return self.values

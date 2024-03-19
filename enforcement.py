@@ -21,7 +21,12 @@ golden_brick_emoji = "<:brick_gold:971239215968944168>"
 
 bot_ref = None
 
-def json_data_increment(member: discord.Member, field: str, amount: int):
+def json_data_increment(
+        member: discord.Member,
+        field: str,
+        amount: int
+    ) -> None:
+    """Increments a member's data in the JSON data."""
     try:
         # print("Attempting reference through cog")
         JSON_cog = bot_ref.get_cog("JSON")
@@ -52,7 +57,13 @@ def json_data_increment(member: discord.Member, field: str, amount: int):
         print("Exception: {}".format(type(exception).__name__))
         print("Exception message: {}".format(exception))
 
-async def timeout_user(*, user_id: int, guild_id: int, until):
+async def timeout_user(
+        *,
+        user_id: int,
+        guild_id: int,
+        until: int
+    ) -> bool:
+    """Times out the given member for `until` mount of minutes, then retruns a boolean for whether the timeout was successful."""
     until = int(until)
     if until < 0:
         return
@@ -74,7 +85,11 @@ async def timeout_user(*, user_id: int, guild_id: int, until):
     await base_session.close()
     return result
 
-async def brick_stats(ctx, member: discord.Member):
+async def brick_stats(
+        ctx: commands.Context,
+        member: discord.Member
+    ) -> None:
+    """Sends a member's brick stats."""
     #print("brick_stats called")
     try:
         #print("Attempting reference through cog")
@@ -118,7 +133,11 @@ async def brick_stats(ctx, member: discord.Member):
         print("Exception: {}".format(type(exception).__name__))
         print("Exception message: {}".format(exception))
 
-async def brick_leaderboard(ctx, user: discord.Member):
+async def brick_leaderboard(
+        ctx: commands.Context,
+        user: discord.Member
+    ) -> None:
+    """Sends the brick leaderboard."""
     try:
 
         output = "** -- Brick leaderboard: -- **\n\n"
@@ -395,8 +414,12 @@ async def brick(ctx, member: typing.Optional[discord.Member], duration: typing.O
             member = ctx.author
         await brick_leaderboard(ctx, member)
 
-async def brick_animation(ctx, member: discord.Member, forever=False):
-    pass
+async def brick_animation(
+        ctx: commands.Context,
+        member: discord.Member,
+        forever = False
+    ) -> discord.Message:
+    """Runs the brick animation."""
     header = f"For your sins, {member.mention}, you will be bricked."
     if forever:
         header += " Forever."
@@ -423,7 +446,7 @@ async def brick_animation(ctx, member: discord.Member, forever=False):
     #await asyncio.sleep(1)
     return message
 
-async def setup(bot):
+async def setup(bot: commands.Bot):
     importlib.reload(verification)
     importlib.reload(utility)
     #bot.add_command(timeout)

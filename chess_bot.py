@@ -1,3 +1,5 @@
+from __future__ import annotations
+
 import importlib
 import random
 import typing
@@ -119,7 +121,8 @@ tempfile_path = "/Volumes/RAM_Disk/"
 # class to track a chess game happening on a channel
 class Chess_game():
 
-    def initialize_variables(self):
+    def initialize_variables(self: typing.Self) -> None:
+        """Sets up the variables required for this chess game."""
         # self.channel = None
 
         self.game_board = chess.Board()
@@ -150,7 +153,12 @@ class Chess_game():
 
         self.moves = list() #empty list
 
-    def __init__(self, starting_channel, starting_board = chess.Board()):
+    def __init__(
+            self: typing.Self,
+            starting_channel: discord.TextChannel,
+            starting_board = chess.Board()
+        ) -> None:
+        """Object that tracks the chess game in a channel."""
         self.initialize_variables()
         print ("New chess game object initialized for channel "+str(starting_channel))
         self.channel = starting_channel
@@ -159,7 +167,8 @@ class Chess_game():
         #game_board = chess.Board()
         pass
 
-    def clean_slate(self):
+    def clean_slate(self: typing.Self) -> None:
+        """Resets the game."""
         self.initialize_variables()
         self.last_message_header = None
         self.last_message_body  = None
@@ -179,19 +188,26 @@ class Chess_game():
 
     
 
-    def set_board(self, new_board):
+    def set_board(
+            self: typing.Self,
+            new_board: chess.Board
+        ) -> None:
+        """Sets the board to the given board."""
         self.game_board = new_board
 
-    def bake_fen(self):
+    def bake_fen(self: typing.Self) -> str:
+        """Sets the starting_fen attribute to the current board."""
         self.starting_fen = self.game_board.board_fen()
 
     #### IMPORT / EXPORT ####
 
-    def imex_test(self):
+    def imex_test(self: typing.Self) -> None:
+        """Dumps the dictionary representation of this Chess_game object into a string, and then loads that via `.from_dict()`, for testing."""
         string = json.dumps(self.to_dict())
         self.from_dict(json.loads(string))
 
-    def to_dict(self):
+    def to_dict(self: typing.Self) -> dict:
+        """Converts this Chess_game object into a dictionary."""
         output = dict()
         output["channel_name"] = self.channel.name
         output["moves"] = self.moves
@@ -214,8 +230,9 @@ class Chess_game():
         # print("JSON String is \n"+json_str)
         # return json_str
 
-    def from_dict(input: dict):
-        print ("Restoring game from dict")
+    def from_dict(input: dict) -> Chess_game:
+        """Creates and returns a Chess_game object from dictionary data."""
+        print("Restoring game from dict")
         restored_game = Chess_game(input["channel_id"])
         restored_game.clean_slate()
 
@@ -269,7 +286,8 @@ class Chess_game():
             
     #### RENDERING ####
 
-    def get_rendered_board(self):
+    def get_rendered_board(self: typing.Self) -> str:
+        """Renders the board and returns the file path to it."""
         svg_code = None
         last_move = None
         num_moves = len(self.game_board.move_stack)
@@ -292,23 +310,41 @@ class Chess_game():
 
     #### MESSAGING ######
 
-    async def send_header(self, text):
+    async def send_header(
+            self: typing.Self,
+            text: str
+        ) -> None:
+        """Sends the header message."""
         #print ("chess_game channel is "+str(self.channel))
         if self.last_message_header is not None:
             await self.last_message_header.delete()
         self.last_message_header = await self.channel.send(text)
     
-    async def send_body(self, text):
+    async def send_body(
+            self: typing.Self,
+            text: str
+        ) -> None:
+        """Sends the body message."""
         if self.last_message_body is not None:
             await self.last_message_body.delete()
         self.last_message_body = await self.channel.send(text)
 
-    async def send_footer(self, text):
+    async def send_footer(
+            self: typing.Self,
+            text: str
+        ) -> None:
+        """Sends the footer message."""
         if self.last_message_footer is not None:
             await self.last_message_footer.delete()
         self.last_message_footer = await self.channel.send(text)
 
-    async def send_full_message(self, header, body, footer):
+    async def send_full_message(
+            self: typing.Self,
+            header: str,
+            body: str,
+            footer: str
+        ) -> None:
+        """Sends three messages with their content being the provided text."""
         temp_header = await self.channel.send(header)
         temp_body   = await self.channel.send(body)
         temp_footer = await self.channel.send(footer)
@@ -329,7 +365,14 @@ class Chess_game():
         #self.last_message_body   = await self.channel.send(body)
         #self.last_message_footer = await self.channel.send(footer)
 
-    async def send_full_message_with_embed(self, header, embed, file, footer):
+    async def send_full_message_with_embed(
+            self: typing.Self,
+            header: str,
+            embed: discord.Embed,
+            file: discord.File,
+            footer: str
+        ) -> None:
+        """Sends all the messages, according to the parameters given."""
         temp_header = await self.channel.send(header)
         temp_embed   = await self.channel.send(file=file, embed=embed)
         temp_footer = await self.channel.send(footer)
@@ -346,7 +389,12 @@ class Chess_game():
         self.last_message_embed   = temp_embed
         self.last_message_footer = temp_footer
 
-    async def send_embed(self, embed, file=None):
+    async def send_embed(
+            self: typing.Self,
+            embed: discord.Embed,
+            file: discord.File = None
+        ) -> None:
+        """Sends an existing embed."""
         #await ctx.send(file=file, embed=embed)
         
         if self.last_message_embed is not None:
@@ -354,9 +402,15 @@ class Chess_game():
         self.last_message_embed = await self.channel.send(file=file, embed=embed)
         pass
 
-    async def send_full_embed(self, info, commentary, image_path):
+    async def send_full_embed(
+            self: typing.Self,
+            info: str,
+            commentary: str,
+            image_path: str
+        ) -> None:
+        """Sends the board, with the embed."""
         embed = discord.Embed() #creates embed
-        embed.title="Chessboard"
+        embed.title = "Chessboard"
         #embed.description="Desc"
         file = discord.File(image_path, filename="board.png")
         embed.set_image(url="attachment://board.png")
@@ -384,7 +438,12 @@ class Chess_game():
     #### GAME STUFF ######
     ######################
 
-    def add_move(self, player: discord.Member, move_text):
+    def add_move(
+            self: typing.Self,
+            player: discord.Member,
+            move_text: str
+        ) -> None:
+        """Adds move according to the move text."""
         #if a move is made, a draw offer is no longer valid
         self.black_offers_draw = False
         self.white_offers_draw = False
@@ -410,7 +469,11 @@ class Chess_game():
         #print ("full move list is "+str(self.moves))
         #print ("move list id is "+str(id(self.moves)))
 
-    async def end_game(self, reason=None):
+    async def end_game(
+            self: typing.Self,
+            reason: str = None
+        ) -> None:
+        """Ends the game, with the given reason."""
         if not (self.is_starting_position()):
             
             # append new text to previous footer
@@ -450,7 +513,8 @@ class Chess_game():
         self.game_board.reset()
         self.clean_slate()
 
-    def is_starting_position(self):
+    def is_starting_position(self: typing.Self) -> bool:
+        """Returns a boolean for whether the current position is the starting position."""
         #print("checking if starting position")
         #print("move stack is "+str(self.game_board.move_stack))
         #if (self.game_board.fen() == chess.STARTING_FEN):
@@ -932,7 +996,11 @@ class Chess_bot(commands.Cog, name="Chess"):
     ##############################
     ######## GAME
 
-    def get_game(self, channel):
+    def get_game(
+            self: typing.Self,
+            channel: discord.TextChannel
+        ) -> Chess_game:
+        """Gets the chess game for this channel."""
         #print ("getting game")
         if channel in self.games:
             #print("game already exists")
@@ -946,7 +1014,11 @@ class Chess_bot(commands.Cog, name="Chess"):
     ######## BOARD 
 
     #gets board for current channel, or creates it if it doesn't exist yet
-    async def get_board(self, ctx):
+    async def get_board(
+            self: typing.Self,
+            ctx: commands.Context
+        ) -> chess.Board:
+        """Gets the board for the channel the context was invoked in."""
         print("getting board:")
         work_board = None
         if ctx.channel in self.boards:
@@ -960,7 +1032,11 @@ class Chess_bot(commands.Cog, name="Chess"):
         return work_board
 
     # finds the previous board posted in the channel so we can delete it when we make a new one
-    def get_previous_board_message(self, ctx):
+    def get_previous_board_message(
+            self: typing.Self,
+            ctx: commands.Context
+        ) -> discord.Message:
+        """Gets the previous board message."""
         print("getting previous board message")
         message = None
         if ctx.channel in self.previous_board_messages:
@@ -968,11 +1044,22 @@ class Chess_bot(commands.Cog, name="Chess"):
             message = self.previous_board_messages[ctx.channel]
         return message
 
-    def set_previous_board_message(self, ctx, message):
+    def set_previous_board_message(
+            self: typing.Self,
+            ctx: commands.Context,
+            message: discord.Message
+        ) -> None:
+        """Sets the ctx's channel's previous board message to the provided message."""
         print("setting new previous board message")
         self.previous_board_messages[ctx.channel] = message
 
-    async def end_previous_board(self, ctx, work_board, reason = None):
+    async def end_previous_board(
+            self: typing.Self,
+            ctx: commands.Context,
+            work_board: chess.Board,
+            reason: str = None
+        ) -> None:
+        """Ends a previous board with the given reason."""
         prev_message = self.get_previous_board_message(ctx)
         if prev_message is not None:
             #new_text = prev_message.content + "\n\n"
@@ -993,13 +1080,18 @@ class Chess_bot(commands.Cog, name="Chess"):
             await prev_message.reply(new_text)
             self.boards.pop(ctx.channel)
 
-    def get_lichess_link(work_board):
+    def get_lichess_link(work_board: chess.Board) -> str:
+        """Generates a Lichess board editor for the given board."""
         output = work_board.fen()
         output = output.replace(" ","_") #convert to be URL safe
         output = "https://lichess.org/editor/" + output #append to lichess
         return output
 
-    def is_starting_position(self, work_board):
+    def is_starting_position(
+            self: typing.Self,
+            work_board: chess.Board
+        ) -> bool:
+        """Returns a boolean for whether the current board is the starting position."""
         if self.board.fen() == "rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1":
             return True
         else:
@@ -1009,7 +1101,11 @@ class Chess_bot(commands.Cog, name="Chess"):
     ########   OUTPUT   ###########
     ###############################
 
-    def render_board_emoji(self, work_board):
+    def render_board_emoji(
+            self: typing.Self,
+            work_board: chess.Board
+        ) -> str:
+        """Renders the given board as a bunch of emojis."""
         output = ""
 
         #add files labels
@@ -1058,7 +1154,11 @@ class Chess_bot(commands.Cog, name="Chess"):
         return output
 
         
-    async def print_game(self, current_game):
+    async def print_game(
+            self: typing.Self,
+            current_game: Chess_game
+        ) -> None:
+        """Sends the given Chess game in its channel."""
         work_board = current_game.game_board
 
         #await current_game.send_header(preface_message)
@@ -1099,7 +1199,8 @@ class Chess_bot(commands.Cog, name="Chess"):
         #                                      Chess_bot.get_commentary(current_game))
 
     #commentary
-    def get_commentary(current_game: Chess_game):
+    def get_commentary(current_game: Chess_game) -> str:
+        """Returns the commentary for the given Chess game."""
         if type(current_game) is Chess_game:
             work_board = current_game.game_board
         else:
@@ -1140,7 +1241,8 @@ class Chess_bot(commands.Cog, name="Chess"):
         
         return output
 
-    def get_pgn(current_game):
+    def get_pgn(current_game: Chess_game) -> str:
+        """Returns the PGN for the given Chess game."""
         output = ""
         if (current_game.game_details != ""):
             output += f'[Variant "{current_game.game_details}"]\n'
@@ -1155,7 +1257,8 @@ class Chess_bot(commands.Cog, name="Chess"):
         return output
         
 
-    def get_ingame_notation(current_game):
+    def get_ingame_notation(current_game: Chess_game) -> str:
+        """Returns the in-game notation for the given Chess game."""
         output = "```\n"
 
         output += current_game.game_details
@@ -1182,7 +1285,8 @@ class Chess_bot(commands.Cog, name="Chess"):
         output += "```"
         return output
 
-    def get_moves_notation(current_game):
+    def get_moves_notation(current_game: Chess_game) -> None:
+        """Returns the move notation for the given Chess game."""
         output = ""
         move_num = 1
         move_stack = current_game.moves
@@ -1194,7 +1298,8 @@ class Chess_bot(commands.Cog, name="Chess"):
         
 
 
-    def get_printed_player_list(player_list: typing.Set[discord.Member]):
+    def get_printed_player_list(player_list: typing.Set[discord.Member]) -> str:
+        """Returns the player list with the player usernames."""
         length = len(player_list)
         output = ""
         player_num = 1
@@ -1223,7 +1328,11 @@ class Chess_bot(commands.Cog, name="Chess"):
         self.internal_save()
         await ctx.send("Done.")
 
-    def internal_save(self, JSON_cog=None):
+    def internal_save(
+            self: typing.Self,
+            JSON_cog = None
+        ) -> None:
+        """Saves the chess data with the JSON cog."""
         if JSON_cog is None:
             JSON_cog = bot_ref.get_cog("JSON")
         #JSON_cog.load_all_data() 
@@ -1316,7 +1425,7 @@ class Chess_bot(commands.Cog, name="Chess"):
 bot_ref = None
 cog_ref = None
 
-async def setup(bot):
+async def setup(bot: commands.Bot):
 
     global bot_ref
     global cog_ref
@@ -1334,7 +1443,7 @@ async def setup(bot):
     #bot.add_cog(Chess_game(bot)) #do we want to actually have this be a *cog*, or just a helper class?
 
 #seems mostly useless since we can't call anything async
-def teardown(bot):
+def teardown(bot: commands.Bot):
     print('chess bot is being unloaded, saving data.')
     try:
         cog_ref.internal_save()

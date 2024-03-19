@@ -15,7 +15,8 @@ def bread_roll(
         roll_count = 1,
         user_account: account.Bread_Account = None,
         json_interface: bread_cog.JSON_interface = None
-    ):
+    ) -> dict:
+    """Calculates an entire set of bread rolls."""
 
     output = dict()
 
@@ -355,7 +356,8 @@ def loaf_roll(
         chess_piece_multiplier: float = 1,
         rare_bread_multiplier: float = 1,
         special_bread_multiplier: float = 1
-    ):
+    ) -> dict:
+    """Calculates a single loaf in a bread roll."""
 
     output = {}
     output["extra_profit"] = 0

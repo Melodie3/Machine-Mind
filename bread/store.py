@@ -37,23 +37,43 @@ class Store_Item:
     display_name = "Generic Item" # did you just say "generic excuse"??
 
     @classmethod
-    def cost(cls, user_account: account.Bread_Account) -> int:
+    def cost(
+            cls,
+            user_account: account.Bread_Account
+        ) -> int:
+        """The cost of this store item."""
         return 1000
 
     @classmethod
-    def get_price_description(cls, user_account: account.Bread_Account) -> str:
+    def get_price_description(
+            cls,
+            user_account: account.Bread_Account
+        ) -> str:
+        """Formatted version of the cost."""
         return f"{utility.smart_number(cls.cost(user_account))} dough"
     
     @classmethod
-    def description(cls, user_account: account.Bread_Account) -> str:
+    def description(
+            cls,
+            user_account: account.Bread_Account
+        ) -> str:
+        """The description of this store item."""
         return "A description"
 
     @classmethod
-    def max_level(cls, user_account: account.Bread_Account = None) -> typing.Optional[int]:
+    def max_level(
+            cls,
+            user_account: account.Bread_Account = None
+        ) -> typing.Optional[int]:
+        """The maximum allowed level for the given player."""
         return None
 
     @classmethod
-    def can_be_purchased(cls, user_account: account.Bread_Account) -> bool:
+    def can_be_purchased(
+            cls,
+            user_account: account.Bread_Account
+        ) -> bool:
+        """Whether the player can purchase this item. This does not need to include determining whether the player has the item(s) required (that is `.is_affordable_for()`.)"""
         level = user_account.get(cls.name) + 1
         if cls.max_level(user_account) is None:
             return True
@@ -64,14 +84,23 @@ class Store_Item:
                 return True
 
     @classmethod
-    def is_affordable_for(cls, user_account: account.Bread_Account) -> bool:
+    def is_affordable_for(
+            cls,
+            user_account: account.Bread_Account
+        ) -> bool:
+        """Whether the given player has the item(s) required to purchase this."""
         cost = cls.cost(user_account)
         if user_account.get_dough() >= cost:
             return True
         return False
 
     @classmethod
-    def do_purchase(cls, user_account: account.Bread_Account, amount:int = 1):
+    def do_purchase(
+            cls,
+            user_account: account.Bread_Account,
+            amount: int = 1
+        ) -> None:
+        """Purchases this store item for the given account."""
         level = user_account.get(cls.name) + 1
 
         # then we can purchase it
@@ -83,7 +112,12 @@ class Store_Item:
             user_account.increment(cls.name, amount)
 
     @classmethod
-    def get_cost_types(cls, user_account: account.Bread_Account, level: int = None):
+    def get_cost_types(
+            cls,
+            user_account: account.Bread_Account,
+            level: int = None
+        ) -> list[str]:
+        """Returns a list of all the unique items in this store item's cost."""
         return ["total_dough"]
         
 class Custom_price_item(Store_Item):
@@ -92,7 +126,11 @@ class Custom_price_item(Store_Item):
 
     #required
     @classmethod
-    def can_be_purchased(cls, user_account: account.Bread_Account) -> bool:
+    def can_be_purchased(
+            cls,
+            user_account: account.Bread_Account
+        ) -> bool:
+        """Whether this item can be purchased. This does not determine whether the player has the item(s) to purchase it, that is `.is_affordable_for()`."""
         level = user_account.get(cls.name) 
         if level >= cls.max_level(user_account):
             return False
@@ -100,7 +138,11 @@ class Custom_price_item(Store_Item):
 
     #required
     @classmethod
-    def get_price_description(cls, user_account: account.Bread_Account) -> str:
+    def get_price_description(
+            cls,
+            user_account: account.Bread_Account
+        ) -> str:
+        """Formatted and easier to read version of the cost."""
         # print(f"Price description called for level {user_account.get(cls.name)}")
         cost = cls.cost(user_account)
         output = ""
@@ -114,12 +156,20 @@ class Custom_price_item(Store_Item):
 
     #required
     @classmethod
-    def description(cls, user_account: account.Bread_Account) -> str:
+    def description(
+            cls,
+            user_account: account.Bread_Account
+        ) -> str:
+        """This item's description."""
         return "An item in the ascension shop"
 
     #required
     @classmethod
-    def do_purchase(cls, user_account: account.Bread_Account):
+    def do_purchase(
+            cls,
+            user_account: account.Bread_Account
+        ) -> None:
+        """Purchases this item for the given account."""
         cost = cls.cost(user_account)
 
         for pair in cost:
@@ -130,7 +180,11 @@ class Custom_price_item(Store_Item):
 
     #required
     @classmethod
-    def is_affordable_for(cls, user_account: account.Bread_Account) -> bool:
+    def is_affordable_for(
+            cls,
+            user_account: account.Bread_Account
+        ) -> bool:
+        """Determines whether the given account has the item(s) required to purchase this item."""
         cost = cls.cost(user_account)
         for pair in cost:
             if user_account.get(pair[0]) < pair[1]:
@@ -139,13 +193,21 @@ class Custom_price_item(Store_Item):
 
     #optional
     @classmethod
-    def max_level(cls, user_account: account.Bread_Account = None) -> typing.Optional[int]:
+    def max_level(
+            cls,
+            user_account: account.Bread_Account = None
+        ) -> typing.Optional[int]:
+        """Returns the maximum allowed level of this item for the given account."""
         costs = cls.get_costs()
         return len(costs) - 1
 
     #optional
     @classmethod
-    def cost(cls, user_account: account.Bread_Account) -> int:
+    def cost(
+            cls,
+            user_account: account.Bread_Account
+        ) -> list[tuple[typing.Union[values.Emote, str], int]]:
+        """Returns the cost of this item for the next tier, according to the amount the given account already has."""
         level = user_account.get(cls.name)
         costs = cls.get_costs()
         return costs[level + 1]
@@ -153,13 +215,19 @@ class Custom_price_item(Store_Item):
     #required for subclasses
     @classmethod
     def get_costs(cls):
-        costs = [
+        """Returns a list of lists of tuples, representing the costs of different tiers of this item."""
+        return [
             [],
             [(values.gem_red.text, 1), ("total_dough", 1000)],
         ]
 
     @classmethod
-    def get_cost_types(cls, user_account: account.Bread_Account, level: int = None):
+    def get_cost_types(
+            cls,
+            user_account: account.Bread_Account,
+            level: int = None
+        ) -> list[typing.Union[str, values.Emote]]:
+        """Returns a list of all the unique items in this store item's cost."""
         if level is None: 
             level = user_account.get(cls.name)
 

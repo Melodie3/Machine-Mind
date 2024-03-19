@@ -2,8 +2,10 @@ import random
 import math
 import typing
 import discord
+from discord.ext import commands
 
 def smart_number(number: int) -> str:
+    """Adds commas to the given number, and returns the output."""
     shrink_large_numbers = False
     if shrink_large_numbers is False:
         return f"{number:,}"
@@ -33,7 +35,8 @@ def smart_number(number: int) -> str:
             return f"{fraction:.2f} {marker}"
 
 
-def write_number_of_times(number):
+def write_number_of_times(number: int) -> str:
+    """Returns the number of times something has occurred corresponding to the given number. So if 3 is passed it'll return '3 times', but if 1 is passed it will return 'once'."""
     if type(number) is str:
         number = int(number)
     if number == 0:
@@ -45,7 +48,11 @@ def write_number_of_times(number):
     else:
         return smart_number(number) + " times"
 
-def write_count(number: int, word: str) -> str:
+def write_count(
+        number: int,
+        word: str
+    ) -> str:
+    """Writes the count of a number and word, and will pluralize the word if the number is not 1."""
     if number == 1:
         pass
     else:
@@ -53,7 +60,11 @@ def write_count(number: int, word: str) -> str:
     output = smart_number(number) + " " + word
     return output
 
-def array_subtract(array1, array2):
+def array_subtract(
+        array1: list,
+        array2: list
+    ) -> list:
+    """Subtracts one list from another by returning all the items in array1 that are not in array2."""
     #return [x for x in array1 if x not in array2]
     output = list()
     output.extend(array1)
@@ -71,7 +82,12 @@ def array_subtract(array1, array2):
             #this is subtly different, but it means that duplicate members are only removed one at a time
     return output
 
-def dict_subtract(dict1, dict2):
+def dict_subtract(
+        dict1: dict,
+        dict2: dict
+    ) -> dict:
+    """Subtracts one dictionary from another by returning a dict containing all the keys and values of dict1, subtraced by the same keys in dict2.
+    Via this subtraction, if a value goes less than or equal to 0 it will be removed."""
     output = dict()
     output.update(dict1)
     for key in dict2:
@@ -82,7 +98,12 @@ def dict_subtract(dict1, dict2):
     return output
 
 
-def increment(dictionary: dict, key, amount: int =1) -> dict:
+def increment(
+        dictionary: dict,
+        key: str,
+        amount: int = 1
+    ) -> dict:
+    """Increments a key in a dictionary by the given amount."""
     if key in dictionary:
         dictionary[key] += amount
     else:
@@ -90,7 +111,8 @@ def increment(dictionary: dict, key, amount: int =1) -> dict:
     return dictionary
 
 # returns a random number between 0 and 1, biased towards the edges
-def rand_sigmoid(x: typing.Optional[int] = None):
+def rand_sigmoid(x: typing.Optional[int] = None) -> float:
+    """Returns a random number between 0 and 1, but biased towards the edges."""
     if x is None:
         x = random.uniform(-1, 1)
     else:
@@ -110,7 +132,8 @@ def rand_sigmoid(x: typing.Optional[int] = None):
     return output
 
 #returns a random number between 0 and 1, biased towards the middle
-def rand_logit(x: typing.Optional[int] = None):
+def rand_logit(x: typing.Optional[int] = None) -> float:
+    """Returns a random number between 0 and 1, but biased towards the middle."""
     if x is None:
         x = random.uniform(0, 1)
     
@@ -133,10 +156,21 @@ def rand_logit(x: typing.Optional[int] = None):
 
     return remap(output, -1, 1, 0, 1)
 
-def remap(x, in_min, in_max, out_min, out_max):
+def remap(
+        x: typing.Union[int, float],
+        in_min: typing.Union[int, float],
+        in_max: typing.Union[int, float],
+        out_min: typing.Union[int, float],
+        out_max: typing.Union[int, float]
+    ) -> float:
+  """Remaps a number between a min and max to a different min and max."""
   return (x - in_min) * (out_max - out_min) / (in_max - in_min) + out_min
 
-def normalize_array_to_ints(array: list, target_total:int = 1000) -> list:
+def normalize_array_to_ints(
+        array: list,
+        target_total: int = 1000
+    ) -> list[int]:
+    """Normalizes a list to shift the total value to the target total."""
     total = sum(array)
     if total == 0:
         return array
@@ -147,6 +181,7 @@ def normalize_array_to_ints(array: list, target_total:int = 1000) -> list:
 
 
 def contains_ping(string: str) -> bool:
+    """Returns a boolean for whether a given string contains a ping."""
     if "<@" in string:
         return True
     elif "@everyone" in string:
@@ -157,13 +192,21 @@ def contains_ping(string: str) -> bool:
         return False
 
 def sanitize_ping(string: str) -> str:
+    """Returns the input string but with invisible characters (U+200B) placed to avoid pings."""
     output = string.replace("@everyone", "@\u200beveryone")
     output = output.replace("@here", "@\u200bhere")
     output = output.replace("<@", "<@\u200b")
     return output
 
 # this will first try a regular reply, and if that fails, it will send it as a plain message with a mention
-async def smart_reply(ctx, message: str, ping_reply: bool = True):
+async def smart_reply(
+        ctx: commands.Context,
+        message: str,
+        ping_reply: bool = True
+    ) -> typing.Optional[discord.Message]:
+    """Attempts to reply nromally, then if that fails tries to send it as a plain message with a ping.
+    
+    Will abide by the ping reply parameter."""
     if message == "" or message is None:
         return None
         
@@ -188,6 +231,7 @@ def plot_line(
         start: tuple[int, int],
         end: tuple[int, int]
     ) -> list[tuple[int, int]]:
+    """Plots a line between two points. Returns a list of points that make the line, in order."""
     points = []
 
     x1, y1 = start

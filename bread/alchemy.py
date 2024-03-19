@@ -1,4 +1,5 @@
 import bread.values as values
+import typing
 
 #recipes = {}
 
@@ -744,7 +745,13 @@ recipes = {
 }       
 """
 
-def alchemy(target_item, item1, item2, item3):
+def alchemy(
+        target_item: values.Emote,
+        item1: typing.Any, # I have no idea what types these were supposed to be.
+        item2: typing.Any,
+        item3: typing.Any
+    ) -> None:
+    """Unfinished alchemy function. Does nothing."""
     target_name = target_item.name.lower()
     if target_name in recipes.keys():
         target_recipes = recipes[target_name]
@@ -754,7 +761,8 @@ def alchemy(target_item, item1, item2, item3):
 
     pass
 
-def describe_individual_recipe(recipe):
+def describe_individual_recipe(recipe: dict) -> str:
+    """Describes a recipe, as taken from the full recipes dict."""
     output = ""
     for i in range(len(recipe["cost"])):
     #for pair in recipe:

@@ -102,6 +102,7 @@ class SystemTile:
     
     # Optional for subclasses.
     def tile_seed(self: typing.Self) -> str:
+        """Generates a string with multiple parts, all relating to this tile's position."""
         return f"{self.galaxy_seed}{self.galaxy_xpos}{self.galaxy_ypos}{self.system_xpos}{self.system_ypos}"
     
     ###############################################################################
@@ -109,11 +110,8 @@ class SystemTile:
     
     # Should be overwitten by subclasses.
     def get_emoji(self: typing.Self) -> str:
+        """Returns an emoji that represents this tile."""
         return map_emojis.get("empty")
-
-    # Should be overwitten by subclasses.
-    def get_priority_item(self: typing.Self) -> typing.Union[values.Emote, str, None]:
-        return None
         
         
 
@@ -322,7 +320,8 @@ class SystemPlanet(SystemTile):
 
         return result
     
-    def get_priority_item(self: typing.Self) -> typing.Union[values.Emote, str, None]:        
+    def get_priority_item(self: typing.Self) -> typing.Union[values.Emote, str, None]:
+        """Returns the item or category that is prioritized by this planet."""
         if self.planet_type.text == values.anarchy_chess.text:
             return self.planet_type.name
         
@@ -335,7 +334,7 @@ class SystemPlanet(SystemTile):
         elif self.planet_type in values.chess_pieces_black:
             return "chess_piece"
         
-        elif self.planet_type in values.rare_breads:
+        elif self.planet_type in values.all_rare_breads:
             return "rare_bread"
         
         elif self.planet_type in values.all_special_breads:
@@ -725,7 +724,7 @@ def get_corruption_chance(
     """Returns the chance of a loaf becoming corrupted for any point in the galaxy. Between 0 and 1."""
     dist = math.hypot(xpos, ypos)
 
-    # The band where the chance is 0 is between 72.844 and 91.850.
+    # The band where the chance is 0 is between 80 and 87.774.
     if 80 <= dist <= 87.774:
         return 0.0
 
@@ -1055,6 +1054,7 @@ def system_map(
 ###################################################################################################################################
     
 def generate_galaxy_seed() -> str:
+    """Generates a random new galaxy seed."""
     return "{:050x}".format(random.randrange(16 ** 64)) # Random 64 digit hexadecimal number.
 
 def get_galaxy_coordinate(
@@ -1341,7 +1341,8 @@ def create_trade_hub(
         galaxy_y: int,
         system_x: int,
         system_y: int
-    ):
+    ) -> None:
+    """Creates a new trade hub in the given system."""
     guild_id = user_account.get("guild_id")
 
     ascension_data = json_interface.get_space_ascension(ascension_id=user_account.get_prestige_level(), guild=guild_id)
@@ -1372,6 +1373,7 @@ def get_trade_hub_projects(
         galaxy_x: int,
         galaxy_y: int
     ) -> list[dict[str, typing.Union[projects.Project, int, str, bool]]]:
+    """Returns a list of dictionaries, where each dictionary is a project on the given galaxy tile."""
     prestige_level = user_account.get_prestige_level()
     guild_id = user_account.get("guild_id")
     seed = json_interface.get_ascension_seed(prestige_level, guild_id)
@@ -1435,6 +1437,7 @@ def get_spawn_location(
         json_interface: bread_cog.JSON_interface,
         user_account: account.Bread_Account
     ) -> tuple[int, int]:
+    """Returns a 2D tuple of the spawn location in the galaxy the given player is in."""
     seed = json_interface.get_ascension_seed(
         ascension_id = user_account.get_prestige_level(),
         guild = user_account.get("guild_id")
@@ -1447,6 +1450,7 @@ def get_move_cost_galaxy(
         start_position: tuple[int, int],
         end_position: tuple[int, int]
     ) -> int:
+    """Calculates the fuel cost to move between two points on the galaxy map."""
     points = utility.plot_line(
         start = start_position,
         end = end_position
@@ -1476,6 +1480,7 @@ def get_move_cost_system(
         start_position: tuple[int, int],
         end_position: tuple[int, int]
     ) -> int:
+    """Calculates the fuel cost to move between two points on the system map."""
     points = utility.plot_line(
         start = start_position,
         end = end_position
@@ -1491,6 +1496,7 @@ def allowed_gifting(
         player_1: account.Bread_Account,
         player_2: account.Bread_Account
     ) -> bool:
+    """Determines whether a gift can be sent between two players."""
     p1_location = player_1.get_galaxy_location(json_interface=json_interface)
     p2_location = player_2.get_galaxy_location(json_interface=json_interface)
 

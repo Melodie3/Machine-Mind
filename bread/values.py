@@ -12,7 +12,31 @@ class Emote:
     attributes = []
     name = None
 
-    def __init__(self, text, value=0, name=None, emoji=None, attributes=[], awards_value=False, alchemy_value=None, giftable=True, alternate_names=[]):
+    def __init__(
+            self: typing.Self,
+            text: str,
+            value: int = 0,
+            name: str = None,
+            emoji: str = None,
+            attributes: list[str] = [],
+            awards_value: bool = False,
+            alchemy_value: typing.Optional[int] = None,
+            giftable: bool = True,
+            alternate_names: list[str] = []
+        ) -> None:
+        """Object that represents an Emote.
+
+        Args:
+            text (str): The emoji text. Something like ":bread:" or "<:anarchy_chess:960772054746005534>".
+            value (int, optional): The dough value of this when rolled. Defaults to 0.
+            name (str, optional): The name of this emote. Defaults to None.
+            emoji (str, optional): The emoji character of this, if it has one. Defaults to None.
+            attributes (list[str], optional): A list of attributes for this emote. Defaults to [].
+            awards_value (bool, optional): Whether this emote awards its value when alchemized. Defaults to False.
+            alchemy_value (typing.Optional[int], optional): The value of this emote in alchemy. Defaults to None.
+            giftable (bool, optional): Whether this emote can be gifted. Defaults to True.
+            alternate_names (list[str], optional): A list of alternate names for this emote. Defaults to [].
+        """
         self.text = text
         self.value = value
         self.name = name
@@ -24,7 +48,7 @@ class Emote:
             self.alchemy_value = value
         self.alternate_names = alternate_names
 
-    def __str__(self):
+    def __str__(self: typing.Self) -> str:
         if self.name is not None:
             return f"<Emote: {self.name}>"
         elif self.text is not None:
@@ -32,16 +56,18 @@ class Emote:
         else:
             return "<Emote object>"
     
-    def __repr__(self):
+    def __repr__(self: typing.Self) -> str:
         return self.__str__()
 
-    def gives_alchemy_award(self):
-        if hasattr (self, "awards_value"):
+    def gives_alchemy_award(self: typing.Self) -> bool:
+        """Whether this emote awards its value when alchemized."""
+        if hasattr(self, "awards_value"):
             return self.awards_value
         else:
             return False
 
-    def get_alchemy_value(self):
+    def get_alchemy_value(self: typing.Self) -> int:
+        """The value of this item when alchemized."""
         if self.gives_alchemy_award():
             if hasattr (self, "alchemy_value"):
                 return self.alchemy_value
@@ -50,13 +76,18 @@ class Emote:
         else:
             return 0
 
-    def get_representation(self, guild_id):
+    def get_representation(
+            self: typing.Self,
+            guild_id: int
+        ) -> str:
+        """The representation of this emote."""
         if self.emoji is not None:
             return self.emoji
         else:
             return self.text
 
-    def can_be_gifted(self):
+    def can_be_gifted(self: typing.Self) -> bool:
+        """Whether this item can be gifted."""
         if hasattr(self, "giftable"):
             return self.giftable
         else:
@@ -320,7 +351,21 @@ all_uniques =       [anarchy, anarchy_chess, horsey, holy_hell, chessatron, omeg
 ##################### CHESS
 
 class Chess_Emote(Emote):
-    def __init__(self, name, text, isWhite, alternate_names=[]):
+    def __init__(
+            self: typing.Self,
+            name: str,
+            text: str,
+            isWhite: bool,
+            alternate_names: list[str] = []
+        ) -> None:
+        """An object that represents a chess piece.
+
+        Args:
+            name (str): The name of this emote.
+            text (str): The text representation.
+            isWhite (bool): Whether this piece is a white chess piece.
+            alternate_names (list[str], optional): A list of alternate names for this emote. Defaults to [].
+        """
         self.text = text
         self.name = name
         if isWhite:
@@ -484,7 +529,15 @@ class Anarchy_Piece_Emote(Emote):
             text: str,
             isWhite: bool,
             alternate_names: list[str] = []
-        ):
+        ) -> None:
+        """An object that represents an anarchy piece.
+
+        Args:
+            name (str): The name of this emote.
+            text (str): The text representation.
+            isWhite (bool): Whether this piece is a white anarchy piece.
+            alternate_names (list[str], optional): A list of alternate names for this emote. Defaults to [].
+        """
         self.text = text
         self.name = name
         if isWhite:
@@ -606,7 +659,25 @@ anarchy_pieces_white = [anarchy_white_pawn, anarchy_white_rook, anarchy_white_bi
 ##################### SHINIES
 
 class Shiny_Emote(Emote):
-    def __init__(self, name, text, value, awards_value=False, alchemy_value=None, alternate_names=[]):
+    def __init__(
+            self: typing.Self,
+            name: str,
+            text: str,
+            value: int,
+            awards_value: bool = False,
+            alchemy_value: int = None,
+            alternate_names: list[str] = []
+        ) -> None:
+        """An object representing a shiny emote (a gem)
+
+        Args:
+            name (str): The name of this emote.
+            text (str): The text representation of this emote.
+            value (int): The value of this emote in rolling and alchemy.
+            awards_value (bool, optional): Whether this emote awards its value when alchemized. Defaults to False.
+            alchemy_value (int, optional): Specific value to award when alchemized. Defaults to None.
+            alternate_names (list[str], optional): A list of alternate names for this emote. Defaults to [].
+        """
         self.text = text
         self.name = name
         self.attributes = ["shiny"]
@@ -907,6 +978,7 @@ all_emotes = [normal_bread,
     ] + all_chess_pieces + all_anarchy_pieces + misc_emotes + misc_bread_emotes + all_uniques + all_shinies + shadow_emotes
 
 def get_emote(text: str) -> typing.Optional[Emote]:
+    """Returns an Emote object if the given text represents that emote, or None if no emote matches."""
     # return None
 
     text = text.lower()
@@ -936,7 +1008,8 @@ def get_emote(text: str) -> typing.Optional[Emote]:
     return None
 
 
-def get_emote_text(text: str):
+def get_emote_text(text: str) -> str:
+    """Returns the emote text of an emote that is represented by the given string."""
     emote = get_emote(text)
     if emote is not None:
         return emote.text
@@ -944,6 +1017,7 @@ def get_emote_text(text: str):
         return None
 
 def extract_emote_from_text(text: str) -> typing.Optional[Emote]:
+    """Extracts a single emote from a piece of text."""
     text = text.lower()
     for emote in all_emotes:
         if (emote.emoji is not None):

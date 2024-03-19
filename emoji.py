@@ -1,5 +1,7 @@
 # emoji.py
 
+import typing
+
 golden_brick = "<:brick_gold:971239215968944168>"
 
 
@@ -148,7 +150,8 @@ amogus = "<:sus:961517169424883722>"
 all_default_emoji = all_breads + rare_breads 
 
 
-def get_named_emoji(name: str):
+def get_named_emoji(name: str) -> typing.Optional[str]:
+    """Returns the emoji matching the given text."""
 
     #check for an emoji conversion
     #we do this first because a single char emoji isn't long enough for later checks

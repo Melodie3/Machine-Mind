@@ -1,4 +1,5 @@
 from discord.ext import commands
+import typing
 
 
 
@@ -11,13 +12,18 @@ class Bootstrap_cog(commands.Cog, name="Bootstrap"):
 
     bot_ref = None
 
-    async def _load_all_modules(self):
+    async def _load_all_modules(self: typing.Self) -> None:
+        """Loads all extensions."""
         print("Extensions are: "+str(self.extensions))
         for extension in self.extensions:
             await self._load_internal(extension)
             #bot_ref.load_extension(extension)
 
-    async def _load_internal(self, extension):
+    async def _load_internal(
+            self: typing.Self,
+            extension: str
+        ) -> None:
+        """Loads an extension from the name of it as a string."""
         print("Loading " + extension + "...")
         if (extension not in self.extensions):
             print("This extension has not been seen before.")
@@ -137,7 +143,7 @@ async def reload(ctx):
 
 
 
-async def setup(bot):
+async def setup(bot: commands.Bot):
     print("Setting up Bootstrap Cog")
     cog = Bootstrap_cog(bot)
     cog.bot_ref = bot

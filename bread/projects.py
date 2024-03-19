@@ -14,6 +14,7 @@ import bread.utility as utility
 import bread.store as store
 
 def hash_args(*args) -> str:
+    """Converts a list of args into a string, and then returns the SHA-256 hash of it."""
     return hashlib.sha256("".join([str(arg) for arg in args]).encode()).digest()
 
 
@@ -28,6 +29,7 @@ class Project:
             system_tile: space.SystemTradeHub,
             completed: bool = False
         ) -> str:
+        """Returns a string that represents this project, it includes the name and description, as well as some text if the project has been completed."""
         name = cls.name(day_seed, system_tile)
         description = cls.description(day_seed, system_tile)
 
@@ -43,6 +45,7 @@ class Project:
             day_seed: str,
             system_tile: space.SystemTradeHub
         ) -> str:
+        """The project's name, this should be based on the day seed, and return the same thing with the same day seed and system tile."""
         return "Project name"
 
     # Required for subclasses.
@@ -52,6 +55,7 @@ class Project:
             day_seed: str,
             system_tile: space.SystemTradeHub
         ) -> str:
+        """The project's description, this should be based on the day seed, and return the same thing with the same day seed and system tile."""
         return "Project description"
 
     # Required for subclasses.
@@ -61,6 +65,7 @@ class Project:
             day_seed: str,
             system_tile: space.SystemTradeHub
         ) -> str:
+        """The project's completion text, this is sent when the project is completed. This should be based on the day seed, and return the same thing with the same day seed and system tile."""
         return "Project completion"
     
     # Required for subclasses.
@@ -70,6 +75,7 @@ class Project:
             day_seed: str,
             system_tile: space.SystemTradeHub
         ) -> list[tuple[str, int]]:
+        """The cost of this project, this should be based on the day seed, and return the same thing with the same day seed and system tile."""
         return [(values.gem_red.text, 100), ("total_dough", 200)]
     
     # Required for subclasses.
@@ -79,6 +85,7 @@ class Project:
             day_seed: str,
             system_tile: space.SystemTradeHub
         ) -> list[tuple[str, int]]:
+        """The reward for completing this project, this should be based on the day seed, and return the same thing with the same day seed and system tile."""
         return [(values.gem_red.text, 100), ("total_dough", 200)]
 
     # Optional for subclasses.
@@ -89,6 +96,7 @@ class Project:
             system_tile: space.SystemTradeHub,
             user_account: account.Bread_Account
         ) -> None:
+        """This subtracts all the cost items from a single user account."""
         cost = cls.get_cost(day_seed, system_tile)
 
         for pair in cost:
@@ -102,6 +110,7 @@ class Project:
             system_tile: space.SystemTradeHub,
             user_account: account.Bread_Account
         ) -> bool:
+        """Returns a boolean for whether a single user account has all the items required for the cost."""
         cost = cls.get_cost(day_seed, system_tile)
 
         for pair in cost:
@@ -117,6 +126,7 @@ class Project:
             day_seed: str,
             system_tile: space.SystemTradeHub
         ) -> str:
+        """Formatted version of the cost in a string."""
         cost = cls.get_cost(day_seed, system_tile)
 
         output = ""
@@ -136,6 +146,7 @@ class Project:
             day_seed: str,
             system_tile: space.SystemTradeHub
         ) -> str:
+        """Formatted version of the reward in a string."""
         reward = cls.get_reward(day_seed, system_tile)
 
         output = ""
@@ -155,6 +166,7 @@ class Project:
             day_seed: str,
             system_tile: space.SystemTradeHub
         ) -> int:
+        """Sums up all the required items into a single number."""
         cost = cls.get_cost(day_seed, system_tile)
 
         return sum([pair[1] for pair in cost])
@@ -167,6 +179,7 @@ class Project:
             system_tile: space.SystemTradeHub,
             progress_data: dict[str, dict[str, list[tuple[str, int]]]]
         ) -> int:
+        """Uses the given project data to determine the number of items collected."""
         cost_sum = cls.total_items_required(day_seed, system_tile)
 
         remaining = cls.get_remaining_items(day_seed, system_tile, progress_data)
@@ -181,6 +194,7 @@ class Project:
             system_tile: space.SystemTradeHub,
             progress_data: dict[str, dict[str, list[tuple[str, int]]]]
         ) -> float:
+        """Returns a float representing this the percentage of items contributed to this project. Will be between 0 and 1."""
         cost_sum = cls.total_items_required(day_seed, system_tile)
 
         remaining = cls.get_remaining_items(day_seed, system_tile, progress_data)
@@ -197,6 +211,7 @@ class Project:
             system_tile: space.SystemTradeHub,
             progress_data: dict[str, dict[str, list[tuple[str, int]]]]
         ) -> dict[str, int]:
+        """Returns a dict containing the amount of each item remaining."""
         """
         {
             "completed": False,
@@ -230,6 +245,7 @@ class Project:
             system_tile: space.SystemTradeHub,
             progress_data: dict[str, dict[str, list[tuple[str, int]]]]
         ) -> str:
+        """Formatted version of the remaining items in a string."""
         remaining = cls.get_remaining_items(day_seed, system_tile, progress_data)
 
         output = []

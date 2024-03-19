@@ -169,7 +169,9 @@ all_stonks = main_stonks + shadow_stonks
 ############   ASSIST FUNCTIONS  ###################
 ####################################################
 
-def get_channel_permission_level(ctx):
+def get_channel_permission_level(ctx: commands.Context):
+    """Returns the permission level for the channel the context was invoked in.
+    This will handle threads as well."""
     # print (f"getting channel permission level for {ctx.channel.name}")
     # first, can only roll in channels and not in threads
     if isinstance(ctx.channel, discord.threads.Thread):
@@ -185,44 +187,61 @@ def get_channel_permission_level(ctx):
     return permission_level
 
 def get_id_from_guild(guild: typing.Union[discord.Guild, int, str]) -> str:
-    if type(guild) is int:
-        guild_id = str(guild)
-    elif type(guild) is discord.Guild:
-        guild_id = str(guild.id)
-    elif type(guild) is str:
-        guild_id = guild
-    return guild_id
+    """Takes in a guild, integer or string and returns the guild id as a string."""
+    if isinstance(guild, int):
+        return str(guild)
+    elif isinstance(guild, discord.Guild):
+        return str(guild.id)
+    elif isinstance(guild, str):
+        return guild
+    else:
+        # If nothing fires, raise a TypeError.
+        raise TypeError(f"Incorrect guild type passed. Was expecting discord.Guild, int, or str, not {type(guild)}")
 
 def get_guild_from_id(guild_id: typing.Union[discord.Guild, int, str]) -> discord.Guild:
+    """Gets a discord.Guild object for the given guild id."""
     guild_id = get_id_from_guild(guild_id)
     return bot_ref.get_guild(int(guild_id))
 
 def get_name_from_guild(guild: typing.Union[discord.Guild, int, str]) -> str:
-    guild_id = get_id_from_guild(guild)
-    guild_object = bot_ref.get_guild(int(guild_id))
+    """Gets the a guild's name from a discord.Guild, int, or str object."""
+    guild_object = get_guild_from_id(guild)
 
     # If the bot doesn't have access to this guild (like if it got kicked), then guild will be None.
     if guild_object is None:
-        return f"<unknown guild {guild}>"
+        return f"<Unknown guild {guild}>"
     
     return guild_object.name
 
-def get_display_name(member):
+def get_id_from_user(user: typing.Union[discord.Member, int, str]) -> str:
+    """Takes in a member, integer or string and returns the member id as a string."""
+    if isinstance(user, int):
+        return str(user)
+    elif isinstance(user, discord.Member):
+        return str(user.id)
+    elif isinstance(user, str):
+        return user
+    else:
+        # If nothing fires, raise a TypeError.
+        raise TypeError(f"Incorrect user type passed. Was expecting discord.Member, int, or str, not {type(user)}")
+
+def get_display_name(member: discord.Member) -> str:
+    """Gets the display name of a discord.Member object."""
     return (member.global_name if (member.global_name is not None and member.name == member.display_name) else member.display_name)
 
-def parse_int(argument) -> int:
+def parse_int(argument: str) -> int:
     """Converts an argument to an integer, will remove commas along the way."""
     return int(str(argument).replace(",", ""))
 
-def is_digit(string) -> bool:
+def is_digit(string: str) -> bool:
     """Same as str.isdigit(), but will remove commas first."""
     return str(string).replace(",", "").isdigit()
 
-def is_numeric(string) -> bool:
+def is_numeric(string: str) -> bool:
     """Same as str.isnumeric(), but will remove commas first."""
     return str(string).replace(",", "").isnumeric()
 
-def is_decimal(string) -> bool:
+def is_decimal(string: str) -> bool:
     """Same as str.isdecimal(), but will remove commas first."""
     return str(string).replace(",", "").isdecimal()
 
@@ -272,7 +291,8 @@ class JSON_interface:
     ####################################
     #####      FILE STUFF
 
-    def internal_load(self):
+    def internal_load(self: typing.Self) -> None:
+        """Loads the Bread Game data from the JSON cog into the interface storage."""
         print("Bread JSON internal_load called")
 
 
@@ -296,7 +316,11 @@ class JSON_interface:
         print("Load process complete.")
 
     
-    def internal_save(self, JSON_cog = None):
+    def internal_save(
+            self: typing.Self,
+            JSON_cog = None
+        ) -> None:
+        """Saves the data in the interface storage to file via the JSON cog."""
         print("saving bread data")
         if JSON_cog is None:
             JSON_cog = bot_ref.get_cog("JSON")
@@ -310,7 +334,9 @@ class JSON_interface:
         
         
 
-    def create_backup(self):
+    def create_backup(self: typing.Self) -> None:
+        """Creates a backup of the interface storage.
+        The JSON cog's create_backup function is preferred over this, as this will only save the bread data."""
         #first, make sure there's a backup folder (relative path)
         folder_path = "backup/"
         if not os.path.exists(folder_path):
@@ -330,18 +356,17 @@ class JSON_interface:
     ####################################
     #####      INTERFACE
 
-    def get_account(self, user:typing.Union[discord.Member, int, str], guild: typing.Union[discord.Guild, int, str]) -> account.Bread_Account:
+    def get_account(
+            self: typing.Self,
+            user: typing.Union[discord.Member, int, str],
+            guild: typing.Union[discord.Guild, int, str]
+        ) -> account.Bread_Account:
+        """Returns an account.Bread_Account object representing the given user's account in the bread data."""
         if guild is None:
-            raise ValueError("Guild cannot be None")        
+            raise TypeError("Guild cannot be None")        
         
+        index = get_id_from_user(user)
         guild_id = get_id_from_guild(guild)
-
-        if type(user) is int:
-            index = str(user)
-        elif type(user) is discord.Member:
-            index = str(user.id)
-        else:
-            index = str(user)
 
         # if index in self.accounts:
         #     return self.accounts[index]
@@ -350,28 +375,36 @@ class JSON_interface:
         return account_raw
         
 
-    def set_account(self, user:typing.Union[discord.Member, int, str], user_account: account.Bread_Account, guild: typing.Union[discord.Guild, int, str]):
+    def set_account(
+            self: typing.Self,
+            user: typing.Union[discord.Member, int, str],
+            user_account: account.Bread_Account,
+            guild: typing.Union[discord.Guild, int, str]
+        ) -> None:
+        """Updates the bread data for a player based on an account.Bread_Account object."""
         if guild is None:   
-            raise ValueError("Guild cannot be None")
+            raise TypeError("Guild cannot be None")
         
-        if type(user) is int:
-            index = str(user)
-        elif type(user) is discord.Member:
-            index = str(user.id)
-        else:
-            index = str(user)
-
+        index = get_id_from_user(user)
         guild_id = get_id_from_guild(guild)
 
         # self.accounts[index] = user_account
         self.data[guild_id][index] = user_account.to_dict()
 
-    def has_account(self, user:discord.Member) -> bool:
+    def has_account(
+            self: typing.Self,
+            user: discord.Member
+        ) -> bool:
+        """Returns a boolean for whether the given member object has an account in the bread data."""
         index = str(user.id)
         guild = str(user.guild.id)
         return index in self.data[guild]
 
-    def get_all_user_accounts(self, guild: typing.Union[discord.Guild, int, str]) -> list:
+    def get_all_user_accounts(
+            self: typing.Self,
+            guild: typing.Union[discord.Guild, int, str]
+        ) -> list[account.Bread_Account]:
+        """Returns a list containing all user accounts."""
         guild_id = get_id_from_guild(guild)
         
         #return [account.Bread_Account.from_dict(index, self.data["bread"][index]) for index in self.data["bread"]]
@@ -382,7 +415,8 @@ class JSON_interface:
             # yield account.Bread_Account.from_dict(index, self.data["bread"][index])
         return output
 
-    def get_list_of_all_guilds(self) -> list:
+    def get_list_of_all_guilds(self: typing.Self) -> list[str]:
+        """Returns a list of all the guilds in the bread data."""
         return list(self.all_guilds)
     
     ####################################
@@ -392,6 +426,7 @@ class JSON_interface:
             self: typing.Self,
             guild: typing.Union[discord.Guild, int, str]
         ) -> dict:
+        """Returns the `space` custom file."""
         return self.get_custom_file("space", guild=guild)
     
     def get_space_ascension(
@@ -400,6 +435,7 @@ class JSON_interface:
             guild: typing.Union[discord.Guild, int, str],
             default: typing.Any = dict()
         ) -> dict:
+        """Returns the space data for the given ascension."""
         space_data = self.get_space_data(guild=guild)
 
         return space_data.get(f"ascension_{ascension_id}", default)
@@ -409,6 +445,7 @@ class JSON_interface:
             ascension_id: typing.Union[int, str],
             guild: typing.Union[discord.Guild, int, str]
         ) -> str:
+        """Returns an ascension's seed, while creating one if it does not exist yet."""
         ascension_data = self.get_space_ascension(ascension_id, guild)
 
         if "seed" in ascension_data.keys():
@@ -437,6 +474,7 @@ class JSON_interface:
             guild: typing.Union[discord.Guild, int, str],
             galaxy_seed: str
         ) -> typing.Union[int, None]:
+        """Returns an integer (or None if nothing is found) for the ascension id that matches the given seed."""
         space_data = self.get_space_data(guild=guild)
 
         for key, value in space_data.items():
@@ -448,11 +486,11 @@ class JSON_interface:
         
         return None
 
-    
     def get_day_seed(
             self: typing.Self,
             guild: typing.Union[discord.Guild, int, str]
-        ):
+        ) -> str:
+        """Returns the day seed for the given guild in Bread Space."""
         space_data = self.get_space_data(guild=guild)
 
         return space_data.get("day_seed", "31004150_will_rule_the_world")
@@ -481,6 +519,7 @@ class JSON_interface:
             galaxy_y: int,
             new_data: dict
         ) -> None:
+        """Sets the data for a trade hub to the given dictionary."""
         space_data = self.get_space_data(guild)
 
         ascension_data = space_data.get(f"ascension_{ascension}", {})
@@ -500,7 +539,8 @@ class JSON_interface:
             galaxy_x: int,
             galaxy_y: int,
             new_data: dict
-        ):
+        ) -> None:
+        """Updates the progress of a trade hub's levelling to the given dictionary."""
         existing = self.get_trade_hub_data(guild, ascension, galaxy_x, galaxy_y)
 
         existing["level_progress"] = new_data
@@ -522,7 +562,8 @@ class JSON_interface:
             galaxy_y: int,
             project_id: int, # Should be between 1 and 3.
             new_data: dict
-        ):
+        ) -> None:
+        """Updates the data regarding a project's progress to the given dictionary."""
         space_data = self.get_space_data(guild)
 
         ascension_data = space_data.get(f"ascension_{ascension}", {})
@@ -550,7 +591,12 @@ class JSON_interface:
     ####################################
     #####      INTERFACE NICHE
 
-    def get_custom_file(self, label:str, guild: typing.Union[discord.Guild, int, str]):
+    def get_custom_file(
+            self: typing.Self,
+            label: str,
+            guild: typing.Union[discord.Guild, int, str]
+        ) -> dict:
+        """Returns the specific data for the given custom file."""
         guild_id = get_id_from_guild(guild)
 
         if label in self.data[guild_id]:
@@ -558,12 +604,22 @@ class JSON_interface:
         else:
             return dict()
 
-    def set_custom_file(self, label:str, file_data:dict, guild: typing.Union[discord.Guild, int, str]):
+    def set_custom_file(
+            self: typing.Self,
+            label: str,
+            file_data: dict,
+            guild: typing.Union[discord.Guild, int, str]
+        ) -> None:
+        """Sets a custom file to the given dictionary."""
         guild_id = get_id_from_guild(guild)
 
         self.data[guild_id][label] = file_data
 
-    def get_guild_info(self, guild: typing.Union[discord.Guild, int, str]) -> dict:
+    def get_guild_info(
+            self: typing.Self,
+            guild: typing.Union[discord.Guild, int, str]
+        ) -> dict:
+        """Returns the data for a specific guild."""
         guild_id = get_id_from_guild(guild)
         if "guild_info" not in self.data[guild_id].keys():
             self.data[guild_id]["guild_info"] = dict()
@@ -574,11 +630,20 @@ class JSON_interface:
 
         return self.data[guild_id]["guild_info"]
 
-    def set_guild_info(self, guild_info: dict, guild: typing.Union[discord.Guild, int, str]):
+    def set_guild_info(
+            self: typing.Self,
+            guild_info: dict,
+            guild: typing.Union[discord.Guild, int, str]
+        ) -> None:
+        """Sets a guild's data to the given dictionary."""
         guild_id = get_id_from_guild(guild)
         self.data[guild_id]["guild_info"] = guild_info
 
-    def get_rolling_channel(self, guild: typing.Union[discord.Guild, int, str]) -> str:
+    def get_rolling_channel(
+            self: typing.Self,
+            guild: typing.Union[discord.Guild, int, str]
+        ) -> str:
+        """Gets the id of the rolling channel for the given guild."""
         guild_info = self.get_guild_info(guild)
         if "rolling_channel" not in guild_info.keys():
             return "<#967544442468843560>" # bread roll channel link in default guild
@@ -590,18 +655,17 @@ class JSON_interface:
 
     
 
-    def get_file_for_user(self, user: typing.Union[discord.Member, int, str], guild: typing.Union[discord.Guild, int, str]) -> dict: 
+    def get_file_for_user(
+            self: typing.Self,
+            user: typing.Union[discord.Member, int, str],
+            guild: typing.Union[discord.Guild, int, str]
+        ) -> dict: 
+        """Gets the dictionary of the given member's stats."""
         guild_id = get_id_from_guild(guild)
         if guild_id not in self.data.keys():
             self.data[guild_id] = dict()
 
-
-        if type(user) is int:
-            key = str(user)
-        elif type(user) is discord.Member:
-            key = str(user.id)
-        else:
-            key = str(user)
+        key = get_id_from_user(user)
         #print("Searching database for file for "+user.display_name)
         if key in self.data[guild_id]:
             #print("Found")
@@ -637,7 +701,10 @@ class Bread_cog(commands.Cog, name="Bread"):
     json_interface = JSON_interface()
     currently_interacting = list()
 
-    def __init__(self, bot):
+    def __init__(
+            self: typing.Self,
+            bot: commands.Bot
+        ) -> None:
         # Scramble the random seed.
         random.seed(os.urandom(1024))
         
@@ -645,7 +712,7 @@ class Bread_cog(commands.Cog, name="Bread"):
         self.bot = bot
         self.daily_task.start()
 
-    def cog_unload(self):
+    def cog_unload(self: typing.Self):
         self.daily_task.cancel()
         pass
 
@@ -655,7 +722,7 @@ class Bread_cog(commands.Cog, name="Bread"):
     reset_time = None
 
     @tasks.loop(minutes=60)
-    async def daily_task(self):
+    async def daily_task(self: typing.Self):
         # NOTE: THIS LOOP CANNOT BE ALTERED ONCE STARTED, EVEN BY RELOADING. MUST BE STOPPED MANUALLY
         time = datetime.now()
         print (time.strftime("Hourly bread loop running at %H:%M:%S"))
@@ -685,7 +752,7 @@ class Bread_cog(commands.Cog, name="Bread"):
             await self.stonks_announce()
     
     @daily_task.before_loop
-    async def before_daily(self):
+    async def before_daily(self: typing.Self):
         print('Booting up loop')
         #wait to be closer to the hour
         time = datetime.now()
@@ -709,7 +776,14 @@ class Bread_cog(commands.Cog, name="Bread"):
 
     previous_messages = dict()
 
-    async def announce(self, key, content: str):
+    async def announce(
+            self: typing.Self,
+            key: str,
+            content: str
+        ) -> None:
+        """Announces the given content to all guilds.
+        
+        The key argument is used to generate the save key, which is used to store previous messages and delete them when the next one is sent."""
 
         print("announce called")
         # load_dotenv()
@@ -766,7 +840,8 @@ class Bread_cog(commands.Cog, name="Bread"):
     ########################################################################################################################
     #####      SYNCHRONIZE_USERNAMES
 
-    def synchronize_usernames_internal(self):
+    def synchronize_usernames_internal(self: typing.Self) -> None:
+        """Syncronizes the internally stored usernames with the actual usernames of members."""
         # we get the guild and then all the members in it
         # guild = default_guild
 
@@ -924,7 +999,7 @@ class Bread_cog(commands.Cog, name="Bread"):
             pass
         
         #make chess board
-        board = Bread_cog.format_chess_pieces(file)
+        board = self.format_chess_pieces(file)
         if board != "":
             output += "\n" + board + "\n"
         
@@ -1126,7 +1201,7 @@ class Bread_cog(commands.Cog, name="Bread"):
         output2 = ""
 
         #make chess board
-        board = Bread_cog.format_chess_pieces(account.values)
+        board = self.format_chess_pieces(account.values)
         if board != "":
             output2 += "\n" + board + "\n"
 
@@ -1870,7 +1945,19 @@ loaf_converter""",
     ########################################################################################################################
     #####      do CHESSBOARD COMPLETION
 
-    async def do_chessboard_completion(self, ctx, force: bool = False, amount = None):
+    async def do_chessboard_completion(
+            self: typing.Self,
+            ctx: commands.Context,
+            force: bool = False,
+            amount: int = None
+        ) -> None:
+        """Runs the chessatron creation animation, as well as making the chessatrons themselves.
+
+        Args:
+            ctx (commands.Context): The context the chessatron creation was invoked in.
+            force (bool, optional): Whether to override `auto_chessatron`. Defaults to False.
+            amount (int, optional): The amount of chessatrons to make. Will make as many as possible if None is provided. Defaults to None.
+        """
 
         user_account = self.json_interface.get_account(ctx.author, guild=ctx.guild.id)
 
@@ -1897,7 +1984,7 @@ loaf_converter""",
 
         # print(f"valid trons: {valid_trons}, amount: {amount}")
 
-        board = Bread_cog.format_chess_pieces(user_account.values)
+        board = self.format_chess_pieces(user_account.values)
         chessatron_value = user_account.get_chessatron_dough_amount(include_prestige_boost=False) 
         trons_to_make = min(valid_trons, amount)
 
@@ -2273,6 +2360,8 @@ loaf_converter""",
     # this is the gambit shop, which can be accessed at any point
     @bread.command(
         aliases = ["strategy_store", "strategy_shop", "gambit", "strategy"],
+        brief = "Fine tune your strategies.",
+        description = "Fine tune your strategies."
     )
     async def gambit_shop(self, ctx):
         
@@ -2547,7 +2636,12 @@ loaf_converter""",
 
 
     # this function finds all the items the user is allowed to purchase
-    def get_buyable_items(self, user_account: account.Bread_Account, item_list: "list[store.Store_Item]") -> "list[store.Store_Item]":
+    def get_buyable_items(
+            self: typing.Self,
+            user_account: account.Bread_Account,
+            item_list: list[store.Store_Item]
+        ) -> list[store.Store_Item]:
+        """Returns a list of every item in item_list that passes the can_be_purchased store item method."""
         # user_account = self.json_interface.get_account(ctx.author)
         output = []
         #for item in store.all_store_items:
@@ -2974,7 +3068,7 @@ anarchy - 1000% of your wager.
                     # grid[i][k] = random.choice(gamble.reward_values).text
         try:  #sometimes we'll get a timeout error and the function will crash, this should allow
               # the user to be removed from the currently_interacting list
-            message = await utility.smart_reply(ctx, Bread_cog.show_grid(grid))
+            message = await utility.smart_reply(ctx, self.show_grid(grid))
             await asyncio.sleep(2)
 
 
@@ -2994,7 +3088,7 @@ anarchy - 1000% of your wager.
                     for y in range(grid_size):
                         grid[x][y] = None
                 
-                await message.edit(content= Bread_cog.show_grid(grid))
+                await message.edit(content = self.show_grid(grid))
                 await asyncio.sleep(1.5)
 
                 
@@ -3049,7 +3143,11 @@ anarchy - 1000% of your wager.
         # await ctx.send(output)
 
 
-    def show_grid(grid):
+    def show_grid(
+            self: typing.Self,
+            grid: list[list[str]]
+        ) -> str:
+        """Renders a grid from a list of lists of strings."""
         output = ""
         for i in range(len(grid)):
             for k in range(len(grid[i])):
@@ -3104,7 +3202,8 @@ anarchy - 1000% of your wager.
 
     previous_messages = list()
 
-    async def stonks_announce(self):
+    async def stonks_announce(self: typing.Self) -> None:
+        """Announces the new values of the stonks."""
         
         
         load_dotenv()
@@ -3627,25 +3726,24 @@ anarchy - 1000% of your wager.
     #####      Stonk internal stuff
 
     
-    def stonk_fluctuate_internal(self):
-        # Auto splitting stonks.
+    def stonk_fluctuate_internal(self: typing.Self) -> None:
+        """Fluctuates the stonk values for each guild in the JSON interface."""
+
+        stonk_starting_values = {
+            ":cookie:": 25,
+            ":pretzel:": 100,
+            ":fortune_cookie:": 500,
+            ":pancakes:": 2_500,
+            ":cake:": 21_000,
+            ":pizza:": 168_000,
+            ":pie:": 1_512_000,
+            ":cupcake:": 15_120_000
+        }
 
         all_guild_ids = self.json_interface.get_list_of_all_guilds()
         for guild_id in all_guild_ids:
             print(f"stonk fluctuate: checking guild {get_name_from_guild(guild_id)}")
             stonks_file = self.json_interface.get_custom_file("stonks", guild = guild_id)
-
-
-            stonk_starting_values = {
-                ":cookie:": 25,
-                ":pretzel:": 100,
-                ":fortune_cookie:": 500,
-                ":pancakes:": 2_500,
-                ":cake:": 21_000,
-                ":pizza:": 168_000,
-                ":pie:": 1_512_000,
-                ":cupcake:": 15_120_000
-            }
 
             # initialize stonks if they're not already
             for stonk in all_stonks:
@@ -3693,17 +3791,36 @@ anarchy - 1000% of your wager.
         
     
 
-    def stonk_reset_internal(self, guild):
+    def stonk_reset_internal(
+            self: typing.Self,
+            guild: typing.Union[discord.Guild, int, str]
+        ) -> None:
+        """Resets the stonks to their original values."""
+
         stonks_file = self.json_interface.get_custom_file("stonks", guild = guild)
 
-        #set default values
+        # Set default values
+
+        # Main stonks:
         stonks_file[values.pretzel.text] = 100
         stonks_file[values.cookie.text] = 25
         stonks_file[values.fortune_cookie.text] = 500
+        stonks_file[values.pancakes.text] = 2500
+        
+        # Shadow stonks:
+        stonks_file[values.cake.text] = 21000
+        stonks_file[values.pizza.text] = 168000
+        stonks_file[values.pie.text] = 1512000
+        stonks_file[values.cupcake.text] = 15120000
 
         self.json_interface.set_custom_file("stonks", stonks_file, guild=guild)
 
-    def stonk_split_internal(self, stonk_text: str, guild: typing.Union[discord.Guild, int, str]):
+    def stonk_split_internal(
+            self: typing.Self,
+            stonk_text: str,
+            guild: typing.Union[discord.Guild, int, str]
+        ) -> None:
+        """Splits a stonk in half, while compensating those who had invested."""
 
         guild_id = get_id_from_guild(guild)
 
@@ -3747,7 +3864,12 @@ anarchy - 1000% of your wager.
         print(f"{stonk_text} has been split into two stonks")
 
 
-    def get_portfolio_value(self, user_id: int, guild):
+    def get_portfolio_value(
+            self: typing.Self,
+            user_id: int,
+            guild: typing.Union[discord.Guild, int, str]
+        ) -> int:
+        """Returns the portfolio value of the given user id."""
         guild_id = get_id_from_guild(guild)
         stonks_file = self.json_interface.get_custom_file("stonks", guild_id)
         user_file = self.json_interface.get_account(user_id, guild_id)
@@ -3762,7 +3884,12 @@ anarchy - 1000% of your wager.
         return total_value
 
 
-    def get_portfolio_combined_value(self, user_id: int, guild):
+    def get_portfolio_combined_value(
+            self: typing.Self,
+            user_id: int,
+            guild: typing.Union[discord.Guild, int, str]
+        ) -> int:
+        """Takes the user's portfolio value and adds it to their investment_profit stat."""
         user_file = self.json_interface.get_account(user_id, guild)
         portfolio_value = self.get_portfolio_value(user_id, guild)
         return portfolio_value + user_file.get("investment_profit")
@@ -3785,7 +3912,7 @@ anarchy - 1000% of your wager.
             target_item: typing.Optional[str] = commands.parameter(description = "The item to create."),
             recipe_num: typing.Optional[parse_int] = commands.parameter(description = "The recipe number to use."),
             confirm: typing.Optional[str] = commands.parameter(description = "Whether to confirm automatically.")
-            ):
+        ):
         
         if count is None:
             count = 1
@@ -4442,7 +4569,8 @@ anarchy - 1000% of your wager.
 
             item: values.Emote,
             amount: int
-        ):
+        ) -> None:
+        """Contributes items to a trade hub level."""
         level_project = projects.Trade_Hub
         max_level = len(level_project.all_costs())
 
@@ -4563,7 +4691,8 @@ anarchy - 1000% of your wager.
             hub_projects: list[projects.Project],
             hub: space.SystemTradeHub,
             actions: tuple[str]
-        ):
+        ) -> None:
+        """Contributes items to a trade hub project, or the trade hub level."""
         galaxy_x, galaxy_y = user_account.get_galaxy_location(json_interface=self.json_interface)
 
         actions += [" ", " ", " "]
@@ -4760,7 +4889,8 @@ anarchy - 1000% of your wager.
             hub_projects: list[projects.Project],
             hub: space.SystemTradeHub,
             actions: tuple[str]
-        ):
+        ) -> None:
+        """Gets information about a project and sends it."""
         actions.append(" ")
 
         try:
@@ -4823,7 +4953,8 @@ anarchy - 1000% of your wager.
             hub_projects: list[projects.Project],
             hub: space.SystemTradeHub,
             actions: tuple[str]
-        ):
+        ) -> None:
+        """Gets information about the trade hub levelling and sends it."""
         galaxy_x, galaxy_y = user_account.get_galaxy_location(json_interface=self.json_interface)
         level_project = projects.Trade_Hub
         max_level = len(level_project.all_costs())
@@ -5449,7 +5580,14 @@ anarchy - 1000% of your wager.
             ctx: commands.Context,
             force: bool = False,
             amount = None
-        ):
+        ) -> None:
+        """Runs the anarchy chessatron creation animation, as well as making the anarchy chessatrons themselves.
+
+        Args:
+            ctx (commands.Context): The context the anarchy chessatron creation was invoked in.
+            force (bool, optional): Whether to override `auto_chessatron`. Defaults to False.
+            amount (int, optional): The amount of anarchy chessatrons to make. Will make as many as possible if None is provided. Defaults to None.
+        """
         user_account = self.json_interface.get_account(ctx.author, guild=ctx.guild.id)
 
         if user_account.get("auto_chessatron") is False and force is False:
@@ -5556,7 +5694,14 @@ anarchy - 1000% of your wager.
             print("admin called on nothing")
             return
 
-    async def await_confirmation(self, ctx, force = False, message = "Are you sure you would like to proceed?"):
+    async def await_confirmation(
+            self: typing.Self,
+            ctx: commands.Context,
+            force: bool = False,
+            message: str = "Are you sure you would like to proceed?"
+        ) -> bool:
+        """Waits for confirmation, and returns a boolean based on the result."""
+
         load_dotenv()
         IS_PRODUCTION = getenv('IS_PRODUCTION')
         if force or IS_PRODUCTION == 'True':
@@ -5905,7 +6050,12 @@ anarchy - 1000% of your wager.
         self.reset_internal()
         await ctx.send("Done.")
 
-    def reset_space(self, guild: typing.Optional[typing.Union[discord.Guild,str,int]]):
+    def reset_space(
+            self: typing.Self,
+            guild: typing.Union[discord.Guild,str,int]
+        ) -> None:
+        """Daily reset for Bread Space."""
+
         # Set a new day seed.
         space_data = self.json_interface.get_space_data(guild=guild)
 
@@ -5928,7 +6078,12 @@ anarchy - 1000% of your wager.
 
         self.json_interface.set_custom_file("space", file_data=space_data, guild=guild)
 
-    def reset_internal(self, guild: typing.Optional[typing.Union[discord.Guild,str,int]] = None):
+    def reset_internal(
+            self: typing.Self,
+            guild: typing.Optional[typing.Union[discord.Guild,str,int]] = None
+        ) -> None:
+        """Runs the daily reset."""
+
         print("Internal daily reset called")
         self.currently_interacting.clear()
 
@@ -6383,7 +6538,10 @@ anarchy - 1000% of your wager.
     #####      STRING FORMATTING
 
     
-    def write_number_of_times(number):
+    def write_number_of_times(number: int) -> str:
+        """Write the amount of times, for a number.
+        
+        For example, `0` will return `zero times`, `1` will return `once`, and something like `10` will return `10 times`."""
         number = parse_int(number)
         if number == 0:
             return "zero times"
@@ -6394,7 +6552,11 @@ anarchy - 1000% of your wager.
         else:
             return str(number) + " times"
 
-    def format_chess_pieces(file):
+    def format_chess_pieces(
+            self: typing.Self,
+            file: dict
+        ) -> str:
+        """Returns a string of the formatted version of the given file's chess pieces."""
         output = ""
 
         ###############################################################
@@ -6507,7 +6669,11 @@ anarchy - 1000% of your wager.
         
         return output
     
-    def format_anarchy_pieces(self, account_values: dict):
+    def format_anarchy_pieces(
+            self: typing.Self,
+            account_values: dict
+        ) -> str:
+        """Returns a string for the formatted anarchy chess pieces of the given account data."""
         lines = []
         
         components = [["" for _ in range(8)] for _ in range(2)]
@@ -6546,7 +6712,7 @@ anarchy - 1000% of your wager.
 bread_cog_ref = None
 bot_ref = None
 
-async def setup(bot):
+async def setup(bot: commands.Bot):
     
     bread_cog = Bread_cog(bot)
     await bot.add_cog(bread_cog)
@@ -6579,7 +6745,7 @@ async def setup(bot):
     #bot.add_cog(Chess_game(bot)) #do we want to actually have this be a *cog*, or just a helper class?
 
 #seems mostly useless since we can't call anything async
-def teardown(bot):
+def teardown(bot: commands.Bot):
     print('bread cog is being unloaded.')
     #print("bot is "+str(bot))
     
