@@ -1057,7 +1057,7 @@ class Bread_cog(commands.Cog, name="Bread"):
         print(f"stats called for user {user.display_name} by {ctx.author.display_name}")
 
         # get account
-        account = self.json_interface.get_account(user, ctx.guild.id)
+        user_account = self.json_interface.get_account(user, ctx.guild.id) # type: account.Bread_Account
 
         # bread stats space
         if (modifier is not None) and (modifier.lower() in ["space"]):
@@ -1066,14 +1066,14 @@ class Bread_cog(commands.Cog, name="Bread"):
 
         # bread stats chess
         if (modifier is not None) and (modifier.lower() == "chess" or modifier.lower() == "chess pieces" or modifier.lower() == "pieces"):
-            output = f"Chess pieces of {account.get_display_name()}:\n\n"
+            output = f"Chess pieces of {user_account.get_display_name()}:\n\n"
             for chess_piece in values.all_chess_pieces:
-                output += f"{chess_piece.text} - {account.get(chess_piece.text)}\n"
+                output += f"{chess_piece.text} - {user_account.get(chess_piece.text)}\n"
             
-            if any(account.has(piece.text) for piece in values.all_anarchy_pieces):
+            if any(user_account.has(piece.text) for piece in values.all_anarchy_pieces):
                 output += "\n"
                 for anarchy_piece in values.all_anarchy_pieces:
-                    output += f"{anarchy_piece.text} - {account.get(anarchy_piece.text)}\n"
+                    output += f"{anarchy_piece.text} - {user_account.get(anarchy_piece.text)}\n"
 
 
             await ctx.send(output)
@@ -1081,8 +1081,8 @@ class Bread_cog(commands.Cog, name="Bread"):
 
         # bread stats gambit
         if (modifier is not None) and (modifier.lower() in ["gambit", "strategy", "gambit shop", "strategy shop"]):
-            output = f"Gambit shop bonuses for {account.get_display_name()}:\n\n"
-            boosts = account.values.get("dough_boosts", {})
+            output = f"Gambit shop bonuses for {user_account.get_display_name()}:\n\n"
+            boosts = user_account.values.get("dough_boosts", {})
             for item in boosts.keys():
                 output += f"{item} - {boosts[item]}\n"
             if len(boosts) == 0:
@@ -1092,65 +1092,69 @@ class Bread_cog(commands.Cog, name="Bread"):
 
         sn = utility.smart_number
 
-        output += f"Stats for: {account.get_display_name()}:\n\n"
-        output += f"You have **{sn(account.get_dough())} dough.**\n\n"
-        if account.has("earned_dough"):
-            output += f"You've found {sn(account.get('earned_dough'))} dough through all your rolls and {sn(self.get_portfolio_combined_value(user.id, guild=ctx.guild.id))} dough through stonks.\n"
-        if account.has("total_rolls"): 
-            output += f"You've bread rolled {account.write_number_of_times('total_rolls')} overall.\n"
+        output += f"Stats for: {user_account.get_display_name()}:\n\n"
+        output += f"You have **{sn(user_account.get_dough())} dough.**\n\n"
+        if user_account.has("earned_dough"):
+            output += f"You've found {sn(user_account.get('earned_dough'))} dough through all your rolls and {sn(self.get_portfolio_combined_value(user.id, guild=ctx.guild.id))} dough through stonks.\n"
+        if user_account.has("total_rolls"): 
+            output += f"You've bread rolled {user_account.write_number_of_times('total_rolls')} overall.\n"
         
-        if account.has("lifetime_gambles"):
-            output += f"You've gambled your dough {account.write_number_of_times('lifetime_gambles')}.\n"
-        if account.has("max_daily_rolls"):
-            if account.get('daily_rolls') < 0:
-                output += f"You have {sn(-account.get('daily_rolls'))} stored rolls, plus a maximum of {sn(account.get('max_daily_rolls'))} daily rolls.\n"
+        if user_account.has("lifetime_gambles"):
+            output += f"You've gambled your dough {user_account.write_number_of_times('lifetime_gambles')}.\n"
+        if user_account.has("max_daily_rolls"):
+            if user_account.get('daily_rolls') < 0:
+                output += f"You have {sn(-user_account.get('daily_rolls'))} stored rolls, plus a maximum of {sn(user_account.get('max_daily_rolls'))} daily rolls.\n"
             else:
-                output += f"You've rolled {sn(account.get('daily_rolls'))} of {account.write_number_of_times('max_daily_rolls')} today.\n"
-        if account.get('max_days_of_stored_rolls') > 1:
-            output += f"You can store rolls for up to {account.get('max_days_of_stored_rolls')} days.\n"
-        if account.has("loaf_converter"):
-            output += f"You have {account.write_count('loaf_converter', 'Loaf Converter')}"  
-            if account.has("LC_booster"):
-                LC_booster_level = account.get("LC_booster")
+                output += f"You've rolled {sn(user_account.get('daily_rolls'))} of {user_account.write_number_of_times('max_daily_rolls')} today.\n"
+        if user_account.get('max_days_of_stored_rolls') > 1:
+            output += f"You can store rolls for up to {user_account.get('max_days_of_stored_rolls')} days.\n"
+        if user_account.has("loaf_converter"):
+            output += f"You have {user_account.write_count('loaf_converter', 'Loaf Converter')}"  
+            if user_account.has("LC_booster"):
+                LC_booster_level = user_account.get("LC_booster")
                 multiplier = 1
                 if LC_booster_level >= 1:
                     multiplier = 2 ** LC_booster_level 
-                boosted_amount = account.get("loaf_converter") * multiplier
+                boosted_amount = user_account.get("loaf_converter") * multiplier
                 output += f", which, with Recipe Refinement level {LC_booster_level}, makes you {boosted_amount} times more likely to find special items.\n"
             else:
                 output += ".\n"
-        if account.has(values.omega_chessatron.text):
-            output += f"With your {account.write_count(values.omega_chessatron.text, 'Omega Chessatron')}, each new chessatron is worth {sn(account.get_chessatron_dough_amount(True))} dough.\n"
-        if account.has("multiroller"):
-            output += f"With your {account.write_count('multiroller', 'Multiroller')}, you roll {utility.write_number_of_times(2 ** account.get('multiroller'))} with each command. "
-        if account.has("compound_roller"):
-            output += f"You also get {utility.write_count(2 ** account.get('compound_roller'), 'roll')} per message with your {account.write_count('compound_roller', 'Compound Roller')}.\n"
+        if user_account.has(values.omega_chessatron.text):
+            output += f"With your {user_account.write_count(values.omega_chessatron.text, 'Omega Chessatron')}, each new chessatron is worth {sn(user_account.get_chessatron_dough_amount(True))} dough.\n"
+        if user_account.has("multiroller"):
+            output += f"With your {user_account.write_count('multiroller', 'Multiroller')}, you roll {utility.write_number_of_times(2 ** user_account.get('multiroller'))} with each command. "
+        if user_account.has("compound_roller"):
+            output += f"You also get {utility.write_count(2 ** user_account.get('compound_roller'), 'roll')} per message with your {user_account.write_count('compound_roller', 'Compound Roller')}.\n"
         else:
             output += "\n"
 
         # ascension/prestige shop items
-        if account.has("prestige_level", 1):
+        if user_account.has("prestige_level", 1):
             output += "\n"
-            if account.has("gamble_level"):
-                output += f"You have level {account.get('gamble_level')} of the High Roller Table.\n"
-            if account.has("max_daily_rolls_discount"):
-                output += f"You have {utility.write_count(account.get('max_daily_rolls_discount'), 'Daily Discount Card')}.\n"
-            if account.has("loaf_converter_discount"):
-                output += f"You have {utility.write_count(account.get('loaf_converter_discount'), 'Self Converting Yeast level')}.\n"
-            if account.has ("chess_piece_equalizer"):
-                output += f"With level {account.get('chess_piece_equalizer')} of the Chess Piece Equalizer, you get {store.chess_piece_distribution_levels[account.get('chess_piece_equalizer')]}% white pieces.\n"
-            if account.has("moak_booster"):
-                output += f"With level {account.get('moak_booster')} of the Moak Booster, you get {round((store.moak_booster_multipliers[account.get('moak_booster')]-1)*100)}% more Moaks.\n"
-            if account.has("chessatron_shadow_boost"):
-                output += f"With level {account.get('chessatron_shadow_boost')} of the Chessatron Contraption, you get {account.get_shadowmega_boost_amount()} more dough per Chessatron.\n"
-            if account.has("shadow_gold_gem_luck_boost"):
-                output += f"With level {account.get('shadow_gold_gem_luck_boost')} of Ethereal Shine, you get {utility.write_count(account.get_shadow_gold_gem_boost_count(), 'more LC')} worth of gem luck.\n"
-            if account.has("first_catch_level"):
-                output += f"With First Catch of the Day, your first {utility.write_count(account.get('first_catch_level'), 'special item')} each day will be worth 4x more.\n"
+            if user_account.has("gamble_level"):
+                output += f"You have level {user_account.get('gamble_level')} of the High Roller Table.\n"
+            if user_account.has("max_daily_rolls_discount"):
+                output += f"You have {utility.write_count(user_account.get('max_daily_rolls_discount'), 'Daily Discount Card')}.\n"
+            if user_account.has("loaf_converter_discount"):
+                output += f"You have {utility.write_count(user_account.get('loaf_converter_discount'), 'Self Converting Yeast level')}.\n"
+            if user_account.has ("chess_piece_equalizer"):
+                output += f"With level {user_account.get('chess_piece_equalizer')} of the Chess Piece Equalizer, you get {store.chess_piece_distribution_levels[user_account.get('chess_piece_equalizer')]}% white pieces.\n"
+            if user_account.has("moak_booster"):
+                output += f"With level {user_account.get('moak_booster')} of the Moak Booster, you get {round((store.moak_booster_multipliers[user_account.get('moak_booster')]-1)*100)}% more Moaks.\n"
+            if user_account.has("chessatron_shadow_boost"):
+                output += f"With level {user_account.get('chessatron_shadow_boost')} of the Chessatron Contraption, you get {user_account.get_shadowmega_boost_amount()} more dough per Chessatron.\n"
+            if user_account.has("shadow_gold_gem_luck_boost"):
+                output += f"With level {user_account.get('shadow_gold_gem_luck_boost')} of Ethereal Shine, you get {utility.write_count(user_account.get_shadow_gold_gem_boost_count(), 'more LC')} worth of gem luck.\n"
+            if user_account.has("first_catch_level"):
+                output += f"With First Catch of the Day, your first {utility.write_count(user_account.get('first_catch_level'), 'special item')} each day will be worth 4x more.\n"
+            if user_account.has("fuel_refinement"):
+                output += f"You get {round(user_account.get_fuel_refinement_boost() * 100 - 100)}% more fuel with {user_account.write_count('fuel_refinement', 'level')} of Fuel Refinement.\n"
+            if user_account.has("corruption_negation"):
+                output += f"You have a {round(abs(user_account.get_corruption_negation_multiplier() * 100 - 100))}% lower chance of a loaf becoming corrupted with {user_account.write_count('corruption_negation', 'level')} of Corruption Negation.\n"
 
         output += "\nIndividual stats:\n"
-        if account.has(":bread:"):
-            output += f":bread: - {sn(account.get(':bread:'))}\n"
+        if user_account.has(":bread:"):
+            output += f":bread: - {sn(user_account.get(':bread:'))}\n"
 
         # list all special breads
         # special_breads = account.get_all_items_with_attribute("special_bread")
@@ -1178,12 +1182,12 @@ class Bread_cog(commands.Cog, name="Bread"):
         #iterate through all the display list and print them
         for item_name in display_list:
 
-            display_items = account.get_all_items_with_attribute(item_name)
+            display_items = user_account.get_all_items_with_attribute(item_name)
 
             cleaned_items = []
             for display_item in display_items:
 
-                if account.has(display_item.text, 1):
+                if user_account.has(display_item.text, 1):
                     cleaned_items.append(display_item)
                     # remove the item from the list if it's quantity zero           
 
@@ -1192,7 +1196,7 @@ class Bread_cog(commands.Cog, name="Bread"):
                 text = cleaned_items[i].text
                 # if account.get(text) == 0:
                 #     continue #skip empty values
-                output += f"{sn(account.get(text))} {text} "
+                output += f"{sn(user_account.get(text))} {text} "
                 if i != len(cleaned_items) - 1:
                     output += ", "
                 else:
@@ -1201,48 +1205,48 @@ class Bread_cog(commands.Cog, name="Bread"):
         output2 = ""
 
         #make chess board
-        board = self.format_chess_pieces(account.values)
+        board = self.format_chess_pieces(user_account.values)
         if board != "":
             output2 += "\n" + board + "\n"
 
         # list highest roll stats
 
-        if account.has("highest_roll", 11):
-            output2 += f"Your highest roll was {account.get('highest_roll')}.\n"
+        if user_account.has("highest_roll", 11):
+            output2 += f"Your highest roll was {user_account.get('highest_roll')}.\n"
             comma = False
-            if account.has("eleven_breads"):
-                output2 += f"11 - {account.write_number_of_times('eleven_breads')}"
+            if user_account.has("eleven_breads"):
+                output2 += f"11 - {user_account.write_number_of_times('eleven_breads')}"
                 comma = True
-            if account.has("twelve_breads"):
+            if user_account.has("twelve_breads"):
                 if comma:
                     output2 += ", "
-                output2 += f"12 - {account.write_number_of_times('twelve_breads')}"
+                output2 += f"12 - {user_account.write_number_of_times('twelve_breads')}"
                 comma = True
-            if account.has("thirteen_breads"):
+            if user_account.has("thirteen_breads"):
                 if comma:
                     output2 += ", "
-                output2 += f"13 - {account.write_number_of_times('thirteen_breads')}"
+                output2 += f"13 - {user_account.write_number_of_times('thirteen_breads')}"
                 comma = True
-            if account.has("fourteen_or_higher"):
+            if user_account.has("fourteen_or_higher"):
                 if comma:
                     output2 += ", "
-                output2 += f"14+ - {account.write_number_of_times('fourteen_or_higher')}"
+                output2 += f"14+ - {user_account.write_number_of_times('fourteen_or_higher')}"
                 comma = True
             if comma:
                 output2 += "."
             output2 += "\n"
 
         # list 10 and 1 roll stats
-        output2 += f"You've found a single solitary loaf {account.write_number_of_times('natural_1')}, and the full ten loaves {account.write_number_of_times('ten_breads')}.\n"
+        output2 += f"You've found a single solitary loaf {user_account.write_number_of_times('natural_1')}, and the full ten loaves {user_account.write_number_of_times('ten_breads')}.\n"
 
         # list the rest of the stats
 
-        if account.has("lottery_win"):
-            output2 += f"You've won the lottery {account.write_number_of_times('lottery_win')}!\n"
-        if account.has("chess_pieces"):
-            output2 += f"You have {account.write_count('chess_pieces', 'Chess Piece')}.\n"
-        if account.has("special_bread"):
-            output2 += f"You have {account.write_count('special_bread', 'Special Bread')}.\n"
+        if user_account.has("lottery_win"):
+            output2 += f"You've won the lottery {user_account.write_number_of_times('lottery_win')}!\n"
+        if user_account.has("chess_pieces"):
+            output2 += f"You have {user_account.write_count('chess_pieces', 'Chess Piece')}.\n"
+        if user_account.has("special_bread"):
+            output2 += f"You have {user_account.write_count('special_bread', 'Special Bread')}.\n"
         
         if len(output) + len(output2) < 1900:
             await ctx.reply( output + output2 )
