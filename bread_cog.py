@@ -4133,18 +4133,7 @@ anarchy - 1000% of your wager.
             output_amount = item_multiplier
             
             if target_emote.text == values.fuel.text:
-                output_fuel = int(item_multiplier * count * user_account.get_fuel_refinement_boost())
-
                 output_amount = int(output_amount * user_account.get_fuel_refinement_boost())
-
-                current_fuel = user_account.get(values.fuel.text)
-                fuel_tank = user_account.get("fuel_tank")
-                max_fuel = store.Fuel_Tank.tank_values[fuel_tank]
-
-                if output_fuel + current_fuel > max_fuel:
-                    await ctx.reply("I am sorry, but you do not have a large enough fuel tank to store that much fuel.")
-                    self.currently_interacting.remove(ctx.author.id)
-                    return
             
             value = 0
 
@@ -4291,7 +4280,17 @@ anarchy - 1000% of your wager.
 
         output.append(f"You have a tier {sn(account.get_space_level())} Bread Rocket.")
 
-        output.append(f"With a level {sn(account.get('fuel_tank'))} fuel tank, you can store up to {store.Fuel_Tank.tank_values[account.get('fuel_tank')]} {values.fuel.text}.")
+        if account.has(store.Upgraded_Autopilot.name):
+            autopilot_level = account.get(store.Upgraded_Autopilot.name)
+
+            messages = [
+                "",
+                "explore the galaxy",
+                "adventure through nebulae",
+                "travel through wormholes"
+            ]
+
+            output.append(f"With a level {sn(autopilot_level)} autopilot, you can {messages[autopilot_level]}.")
 
         if account.has("fuel_research"):
             output.append(f"By having {account.write_count('fuel_research', 'level')} of fuel research, you can use {store.Fuel_Research.highest_gem[account.get('fuel_research')]} or any lower gem for making fuel.")
@@ -4305,7 +4304,7 @@ anarchy - 1000% of your wager.
         # Anarchy pieces.
 
         output.append("") # Add a blank item to add an extra new line.
-        output.append(self.format_anarchy_pieces(account.values))
+        output.append(self.format_anarchy_pieces(account.values).strip(" \n"))
 
         await utility.smart_reply(ctx, "\n".join(output))
 
@@ -5260,7 +5259,14 @@ anarchy - 1000% of your wager.
             
         ###################################
 
+        autopilot_level = user_account.get(store.Upgraded_Autopilot.name)
+
         if move_map == "wormhole":
+            if autopilot_level < 3:
+                await ctx.reply("Autopilot error:\nWormhole travel not possible.")
+                self.currently_interacting.remove(ctx.author.id)
+                return
+            
             # Wormhole travel :o
             system_tile = user_account.get_system_tile(json_interface=self.json_interface) # type: space.SystemWormhole
 
@@ -5421,11 +5427,18 @@ anarchy - 1000% of your wager.
                 return
             
             # In the end, determine how much fuel it'll cost to make the move.
-            move_cost = space.get_move_cost_system(
+            cost_data = space.get_move_cost_system(
                 start_position = start_location,
                 end_position = end_location
             )
+
+            move_cost = cost_data.get("cost", 500)
         else:
+            if autopilot_level < 1:
+                await ctx.reply("Autopilot error:\nGalaxy travel not possible.")
+                self.currently_interacting.remove(ctx.author.id)
+                return
+            
             start_location = user_account.get_galaxy_location(json_interface=self.json_interface)
         
             end_location = (
@@ -5433,11 +5446,18 @@ anarchy - 1000% of your wager.
                 start_location[1] + y_modifier - radius
             )
 
-            move_cost = space.get_move_cost_galaxy(
+            cost_data = space.get_move_cost_galaxy(
                 galaxy_seed = galaxy_seed,
                 start_position = start_location,
                 end_position = end_location
             )
+
+            if autopilot_level < 2 and cost_data.get("nebula", False):
+                await ctx.reply("Autopilot error:\nNebula travel not possible.")
+                self.currently_interacting.remove(ctx.author.id)
+                return
+
+            move_cost = cost_data.get("cost", 500)
 
         if confirm not in confirm_text:
             current_fuel = user_account.get(values.fuel.text)

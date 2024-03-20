@@ -1449,7 +1449,7 @@ def get_move_cost_galaxy(
         galaxy_seed: str,
         start_position: tuple[int, int],
         end_position: tuple[int, int]
-    ) -> int:
+    ) -> dict:
     """Calculates the fuel cost to move between two points on the galaxy map."""
     points = utility.plot_line(
         start = start_position,
@@ -1461,6 +1461,8 @@ def get_move_cost_galaxy(
 
     cost_sum = 0
 
+    through_nebula = False
+
     for x, y in points:
         tile_data = generation.galaxy_single(
             galaxy_seed = galaxy_seed,
@@ -1469,17 +1471,21 @@ def get_move_cost_galaxy(
         )
 
         if tile_data.get("in_nebula", False):
+            through_nebula = True
             cost_sum += move_fuel_galaxy_nebula
         else:
             cost_sum += move_fuel_galaxy
     
-    return cost_sum
+    return {
+        "cost": cost_sum,
+        "nebula": through_nebula
+    }
 
 
 def get_move_cost_system(
         start_position: tuple[int, int],
         end_position: tuple[int, int]
-    ) -> int:
+    ) -> dict:
     """Calculates the fuel cost to move between two points on the system map."""
     points = utility.plot_line(
         start = start_position,
@@ -1489,7 +1495,9 @@ def get_move_cost_system(
     # Remove the first item, which is the starting location.
     points.pop(0)
 
-    return len(points) * move_fuel_system
+    return {
+        "cost": len(points) * move_fuel_system
+    }
 
 def allowed_gifting(
         json_interface: bread_cog.JSON_interface,

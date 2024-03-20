@@ -1514,6 +1514,48 @@ class Bread_Rocket(Space_Shop_Item):
         return True
 
         
+class Upgraded_Autopilot(Space_Shop_Item):
+    name = "autopilot_level"
+    display_name = "Upgraded Autopilot"
+
+    @classmethod
+    def get_costs(cls):
+        return [
+            [],
+            [(values.gem_gold.text, 100)],
+            [(values.anarchy_chess.text, 10)],
+            [(values.anarchy_chessatron, 5)]
+        ]
+    
+    @classmethod
+    def description(cls, user_account: account.Bread_Account) -> str:
+        level = user_account.get(cls.name) + 1
+        messages = [
+            "",
+            "An upgraded autopilot system to allow traversing the galaxy.",
+            "An upgraded autopilot system to allow movement through nebulae.",
+            "An upgraded autopilot system to allow the exploration of wormholes.",
+        ]
+        return messages[level]
+
+    @classmethod
+    def can_be_purchased(cls, user_account: account.Bread_Account) -> bool:
+        if not super().can_be_purchased(user_account):
+            return False
+        
+        level = user_account.get(cls.name) + 1
+        prestige_level = user_account.get_prestige_level()
+
+        if prestige_level <= 2:
+            return False
+        
+        # Only return True if the prestige level is greater than or equal to the level plus 2.
+        # This means that for level 1 you need to have a prestige level of 3 or higher.
+        # For level 2, prestige level of 4 or higher.
+        return prestige_level >= level + 2
+    
+
+#### UNUSED
 class Fuel_Tank(Space_Shop_Item):
     name = "fuel_tank"
     display_name = "Upgraded Fuel Tank"
@@ -1639,7 +1681,7 @@ class Multiroller_Terminal(Space_Shop_Item):
         super().do_purchase(user_account)
         return "You have acquired the Multiroller Terminal, you can configure it with '$bread multiroller`."
 
-space_shop_items = [Bread_Rocket, Fuel_Tank, Fuel_Research, Upgraded_Telescopes, Multiroller_Terminal]
+space_shop_items = [Bread_Rocket, Upgraded_Autopilot, Fuel_Research, Upgraded_Telescopes, Multiroller_Terminal]
 
 #############################################################################################################
 #############################################################################################################
