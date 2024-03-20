@@ -2337,9 +2337,17 @@ For example, "$bread gift Melodie all chess_pieces" would gift all your chess pi
             if sender_account.values["allowed"] == False:
                 await ctx.reply("Sorry, you are not allowed to gift bread.")
                 return
+                
+        bot_list = [ # These can always be gifted to.
+            960869046323134514, # Machine-Mind
+            973811353036927047, # Latent-Dreamer
+            966474721619238972, # Tigran-W-Petrosian
+            1029793702136254584, # Bingo-Bot
+            466378653216014359, # PluralKit
+        ]
 
         if receiver_account.get_prestige_level() > sender_account.get_prestige_level():
-            if receiver_account.get("id") != 960869046323134514: # always can gift to MM
+            if receiver_account.get("id") not in bot_list: # can always gift to bots
                 await ctx.reply("Sorry, you can't gift to someone who has a higher ascension level than you.")
                 return
             
@@ -2496,7 +2504,7 @@ For example, "$bread gift Melodie all chess_pieces" would gift all your chess pi
         # enforce maxumum gift amount to players of lower prestige level
         if receiver_account.get_prestige_level() < sender_account.get_prestige_level() and \
             item == "total_dough" and \
-            receiver_account.get("id") != 960869046323134514: #machine mind
+            receiver_account.get("id") not in bot_list: # can always gift to bots
             already_gifted = receiver_account.get("daily_gifts")
             max_gift = receiver_account.get_maximum_daily_gifts()
             leftover = max_gift - already_gifted
@@ -2515,7 +2523,7 @@ For example, "$bread gift Melodie all chess_pieces" would gift all your chess pi
         # no gifting stonks to people of lower prestige level
         if receiver_account.get_prestige_level() < sender_account.get_prestige_level() and \
             emote is not None and \
-            receiver_account.get("id") != 960869046323134514: #machine mind
+            receiver_account.get("id") not in bot_list: # can always gift to bots
             if emote.text in all_stonks:
                 await ctx.reply("Sorry, you can't gift stonks to people of lower prestige level.")
                 return
