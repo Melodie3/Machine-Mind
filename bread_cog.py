@@ -1,9 +1,7 @@
 """
 Patch Notes: 
-(All patches submitted by Duck)
-- MoaKs no longer add to the gambit shop bonus in the multiroller
-- Fixed tier one multiroller to have a cost of 128
-- First Catch count now resets properly
+- Added space.
+- You can now use fraction in gifting to specify a custom amount.
 
 
 (todo) test reply ping
@@ -233,6 +231,14 @@ def parse_int(argument: str) -> int:
     """Converts an argument to an integer, will remove commas along the way."""
     return int(str(argument).replace(",", ""))
 
+def is_int(argument: str) -> bool:
+    """Checks if an argument is an integer."""
+    try:
+        parse_int(argument)
+        return True
+    except ValueError:
+        return False
+
 def is_digit(string: str) -> bool:
     """Same as str.isdigit(), but will remove commas first."""
     return str(string).replace(",", "").isdigit()
@@ -244,6 +250,35 @@ def is_numeric(string: str) -> bool:
 def is_decimal(string: str) -> bool:
     """Same as str.isdecimal(), but will remove commas first."""
     return str(string).replace(",", "").isdecimal()
+
+def parse_fraction(argument: str) -> tuple[int, int]:
+    """Attempts to parse an argument as a fraction.
+    This will raise an exception if it's unable to, which should be caught via `try` and `except`."""
+
+    # Each `([\d,]+)` matches a number (including commas.)
+    # This means the pattern matches a number followed by a slash followed by another number.
+    # So something like `5/8` will match it, but `w/o` is without a match.
+    match = re.match("^([\d,]+)\/([\d,]+)$", str(argument))
+
+    # If the match did not find anything.
+    if match is None:
+        raise commands.BadArgument
+    
+    argument = argument.replace(",", "") # Remove any commas that are in the numbers.
+    parts = argument.split("/")
+
+    numerator = int(parts[0])
+    denominator = int(parts[1])
+
+    return numerator, denominator
+
+def is_fraction(argument: str) -> bool:
+    """Returns a boolean for whether the given argument is a fraction."""
+    match = re.match("^([\d,]+)\/([\d,]+)$", str(argument))
+
+    return match is not None
+
+
 
 ####################################################
 ##############   JSON INTERFACE   ##################
@@ -2722,91 +2757,131 @@ For example, "$bread gift Melodie all chess_pieces" would gift all your chess pi
             if not gifting_allowed:
                 await ctx.reply("Sorry, you are too far away from that player to gift to them.")
                 return
-
-        #shitty way of converting to int
-        try:
-            arg1 = parse_int(arg1)
-        except:
-            pass
-        try:
-            arg2 = parse_int(arg2)
-        except:
-            pass
+        
+        if arg1 is None: # If arg1 is None, then arg2 is None as well.
+            await ctx.reply("Needs an amount and what to gift.")
+            return
         
         do_fraction = False
         amount = 0
         do_category_gift = False
+        
+        print(arg1, arg2)
 
-        # print(f"arg1 type was {type(arg1)} and arg2 type was {type(arg2)}")
-        if type(arg1) is int and type(arg2) is str:
-            amount = arg1
-            emoji = arg2
-        elif type(arg1) is str and type(arg2) is int:
-            amount = arg2
-            emoji = arg1
-
-        # check if there's just a string, AKA gifting just one    
-        elif (type(arg1) is str and arg2 is None):
-            emoji = arg1
+        if arg2 is None:
             amount = 1
-        elif (type(arg1) is int and arg2 is None):
-            emoji = "dough"
-            amount = arg1
-
-        # check if there's a fraction of the item we're supposed to gift
-        elif (type(arg1) is str and type(arg2) is str and arg1.lower() in ["all", "half", "quarter"]):
-            emoji = arg2     
-            fraction_amount = arg1.lower() 
-            do_fraction = True
-        elif (type(arg1) is str and type(arg2) is str and arg2.lower() in ["all", "half", "quarter"]):
             emoji = arg1
-            fraction_amount = arg2.lower()
+        
+        elif is_int(arg1):
+            amount = int(arg1)
+            emoji = arg2
+        elif is_int(arg2):
+            amount = int(arg2)
+            emoji = arg1
+        
+        elif is_fraction(arg1):
             do_fraction = True
+            amount = 1
+            fraction_numerator, fraction_denominator = parse_fraction(arg1)
+            emoji = arg2
+        elif is_fraction(arg2):
+            do_fraction = True
+            amount = 1
+            fraction_numerator, fraction_denominator = parse_fraction(arg2)
+            emoji = arg1
+        
+        elif str(arg1).lower() in ["all", "half", "quarter"] or \
+            str(arg2).lower() in ["all", "half", "quarter"]:
+            do_fraction = True
+            amount = 1
+
+            if str(arg1).lower() in ["all", "half", "quarter"]:
+                parse = str(arg1).lower()
+                emoji = arg2
+            else:
+                parse = str(arg2).lower()
+                emoji = arg1
+
+            if parse == "all":
+                fraction_numerator = 1
+                fraction_denominator = 1
+            elif parse == "half":
+                fraction_numerator = 1
+                fraction_denominator = 2
+            else:
+                fraction_numerator = 1
+                fraction_denominator = 4
         else:
             await ctx.reply("Needs an amount and what to gift.")
             return
+
+        if (amount < 0):
+            print(f"Rejecting steal request from {ctx.author.display_name}")
+            await ctx.reply("Trying to steal bread? Mum won't be very happy about that.")
+            await ctx.invoke(self.bot.get_command('brick'), member=ctx.author, duration="1")
+            return
+        
+        if (amount == 0):
+            print(f"Rejecting 0 bread request from {ctx.author.display_name}")
+            await ctx.reply("That's not much of a gift.")
+            return
+
+        if ctx.author.id == target.id:
+            await ctx.reply("You can't gift bread to yourself, silly.")
+            print(f"rejecting self gift request from {target.display_name} for amount {amount}.")
+            
+            return     
+        
+        def gift(
+                sender_member: discord.Member,
+                receiver_member: discord.Member,
+                item: values.Emote,
+                amount: int
+            ):
+            sender = self.json_interface.get_account(sender_member, sender_member.guild)
+            receiver = self.json_interface.get_account(receiver_member, receiver_member.guild)
+
+            sender.increment(item, -amount)
+            receiver.increment(item, amount)
+            
+            # Save the accounts after gifting to ensure nothing is overwritten.
+            self.json_interface.set_account(sender_member, sender, guild = ctx.guild.id)
+            self.json_interface.set_account(target, receiver, guild = ctx.guild.id)
 
             
         if sender_account.has_category(emoji):
             do_category_gift = True
             print(f"category gift of {emoji} detected")
+        
+        if do_fraction:
+            if fraction_numerator > fraction_denominator:
+                await ctx.reply("You can't gift more than what you have.")
+                return
+            elif fraction_numerator == 0:
+                await ctx.reply("That's not much of a gift.")
+                return
 
         if do_category_gift is True:
             gifted_count = 0
 
-            if do_fraction is True:
-                # we recursively call gift for each item in the category, after calculating the amount
-                for item in sender_account.get_category(emoji):
-                    item_amount = 0
-                    if fraction_amount == "all":
-                        item_amount = sender_account.get(item.text)
-                    elif fraction_amount == "half":
-                        item_amount = sender_account.get(item.text) // 2
-                    elif fraction_amount == "quarter":
-                        item_amount = sender_account.get(item.text) // 4
-                    
-                    if item_amount > 0:
-                        gifted_count += item_amount
-                        await self.gift(ctx, target, item.text, item_amount)
-                        await asyncio.sleep(1)
-            else:
-                # we recursively call gift for each item in the category
-                # and then return
-                for item in sender_account.get_category(emoji):
-                    # we want to guarantee a successful gifting so we will gift less than "amount" if necessary
+            for item in sender_account.get_category(emoji):
+                if do_fraction:
+                    item_amount = sender_account.get(item.text) * fraction_numerator // fraction_denominator
+                else:
                     item_amount = min(amount, sender_account.get(item.text))
+                
+                if item_amount > 0:
+                    gifted_count += item_amount
+                    gift(ctx.author, target, item.text, item_amount)
 
-                    if item_amount > 0:
-                        gifted_count += item_amount
-                        await self.gift(ctx, target, item.text, item_amount)
-                        await asyncio.sleep(1)
+                    await ctx.send(f"{utility.smart_number(item_amount)} {item.text} has been gifted to {target.mention}.")
+                    await asyncio.sleep(1)
                 
             if gifted_count > 0:
-                await ctx.reply(f"Gifted {utility.smart_number(gifted_count)} {emoji} to {receiver_account.get_display_name()}.")
+                await utility.smart_reply(ctx, f"Gifted {utility.smart_number(gifted_count)} {emoji} to {receiver_account.get_display_name()}.")
             else:
-                await ctx.reply(f"Sorry, you don't have any {emoji} to gift.")
+                await utility.smart_reply(ctx, f"Sorry, you don't have any {emoji} to gift.")
 
-            # now that we've acted recursively, we return to avoid triggering the rest of the function
             return
 
         
@@ -2838,32 +2913,7 @@ For example, "$bread gift Melodie all chess_pieces" would gift all your chess pi
             else:
                 base_amount = sender_account.get(item)
 
-            
-            if fraction_amount == "all":
-                amount = base_amount
-            elif fraction_amount == "half":
-                amount = base_amount // 2
-            elif fraction_amount == "quarter":
-                amount = base_amount // 4
-
-        if ctx.author.id == target.id:
-            await ctx.reply("You can't gift bread to yourself, silly.")
-            print(f"rejecting self gift request from {target.display_name} for amount {amount}.")
-            
-            return
-
-        if (amount < 0):
-            print(f"Rejecting steal request from {ctx.author.display_name}")
-            await ctx.reply("Trying to steal bread? Mum won't be very happy about that.")
-            await ctx.invoke(self.bot.get_command('brick'), member=ctx.author, duration="1")
-            return
-        
-        if (amount == 0):
-            print(f"Rejecting 0 bread request from {ctx.author.display_name}")
-            await ctx.reply("That's not much of a gift.")
-            return
-
-        
+            amount = base_amount * fraction_numerator // fraction_denominator
 
         # enforce maxumum gift amount to players of lower prestige level
         if receiver_account.get_prestige_level() < sender_account.get_prestige_level() and \
@@ -2897,16 +2947,16 @@ For example, "$bread gift Melodie all chess_pieces" would gift all your chess pi
         #if emote[]
         if emote is None:
             if sender_account.has(item, amount):
-                sender_account.increment(item, -amount)
-                receiver_account.increment(item, amount)
+                gift(ctx.author, target, "total_dough", amount)
+                
                 print(f"{amount} dough has been gifted to {target.display_name} by {ctx.author.display_name}.")
                 await ctx.send(f"{utility.smart_number(amount)} dough has been gifted to {target.mention}.")
             else:
                 await ctx.reply("You don't have enough dough to gift that much.")
         else:
             if sender_account.has(item, amount):
-                sender_account.increment(item, -amount)
-                receiver_account.increment(item, amount)
+                gift(ctx.author, target, item, amount)
+                
                 print(f"{amount} {item} has been gifted to {target.display_name} by {ctx.author.display_name}.")
                 await ctx.send(f"{utility.smart_number(amount)} {item} has been gifted to {target.mention}.")
             else:
@@ -2917,8 +2967,8 @@ For example, "$bread gift Melodie all chess_pieces" would gift all your chess pi
             #         sender_account.increment(atrribute, -amount)
             #         receiver_account.increment(atrribute, amount)
         
-        self.json_interface.set_account(ctx.author, sender_account, guild = ctx.guild.id)
-        self.json_interface.set_account(target, receiver_account, guild = ctx.guild.id)
+        # self.json_interface.set_account(ctx.author, sender_account, guild = ctx.guild.id)
+        # self.json_interface.set_account(target, receiver_account, guild = ctx.guild.id)
 
         # elif type(arg1) is None or type(arg2) is None:
         #     await ctx.reply("Needs an amount and what to gift.")
