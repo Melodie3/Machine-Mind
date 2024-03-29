@@ -515,7 +515,6 @@ class Random_Chess_Piece(Store_Item):
 
         out_str = ''
         if original_amount == 1:
-            # set piece_text to the only member of the purchased_pieces dict
             out_str = f'Congratulations! You have purchased a {piece_text}!'
         else:
             out_str = "Congratulations! You have purchased the following chess pieces:\n"
