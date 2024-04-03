@@ -4400,6 +4400,7 @@ anarchy - 1000% of your wager.
         name = "space_shop",
         brief = "The Space Shop.",
         description = "Shortcut to '$bread space shop'.",
+        aliases = ["space_store"],
         hidden = True
     )
     async def space_shop_shortcut(self, ctx):
@@ -4407,7 +4408,8 @@ anarchy - 1000% of your wager.
 
     @space.command(
         name = "shop",
-        brief = "The Space Shop."
+        brief = "The Space Shop.",
+        aliases = ["store"]
     )
     async def space_shop(self, ctx):
 
