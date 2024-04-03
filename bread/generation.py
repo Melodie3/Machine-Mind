@@ -26,6 +26,7 @@ vowels = ['a', 'e', 'i', 'o', 'u']
 map_size = 256
 
 map_radius = map_size // 2
+half_radius = map_radius // 2
 map_radius_squared = map_radius ** 2
 
 # This is in `1 in __`, so an 8 means a 1/8 chance.
@@ -70,22 +71,21 @@ planet_options = {
 ####################################
 ### GALAXY GENERATION UTILITIES
 
-def gradients_and_nebulae(galaxy_seed: str) -> tuple[list, list]:
+def generate_gradients(galaxy_seed: str) -> list:
     """Generates the gradient and nebulae info for the galaxy.
 
     Args:
         galaxy_seed (int): The seed of the galaxy.
 
     Returns:
-        tuple[list, list]: The gradient info in one list, and the nebulae info in the other.
+        list: The gradient info in a list.
     """
     gradient_points = []
-    nebulae_points = []
 
     seeded = random.Random(galaxy_seed)
 
     previous_angles = []
-    for point in range(6): # 4 for gradient points, 2 for nebulae
+    for point in range(4): # 4 for gradient points, 2 for nebulae
         dist = map_radius * ((seeded.random() / 2) + 0.25)
 
         if point > 3:
@@ -104,14 +104,11 @@ def gradients_and_nebulae(galaxy_seed: str) -> tuple[list, list]:
         fold = seeded.randint(2, 5)
         rotation = seeded.randrange(0, 360)
 
-        if point <= 3:
-            gradient_points.append((x, y, fold, rotation))
-        else:
-            nebulae_points.append((x, y, fold, rotation))
+        gradient_points.append((x, y, fold, rotation))
 
         previous_angles.append(angle)
     
-    return (gradient_points, nebulae_points)
+    return gradient_points
 
 def gradient_modifier(
         gradient_info: list,
@@ -154,44 +151,114 @@ def gradient_modifier(
 
     return 0
 
+def generate_nebulae(galaxy_seed: str) -> list[dict]:
+    out = []
+    previous_angle = 1
+
+    nebula_count = max(round(random.Random(galaxy_seed).normalvariate(5, 1)), 1)
+    for i in range(nebula_count):
+        rng = random.Random(f"{galaxy_seed}_nebula_{i}")
+
+        theta = rng.uniform(0, math.tau) # τ!! :3
+
+        size_average = 32
+
+        blob_x_size = max(min(rng.normalvariate(size_average, 20), size_average * 1.25), size_average * 0.75)
+        blob_y_size = max(min(rng.normalvariate(blob_x_size, 20), blob_x_size * 1.25), blob_x_size * 0.75)
+
+        blob_angle = rng.uniform(0, math.tau) - previous_angle
+        previous_angle = blob_angle
+
+        dist_range = int(max(blob_x_size, blob_y_size))
+        blob_distance = rng.uniform(dist_range * 1.2, dist_range * 2.5)
+
+        blob_location = [
+            math.cos(blob_angle) * blob_distance,
+            math.sin(blob_angle) * blob_distance
+        ]
+
+        exponent_modifier = rng.uniform(1, 3)
+        max_depth = min(max(int(rng.normalvariate(5, 1)), 3), 7)
+
+        out.append({
+            "location": blob_location,
+            "theta": theta,
+            "size_x": blob_x_size,
+            "size_y": blob_y_size,
+            "modifier": exponent_modifier,
+            "max_depth": max_depth
+        })
+        
+    return out
+
 def in_nebula(
-        nebulae_info: list,
+        nebulae_info: list[dict],
         x: int,
         y: int
     ) -> bool:
-    """Returns a boolean for whether a given point is in a nebula.
+    for data in nebulae_info:
+        location = data["location"]
+        size_x = data["size_x"]
+        size_y = data["size_y"]
+        modifier = data["modifier"]
+        max_depth = data["max_depth"]
+        theta = data["theta"]
 
-    Args:
-        nebulae_info (list): The nebulae information.
-        x (int): The x position.
-        y (int): The y position.
+        use = (
+            (x - location[0]) / half_radius / (size_x / half_radius),
+            (y - location[1]) / half_radius / (size_y / half_radius)
+        )
 
-    Returns:
-        bool: Whether the point is in a nebula.
-    """
-    for xpoint, ypoint, fold, rotation in nebulae_info:
+        use = (
+            use[0] * math.cos(theta) - use[1] * math.sin(theta),
+            use[0] * math.sin(theta) + use[1] * math.cos(theta)
+        )
+
+        if use[0] ** 2 + use[1] ** 2 > 4:
+            continue
         
-        dist = math.dist((x, y), (xpoint, ypoint))
+        exponent = use[1] + modifier
 
-        ydiff = y - ypoint
+        depth = mandelbrot(use, max_depth, exponent)
 
-        try:
-            angle = math.asin(ydiff / dist)
-        except ZeroDivisionError:
+        if depth != max_depth:
             continue
 
-        if x < xpoint:
-            angle = math.pi - angle
-
-        angle += math.radians(rotation)
-
-        mod = math.sin(fold * angle) + math.sin(fold * (1 + 1 / fold) * angle)
-        mod = mod * 10
-
-        if dist <= (25 + mod) * (math.pi / 2):
-            return True
-
+        return True
+    
     return False
+
+def mandelbrot(
+        coord: tuple[float, float],
+        depth: int,
+        exponent: float
+    ) -> int:
+    """Runs the Mandelbrot Set equation on the given coordinate up to the given depth, with the given exponent.
+    
+    Args:
+        coord (tuple[float, float]): The coordinate to run the equation on.
+        depth (int): The maximum depth to check.
+        exponent (float): The exponent to use. It would be `d` in `z = z^d + c`.
+    
+    Returns:
+        int: The last depth value at which it was within the radius 2 circle."""
+    g = 0
+    try:
+        def f(z: tuple[float, float]):
+            return (
+                (z[0] ** 2 + z[1] ** 2) ** (exponent / 2) * math.cos(exponent * math.atan2(z[1], z[0])) + coord[0],
+                (z[0] ** 2 + z[1] ** 2) ** (exponent / 2) * math.sin(exponent * math.atan2(z[1], z[0])) + coord[1]
+            )
+        z = coord
+        
+        for g in range(depth):
+            if z[0] ** 2 + z[1] ** 2 > 4:
+                return g + 1
+            z = f(z)
+
+        return depth
+    except (OverflowError, ZeroDivisionError):
+        return g
 
 def core_spot(
         galaxy_seed: str,
@@ -296,8 +363,10 @@ def galaxy_single(
     Returns:
         dict: The information for the generated point.
     """
-    if gradient_info is None or nebulae_info is None:
-        gradient_info, nebulae_info = gradients_and_nebulae(galaxy_seed)
+    if gradient_info is None:
+        gradient_info = generate_gradients(galaxy_seed)
+    if nebulae_info is None:
+        nebulae_info = generate_nebulae(galaxy_seed)
     
     point_info = get_spot(
         galaxy_seed = galaxy_seed,
@@ -337,7 +406,8 @@ def galaxy_bulk(
     """
     out = {}
 
-    gradient_info, nebulae_info = gradients_and_nebulae(galaxy_seed)
+    gradient_info = generate_gradients(galaxy_seed)
+    nebulae_info = generate_nebulae(galaxy_seed)
 
     x_size = max(top_right[0], bottom_left[0]) - min(top_right[0], bottom_left[0]) + 1
     y_size = max(top_right[1], bottom_left[1]) - min(top_right[1], bottom_left[1]) + 1
@@ -417,8 +487,10 @@ def get_wormhole_points(
     """
     wormhole_id = len(existing_points) + 1
     
-    if gradient_data is None or nebula_data is None:
-        gradient_data, nebula_data = gradients_and_nebulae(galaxy_seed)
+    if gradient_data is None:
+        gradient_data = generate_gradients(galaxy_seed)
+    if nebula_data is None:
+        nebula_data = generate_nebulae(galaxy_seed)
 
     points = []
     out_data = []
@@ -518,7 +590,8 @@ def generate_system(
     ##### Depending on where the change is made asteroid belts & planets may change. #####
     ######################################################################################
 
-    gradient_info, nebula_info = gradients_and_nebulae(galaxy_seed)
+    gradient_info = generate_gradients(galaxy_seed)
+    nebula_info = generate_nebulae(galaxy_seed)
 
     system_position = (galaxy_xpos, galaxy_ypos)
 
