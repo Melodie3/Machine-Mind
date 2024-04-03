@@ -1285,7 +1285,7 @@ class Chess_bot(commands.Cog, name="Chess"):
         output += "```"
         return output
 
-    def get_moves_notation(current_game: Chess_game) -> None:
+    def get_moves_notation(current_game: Chess_game) -> str:
         """Returns the move notation for the given Chess game."""
         output = ""
         move_num = 1

@@ -578,7 +578,7 @@ class Flatbread_Feast(Project):
         return [(item.text, amount)]
 
 class Waffle_Machine(Project):
-    """Written by ChatGPT lol."""
+    """Concept by Emily, written by Duck."""
     internal = "waffle_machine"
     
     @classmethod

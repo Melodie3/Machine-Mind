@@ -47,7 +47,8 @@ map_emojis = {
     "rocket": ":rocket:",
     "trade_hub": ":post_office:",
     "asteroid": ":rock:",
-    "wormhole": ":hole:"
+    "wormhole": ":hole:",
+    "merchant": ":person_in_tuxedo:",
 }
 
 class SystemTile:
@@ -344,6 +345,55 @@ class SystemPlanet(SystemTile):
     
 ########################################################
 
+class SystemMerchant(SystemTile):
+    def __init__(
+            self: typing.Self,
+            galaxy_seed: str,
+
+            galaxy_xpos: int,
+            galaxy_ypos: int,
+            system_xpos: int,
+            system_ypos: int
+        ) -> None:
+        super().__init__(galaxy_seed, galaxy_xpos, galaxy_ypos, system_xpos, system_ypos)
+        self.type = "merchant"
+
+        self.trades_internal = None
+    
+    def get_emoji(self: typing.Self) -> str:
+        return map_emojis.get("merchant")
+
+    def get_analysis(
+            self: typing.Self,
+            guild: typing.Union[discord.Guild, int, str],
+            json_interface: bread_cog.JSON_interface
+        ) -> list[str]:
+        return [
+                "Object type: Merchant",
+                "Use '$bread space merchant' to talk with them."
+            ]
+
+    def get_trades(
+            self: typing.Self,
+            guild: typing.Union[discord.Guild, int, str],
+            json_interface: bread_cog.JSON_interface
+        ) -> list:
+        if self.trades_internal is None:
+            self.load_trades(guild, json_interface)
+        
+        return self.trades_internal
+
+    def load_trades(
+            self: typing.Self,
+            guild: typing.Union[discord.Guild, int, str],
+            json_interface: bread_cog.JSON_interface
+        ) -> None:
+        tick_seed = json_interface.get_tick_seed(guild)
+        # TODO: this
+
+    
+########################################################
+
 class SystemWormhole(SystemTile):
     def __init__(
             self: typing.Self,
@@ -419,7 +469,8 @@ class GalaxyTile:
             trade_hub: SystemTradeHub = False,
             asteroids: list[SystemAsteroid] = None,
             planets: list[SystemPlanet] = None,
-            wormhole: SystemWormhole = None
+            wormhole: SystemWormhole = None,
+            merchant: SystemMerchant = None
         ) -> None:
         """Object that represents a tile within the galaxy.
 
@@ -439,6 +490,7 @@ class GalaxyTile:
             asteroids (list[SystemAsteroid], optional): List of SystemTile objects for each tile in this system that is part of an asteroid belt. If there are no asteroids then pass an empty list. Defaults to None.
             planets (list[SystemPlanet], optional): A list of SystemTile objects for each planet in this system. Defaults to None.
             wormhole (SystemWormhole, optional): A SystemWormhole object for a wormhole in this system. Defaults to None.
+            merchant (SystemMerchant, optional): A SystemMerchant object for a merchant in this system. Defaults to None.
         """
         self.galaxy_seed = galaxy_seed
         self.ascension = ascension
@@ -456,6 +508,7 @@ class GalaxyTile:
         self.trade_hub = trade_hub
         self.planets = planets
         self.wormhole = wormhole
+        self.merchant = merchant
 
         if self.star is not None and \
                 self.asteroids is not None and \
@@ -606,6 +659,22 @@ class GalaxyTile:
                 planet_deviation = planet_data.get("deviation")
             ))
         
+        # Setup any merchants in this system.
+
+        if (self.xpos, self.ypos) in generate_merchants(
+                ascension = self.ascension,
+                guild = guild,
+                json_interface = json_interface
+            ):
+            
+            self.merchant = SystemMerchant(
+                galaxy_seed = self.galaxy_seed,
+                galaxy_xpos = self.xpos,
+                galaxy_ypos = self.ypos,
+                system_xpos = raw_data.get("merchant", {}).get("xpos", 0),
+                system_ypos = raw_data.get("merchant", {}).get("ypos", 0)
+            )
+        
         self.planets = planets
         
         self.loaded = True
@@ -705,6 +774,10 @@ class GalaxyTile:
         if self.wormhole is not None:
             if self.wormhole.system_xpos == system_x and self.wormhole.system_ypos == system_y:
                 return self.wormhole
+        
+        if self.merchant is not None:
+            if self.merchant.system_xpos == system_x and self.merchant.system_ypos == system_y:
+                return self.merchant
         
         # Lastly, check if any asteroids match up.
         for asteroid in self.asteroids:
@@ -1028,6 +1101,14 @@ def system_map(
 
         if (trade_hub_x, trade_hub_y) in visible_coordinates:
             grid[trade_hub_y + 2 - system_y + radius][trade_hub_x + 2 - system_x + radius] = system_data.trade_hub.get_emoji()
+            
+    # Potential merchant.
+    if system_data.merchant is not None:
+        merchant_x = system_data.merchant.system_xpos
+        merchant_y = system_data.merchant.system_ypos
+
+        if (merchant_x, merchant_y) in visible_coordinates:
+            grid[merchant_y + 2 - system_y + radius][merchant_x + 2 - system_x + radius] = system_data.merchant.get_emoji()
     
     # Potential wormhole.
     if system_data.wormhole is not None:
@@ -1420,6 +1501,57 @@ def get_trade_hub_projects(
         )
     
     return out_projects
+
+
+            
+
+        
+
+
+
+
+###################################################################################################################################
+###################################################################################################################################
+###################################################################################################################################
+
+def generate_merchants(
+        ascension: int,
+        guild: typing.Union[discord.Guild, int, str],
+        json_interface: bread_cog.JSON_interface
+    ) -> list:
+    tick_seed = json_interface.get_tick_seed(guild)
+    galaxy_seed = json_interface.get_ascension_seed(ascension_id=ascension, guild=guild)
+
+    merchant_count = max(10, round(random.Random(galaxy_seed).normalvariate(500, 100)))
+
+    merchant_locations = []
+
+    gradient_info = generation.generate_gradients(galaxy_seed)
+    nebula_info = generation.generate_nebulae(galaxy_seed)
+
+    for merchant_id in range(merchant_count):
+        # Each merchant makes 10 attempts at finding a system.
+        # Any merchant that does not find one is considered in transit.
+        for attempt in range(10):
+            rng = random.Random(f"{galaxy_seed}_{tick_seed}_{merchant_id}_{attempt}")
+
+            x = rng.randrange(1, map_size)
+            upper_bound = round(math.sin(math.acos((x - map_radius) / map_radius)) * map_size)
+            y = int(rng.randrange(upper_bound) + (map_radius - (upper_bound / 2)))
+
+            generated = generation.galaxy_single(
+                galaxy_seed = galaxy_seed,
+                x = x,
+                y = y,
+                gradient_info = gradient_info,
+                nebulae_info = nebula_info
+            )
+
+            if generated["system"]:
+                merchant_locations.append((x, y))
+                break
+    
+    return merchant_locations
 
 
             

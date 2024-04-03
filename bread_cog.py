@@ -1,7 +1,7 @@
 """
 Patch Notes: 
 - Added space.
-- You can now use fraction in gifting to specify a custom amount.
+- You can now use fractions in gifting to specify a custom amount.
 
 
 (todo) test reply ping
@@ -529,6 +529,15 @@ class JSON_interface:
         space_data = self.get_space_data(guild=guild)
 
         return space_data.get("day_seed", "31004150_will_rule_the_world")
+
+    def get_tick_seed(
+            self: typing.Self,
+            guild: typing.Union[discord.Guild, int, str]
+        ) -> str:
+        """Returns the tick seed for the given guild in Bread Space."""
+        space_data = self.get_space_data(guild=guild)
+
+        return space_data.get("tick_seed", "the_game_:3")
     
     def get_trade_hub_data(
             self: typing.Self,
@@ -781,10 +790,24 @@ class Bread_cog(commands.Cog, name="Bread"):
         # print (f"Hour +15 %6 is {(time.hour + 15) % 6}")
         # print (f"Hour -15 %6 is {(time.hour - 15) % 6}")
         if (time.hour - 12) % 6 == 0:
+            self.space_tick()
+            
             print("stonk fluctuate called")
 
             self.stonk_fluctuate_internal()
             await self.stonks_announce()
+    
+    def space_tick(self: typing.Self) -> None:
+        """Bread Space related tasks that run at stonk ticks."""
+
+        all_guild_ids = self.json_interface.get_list_of_all_guilds()
+        for guild_id in all_guild_ids:
+            space_data = self.json_interface.get_space_data(guild=guild_id)
+
+            # Set a new tick seed.
+            space_data["tick_seed"] = space.generate_galaxy_seed()
+
+            self.json_interface.set_custom_file("space", file_data=space_data, guild=guild_id)
     
     @daily_task.before_loop
     async def before_daily(self: typing.Self):
@@ -4395,6 +4418,10 @@ anarchy - 1000% of your wager.
         
         # we get the account of the user who called it
         user_account = self.json_interface.get_account(ctx.author, guild = ctx.guild.id)
+
+        if user_account.get_prestige_level() < 2:
+            await ctx.reply("The entrance to this shop is nowhere to be found, perhaps you need to ascend.")
+            return
 
         # now we get the list of items
         items = self.get_buyable_items(user_account, store.space_shop_items)
