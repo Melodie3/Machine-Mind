@@ -462,7 +462,7 @@ class Essential_Oils(Project):
 #######################################################################################################
 
 ##### Special bread.
-    
+
 class Flatbread_Feast(Project):
     """Written by ChatGPT lol."""
     internal = "flatbread_feast"
@@ -577,6 +577,159 @@ class Flatbread_Feast(Project):
 
         return [(item.text, amount)]
 
+class Waffle_Machine(Project):
+    """Written by ChatGPT lol."""
+    internal = "waffle_machine"
+    
+    @classmethod
+    def name(
+            cls,
+            day_seed: str,
+            system_tile: space.SystemTradeHub
+        ) -> str:
+        rng = random.Random(hash_args(day_seed, system_tile.tile_seed()))
+        
+        options = [
+            "Waffle Machine",
+            "The Broken Machine",
+            "Cafeteria Conflict",
+        ]
+
+        return rng.choice(options)
+
+    @classmethod
+    def description(
+            cls,
+            day_seed: str,
+            system_tile: space.SystemTradeHub
+        ) -> str:
+        rng = random.Random(hash_args(day_seed, system_tile.tile_seed()))
+
+        cost = cls.get_price_description(day_seed, system_tile)
+        reward = cls.get_reward_description(day_seed, system_tile)
+
+        part_1 = [
+            "Oh no!",
+            "Oh no...",
+            "Welp."
+        ]
+
+        part_2 = [
+            "The officials at the Trade Hub have some unfortunate news.",
+            "The Trade Hub's cafeteria staff have some bad news.",
+            "The Trade Hub's staff have made a sad announcement."
+        ]
+
+        part_3 = [
+            "\nThe waffle machine in the cafeteria is broken!",
+            "\nThe cafeteria's waffle machine stopped working!",
+            "\nThe Trade Hub's waffle machine is no longer functional!"
+        ]
+
+        part_4 = [
+            "\nThis is very unfortunate,",
+            "\nThis is not good,",
+            "\nThis is bad,"
+        ]
+
+        part_5 = [
+            "due to the fact that the next time another machine can be ordered is in a few days!",
+            "because the Trade Hub can only get a replacement in a few days!",
+            "because the Trade Hub doesn't have same-day delivery on waffle machines!"
+        ]
+
+        part_6 = [
+            "In the time until a replacement can be acquired,",
+            "In that time,",
+            "Before another waffle machine arrives,"
+        ]
+        
+        part_7 = [
+            "nobody can have any waffles!",
+            "no waffles can be made!",
+            "the Trade Hub will have no waffles!"
+        ]
+
+        part_8 = [
+            f"\nWith a supply of just {cost},",
+            f"\nFor only {cost},",
+            f"\nIf someone were able to provide {cost},"
+        ]
+
+        part_9 = [
+            "the cafeteria would be able to have waffles until the replacement machine arrives!",
+            "there would be enough waffles to go around for the few days required!",
+            "everyone on the Trade Hub would be able to have waffles!"
+        ]
+
+        part_10 = [
+            "But worry not, good deeds do not go without a reward!",
+            "Don't worry, there is a reward for anyone who provides the needed waffles!",
+            "The cafeteria staff will compensate someone who gives the waffles!"
+        ]
+
+        part_11 = [
+            f"The reward for providing the waffles is {reward}!",
+            f"The staff have announced a reward of {reward}!",
+            f"The posted reward is {reward}!"
+        ]
+
+        return " ".join([
+            rng.choice(part_1),
+            rng.choice(part_2),
+            rng.choice(part_3),
+            rng.choice(part_4),
+            rng.choice(part_5),
+            rng.choice(part_6),
+            rng.choice(part_7),
+            rng.choice(part_8),
+            rng.choice(part_9),
+            rng.choice(part_10),
+            rng.choice(part_11)
+        ])
+
+    @classmethod
+    def completion(
+            cls: typing.Type[typing.Self],
+            day_seed: str,
+            system_tile: space.SystemTradeHub
+        ) -> str:
+        rng = random.Random(hash_args(day_seed, system_tile.tile_seed()))
+
+        options = [
+            f"Phew! That was close to a waffle-pocalypse! But luckily the waffles were provided! The Trade Hub has put in an order for a replacement waffle machine, but until that arrives everyone will have all the waffles they want!",
+            f"Waffles! Congratulations! You provided all the needed waffles! The folks on the Trade Hub will have plenty of waffles to eat until the new waffle machine arrives!",
+            f"Yay! You did it! The Trade Hub cafeteria staff have confirmed that they have more than enough waffles to supply the hungry Trade Hub staff!"
+        ]
+
+        return rng.choice(options)
+    
+    @classmethod
+    def get_cost(
+            cls,
+            day_seed: str,
+            system_tile: space.SystemTradeHub
+        ) -> list[tuple[str, int]]:
+        rng = random.Random(hash_args(day_seed, system_tile.tile_seed()))
+
+        amount = rng.randint(10, 20) * 1000
+
+        return [(values.waffle.text, amount)]
+    
+    @classmethod
+    def get_reward(
+            cls,
+            day_seed: str,
+            system_tile: space.SystemTradeHub
+        ) -> list[tuple[str, int]]:
+        rng = random.Random(hash_args(day_seed, system_tile.tile_seed()))
+
+        amount = rng.randint(10, 20) * 10
+
+        item = rng.choice(values.chess_pieces_white_biased)
+
+        return [(item.text, amount)]
+    
 ##### Rare bread.
 
 ##### Black chess pieces.
@@ -829,7 +982,7 @@ story_projects = [Essential_Oils]
 # Chessatron_Repair appears a lot here since it doesn't like it when a list is empty.
 # When projects are made for those categories Chessatron_Repair can be removed.
 # Except take_misc_item_projects, since it actually goes there lol.
-take_special_bread_projects = [Flatbread_Feast]
+take_special_bread_projects = [Flatbread_Feast, Waffle_Machine]
 take_rare_bread_projects = [Chessatron_Repair]
 take_black_chess_piece_projects = [Chessatron_Repair]
 take_white_chess_piece_projects = [Chessatron_Repair]
