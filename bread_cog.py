@@ -791,7 +791,7 @@ class Bread_cog(commands.Cog, name="Bread"):
         # print (f"Hour -15 %6 is {(time.hour - 15) % 6}")
         if (time.hour - 12) % 6 == 0:
             self.space_tick()
-            
+
             print("stonk fluctuate called")
 
             self.stonk_fluctuate_internal()
@@ -5140,6 +5140,10 @@ anarchy - 1000% of your wager.
         if action is not None:
             actions = action.split(" ")
             action = actions[0]
+            
+        day_seed = self.json_interface.get_day_seed(guild=ctx.guild.id)
+
+        hub = system.trade_hub
         
         if system.trade_hub is None:
             if system_x == 0 and system_y == 0:
@@ -5177,7 +5181,7 @@ anarchy - 1000% of your wager.
                 await ctx.reply("Well done, you have created a Trade Hub!")
                 return
 
-            cost = projects.Trade_Hub.get_cost(day_seed, hub)
+            cost = projects.Trade_Hub.get_price_description(day_seed, hub)
             
             await ctx.reply(f"To create a Trade Hub here, you must have the following resources:\n{cost}\n\nOnce you have the resources, use '$bread space hub create' to create the Trade Hub.")
             return
@@ -5192,8 +5196,6 @@ anarchy - 1000% of your wager.
         
         ##############################################################################################################
         # Can interact with the trade hub!
-            
-        day_seed = self.json_interface.get_day_seed(guild=ctx.guild.id)
 
         hub_projects = space.get_trade_hub_projects(
             json_interface = self.json_interface,
@@ -5201,8 +5203,6 @@ anarchy - 1000% of your wager.
             galaxy_x = galaxy_x,
             galaxy_y = galaxy_y
         )
-
-        hub = system.trade_hub
         
         ##############################################################################################################
 

@@ -314,7 +314,11 @@ class Trade_Hub(Project):
             day_seed: str,
             system_tile: space.SystemTradeHub
         ) -> list[tuple[str, int]]:
-        return cls.all_costs()[system_tile.trade_hub_level]
+        if system_tile is None:
+            level = 0
+        else:
+            level = system_tile.trade_hub_level
+        return cls.all_costs()[level]
     
     @classmethod
     def get_reward(
