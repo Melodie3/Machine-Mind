@@ -2,6 +2,8 @@
 Patch Notes: 
 - Added space.
 - You can now use fractions in gifting to specify a custom amount.
+- Modified Chessatron dough equation to buff Chessatron Contraption.
+- Decreased Chessatron Contraption max level to 10.
 
 
 (todo) test reply ping
@@ -1200,7 +1202,7 @@ class Bread_cog(commands.Cog, name="Bread"):
             if user_account.has("moak_booster"):
                 output += f"With level {user_account.get('moak_booster')} of the Moak Booster, you get {round((store.moak_booster_multipliers[user_account.get('moak_booster')]-1)*100)}% more Moaks.\n"
             if user_account.has("chessatron_shadow_boost"):
-                output += f"With level {user_account.get('chessatron_shadow_boost')} of the Chessatron Contraption, your omegas are {round(user_account.get_shadowmega_boost_amount(), 2)}x more powerful than normal.\n"
+                output += f"With level {user_account.get('chessatron_shadow_boost')} of the Chessatron Contraption, your Omega Chessatrons are {round(user_account.get_shadowmega_boost_amount() * 100 - 100)}% more powerful than normal.\n"
             if user_account.has("shadow_gold_gem_luck_boost"):
                 output += f"With level {user_account.get('shadow_gold_gem_luck_boost')} of Ethereal Shine, you get {utility.write_count(user_account.get_shadow_gold_gem_boost_count(), 'more LC')} worth of gem luck.\n"
             if user_account.has("first_catch_level"):
