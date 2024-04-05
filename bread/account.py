@@ -401,8 +401,8 @@ class Bread_Account:
         return affecting_shadowmegas
 
     def get_shadowmega_boost_amount(self: typing.Self) -> int:
-        """Returns the amount of extra dough this player gets per chessatron from Chessatron Contraption and shadowmega chessatrons."""
-        return self.get_shadowmega_boost_count() * 100
+        """Returns the multiplier applied to omegas this player gets per chessatron from Chessatron Contraption and shadowmega chessatrons."""
+        return 1.05 ** self.get_shadowmega_boost_count()
 
     def get_shadow_gold_gem_boost_count(self: typing.Self) -> int:
         """Returns the amount of shadow gold gems that this player can use to increase their odds of finding gems. Essentially, this is the number of active shadow gold gems."""
@@ -448,14 +448,13 @@ class Bread_Account:
             include_prestige_boost = True
         ) -> int:
         """Calculates the amount of dough this player gets for each chessatron."""
-        amount = values.chessatron.value   
-        amount += self.get_shadowmega_boost_amount()
+        amount = values.chessatron.value
         # then we add omegas
-        amount += self.get(values.omega_chessatron.text) * 250
+        amount += (self.get(values.omega_chessatron.text) * 100) * self.get_shadowmega_boost_amount()
         if include_prestige_boost:
             prestige_mult = self.get_prestige_multiplier()
             amount = round(amount * prestige_mult)  
-        return amount
+        return round(amount)
     
     def get_anarchy_chessatron_dough_amount(
             self: typing.Self,
