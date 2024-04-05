@@ -2,6 +2,7 @@ import random
 import math
 import typing
 import discord
+import hashlib
 from discord.ext import commands
 
 def smart_number(number: int) -> str:
@@ -261,3 +262,7 @@ def plot_line(
             y += sy
 
     return points
+
+def hash_args(*args, separator: str = "") -> str:
+    """Converts a list of args into a string, and then returns the SHA-256 hash of it."""
+    return hashlib.sha256(separator.join([str(arg) for arg in args]).encode()).digest()

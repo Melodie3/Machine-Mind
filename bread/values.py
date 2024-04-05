@@ -22,7 +22,8 @@ class Emote:
             awards_value: bool = False,
             alchemy_value: typing.Optional[int] = None,
             giftable: bool = True,
-            alternate_names: list[str] = []
+            alternate_names: list[str] = [],
+            trade_value: float = None
         ) -> None:
         """Object that represents an Emote.
 
@@ -36,6 +37,7 @@ class Emote:
             alchemy_value (typing.Optional[int], optional): The value of this emote in alchemy. Defaults to None.
             giftable (bool, optional): Whether this emote can be gifted. Defaults to True.
             alternate_names (list[str], optional): A list of alternate names for this emote. Defaults to [].
+            trade_value (float, optional): The value of this item in merchant trades. If an item's trade value is not None, it can be traded by merchants. Defaults to None.
         """
         self.text = text
         self.value = value
@@ -47,6 +49,7 @@ class Emote:
         if alchemy_value is None:
             self.alchemy_value = value
         self.alternate_names = alternate_names
+        self.trade_value = trade_value
 
     def __str__(self: typing.Self) -> str:
         if self.name is not None:
@@ -104,6 +107,7 @@ normal_bread =  Emote(
     value=1,
     name="bread",
     emoji= "🍞",
+    trade_value = 1
 )
 
 ############ corrupted bread
@@ -111,7 +115,8 @@ normal_bread =  Emote(
 corrupted_bread = Emote(
     text = "<:corrupted_bread:1129289000843235378>",
     value = 1,
-    name = "corrupted_bread"
+    name = "corrupted_bread",
+    trade_value = 0.25
 )
 
 ############ speacial breads
@@ -126,7 +131,8 @@ flatbread =  Emote(
     value=5,
     name="flatbread",
     emoji= "🫓",
-    attributes=["special_bread"]
+    attributes=["special_bread"],
+    trade_value=5
 )
 
 # stuffed_flatbread = {
@@ -141,7 +147,8 @@ stuffed_flatbread = Emote(
     value=5,
     name="stuffed_flatbread",
     emoji= "🥙",
-    attributes=["special_bread"]
+    attributes=["special_bread"],
+    trade_value=5
 )
 
 # french_bread = { "value" : 5,
@@ -154,7 +161,8 @@ french_bread = Emote(
     value=5,
     name="french_bread",
     emoji= "🥖",
-    attributes=["special_bread"]
+    attributes=["special_bread"],
+    trade_value=5
 )
 
 # croissant = { "value" : 5,
@@ -167,7 +175,8 @@ croissant = Emote(
     value=5,
     name="croissant",
     emoji= "🥐",
-    attributes=["special_bread"]
+    attributes=["special_bread"],
+    trade_value=5
 )
 
 # sandwich = { "value" : 5,
@@ -180,7 +189,8 @@ sandwich = Emote(
     value=5,
     name="sandwich",
     emoji= "🥪",
-    attributes=["special_bread"]
+    attributes=["special_bread"],
+    trade_value=5
 )
 
 all_special_breads = [sandwich, croissant, french_bread, stuffed_flatbread, flatbread]
@@ -210,7 +220,8 @@ doughnut = Emote(
     value=10,
     name="doughnut",
     emoji= "🍩",
-    attributes=["rare_bread"]
+    attributes=["rare_bread"],
+    trade_value=10
 )
 
 # bagel = {
@@ -225,7 +236,8 @@ bagel = Emote(
     value=10,
     name="bagel",
     emoji= "🥯",
-    attributes=["rare_bread"]
+    attributes=["rare_bread"],
+    trade_value=10
 )
 
 # waffle = {
@@ -240,7 +252,8 @@ waffle = Emote(
     value=10,
     name="waffle",
     emoji= "🧇",
-    attributes=["rare_bread"]
+    attributes=["rare_bread"],
+    trade_value=10
 )
 
 all_rare_breads = [doughnut, bagel, waffle]
@@ -282,7 +295,8 @@ anarchy_chess = Emote(
     value=2000,
     name="anarchy_chess",
     attributes=["unique", "many_of_a_kind"],
-    alternate_names = ["moak"]
+    alternate_names = ["moak"],
+    trade_value=256000
 )
 
 # horsey = {
@@ -356,7 +370,8 @@ class Chess_Emote(Emote):
             name: str,
             text: str,
             isWhite: bool,
-            alternate_names: list[str] = []
+            alternate_names: list[str] = [],
+            trade_value: float = None
         ) -> None:
         """An object that represents a chess piece.
 
@@ -365,6 +380,7 @@ class Chess_Emote(Emote):
             text (str): The text representation.
             isWhite (bool): Whether this piece is a white chess piece.
             alternate_names (list[str], optional): A list of alternate names for this emote. Defaults to [].
+            trade_value (float, optional): The value of this item in merchant trades. If an item's trade value is not None, it can be traded by merchants. Defaults to None.
         """
         self.text = text
         self.name = name
@@ -376,6 +392,7 @@ class Chess_Emote(Emote):
         self.awards_value = False
         self.alchemy_value = self.value
         self.alternate_names = alternate_names
+        self.trade_value = trade_value
 
 # white_pawn = { "text" : "<:Wpawn:961815364319207516>",
 #     "value" : 80,
@@ -384,7 +401,8 @@ class Chess_Emote(Emote):
 white_pawn = Chess_Emote(
     name="Wpawn",
     text = "<:Wpawn:961815364319207516>",
-    isWhite=True 
+    isWhite=True,
+    trade_value=80
 )
 
 # white_rook = { "text" : "<:Wrook:961815364482793492>",
@@ -394,7 +412,8 @@ white_pawn = Chess_Emote(
 white_rook = Chess_Emote(
     name="Wrook",
     text = "<:Wrook:961815364482793492>",
-    isWhite=True 
+    isWhite=True,
+    trade_value=80
 )
 
 # white_bishop = { "text" : "<:Wbishop:961815364428263435>",
@@ -404,7 +423,8 @@ white_rook = Chess_Emote(
 white_bishop = Chess_Emote(
     name="Wbishop",
     text = "<:Wbishop:961815364428263435>",
-    isWhite=True 
+    isWhite=True,
+    trade_value=80
 )
 
 # white_knight = { "text" : "<:Wknight:958746544436310057>",
@@ -414,7 +434,8 @@ white_bishop = Chess_Emote(
 white_knight = Chess_Emote(
     name="Wknight",
     text = "<:Wknight:958746544436310057>",
-    isWhite=True 
+    isWhite=True,
+    trade_value=80
 )
 
 # white_queen = { "text" : "<:Wqueen:961815364461809774>",
@@ -424,7 +445,8 @@ white_knight = Chess_Emote(
 white_queen = Chess_Emote(
     name="Wqueen",
     text = "<:Wqueen:961815364461809774>",
-    isWhite=True 
+    isWhite=True,
+    trade_value=80
 )
 
 # white_king = { "text" : "<:Wking:961815364411478016>",
@@ -434,7 +456,8 @@ white_queen = Chess_Emote(
 white_king = Chess_Emote(
     name="Wking",
     text = "<:Wking:961815364411478016>",
-    isWhite=True 
+    isWhite=True,
+    trade_value=80
 )
 
 
@@ -445,7 +468,8 @@ white_king = Chess_Emote(
 black_pawn = Chess_Emote(
     name="Bpawn",
     text = "<:Bpawn:961815364436635718>",
-    isWhite=False 
+    isWhite=False,
+    trade_value=40
 )
 
 # black_rook = { "text" : "<:Brook:961815364377919518>",
@@ -455,7 +479,8 @@ black_pawn = Chess_Emote(
 black_rook = Chess_Emote(
     name="Brook",
     text = "<:Brook:961815364377919518>",
-    isWhite=False 
+    isWhite=False,
+    trade_value=40
 )
 
 # black_bishop = { "text" : "<:Bbishop:961815364306608228>",
@@ -465,7 +490,8 @@ black_rook = Chess_Emote(
 black_bishop = Chess_Emote(
     name="Bbishop",
     text = "<:Bbishop:961815364306608228>",
-    isWhite=False 
+    isWhite=False,
+    trade_value=40
 )
 
 # black_knight = { "text" : "<:Bknight:961815364424048650>",
@@ -475,7 +501,8 @@ black_bishop = Chess_Emote(
 black_knight = Chess_Emote(
     name="Bknight",
     text =  "<:Bknight:961815364424048650>",
-    isWhite=False 
+    isWhite=False,
+    trade_value=40
 )
 
 # black_queen = { "text" : "<:Bqueen:961815364470202428>",
@@ -485,7 +512,8 @@ black_knight = Chess_Emote(
 black_queen = Chess_Emote(
     name="Bqueen",
     text =  "<:Bqueen:961815364470202428>",
-    isWhite=False 
+    isWhite=False,
+    trade_value=40
 )
 
 # black_king = { "text" : "<:Bking:961815364327600178>",
@@ -495,7 +523,8 @@ black_queen = Chess_Emote(
 black_king = Chess_Emote(
     name="Bking",
     text =  "<:Bking:961815364327600178>",
-    isWhite=False 
+    isWhite=False,
+    trade_value=40
 )
 
 all_chess_pieces = [black_king, black_queen, black_knight, black_bishop, black_rook, black_pawn, white_pawn, white_rook, white_bishop, white_knight, white_queen, white_king]
@@ -528,7 +557,8 @@ class Anarchy_Piece_Emote(Emote):
             name: str,
             text: str,
             isWhite: bool,
-            alternate_names: list[str] = []
+            alternate_names: list[str] = [],
+            trade_value: float = None
         ) -> None:
         """An object that represents an anarchy piece.
 
@@ -537,6 +567,7 @@ class Anarchy_Piece_Emote(Emote):
             text (str): The text representation.
             isWhite (bool): Whether this piece is a white anarchy piece.
             alternate_names (list[str], optional): A list of alternate names for this emote. Defaults to [].
+            trade_value (float, optional): The value of this item in merchant trades. If an item's trade value is not None, it can be traded by merchants. Defaults to None.
         """
         self.text = text
         self.name = name
@@ -548,77 +579,90 @@ class Anarchy_Piece_Emote(Emote):
         self.awards_value = False
         self.alchemy_value = self.value
         self.alternate_names = alternate_names
+        self.trade_value = trade_value
 
 anarchy_white_pawn = Anarchy_Piece_Emote(
     name="Wpawnanarchy",
     text = "<:Wpawnanarchy:971046978349858936>",
-    isWhite=True 
+    isWhite=True,
+    trade_value=3600
 )
 
 anarchy_white_rook = Anarchy_Piece_Emote(
     name="Wrookanarchy",
     text = "<:Wrookanarchy:971047003402403862>",
-    isWhite=True 
+    isWhite=True,
+    trade_value=3600
 )
 
 anarchy_white_bishop = Anarchy_Piece_Emote(
     name="Wbishopanarchy",
     text = "<:Wbishopanarchy:971046928395665448>",
-    isWhite=True 
+    isWhite=True,
+    trade_value=3600
 )
 
 anarchy_white_knight = Anarchy_Piece_Emote(
     name="Wknightanarchy",
     text = "<:Wknightanarchy:971046961811714158>",
-    isWhite=True 
+    isWhite=True,
+    trade_value=3600
 )
 
 anarchy_white_queen = Anarchy_Piece_Emote(
     name="Wqueenanarchy",
     text = "<:Wqueenanarchy:971046990312013844>",
-    isWhite=True 
+    isWhite=True,
+    trade_value=3600
 )
 
 anarchy_white_king = Anarchy_Piece_Emote(
     name="Wkinganarchy",
     text = "<:Wkinganarchy:971046942144602172>",
-    isWhite=True 
+    isWhite=True,
+    trade_value=3600
 )
 
 anarchy_black_pawn = Anarchy_Piece_Emote(
     name="Bpawnanarchy",
     text = "<:Bpawnanarchy:971046900038004736>",
-    isWhite=False 
+    isWhite=False,
+    trade_value=1800
 )
 
 anarchy_black_rook = Anarchy_Piece_Emote(
     name="Brookanarchy",
     text = "<:Brookanarchy:971046920166457364>",
-    isWhite=False 
+    isWhite=False,
+    trade_value=1800
 )
 
 anarchy_black_bishop = Anarchy_Piece_Emote(
     name="Bbishopanarchy",
     text = "<:Bbishopanarchy:971046862134050887>",
-    isWhite=False 
+    isWhite=False,
+    trade_value=1800
 )
 
 anarchy_black_knight = Anarchy_Piece_Emote(
     name="Bknightanarchy",
     text =  "<:Bknightanarchy:971046888486891642>",
-    isWhite=False 
+    isWhite=False,
+    trade_value=1800
 )
 
 anarchy_black_queen = Anarchy_Piece_Emote(
     name="Bqueenanarchy",
     text =  "<:Bqueenanarchy:971046911551356948>",
-    isWhite=False 
+    isWhite=False,
+    trade_value=1800
 )
 
 anarchy_black_king = Anarchy_Piece_Emote(
     name="Bkinganarchy",
     text =  "<:Bkinganarchy:971046879540445275>",
-    isWhite=False 
+    isWhite=False,
+    trade_value=1800
 )
 
 all_anarchy_pieces = [
@@ -666,7 +710,8 @@ class Shiny_Emote(Emote):
             value: int,
             awards_value: bool = False,
             alchemy_value: int = None,
-            alternate_names: list[str] = []
+            alternate_names: list[str] = [],
+            trade_value: float = None
         ) -> None:
         """An object representing a shiny emote (a gem)
 
@@ -677,6 +722,7 @@ class Shiny_Emote(Emote):
             awards_value (bool, optional): Whether this emote awards its value when alchemized. Defaults to False.
             alchemy_value (int, optional): Specific value to award when alchemized. Defaults to None.
             alternate_names (list[str], optional): A list of alternate names for this emote. Defaults to [].
+            trade_value (float, optional): The value of this item in merchant trades. If an item's trade value is not None, it can be traded by merchants. Defaults to None.
         """
         self.text = text
         self.name = name
@@ -688,6 +734,7 @@ class Shiny_Emote(Emote):
         else:
             self.alchemy_value = alchemy_value
         self.alternate_names = alternate_names
+        self.trade_value = trade_value
         
 
 # <:gem_red:1006498544892526612> <:gem_blue:1006498655508889671> <:gem_gold:1006498746718244944> <:gem_green:1006498803295211520> <:gem_purple:1006498607861604392>
@@ -696,21 +743,24 @@ gem_red = Shiny_Emote(
     name="gem_red",
     text = "<:gem_red:1006498544892526612>",
     value = 150,
-    alternate_names = ["red_gem"]
+    alternate_names = ["red_gem"],
+    trade_value=500
 )
 
 gem_blue = Shiny_Emote(
     name="gem_blue",
     text = "<:gem_blue:1006498655508889671>",
     value = 250,
-    alternate_names = ["blue_gem"]
+    alternate_names = ["blue_gem"],
+    trade_value=1000
 )
 
 gem_purple = Shiny_Emote(
     name="gem_purple",
     text = "<:gem_purple:1006498607861604392>",
     value = 500,
-    alternate_names = ["purple_gem"]
+    alternate_names = ["purple_gem"],
+    trade_value=2000
 )
 
 gem_gold = Shiny_Emote(
@@ -718,14 +768,16 @@ gem_gold = Shiny_Emote(
     text = "<:gem_gold:1006498746718244944>",
     value = 5000,
     awards_value = True,
-    alternate_names = ["gold_gem"]
+    alternate_names = ["gold_gem"],
+    trade_value=32000
 )
 
 gem_green = Shiny_Emote(
     name="gem_green",
     text = "<:gem_green:1006498803295211520>",
     value = 750,
-    alternate_names = ["green_gem"]
+    alternate_names = ["green_gem"],
+    trade_value=4000
 )
 
 all_shinies = [gem_red, gem_blue, gem_purple, gem_gold, gem_green]
@@ -962,7 +1014,8 @@ fuel = Emote(
     emoji= "🛢️",
     alternate_names = ["oil"],
     attributes = ["misc"],
-    giftable = False
+    giftable = False,
+    trade_value = 750
 )
 
 all_bricks = [brick, brick_gold, fide_brick, brick_fide]

@@ -95,7 +95,7 @@ class SystemTile:
     
     # Optional for subclasses.
     def __str__(self: typing.Self):
-        return f"<SystemTile: {self.tile_type} | system_x: {self.system_xpos} | system_y: {self.system_ypos} | galaxy_x: {self.galaxy_xpos} | galaxy_y: {self.galaxy_ypos}>"
+        return f"<SystemTile | system_x: {self.system_xpos} | system_y: {self.system_ypos} | galaxy_x: {self.galaxy_xpos} | galaxy_y: {self.galaxy_ypos}>"
     
     # Optional for subclasses.
     def __repr__(self: typing.Self):
@@ -370,14 +370,14 @@ class SystemMerchant(SystemTile):
         ) -> list[str]:
         return [
                 "Object type: Merchant",
-                "Use '$bread space merchant' to talk with them."
+                "Use '$bread space merchant' when within viewing range to talk with them."
             ]
 
     def get_trades(
             self: typing.Self,
             guild: typing.Union[discord.Guild, int, str],
             json_interface: bread_cog.JSON_interface
-        ) -> list:
+        ) -> list[tuple]:
         if self.trades_internal is None:
             self.load_trades(guild, json_interface)
         
@@ -389,7 +389,65 @@ class SystemMerchant(SystemTile):
             json_interface: bread_cog.JSON_interface
         ) -> None:
         tick_seed = json_interface.get_tick_seed(guild)
-        # TODO: this
+        
+        trades = []
+        
+        trade_amount = 5
+
+        all_emotes = values.all_emotes.copy()
+
+        for emote in all_emotes.copy():
+            if emote.trade_value is None:
+                all_emotes.remove(emote)
+        
+
+        for trade_id in range(trade_amount):
+            rng = random.Random(utility.hash_args(self.tile_seed(), tick_seed, trade_id))
+
+            give = rng.choice(all_emotes)
+            give_amount = 1
+
+            take = rng.choice(all_emotes)
+            take_amount = 1
+
+            if take == give:
+                while take == give:
+                    take = rng.choice(all_emotes)
+            
+            if give.trade_value > take.trade_value:
+                take_amount = round(give.trade_value / take.trade_value)
+            else:
+                give_amount = round(take.trade_value / give.trade_value)
+            
+            trades.append((
+                (give, give_amount), (take, take_amount)
+            ))
+        
+        self.trades_internal = trades
+    
+    def describe_trades(
+            self: typing.Self,
+            guild: typing.Union[discord.Guild, int, str],
+            json_interface: bread_cog.JSON_interface
+        ) -> list[str]:
+        trades = self.get_trades(guild, json_interface)
+
+        out = []
+
+        for trade_id, trade_data in enumerate(trades):
+            give, take = trade_data
+
+            out.append("{trade_id}: {take_amount} {take_item} for {give_amount} {give_item}".format(
+                trade_id = trade_id + 1,
+                take_amount = utility.smart_number(take[1]),
+                take_item = take[0].text,
+                give_amount = utility.smart_number(give[1]),
+                give_item = give[0].text,
+            ))
+        
+        return out
+        
+
 
     
 ########################################################
@@ -661,12 +719,14 @@ class GalaxyTile:
         
         # Setup any merchants in this system.
 
-        if (self.xpos, self.ypos) in generate_merchants(
+        if merchant_on_tile(
                 ascension = self.ascension,
                 guild = guild,
-                json_interface = json_interface
-            ):
-            
+                json_interface = json_interface,
+                tile_x = self.xpos,
+                tile_y = self.ypos,
+                validate_system = False
+            ):            
             self.merchant = SystemMerchant(
                 galaxy_seed = self.galaxy_seed,
                 galaxy_xpos = self.xpos,
@@ -948,7 +1008,7 @@ def galaxy_map(
                 ascension = ascension,
                 xpos = mod_x,
                 ypos = mod_y,
-                load_planets = False
+                load_data = False
             )
 
             grid[y_pos + 2][x_pos + 2] = tile_object.get_emoji(json_interface=json_interface)
@@ -1055,7 +1115,7 @@ def system_map(
         ascension = ascension,
         xpos = galaxy_x,
         ypos = galaxy_y,
-        load_planets = False
+        load_data = False
     )
 
     # If this location is not a system, place the rocket in the middle and return.
@@ -1145,7 +1205,7 @@ def get_galaxy_coordinate(
         ascension: int,
         xpos: int,
         ypos: int,
-        load_planets: bool = False
+        load_data: bool = False
     ) -> GalaxyTile:
     """Returns a GalaxyTile object for this location within the galaxy the given account is on.
 
@@ -1155,7 +1215,7 @@ def get_galaxy_coordinate(
         ascension (int): The ascension of this galaxy.
         xpos (int): The x position of the coordinate to get.
         ypos (int): The y position of the coordinate to get.
-        load_planets (bool, optional): Whether to load the planets when making the GalaxyTile object. Defaults to True.
+        load_data (bool, optional): Whether to load the system data when making the GalaxyTile object. Defaults to False.
     
     Returns:
         GalaxyTile: A GalaxyTile object for the coordinate.
@@ -1183,7 +1243,7 @@ def get_galaxy_coordinate(
     if not is_system:
         return out
 
-    if load_planets:
+    if load_data:
         out.load_system_data(json_interface=json_interface, guild=guild, get_wormholes=True)
 
     return out
@@ -1268,7 +1328,7 @@ def get_planet_modifiers(
             ascension = ascension,
             xpos = tile.galaxy_xpos,
             ypos = tile.galaxy_ypos,
-            load_planets = True
+            load_data = True
         ) # type: GalaxyTile
 
         if galaxy_tile.in_nebula:
@@ -1474,7 +1534,7 @@ def get_trade_hub_projects(
         project_id += 1
 
         key = f"project_{project_id + 1}"
-        rng = random.Random(projects.hash_args(seed, galaxy_x, galaxy_y, key))
+        rng = random.Random(utility.hash_args(seed, galaxy_x, galaxy_y, key))
 
         if len(out_projects) == 0 or (len(out_projects) == 2 and rng.randint(1, 2) == 1):
             project = rng.choice(projects.item_project_lists) # Full list -> Give/Take
@@ -1514,44 +1574,34 @@ def get_trade_hub_projects(
 ###################################################################################################################################
 ###################################################################################################################################
 
-def generate_merchants(
+def merchant_on_tile(
         ascension: int,
         guild: typing.Union[discord.Guild, int, str],
-        json_interface: bread_cog.JSON_interface
-    ) -> list:
-    tick_seed = json_interface.get_tick_seed(guild)
+        json_interface: bread_cog.JSON_interface,
+        tile_x: int,
+        tile_y: int,
+        validate_system: bool = True
+    ) -> bool:
+    """Determines whether there is a merchant on the given tile and, by default, will only do that check if the given tile contains a system."""
     galaxy_seed = json_interface.get_ascension_seed(ascension_id=ascension, guild=guild)
 
-    merchant_count = max(10, round(random.Random(galaxy_seed).normalvariate(500, 100)))
+    if validate_system:
+        system_data = generation.galaxy_single(
+            galaxy_seed = galaxy_seed,
+            x = tile_x,
+            y = tile_y
+        )
 
-    merchant_locations = []
-
-    gradient_info = generation.generate_gradients(galaxy_seed)
-    nebula_info = generation.generate_nebulae(galaxy_seed)
-
-    for merchant_id in range(merchant_count):
-        # Each merchant makes 10 attempts at finding a system.
-        # Any merchant that does not find one is considered in transit.
-        for attempt in range(10):
-            rng = random.Random(f"{galaxy_seed}_{tick_seed}_{merchant_id}_{attempt}")
-
-            x = rng.randrange(1, map_size)
-            upper_bound = round(math.sin(math.acos((x - map_radius) / map_radius)) * map_size)
-            y = int(rng.randrange(upper_bound) + (map_radius - (upper_bound / 2)))
-
-            generated = generation.galaxy_single(
-                galaxy_seed = galaxy_seed,
-                x = x,
-                y = y,
-                gradient_info = gradient_info,
-                nebulae_info = nebula_info
-            )
-
-            if generated["system"]:
-                merchant_locations.append((x, y))
-                break
+        if not system_data.get("system", False):
+            return False
     
-    return merchant_locations
+    tick_seed = json_interface.get_tick_seed(guild)
+
+    chance_merchant = 8 # So a merchant should appear in a system about every 2 days.
+
+    rng = random.Random(utility.hash_args(galaxy_seed, tick_seed, tile_x, tile_y, separator="-"))
+
+    return rng.randrange(0, chance_merchant) == 0
 
 
             

@@ -4592,7 +4592,7 @@ anarchy - 1000% of your wager.
             ascension = user_account.get_prestige_level(),
             xpos = galaxy_x,
             ypos = galaxy_y,
-            load_planets = False
+            load_data = False
         )
 
         player_x, player_y = user_account.get_system_location()
@@ -5095,8 +5095,9 @@ anarchy - 1000% of your wager.
 
         await ctx.reply(message_lines)
         return
-
-    ##############################################################################################################
+        
+    ########################################################################################################################
+    #####      BREAD SPACE HUB
     
     @space.command(
         name = "hub",
@@ -5113,7 +5114,7 @@ anarchy - 1000% of your wager.
         user_account = self.json_interface.get_account(ctx.author, guild = ctx.guild.id)
 
         if user_account.get_space_level() < 1:
-            await ctx.reply("You do not yet have a rocket that can access Trade Hubs. You can purchase a Space Rocket from the Space Shop.")
+            await ctx.reply("You do not yet have a rocket that can access Trade Hubs. You can purchase a Bread Rocket from the Space Shop.")
             return
         
         galaxy_x, galaxy_y = user_account.get_galaxy_location(json_interface=self.json_interface)
@@ -5126,7 +5127,7 @@ anarchy - 1000% of your wager.
             ascension = user_account.get_prestige_level(),
             xpos = galaxy_x,
             ypos = galaxy_y,
-            load_planets = False
+            load_data = False
         )
 
         if not system.system:
@@ -5648,8 +5649,152 @@ anarchy - 1000% of your wager.
         await utility.smart_reply(ctx, f"Autopilot success:\nSuccessfully moved to {end_location} on the {move_map} map, using {move_cost} {values.fuel.text}.\n\nYou have **{fuel_left} {values.fuel.text}** remaining.")
 
         self.currently_interacting.remove(ctx.author.id)
+        
+    ########################################################################################################################
+    #####      BREAD SPACE MERCHANT
     
+    @space.command(
+        name = "merchant",
+        brief = "Talk with travelling merchants.",
+        description = "Talk with travelling merchants."
+    )
+    async def space_merchant(self, ctx,
+            trade_id: typing.Optional[parse_int] = commands.parameter(description = "The trade id to trade."),
+            amount: typing.Optional[parse_int] = commands.parameter(description = "The amount of times to trade.")
+        ):
+        if amount is None:
+            amount = 1
+        # Viewing merchant trades can be done in any channel with basic permissions,
+        # however actually trading with a merchant requires activity level or higher.
+        if get_channel_permission_level(ctx) < PERMISSION_LEVEL_BASIC:
+            await utility.smart_reply(ctx, f"Thank you for discussing trading with merchants! You can do so over in {self.json_interface.get_rolling_channel(ctx.guild.id)}.")
+            return
+        
+        user_account = self.json_interface.get_account(ctx.author, guild = ctx.guild.id)
+
+        if user_account.get_space_level() < 1:
+            await ctx.reply("You do not have a rocket that can communicate with merchants. You can purchase a Bread Rocket from the Space Shop.")
+            return
+        
+        galaxy_location = user_account.get_galaxy_location(self.json_interface)
+
+        # Now to see if the player is in the same system as a merchant.
+
+        on_tile = space.merchant_on_tile(
+            ascension = user_account.get_prestige_level(),
+            guild = ctx.guild.id,
+            json_interface = self.json_interface,
+            tile_x = galaxy_location[0],
+            tile_y = galaxy_location[1],
+            validate_system = True
+        )
+
+        if not on_tile:
+            await ctx.reply("There does not appear to be any merchants nearby.")
+            return
+        
+        galaxy_seed = self.json_interface.get_ascension_seed(user_account.get_prestige_level(), ctx.guild.id)
+
+        galaxy_tile = space.get_galaxy_coordinate(
+            json_interface = self.json_interface,
+            guild = ctx.guild.id,
+            galaxy_seed = galaxy_seed,
+            ascension = user_account.get_prestige_level(),
+            xpos = galaxy_location[0],
+            ypos = galaxy_location[1],
+            load_data = True
+        )
+        
+        merchant_object = galaxy_tile.merchant
+
+        system_location = user_account.get_system_location()
+
+        merchant_x = merchant_object.system_xpos
+        merchant_y = merchant_object.system_ypos
+        player_x = system_location[0]
+        player_y = system_location[1]
+
+        telescope_level = user_account.get(store.Upgraded_Telescopes.name)
+
+        distance = round(math.sqrt(int(merchant_x - player_x + 0.5) ** 2 + int(merchant_y - player_y + 0.5) ** 2))
+
+        if distance >= telescope_level + 1:
+            print(distance)
+            await ctx.reply("There does not appear to be any merchants nearby.")
+            return
+
+        # Finally, we can actually start working with trades.
+
+        if amount == 0:
+            await ctx.reply("Trading 0 times, an incredible feat.")
+            return
+
+        if amount < 0:
+            await ctx.reply("Typically merchants tend to not be in favor of negative trading.")
+            return
+        
+        merchant_object.load_trades(
+            guild = ctx.guild,
+            json_interface = self.json_interface
+        )
+        
+        if trade_id is None:
+            # Time to list the trades!
+            trade_lines = merchant_object.describe_trades(ctx.guild, self.json_interface)
+
+            await ctx.reply("Merchant trades:\n\n{trades}\n\nUse '$bread space merchant [trade id] [amount]' to trade.".format(
+                trades = "\n\n".join(trade_lines)
+            ))
+            return
+
+        trade_data = merchant_object.get_trades(ctx.guild, self.json_interface)
+        
+        if not(1 <= trade_id <= len(trade_data)):
+            await ctx.reply("There is no trade with that id.")
+            return
+        
+        give_data = trade_data[trade_id - 1][0]
+        take_data = trade_data[trade_id - 1][1]
+
+        print(give_data, take_data)
+
+        take_player = user_account.get(take_data[0].text)
+
+        if take_player < take_data[1] * amount:
+            await ctx.reply("You don't have enough of that to trade.")
+            return
+        
+        # Remove required item.
+        user_account.increment(
+            take_data[0],
+            take_data[1] * amount
+        )
+        
+        # Give traded item.
+        user_account.increment(
+            give_data[0],
+            give_data[1] * amount
+        )
+
+        self.json_interface.set_account(ctx.author, user_account, guild = ctx.guild.id)
+
+        await ctx.reply("Success, you have traded {take_amount} {take_item} for {receive_amount} {receive_item}".format(
+            take_amount = utility.smart_number(take_data[1] * amount),
+            take_item = take_data[0].text,
+            receive_amount = utility.smart_number(give_data[1] * amount),
+            receive_item = give_data[0].text
+        ))
+
+
+
+
+
+        
+
     
+        
+    ########################################################################################################################
+    #####      BREAD ANARCHY CHESSATRON    
 
     @bread.command(
         name="anarchy_chessatron", 
@@ -6510,6 +6655,12 @@ anarchy - 1000% of your wager.
         # JSON_cog.set_filing_cabinet("archived_bread_count", old_data)
 
         await ctx.send("Done.")
+    
+    @admin.command()
+    @commands.is_owner()
+    async def run_space_tick(self, ctx):
+        self.space_tick()
+        await ctx.reply("Done.")
 
     ########################################################################################################################
     #####      ADMIN SAVE / ADMIN LOAD
