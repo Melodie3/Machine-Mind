@@ -201,7 +201,7 @@ def sanitize_ping(string: str) -> str:
 
 # this will first try a regular reply, and if that fails, it will send it as a plain message with a mention
 async def smart_reply(
-        ctx: commands.Context,
+        ctx: typing.Union[commands.Context, discord.Message],
         message: str,
         ping_reply: bool = True
     ) -> typing.Optional[discord.Message]:

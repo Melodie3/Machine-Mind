@@ -726,7 +726,7 @@ class Chess_bot(commands.Cog, name="Chess"):
             work_board.push_san(move_string)
             pass
         except ValueError:
-            await ctx.reply("It seems that is not a legal move, or is not properly specified.\nApologies, but I am not currently capable of performing that.")
+            await utility.smart_reply(ctx, "It seems that is not a legal move, or is not properly specified.\nApologies, but I am not currently capable of performing that.")
         else:
             current_game.add_move(ctx.message.author, move_string) #adds the move to the list
             #await self.print_board(ctx, work_board)
@@ -744,7 +744,7 @@ class Chess_bot(commands.Cog, name="Chess"):
                 await current_game.end_game()
         pass
         if brick:
-            await ctx.reply("You declined en passant. Tsk, tsk.")
+            await utility.smart_reply(ctx, "You declined en passant. Tsk, tsk.")
             #JSON_cog = bot_ref.get_cog("JSON")
             #bot_ref.brick(ctx, ctx.author)
             await ctx.invoke(self.bot.get_command('brick'), member=ctx.author, duration=None)
@@ -783,17 +783,17 @@ class Chess_bot(commands.Cog, name="Chess"):
                     await ctx.send("You must wait until your turn to offer a draw.")
                     return
                 else:
-                    await ctx.reply("You aren't authorized to offer a draw from White.")
+                    await utility.smart_reply(ctx, "You aren't authorized to offer a draw from White.")
                     return
             # if white has already started the offer and it is black's job to respond
             elif (current_game.white_offers_draw is True):
                 # if black is responding with acceptance
                 if (ctx.author in current_game.players_black):
-                    await ctx.reply("The game has been drawn.")
+                    await utility.smart_reply(ctx, "The game has been drawn.")
                     await current_game.end_game(reason = "both players agreed to a draw.")
                     return
                 else:
-                    await ctx.reply("You aren't authorized to offer a draw from Black.")
+                    await utility.smart_reply(ctx, "You aren't authorized to offer a draw from Black.")
                     return
 
         else: # turn is BLACK
@@ -808,17 +808,17 @@ class Chess_bot(commands.Cog, name="Chess"):
                     await ctx.send("You must wait until your turn to offer a draw.")
                     return
                 else:
-                    await ctx.reply("You aren't authorized to offer a draw from Black.")
+                    await utility.smart_reply(ctx, "You aren't authorized to offer a draw from Black.")
                     return
             # if black has already started the offer and it is white's job to respond
             elif (current_game.black_offers_draw is True):
                 # if white is responding with acceptance
                 if (ctx.author in current_game.players_white):
-                    await ctx.reply("The game has been drawn.")
+                    await utility.smart_reply(ctx, "The game has been drawn.")
                     await current_game.end_game(reason = "both players agreed to a draw.")
                     return
                 else:
-                    await ctx.reply("You aren't authorized to offer a draw from White.")
+                    await utility.smart_reply(ctx, "You aren't authorized to offer a draw from White.")
                     return
 
     ##############################################################################################################################################################
@@ -844,7 +844,7 @@ class Chess_bot(commands.Cog, name="Chess"):
         #white_requests_takeback = False
 
         if len(current_game.moves) == 0:
-            await ctx.reply("There are not enough moves to take back.")
+            await utility.smart_reply(ctx, "There are not enough moves to take back.")
             return
         
         # is black who messed up and is requesting the takeback
@@ -861,13 +861,13 @@ class Chess_bot(commands.Cog, name="Chess"):
                     await ctx.send("You cannot request a takeback on your own turn.")
                     return
                 else:
-                    await ctx.reply("You aren't authorized to request a takeback.")
+                    await utility.smart_reply(ctx, "You aren't authorized to request a takeback.")
                     return
             # if black has already started the offer and it is black's job to respond
             elif (current_game.black_requests_takeback is True):
                 # if white is responding with acceptance
                 if (ctx.author in current_game.players_white):
-                    #await ctx.reply("The game has been drawn.")
+                    #await utility.smart_reply(ctx, "The game has been drawn.")
                     #await current_game.end_game(reason = "both players agreed to a draw.")
                     work_board.pop() #pops the move from the board itself
                     current_game.moves.pop() #pops the move from the internal move list
@@ -875,7 +875,7 @@ class Chess_bot(commands.Cog, name="Chess"):
                     await self.print_game(current_game)
                     return
                 else:
-                    await ctx.reply("You aren't authorized to accept that takeback.")
+                    await utility.smart_reply(ctx, "You aren't authorized to accept that takeback.")
                     return
 
         else: # turn is BLACK
@@ -890,13 +890,13 @@ class Chess_bot(commands.Cog, name="Chess"):
                     await ctx.send("You cannot request a takeback on your own turn.")
                     return
                 else:
-                    await ctx.reply("You aren't authorized to request a takeback.")
+                    await utility.smart_reply(ctx, "You aren't authorized to request a takeback.")
                     return
             # if white has already started the request and it is black's job to respond
             elif (current_game.white_requests_takeback is True):
                 # if black is responding with acceptance
                 if (ctx.author in current_game.players_black):
-                    #await ctx.reply("The game has been drawn.")
+                    #await utility.smart_reply(ctx, "The game has been drawn.")
                     #await current_game.end_game(reason = "both players agreed to a draw.")
                     work_board.pop() #pops the move from the board itself
                     current_game.moves.pop() #pops the move from the internal move list
@@ -904,7 +904,7 @@ class Chess_bot(commands.Cog, name="Chess"):
                     await self.print_game(current_game)
                     return
                 else:
-                    await ctx.reply("You aren't authorized to accept that takeback.")
+                    await utility.smart_reply(ctx, "You aren't authorized to accept that takeback.")
                     return
 
     ##############################################################################################################################################################
@@ -922,20 +922,20 @@ class Chess_bot(commands.Cog, name="Chess"):
 
         if (turn == chess.WHITE and ctx.author in current_game.players_white):
             await current_game.end_game(reason = "White resigned.")
-            await ctx.reply("White resigned.")
+            await utility.smart_reply(ctx, "White resigned.")
         elif (turn == chess.BLACK and ctx.author in current_game.players_black):
             await current_game.end_game(reason = "Black resigned.")
-            await ctx.reply("Black resigned.")
+            await utility.smart_reply(ctx, "Black resigned.")
 
         #second batch, for not the person's turn
         elif (ctx.author in current_game.players_white):
             await current_game.end_game(reason = "White resigned.")
-            await ctx.reply("White resigned.")
+            await utility.smart_reply(ctx, "White resigned.")
         elif (ctx.author in current_game.players_black):
             await current_game.end_game(reason = "Black resigned.")
-            await ctx.reply("Black resigned.")
+            await utility.smart_reply(ctx, "Black resigned.")
         else:
-            await ctx.reply("Only a player in the game may resign.")
+            await utility.smart_reply(ctx, "Only a player in the game may resign.")
 
     ###############################
     ########    GAME    ###########
@@ -956,7 +956,7 @@ class Chess_bot(commands.Cog, name="Chess"):
         #three-check
         #board = chess.variant.find_variant("name: str") 
         pass
-        await ctx.reply("This command doesn't do anything yet.")
+        await utility.smart_reply(ctx, "This command doesn't do anything yet.")
 
     # takes 960, or a name, or both
     @chess.command( hidden = True)
@@ -1077,7 +1077,7 @@ class Chess_bot(commands.Cog, name="Chess"):
            
             
             print("Ending message is:"+new_text)
-            await prev_message.reply(new_text)
+            await utility.smart_reply(prev_message, new_text)
             self.boards.pop(ctx.channel)
 
     def get_lichess_link(work_board: chess.Board) -> str:
