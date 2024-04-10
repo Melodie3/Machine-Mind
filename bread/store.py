@@ -505,13 +505,16 @@ class Random_Chess_Piece(Store_Item):
 
     @classmethod
     def cost(cls, user_account: account.Bread_Account) -> int:
-        omega_level = user_account.get(values.omega_chessatron.text)
-        affecting_shadowmegas = user_account.get_shadowmega_boost_count()
+        chessatron_value = user_account.get_chessatron_dough_amount(include_prestige_boost=True)
+        # omega_level = user_account.get(values.omega_chessatron.text)
+        # affecting_shadowmegas = user_account.get_shadowmega_boost_count()
         # shadowmega_boost_level = user_account.get("chessatron_shadow_boost")
         # max_shadowmegas = chessatron_shadow_booster_levels[shadowmega_boost_level]
         # shadowmega_count = user_account.get(values.shadowmega_chessatron.text)
         # affecting_shadowmegas = min(shadowmega_count, max_shadowmegas)
-        return 350 + (omega_level * 50) + (affecting_shadowmegas * 20)
+        # return 350 + (omega_level * 50) + (affecting_shadowmegas * 20)
+        rounded = math.ceil(chessatron_value / 300) # Divide by 6, round up to the nearest 50.
+        return rounded * 50
 
     @classmethod
     def description(cls, user_account: account.Bread_Account) -> str:
