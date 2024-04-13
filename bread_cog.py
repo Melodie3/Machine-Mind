@@ -874,9 +874,11 @@ class Bread_cog(commands.Cog, name="Bread"):
             if account.has("first_catch_level"):
                 output += f"With First Catch of the Day, your first {utility.write_count(account.get('first_catch_level'), 'special item')} each day will be worth 4x more.\n"
 
-        output += "\nIndividual stats:\n"
+        output_2 = ""
+
+        output_2 += "\nIndividual stats:\n"
         if account.has(":bread:"):
-            output += f":bread: - {sn(account.get(':bread:'))}\n"
+            output_2 += f":bread: - {sn(account.get(':bread:'))}\n"
 
         # list all special breads
         # special_breads = account.get_all_items_with_attribute("special_bread")
@@ -893,11 +895,11 @@ class Bread_cog(commands.Cog, name="Bread"):
 
         #     text = selected_special_breads[i].text
 
-        #     output += f"{account.get(text)} {text} "
+        #     output_2 += f"{account.get(text)} {text} "
         #     if i != len(selected_special_breads) - 1:
-        #         output += ", "
+        #         output_2 += ", "
         #     else:
-        #         output += "\n"
+        #         output_2 += "\n"
 
         display_list = ["special_bread", "rare_bread", "misc_bread", "shiny", "shadow", "misc", "unique" ]
 
@@ -918,63 +920,67 @@ class Bread_cog(commands.Cog, name="Bread"):
                 text = cleaned_items[i].text
                 # if account.get(text) == 0:
                 #     continue #skip empty values
-                output += f"{sn(account.get(text))} {text} "
+                output_2 += f"{sn(account.get(text))} {text} "
                 if i != len(cleaned_items) - 1:
-                    output += ", "
+                    output_2 += ", "
                 else:
-                    output += "\n"
+                    output_2 += "\n"
 
-        output2 = ""
+        output_3 = ""
 
         #make chess board
         board = Bread_cog.format_chess_pieces(account.values)
         if board != "":
-            output2 += "\n" + board + "\n"
+            output_3 += "\n" + board + "\n"
 
         # list highest roll stats
 
         if account.has("highest_roll", 11):
-            output2 += f"Your highest roll was {account.get('highest_roll')}.\n"
+            output_3 += f"Your highest roll was {account.get('highest_roll')}.\n"
             comma = False
             if account.has("eleven_breads"):
-                output2 += f"11 - {account.write_number_of_times('eleven_breads')}"
+                output_3 += f"11 - {account.write_number_of_times('eleven_breads')}"
                 comma = True
             if account.has("twelve_breads"):
                 if comma:
-                    output2 += ", "
-                output2 += f"12 - {account.write_number_of_times('twelve_breads')}"
+                    output_3 += ", "
+                output_3 += f"12 - {account.write_number_of_times('twelve_breads')}"
                 comma = True
             if account.has("thirteen_breads"):
                 if comma:
-                    output2 += ", "
-                output2 += f"13 - {account.write_number_of_times('thirteen_breads')}"
+                    output_3 += ", "
+                output_3 += f"13 - {account.write_number_of_times('thirteen_breads')}"
                 comma = True
             if account.has("fourteen_or_higher"):
                 if comma:
-                    output2 += ", "
-                output2 += f"14+ - {account.write_number_of_times('fourteen_or_higher')}"
+                    output_3 += ", "
+                output_3 += f"14+ - {account.write_number_of_times('fourteen_or_higher')}"
                 comma = True
             if comma:
-                output2 += "."
-            output2 += "\n"
+                output_3 += "."
+            output_3 += "\n"
 
         # list 10 and 1 roll stats
-        output2 += f"You've found a single solitary loaf {account.write_number_of_times('natural_1')}, and the full ten loaves {account.write_number_of_times('ten_breads')}.\n"
+        output_3 += f"You've found a single solitary loaf {account.write_number_of_times('natural_1')}, and the full ten loaves {account.write_number_of_times('ten_breads')}.\n"
 
         # list the rest of the stats
 
         if account.has("lottery_win"):
-            output2 += f"You've won the lottery {account.write_number_of_times('lottery_win')}!\n"
+            output_3 += f"You've won the lottery {account.write_number_of_times('lottery_win')}!\n"
         if account.has("chess_pieces"):
-            output2 += f"You have {account.write_count('chess_pieces', 'Chess Piece')}.\n"
+            output_3 += f"You have {account.write_count('chess_pieces', 'Chess Piece')}.\n"
         if account.has("special_bread"):
-            output2 += f"You have {account.write_count('special_bread', 'Special Bread')}.\n"
+            output_3 += f"You have {account.write_count('special_bread', 'Special Bread')}.\n"
         
-        if len(output) + len(output2) < 1900:
-            await ctx.reply( output + output2 )
+        if len(output) + len(output_2) + len(output_3) < 1900:
+            await ctx.reply( output + output_2 + output_3 )
+        elif len(output) + len(output_2) < 1900:
+            await ctx.reply( output + output_2 )
+            await ctx.reply( "Stats continued:\n" + output_3 )
         else:
             await ctx.reply( output )
-            await ctx.reply( "Stats continued:\n" + output2 )
+            await ctx.reply( "Stats continued:\n" + output_2 )
+            await ctx.reply( "Stats continued:\n" + output_3 )
         # await ctx.reply(output)
 
         #await self.do_chessboard_completion(ctx)
@@ -2618,11 +2624,7 @@ anarchy - 1000% of your wager.
         print(f"{ctx.author.display_name} gambled {amount} dough")
 
         user_account = self.json_interface.get_account(ctx.author, guild = ctx.guild.id)
-        if user_account.has("total_dough", amount):
-            pass
-        else:
-            await ctx.reply("You don't have that much dough.")
-            return
+        
         
 
         minimum_wager = 4
@@ -2635,7 +2637,7 @@ anarchy - 1000% of your wager.
         else:
             maximum_wager = gamble_levels[-1]
 
-        if amount < minimum_wager:
+        if amount < minimum_wager or user_account.get("total_dough") < minimum_wager:
             await ctx.reply(f"The minimum wager is {minimum_wager}.")
             return
 
@@ -2651,10 +2653,38 @@ anarchy - 1000% of your wager.
             return
         self.currently_interacting.append(ctx.author.id)
 
+        # if user_account.has("total_dough", amount):
+        #     pass
+        # else:
+        #     # await ctx.reply("You don't have that much dough.")
+        #     # return
+        #     amount = user_account.get("total_dough")
+        #     await ctx.reply(f"You don't have that much dough. I'll enter in {amount} for you.")
+        reply = ""
         if amount > maximum_wager:
-            await ctx.reply(f"The maximum wager is {utility.smart_number(maximum_wager)}. I'll enter that in for you.")
-            await asyncio.sleep(1)
+            # set to maximum wager and notify
             amount = maximum_wager
+            reply = f"The maximum wager is {utility.smart_number(maximum_wager)}. "
+        if amount > user_account.get("total_dough"):
+            # set to maximum dough and notify
+            amount = user_account.get("total_dough")
+            reply += f"You don't have that much dough. I'll enter in {utility.smart_number(amount)} for you."
+        elif reply != "":
+            reply += "I'll enter that in for you."
+
+
+        # if amount > maximum_wager and user_account.has("total_dough", maximum_wager):
+        #     await ctx.reply(f"The maximum wager is {utility.smart_number(maximum_wager)}. I'll enter that in for you.")
+        #     await asyncio.sleep(1)
+        #     amount = maximum_wager
+        # elif amount > maximum_wager and not user_account.has("total_dough", maximum_wager):
+        #     amount = min(maximum_wager, user_account.get("total_dough"))
+        #     await ctx.reply(f"You don't have that much dough. I'll enter in {utility.smart_number(amount)} for you.")
+        #     await asyncio.sleep(1)
+        # elif not user_account.has("total_dough", amount):
+        #     await ctx.reply("You don't have that much dough. I'll enter in the maximum amount for you.")
+        #     await asyncio.sleep(1)
+        #     amount = user_account.get("total_dough")
 
         user_account.increment("total_dough", -amount) 
         user_account.increment("daily_gambles", 1)
@@ -2662,6 +2692,9 @@ anarchy - 1000% of your wager.
         
         self.json_interface.set_account(ctx.author, user_account, ctx.guild.id)
 
+        if reply != "":
+            await ctx.reply(reply)
+            await asyncio.sleep(1)
 
         result = gamble.gamble()
         winnings = parse_int(amount * result["multiple"])
