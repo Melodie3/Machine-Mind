@@ -378,12 +378,6 @@ async def brick(ctx, member: typing.Optional[discord.Member], duration: typing.O
                 await message.edit(content = "Looks like you got away this time.")
     except:
         print("An error occurred during bricking, probably the message was deleted.")
-    try:
-        brick_list.remove(target)
-    except:
-        print(f"Error removing {target} from brick list")
-    if success:
-        pass #add emoji to brick list
 
     if duration == "stats":
         if member is None:
@@ -394,6 +388,14 @@ async def brick(ctx, member: typing.Optional[discord.Member], duration: typing.O
         if member is None:
             member = ctx.author
         await brick_leaderboard(ctx, member)
+    
+    await asyncio.sleep(5)
+    try:
+        brick_list.remove(target)
+    except:
+        print(f"Error removing {target} from brick list")
+    if success:
+        pass
 
 async def brick_animation(ctx, member: discord.Member, forever=False):
     pass
