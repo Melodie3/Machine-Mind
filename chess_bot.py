@@ -1201,7 +1201,7 @@ class Chess_bot(commands.Cog, name="Chess"):
 
         for player in player_list:
             # first add the name to the list
-            if player.display_name in ["@everyone", "@here"]:
+            if utility.contains_ping(player.display_name):
                 output += player.name
             else:
                 output += player.display_name
