@@ -1,10 +1,14 @@
 """
 Patch Notes: 
-(All patches submitted by Duck)
-- MoaKs no longer add to the gambit shop bonus in the multiroller
-- Fixed tier one multiroller to have a cost of 128
-- First Catch count now resets properly
-
+You can now do the closest thing to "$bread gamble all" - enter in a large number and it will gamble all the dough you have.
+(All further patch notes submitted by the community)
+- When you buy a random chess piece, it will no longer always say it is a bking. Thanks to Duck for this patch.
+- New $verify responses, thanks to citron
+- Alchemy now uses smart replies, thanks Duck.
+- You can now gift to all the server's bots on higher ascensions. Thanks to Duck for this patch.
+- Double brick exploit is fixed (1984) - thanks to Duck for this patch.
+- Fixed another ping exploit (Thanks Duck!)
+- Minor additional internal bug fix related to emoji parsing, fixed by Duck
 
 (todo) test reply ping
 
