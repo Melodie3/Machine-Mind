@@ -15,21 +15,21 @@ import bread.store as store
 
 import bread_cog
 
-map_size = 256
+MAP_SIZE = 256
 
-map_radius = map_size // 2
-map_radius_squared = map_radius ** 2
+MAP_RADIUS = MAP_SIZE // 2
+MAP_RADIUS_SQUARED = MAP_RADIUS ** 2
 
 ## Fuel requirements:
 # This is the amount of fuel required for each jump in their respective areas.
-move_fuel_system = 25
-move_fuel_galaxy = 175
-move_fuel_galaxy_nebula = 350
-move_fuel_wormhole = 700
+MOVE_FUEL_SYSTEM = 25
+MOVE_FUEL_GALAXY = 175
+MOVE_FUEL_GALAXY_NEBULA = 350
+MOVE_FUEL_WORMHOLE = 700
 
 ## Emojis:
 
-map_emojis = {
+MAP_EMOJIS = {
     # Backgrounds.
     "empty": ":black_large_square:",
     "nebula": ":purple_square:",
@@ -112,7 +112,7 @@ class SystemTile:
     # Should be overwitten by subclasses.
     def get_emoji(self: typing.Self) -> str:
         """Returns an emoji that represents this tile."""
-        return map_emojis.get("empty")
+        return MAP_EMOJIS.get("empty")
         
         
 
@@ -145,7 +145,7 @@ class SystemEmpty(SystemTile):
         self.type = "empty"
     
     def get_emoji(self: typing.Self) -> str:
-        return map_emojis.get("empty")
+        return MAP_EMOJIS.get("empty")
     
     def get_analysis(
             self: typing.Self,
@@ -174,7 +174,7 @@ class SystemStar(SystemTile):
         self.type = "star"
     
     def get_emoji(self: typing.Self) -> str:
-        return map_emojis.get(self.star_type)
+        return MAP_EMOJIS.get(self.star_type)
     
     def get_analysis(
             self: typing.Self,
@@ -202,7 +202,7 @@ class SystemAsteroid(SystemTile):
         self.type = "asteroid"
     
     def get_emoji(self: typing.Self) -> str:
-        return map_emojis.get("asteroid")
+        return MAP_EMOJIS.get("asteroid")
 
     def get_analysis(
             self: typing.Self,
@@ -234,7 +234,7 @@ class SystemTradeHub(SystemTile):
         self.type = "trade_hub"
     
     def get_emoji(self: typing.Self) -> str:
-        return map_emojis.get("trade_hub")
+        return MAP_EMOJIS.get("trade_hub")
     
     def get_analysis(
             self: typing.Self,
@@ -361,7 +361,7 @@ class SystemMerchant(SystemTile):
         self.trades_internal = None
     
     def get_emoji(self: typing.Self) -> str:
-        return map_emojis.get("merchant")
+        return MAP_EMOJIS.get("merchant")
 
     def get_analysis(
             self: typing.Self,
@@ -447,9 +447,6 @@ class SystemMerchant(SystemTile):
         
         return out
         
-
-
-    
 ########################################################
 
 class SystemWormhole(SystemTile):
@@ -470,7 +467,7 @@ class SystemWormhole(SystemTile):
         self.type = "wormhole"
     
     def get_emoji(self: typing.Self) -> str:
-        return map_emojis.get("wormhole")
+        return MAP_EMOJIS.get("wormhole")
     
     def get_analysis(
             self: typing.Self,
@@ -587,7 +584,7 @@ class GalaxyTile:
     
     def corruption_chance(self: typing.Self) -> float:
         """Returns the chance of a loaf becoming corrupted on this tile. Between 0 and 1."""
-        return get_corruption_chance(self.xpos - map_radius, self.ypos - map_radius)
+        return get_corruption_chance(self.xpos - MAP_RADIUS, self.ypos - MAP_RADIUS)
     
     ###############################################################################
     ##### Methods for the loading of system data.
@@ -784,10 +781,10 @@ class GalaxyTile:
 
         # If this tile is in a nebula, then return the nebula emoji.
         if self.in_nebula:
-            return map_emojis.get("nebula")
+            return MAP_EMOJIS.get("nebula")
         
         # If this tile is not a system, and is not in a nebula return the empty emoji.
-        return map_emojis.get("empty")
+        return MAP_EMOJIS.get("empty")
     
     def get_system_tile(
             self: typing.Self,
@@ -967,7 +964,7 @@ def galaxy_map(
     def get_fill_emoji(grid_x, grid_y):
         # Handling the corners.
         if (grid_x, grid_y) in corners:
-            return map_emojis.get(border_emoji)
+            return MAP_EMOJIS.get(border_emoji)
         
         # The numbers and letters.
         if grid_y == 0 or grid_y == y_size + 3:
@@ -978,24 +975,24 @@ def galaxy_map(
         
         # The ring of fog emojis just inside the outer blue border.
         if grid_x == 1 or grid_x == x_size + 2:
-            return map_emojis.get(fill_emoji)
+            return MAP_EMOJIS.get(fill_emoji)
         
         if grid_y == 1 or grid_y == y_size + 2:
-            return map_emojis.get(fill_emoji)
+            return MAP_EMOJIS.get(fill_emoji)
         
         # Whether this is in the visible area or not.
         if abs(grid_x - 2 - radius) + abs(grid_y - 2 - radius) <= size_check:
-            return map_emojis.get("empty")
+            return MAP_EMOJIS.get("empty")
         
         # If nothing activates, fog emoji.
-        return map_emojis.get(fill_emoji)
+        return MAP_EMOJIS.get(fill_emoji)
 
     grid = [[get_fill_emoji(grid_x, grid_y) for grid_x in range(x_size + 4)] for grid_y in range(y_size + 4)]
 
     for y_pos in range(y_size):
         for x_pos in range(x_size):
             if abs(x_pos - radius) + abs(y_pos - radius) > size_check:
-                grid[y_pos + 2][x_pos + 2] = map_emojis.get("fog")
+                grid[y_pos + 2][x_pos + 2] = MAP_EMOJIS.get("fog")
                 continue
 
             mod_x = x_pos + min(bottom_right[0], top_left[0])
@@ -1013,7 +1010,7 @@ def galaxy_map(
 
             grid[y_pos + 2][x_pos + 2] = tile_object.get_emoji(json_interface=json_interface)
     
-    grid[radius + 2][radius + 2] = map_emojis.get("rocket", "R")
+    grid[radius + 2][radius + 2] = MAP_EMOJIS.get("rocket", "R")
         
     return grid
 
@@ -1077,7 +1074,7 @@ def system_map(
 
         # Handling the corners.
         if (grid_x, grid_y) in corners:
-            return map_emojis.get(border_emoji)
+            return MAP_EMOJIS.get(border_emoji)
         
         # The numbers and letters.
         if grid_y == 0 or grid_y == y_size + 3:
@@ -1088,10 +1085,10 @@ def system_map(
         
         # The ring of fog emojis just inside the outer blue border.
         if grid_x == 1 or grid_x == x_size + 2:
-            return map_emojis.get(fill_emoji)
+            return MAP_EMOJIS.get(fill_emoji)
         
         if grid_y == 1 or grid_y == y_size + 2:
-            return map_emojis.get(fill_emoji)
+            return MAP_EMOJIS.get(fill_emoji)
         
         # Whether this is in the visible area or not.
         if abs(grid_x - 2 - radius) + abs(grid_y - 2 - radius) <= size_check:
@@ -1099,10 +1096,10 @@ def system_map(
                 (grid_x - 2 - radius + system_x,
                 grid_y - 2 - radius + system_y)
             )
-            return map_emojis.get("empty")
+            return MAP_EMOJIS.get("empty")
         
         # If nothing activates, fog emoji.
-        return map_emojis.get(fill_emoji)
+        return MAP_EMOJIS.get(fill_emoji)
     
     grid = [[get_fill_emoji(grid_x, grid_y) for grid_x in range(x_size + 4)] for grid_y in range(y_size + 4)]
 
@@ -1120,7 +1117,7 @@ def system_map(
 
     # If this location is not a system, place the rocket in the middle and return.
     if not system_data.system:
-        grid[radius + 2][radius + 2] = map_emojis.get("rocket", "R")
+        grid[radius + 2][radius + 2] = MAP_EMOJIS.get("rocket", "R")
         return grid
     
     system_data.load_system_data(json_interface=json_interface, guild=guild, get_wormholes=True)
@@ -1130,11 +1127,11 @@ def system_map(
 
     for tile_y in range(y_size):
         for tile_x in range(x_size):
-            if grid[tile_y + 2][tile_x + 2] == map_emojis.get(fill_emoji):
+            if grid[tile_y + 2][tile_x + 2] == MAP_EMOJIS.get(fill_emoji):
                 continue
             
             if math.hypot(tile_x + top_left[0], tile_y + top_left[1]) >= system_radius + 2:
-                grid[tile_y + 2][tile_x + 2] = map_emojis.get("no_entry")
+                grid[tile_y + 2][tile_x + 2] = MAP_EMOJIS.get("no_entry")
 
     # Star
     star_x = system_data.star.system_xpos
@@ -1180,7 +1177,7 @@ def system_map(
 
 
     # Add the rocket and return.
-    grid[radius + 2][radius + 2] = map_emojis.get("rocket", "R")
+    grid[radius + 2][radius + 2] = MAP_EMOJIS.get("rocket", "R")
     return grid
 
             
@@ -1654,9 +1651,9 @@ def get_move_cost_galaxy(
 
         if tile_data.get("in_nebula", False):
             through_nebula = True
-            cost_sum += move_fuel_galaxy_nebula
+            cost_sum += MOVE_FUEL_GALAXY_NEBULA
         else:
-            cost_sum += move_fuel_galaxy
+            cost_sum += MOVE_FUEL_GALAXY
     
     return {
         "cost": cost_sum,
@@ -1678,7 +1675,7 @@ def get_move_cost_system(
     points.pop(0)
 
     return {
-        "cost": len(points) * move_fuel_system
+        "cost": len(points) * MOVE_FUEL_SYSTEM
     }
 
 def allowed_gifting(

@@ -5363,7 +5363,7 @@ anarchy - 1000% of your wager.
                 self.currently_interacting.remove(ctx.author.id)
                 return
             
-            move_cost = space.move_fuel_wormhole
+            move_cost = space.MOVE_FUEL_WORMHOLE
             
             if move_location not in confirm_text:
                 current_fuel = user_account.get(values.fuel.text)

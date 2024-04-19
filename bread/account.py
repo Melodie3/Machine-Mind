@@ -508,8 +508,8 @@ class Bread_Account:
         xpos, ypos = self.get_galaxy_location(json_interface=json_interface)
 
         base_chance = space.get_corruption_chance(
-            xpos - space.map_radius,
-            ypos - space.map_radius
+            xpos - space.MAP_RADIUS,
+            ypos - space.MAP_RADIUS
         )
 
         multiplier = self.get_corruption_negation_multiplier()

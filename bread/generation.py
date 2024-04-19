@@ -13,34 +13,34 @@ import hashlib
 
 import bread.values as values
 
-patterns = ['SVS', 'VSV', 'SVVS', 'VSVS', 'SVSV']
+PATTERNS = ['SVS', 'VSV', 'SVVS', 'VSVS', 'SVSV']
 
-syllables = [
+SYLLABLES = [
     'Vah', 'Nab', 'Or', 'Is', 'Ter', 'Pho', 'Qua', 'Cos', 'Tek', 'Glo', 'Zor', 'Yul', 'Kor', 'Vex', 'Dra', 'Plu', 'Fyr', 
     'Bla', 'Grav', 'Hyp', 'Jex', 'Klyn', 'Morph', 'Nyx', 'Plex', 'Rhyn', 'Spect', 'Vex', 'Zyph', 'Grim', 'Slyth',
     'Xen', 'Chro', 'Drex', 'Kryp', 'Ryze', 'Shrym', 'Trex', 'Vex', 'Wrym', 'Xylo', 'Zygo', 'Myth', 'Glo', 'Vra', 'Zar'
 ]
 
-vowels = ['a', 'e', 'i', 'o', 'u']
+VOWELS = ['a', 'e', 'i', 'o', 'u']
 
-map_size = 256
+MAP_SIZE = 256
 
-map_radius = map_size // 2
-half_radius = map_radius // 2
-map_radius_squared = map_radius ** 2
+MAP_RADIUS = MAP_SIZE // 2
+HALF_RADIUS = MAP_RADIUS // 2
+MAP_RADIUS_SQUARED = MAP_RADIUS ** 2
 
 # This is in `1 in __`, so an 8 means a 1/8 chance.
-chance_system = 8 # Chance of any point being a system, assuming it doesn't have a system very close nearby.
-chance_trade = 3 # The chance of any generated system having a trading hub by default.
+CHANCE_SYSTEM = 8 # Chance of any point being a system, assuming it doesn't have a system very close nearby.
+CHANCE_TRADE = 3 # The chance of any generated system having a trading hub by default.
 
-star_weights = {
+STAR_WEIGHTS = {
     "star1": 50,
     "star2": 22,
     "star3": 22,
     "black_hole": 6
 }
 
-planet_weights = {
+PLANET_WEIGHTS = {
     "normal_bread": 20,
     "special_bread": 20,
     "rare_bread": 50,
@@ -54,7 +54,7 @@ planet_weights = {
     "anarchy_chess": 3
 }
 
-planet_options = {
+PLANET_OPTIONS = {
     "normal_bread": [values.normal_bread],
     "special_bread": values.all_special_breads,
     "rare_bread": values.all_rare_breads,
@@ -86,10 +86,10 @@ def generate_gradients(galaxy_seed: str) -> list:
 
     previous_angles = []
     for point in range(4): # 4 for gradient points, 2 for nebulae
-        dist = map_radius * ((seeded.random() / 2) + 0.25)
+        dist = MAP_RADIUS * ((seeded.random() / 2) + 0.25)
 
         if point > 3:
-            dist += map_radius / 16
+            dist += MAP_RADIUS / 16
 
         try:
             previous = sum(previous_angles) // len(previous_angles) * math.pi
@@ -205,8 +205,8 @@ def in_nebula(
         theta = data["theta"]
 
         use = (
-            (x - location[0]) / half_radius / (size_x / half_radius),
-            (y - location[1]) / half_radius / (size_y / half_radius)
+            (x - location[0]) / HALF_RADIUS / (size_x / HALF_RADIUS),
+            (y - location[1]) / HALF_RADIUS / (size_y / HALF_RADIUS)
         )
 
         use = (
@@ -283,7 +283,7 @@ def core_spot(
 
     gradient_mod = gradient_modifier(gradient_info, x, y) * 128
 
-    return rng.randint(1, int(chance_system + mod + gradient_mod) * chance_trade)
+    return rng.randint(1, int(CHANCE_SYSTEM + mod + gradient_mod) * CHANCE_TRADE)
 
 def get_spot(
         galaxy_seed: str,
@@ -302,7 +302,7 @@ def get_spot(
         int: What is on the given point. 0 is nothing, 1 is a system without a trade hub, 2 is a system with a trade hub.
     """
     
-    if (x ** 2 + y ** 2) > map_radius_squared:
+    if (x ** 2 + y ** 2) > MAP_RADIUS_SQUARED:
         return 0
 
     rng = core_spot(
@@ -313,7 +313,7 @@ def get_spot(
         gradient_info = gradient_info
     )
 
-    if rng > chance_trade:
+    if rng > CHANCE_TRADE:
         return 0 # nothing
     
     for x_mod in range(-1, 2):
@@ -326,7 +326,7 @@ def get_spot(
                     y = y + y_mod,
                     rng = random.Random(),
                     gradient_info = gradient_info
-                ) <= chance_trade:
+                ) <= CHANCE_TRADE:
                 return 0
     
     if rng == 1:
@@ -367,15 +367,15 @@ def galaxy_single(
     
     point_info = get_spot(
         galaxy_seed = galaxy_seed,
-        x = x - map_radius,
-        y = y - map_radius,
+        x = x - MAP_RADIUS,
+        y = y - MAP_RADIUS,
         gradient_info = gradient_info
     )
 
     out = {
         "x": x,
         "y": y,
-        "in_nebula": in_nebula(nebulae_info, x - map_radius, y - map_radius),
+        "in_nebula": in_nebula(nebulae_info, x - MAP_RADIUS, y - MAP_RADIUS),
         "system": False,
     }
 
@@ -498,8 +498,8 @@ def get_wormhole_points(
         point_angle = seeded.randrange(0, 360)
         point_distance = seeded.randint(42, 128)
 
-        check_x = round(math.cos(math.radians(point_angle)) * point_distance) + map_radius
-        check_y = round(math.sin(math.radians(point_angle)) * point_distance) + map_radius
+        check_x = round(math.cos(math.radians(point_angle)) * point_distance) + MAP_RADIUS
+        check_y = round(math.sin(math.radians(point_angle)) * point_distance) + MAP_RADIUS
 
         check_data = galaxy_single(
             galaxy_seed = galaxy_seed,
@@ -524,8 +524,8 @@ def get_wormhole_points(
                     else:
                         point_distance += 1
 
-                check_x = round(math.cos(math.radians(point_angle)) * point_distance) + map_radius
-                check_y = round(math.sin(math.radians(point_angle)) * point_distance) + map_radius
+                check_x = round(math.cos(math.radians(point_angle)) * point_distance) + MAP_RADIUS
+                check_y = round(math.sin(math.radians(point_angle)) * point_distance) + MAP_RADIUS
 
                 check_data = galaxy_single(
                     galaxy_seed = galaxy_seed,
@@ -594,8 +594,8 @@ def generate_system(
 
     system_type = get_spot(
         galaxy_seed = galaxy_seed,
-        x = galaxy_xpos - map_radius,
-        y = galaxy_ypos - map_radius,
+        x = galaxy_xpos - MAP_RADIUS,
+        y = galaxy_ypos - MAP_RADIUS,
         gradient_info = gradient_info
     )
 
@@ -616,8 +616,8 @@ def generate_system(
     merchant_ypos = trade_hub_ypos * -1
 
     star_type = rng.choices(
-        population = list(star_weights.keys()),
-        weights = list(star_weights.values())
+        population = list(STAR_WEIGHTS.keys()),
+        weights = list(STAR_WEIGHTS.values())
     )[0]
 
     planet_count = round(rng.normalvariate(
@@ -643,11 +643,11 @@ def generate_system(
         planet_rng = random.Random(hashlib.sha256(str(galaxy_seed + str(galaxy_ypos) + str(galaxy_xpos) + "planet" + str(planet_id)).encode()).digest())
 
         planet_type = planet_rng.choices(
-            population = list(planet_weights.keys()),
-            weights = list(planet_weights.values())
+            population = list(PLANET_WEIGHTS.keys()),
+            weights = list(PLANET_WEIGHTS.values())
         )[0]
 
-        planet_type = planet_rng.choice(planet_options[planet_type])
+        planet_type = planet_rng.choice(PLANET_OPTIONS[planet_type])
 
         deviation = planet_rng.normalvariate(
             mu = 1,
@@ -796,13 +796,13 @@ def get_trade_hub_name(
         str: The generated name.
     """
     rng = random.Random(hashlib.sha256(str(galaxy_seed + str(galaxy_x) + str(galaxy_y) + "trade_hub").encode()).digest())
-    pattern = rng.choice(patterns)
+    pattern = rng.choice(PATTERNS)
     name_parts = []
     for char in pattern:
         if char == 'S':
-            name_parts.append(rng.choice(syllables))
+            name_parts.append(rng.choice(SYLLABLES))
         elif char == 'V':
-            name_parts.append(rng.choice(vowels))
+            name_parts.append(rng.choice(VOWELS))
     
     if rng.random() < 0.3:
         num_words = rng.randint(2, 3)
@@ -834,7 +834,7 @@ def get_galaxy_spawn(galaxy_seed: str) -> tuple[int, int]:
     spawn_x = math.cos(math.radians(angle)) * 83
     spawn_y = math.sin(math.radians(angle)) * 83
 
-    spawn_data = galaxy_single(galaxy_seed, round(spawn_x + map_radius), round(spawn_y + map_radius))
+    spawn_data = galaxy_single(galaxy_seed, round(spawn_x + MAP_RADIUS), round(spawn_y + MAP_RADIUS))
 
     # If the initially chosen point is in a nebula, then move it to not be in a nebula.
     if spawn_data.get("in_nebula", False):
@@ -846,7 +846,7 @@ def get_galaxy_spawn(galaxy_seed: str) -> tuple[int, int]:
             spawn_x = math.cos(math.radians(angle)) * 83
             spawn_y = math.sin(math.radians(angle)) * 83
 
-            spawn_data = galaxy_single(galaxy_seed, round(spawn_x + map_radius), round(spawn_y + map_radius))
+            spawn_data = galaxy_single(galaxy_seed, round(spawn_x + MAP_RADIUS), round(spawn_y + MAP_RADIUS))
             if not spawn_data.get("in_nebula", False):
                 # If this new point is not in a nebula, break out of the loop.
                 break
@@ -863,7 +863,7 @@ def get_galaxy_spawn(galaxy_seed: str) -> tuple[int, int]:
                 spawn_x = math.cos(math.radians(angle + angle_mod)) * check_distance
                 spawn_y = math.sin(math.radians(angle + angle_mod)) * check_distance
 
-                spawn_data = galaxy_single(galaxy_seed, round(spawn_x + map_radius), round(spawn_y + map_radius))
+                spawn_data = galaxy_single(galaxy_seed, round(spawn_x + MAP_RADIUS), round(spawn_y + MAP_RADIUS))
 
                 if spawn_data.get("system", False):
                     # We found a system!!
@@ -874,4 +874,4 @@ def get_galaxy_spawn(galaxy_seed: str) -> tuple[int, int]:
             # If the `else` did not run, then it means it did break out of the inner loop, and thus it found a system.
             break
     
-    return (round(spawn_x + map_radius), round(spawn_y + map_radius))
+    return (round(spawn_x + MAP_RADIUS), round(spawn_y + MAP_RADIUS))
