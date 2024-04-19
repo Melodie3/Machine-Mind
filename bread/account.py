@@ -105,10 +105,12 @@ class Bread_Account:
         emotes_to_remove.extend(self.get_all_items_with_attribute("rare_bread"))
         emotes_to_remove.extend(self.get_all_items_with_attribute("shiny"))
         emotes_to_remove.extend(self.get_all_items_with_attribute("stonks"))
+        emotes_to_remove.extend(self.get_all_items_with_attribute("anarchy_pieces"))
         emotes_to_remove.append(values.chessatron)
         emotes_to_remove.append(values.omega_chessatron)
         emotes_to_remove.append(values.normal_bread)
         emotes_to_remove.append(values.anarchy_chess)
+        emotes_to_remove.append(values.fuel)
         # we're keeping OoaKs
 
         entries_to_remove = [   "total_dough",
@@ -116,8 +118,8 @@ class Bread_Account:
                                 "daily_gambles", "daily_rolls",
                                 "multiroller", "compound_roller", "roll_summarizer", "black_hole", "multiroller_terminal", "multiroller_active",
                                 "investment_profit", "gamble_winnings",
-                                "space_level", "telescope_level", "autopilot_level", "fuel_tank",
-                                "galaxy_move_count", "galaxy_xpos", "galaxy_ypos", "system_xpos", "system_ypos", "projects_completed",
+                                "space_level", "telescope_level", "autopilot_level", "fuel_tank", "fuel_research", "multiroller_terminal", 
+                                "galaxy_move_count", "galaxy_xpos", "galaxy_ypos", "system_xpos", "system_ypos", "projects_completed", "trade_hubs_created",
         ]
         untouched =            ["lifetime_earned_dough", "lifetime_dough", "lifetime_gambles","highest_roll", ]
 
@@ -127,7 +129,7 @@ class Bread_Account:
                                 "special_bread", "rare_bread", "unique", "chess_pieces", "shiny",
                                 "full_chess_set", "many_of_a_kind", 
                                 "lottery_win",
-                                "projects_completed",
+                                "projects_completed", "trade_hubs_created",
 
         ]
 

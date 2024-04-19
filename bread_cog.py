@@ -4953,7 +4953,7 @@ anarchy - 1000% of your wager.
 
                 items_added.append(f"{amount} {win_item}")
 
-            user_account.increment("projects_completed", 1)
+            player_account.increment("projects_completed", 1)
 
             self.json_interface.set_account(player_id, player_account, guild = ctx.guild.id)
             
@@ -5172,6 +5172,8 @@ anarchy - 1000% of your wager.
                     system_tile = hub,
                     user_account = user_account
                 )
+
+                user_account.increment("trade_hubs_created", 1)
 
                 self.json_interface.set_account(ctx.author, user_account, guild = ctx.guild.id)
 
