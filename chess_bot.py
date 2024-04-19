@@ -241,6 +241,9 @@ class Chess_game():
         restored_game.game_board.reset()
 
         guild = bot_ref.get_guild(int(input["guild_id"]))
+        
+        if guild is None:
+            return None
 
         restored_game.channel = guild.get_channel(input["channel_id"])
 
@@ -1385,6 +1388,8 @@ class Chess_bot(commands.Cog, name="Chess"):
                     print (f"loading game {id}")
                     saved_game = cabinet[id]
                     restored_game = Chess_game.from_dict(saved_game)
+                    if restored_game is None:
+                        continue
                     self.games[restored_game.channel] = restored_game
 
         # cabinet = JSON_cog.get_filing_cabinet("chess", create_if_nonexistent=True)
