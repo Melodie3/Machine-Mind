@@ -242,19 +242,16 @@ def mandelbrot(
     
     Returns:
         int: The last depth value at which it was within the radius 2 circle."""
+    coord = complex(*coord)
+
     g = 0
     try:
-        def f(z: tuple[float, float]):
-            return (
-                (z[0] ** 2 + z[1] ** 2) ** (exponent / 2) * math.cos(exponent * math.atan2(z[1], z[0])) + coord[0],
-                (z[0] ** 2 + z[1] ** 2) ** (exponent / 2) * math.sin(exponent * math.atan2(z[1], z[0])) + coord[1]
-            )
         z = coord
         
         for g in range(depth):
-            if z[0] ** 2 + z[1] ** 2 > 4:
+            if z.imag ** 2 + z.real ** 2 > 4:
                 return g + 1
-            z = f(z)
+            z = z ** exponent + coord
 
         return depth
     except (OverflowError, ZeroDivisionError):
