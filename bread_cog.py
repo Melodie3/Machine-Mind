@@ -4486,16 +4486,20 @@ anarchy - 1000% of your wager.
             middle = f"Your current galaxy location: {user_account.get_galaxy_location(json_interface=self.json_interface)}.\nYour current system location: {user_account.get_system_location()}.\nCorruption chance: {corruption_chance}%."
             suffix = "You can use '$bread space map galaxy' to view the galaxy map."
 
-        lines = ["".join(item) for item in map_data]
-        lines = "\n".join(lines)
+        # lines = ["".join(item) for item in map_data]
+        # lines = "\n".join(lines)
 
+        send_file = discord.File(map_data, filename="space_map.png")
+        file_path = "attachment://space_map.png"
 
         unfortunate_embed = discord.Embed( # It's unfortunate that we have to use one.
             title = prefix,
-            description = lines + "\n" + middle + "\n\n" + suffix,
-            color=8884479
+            description = middle + "\n\n" + suffix,
+            color=8884479,
         )
-        await ctx.reply(embed=unfortunate_embed)
+        unfortunate_embed.set_image(url=file_path)
+
+        await ctx.reply(embed=unfortunate_embed, file=send_file)
         
     ########################################################################################################################
     #####      BREAD SPACE ANALYZE

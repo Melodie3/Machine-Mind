@@ -6,6 +6,9 @@ import math
 import typing
 import random
 
+# pip3 install pillow
+import PIL.Image as Image
+
 import bread.account as account
 import bread.generation as generation
 import bread.values as values
@@ -50,6 +53,97 @@ MAP_EMOJIS = {
     "wormhole": ":hole:",
     "merchant": ":person_in_tuxedo:",
 }
+
+EMOJI_PATH = {
+    # Numbers.
+    "1": "images/1.png",
+    "2": "images/2.png",
+    "3": "images/3.png",
+    "4": "images/4.png",
+    "5": "images/5.png",
+    "6": "images/6.png",
+    "7": "images/7.png",
+    "8": "images/8.png",
+    "9": "images/9.png",
+
+    # Letters.
+    "a": "images/a.png",
+    "b": "images/b.png",
+    "c": "images/c.png",
+    "d": "images/d.png",
+    "e": "images/e.png",
+    "f": "images/f.png",
+    "g": "images/g.png",
+    "h": "images/h.png",
+    "i": "images/i.png",
+    
+    # Filler.
+    "border": "images/border.png",
+    "blocker": "images/blocker.png",
+    "background": "images/background.png",
+    "nebula": "images/nebula.png",
+    "fog": "images/fog.png",
+
+    # Misc.
+    "rocket": "images/rocket.png",
+    "star1": "images/star1.png",
+    "star2": "images/star2.png",
+    "star3": "images/star3.png",
+    "black_hole": "images/black_hole.png",
+    "wormhole": "images/wormhole.png",
+    "trade_hub": "images/trade_hub.png",
+    "merchant": "images/merchant.png",
+    "asteroid": "images/asteroid.png",
+
+    # Special breads.
+    "croissant": "images/croissant.png",
+    "flatbread": "images/flatbread.png",
+    "stuffed_flatbread": "images/stuffed_flatbread.png",
+    "sandwich": "images/sandwich.png",
+    "french_bread": "images/french_bread.png",
+
+    # Rare breads.
+    "bagel": "images/bagel.png",
+    "waffle": "images/waffle.png",
+    "doughnut": "images/doughnut.png",
+
+    # Black Chess pieces.
+    "Bpawn": "images/bpawn.png",
+    "Bknight": "images/bknight.png",
+    "Bbishop": "images/bbishop.png",
+    "Brook": "images/brook.png",
+    "Bqueen": "images/bqueen.png",
+    "Bking": "images/bking.png",
+
+    # White Chess pieces.
+    "Wpawn": "images/wpawn.png",
+    "Wknight": "images/wknight.png",
+    "Wbishop": "images/wbishop.png",
+    "Wrook": "images/wrook.png",
+    "Wqueen": "images/wqueen.png",
+    "Wking": "images/wking.png",
+
+    # Gems.
+    "gem_red": "images/gem_red.png",
+    "gem_blue": "images/gem_blue.png",
+    "gem_purple": "images/gem_purple.png",
+    "gem_green": "images/gem_green.png",
+    "gem_gold": "images/gem_gold.png",
+
+    # MoaK.
+    "anarchy_chess": "images/anarchy_chess.png",
+}
+
+print("Bread Space: Loading map images.")
+
+EMOJI_IMAGES = {}
+
+for key, path in EMOJI_PATH.items():
+    EMOJI_IMAGES[key] = Image.open(path).resize((128, 128))
+
+print("Bread Space: Map image loading complete.")
+
+IMAGE_PATH = "images/"
 
 class SystemTile:
     def __init__(
@@ -112,7 +206,7 @@ class SystemTile:
     # Should be overwitten by subclasses.
     def get_emoji(self: typing.Self) -> str:
         """Returns an emoji that represents this tile."""
-        return MAP_EMOJIS.get("empty")
+        return "background"
         
         
 
@@ -145,7 +239,7 @@ class SystemEmpty(SystemTile):
         self.type = "empty"
     
     def get_emoji(self: typing.Self) -> str:
-        return MAP_EMOJIS.get("empty")
+        return "background"
     
     def get_analysis(
             self: typing.Self,
@@ -174,7 +268,7 @@ class SystemStar(SystemTile):
         self.type = "star"
     
     def get_emoji(self: typing.Self) -> str:
-        return MAP_EMOJIS.get(self.star_type)
+        return self.star_type
     
     def get_analysis(
             self: typing.Self,
@@ -202,7 +296,7 @@ class SystemAsteroid(SystemTile):
         self.type = "asteroid"
     
     def get_emoji(self: typing.Self) -> str:
-        return MAP_EMOJIS.get("asteroid")
+        return "asteroid"
 
     def get_analysis(
             self: typing.Self,
@@ -234,7 +328,7 @@ class SystemTradeHub(SystemTile):
         self.type = "trade_hub"
     
     def get_emoji(self: typing.Self) -> str:
-        return MAP_EMOJIS.get("trade_hub")
+        return "trade_hub"
     
     def get_analysis(
             self: typing.Self,
@@ -273,7 +367,7 @@ class SystemPlanet(SystemTile):
         self.type = "planet"
     
     def get_emoji(self: typing.Self) -> str:
-        return self.planet_type.text
+        return self.planet_type.name
     
     def get_analysis(
             self: typing.Self,
@@ -361,7 +455,7 @@ class SystemMerchant(SystemTile):
         self.trades_internal = None
     
     def get_emoji(self: typing.Self) -> str:
-        return MAP_EMOJIS.get("merchant")
+        return "merchant"
 
     def get_analysis(
             self: typing.Self,
@@ -467,7 +561,7 @@ class SystemWormhole(SystemTile):
         self.type = "wormhole"
     
     def get_emoji(self: typing.Self) -> str:
-        return MAP_EMOJIS.get("wormhole")
+        return "wormhole"
     
     def get_analysis(
             self: typing.Self,
@@ -781,10 +875,10 @@ class GalaxyTile:
 
         # If this tile is in a nebula, then return the nebula emoji.
         if self.in_nebula:
-            return MAP_EMOJIS.get("nebula")
+            return "nebula"
         
         # If this tile is not a system, and is not in a nebula return the empty emoji.
-        return MAP_EMOJIS.get("empty")
+        return "background"
     
     def get_system_tile(
             self: typing.Self,
@@ -946,10 +1040,6 @@ def galaxy_map(
     x_size = max(bottom_right[0], top_left[0]) - min(bottom_right[0], top_left[0]) + 1
     y_size = max(bottom_right[1], top_left[1]) - min(bottom_right[1], top_left[1]) + 1
 
-    fill_emoji = "fog"
-    border_emoji = "border"
-
-    numbers = [":one:", ":two:", ":three:", ":four:", ":five:", ":six:", ":seven:", ":eight:", ":nine:"]
     letters = "abcdefghi"
 
     corners = [
@@ -960,59 +1050,79 @@ def galaxy_map(
     ]
     
     size_check = x_size - round(2.1 * (telescope_level ** 0.3)) # https://www.desmos.com/calculator/hanhwjrrhc
+    
+    img = Image.new(
+        mode = "RGBA",
+        size = ((x_size + 4) * 128, (y_size + 4) * 128),
+        color = (0, 0, 0, 0)
+    )
 
-    def get_fill_emoji(grid_x, grid_y):
-        # Handling the corners.
-        if (grid_x, grid_y) in corners:
-            return MAP_EMOJIS.get(border_emoji)
-        
-        # The numbers and letters.
-        if grid_y == 0 or grid_y == y_size + 3:
-            return f":regional_indicator_{letters[grid_x - 2]}:"
-        
-        if grid_x == 0 or grid_x == x_size + 3:
-            return numbers[grid_y - 2]
-        
-        # The ring of fog emojis just inside the outer blue border.
-        if grid_x == 1 or grid_x == x_size + 2:
-            return MAP_EMOJIS.get(fill_emoji)
-        
-        if grid_y == 1 or grid_y == y_size + 2:
-            return MAP_EMOJIS.get(fill_emoji)
-        
-        # Whether this is in the visible area or not.
-        if abs(grid_x - 2 - radius) + abs(grid_y - 2 - radius) <= size_check:
-            return MAP_EMOJIS.get("empty")
-        
-        # If nothing activates, fog emoji.
-        return MAP_EMOJIS.get(fill_emoji)
+    def place(name, x, y):
+        nonlocal img
+        img.paste(EMOJI_IMAGES.get(name), (x * 128, y * 128), mask=EMOJI_IMAGES.get(name))
 
-    grid = [[get_fill_emoji(grid_x, grid_y) for grid_x in range(x_size + 4)] for grid_y in range(y_size + 4)]
 
-    for y_pos in range(y_size):
-        for x_pos in range(x_size):
-            if abs(x_pos - radius) + abs(y_pos - radius) > size_check:
-                grid[y_pos + 2][x_pos + 2] = MAP_EMOJIS.get("fog")
+    for ypos in range(y_size + 4):
+        for xpos in range(x_size + 4):
+
+            if (xpos, ypos) in corners:
+                place("border", xpos, ypos)
                 continue
 
-            mod_x = x_pos + min(bottom_right[0], top_left[0])
-            mod_y = y_pos + min(bottom_right[1], top_left[1])
+            # If we need to put in a letter.
+            if ypos == y_size + 3 or ypos == 0:
+                place(letters[xpos - 2], xpos, ypos)
+                continue
+
+            # If we need to put in a number.
+            if xpos == x_size + 3 or xpos == 0:
+                place(str(ypos - 1), xpos, ypos)
+                continue
+            
+            if xpos == 1 or ypos == 1 or \
+                xpos == x_size + 2 or ypos == y_size + 2:
+                place("fog", xpos, ypos)
+                continue
+            
+        
+            # Whether this is in the visible area or not.
+            if abs(xpos - 2 - radius) + abs(ypos - 2 - radius) > size_check:
+                place("fog", xpos, ypos)
+                continue
 
             tile_object = get_galaxy_coordinate(
                 json_interface = json_interface,
                 guild = guild,
                 galaxy_seed = galaxy_seed,
                 ascension = ascension,
-                xpos = mod_x,
-                ypos = mod_y,
+                xpos = xpos - 2 - radius + galaxy_x,
+                ypos = ypos - 2 - radius + galaxy_y,
                 load_data = False
             )
+            
+            # Place the background.
+            # If something after this fires, that will be put on top of this.
+            if tile_object.in_nebula:
+                place("nebula", xpos, ypos)
+            else:
+                place("background", xpos, ypos)
 
-            grid[y_pos + 2][x_pos + 2] = tile_object.get_emoji(json_interface=json_interface)
-    
-    grid[radius + 2][radius + 2] = MAP_EMOJIS.get("rocket", "R")
+            if xpos == (y_size + 4) // 2 and ypos == (y_size + 4) // 2:
+                place("rocket", xpos, ypos)
+                continue
+            
+            emoji = tile_object.get_emoji(json_interface)
+
+            if emoji == "background":
+                continue
+
+            place(emoji, xpos, ypos)
+
+    output_path = IMAGE_PATH + "space_map.png"
+
+    img.save(output_path)
         
-    return grid
+    return output_path
 
 ##########################################################################################
 ##### SYSTEM MAP
@@ -1054,8 +1164,8 @@ def system_map(
 
     fill_emoji = "fog"
     border_emoji = "border"
+    blocker = "blocker"
 
-    numbers = [":one:", ":two:", ":three:", ":four:", ":five:", ":six:", ":seven:", ":eight:", ":nine:"]
     letters = "abcdefghi"
 
     corners = [
@@ -1074,21 +1184,21 @@ def system_map(
 
         # Handling the corners.
         if (grid_x, grid_y) in corners:
-            return MAP_EMOJIS.get(border_emoji)
+            return border_emoji
         
         # The numbers and letters.
         if grid_y == 0 or grid_y == y_size + 3:
-            return f":regional_indicator_{letters[grid_x - 2]}:"
+            return letters[grid_x - 2]
         
         if grid_x == 0 or grid_x == x_size + 3:
-            return numbers[grid_y - 2]
+            return str(grid_y - 1)
         
         # The ring of fog emojis just inside the outer blue border.
         if grid_x == 1 or grid_x == x_size + 2:
-            return MAP_EMOJIS.get(fill_emoji)
+            return fill_emoji
         
         if grid_y == 1 or grid_y == y_size + 2:
-            return MAP_EMOJIS.get(fill_emoji)
+            return fill_emoji
         
         # Whether this is in the visible area or not.
         if abs(grid_x - 2 - radius) + abs(grid_y - 2 - radius) <= size_check:
@@ -1096,10 +1206,10 @@ def system_map(
                 (grid_x - 2 - radius + system_x,
                 grid_y - 2 - radius + system_y)
             )
-            return MAP_EMOJIS.get("empty")
+            return "background"
         
         # If nothing activates, fog emoji.
-        return MAP_EMOJIS.get(fill_emoji)
+        return fill_emoji
     
     grid = [[get_fill_emoji(grid_x, grid_y) for grid_x in range(x_size + 4)] for grid_y in range(y_size + 4)]
 
@@ -1116,69 +1226,92 @@ def system_map(
     )
 
     # If this location is not a system, place the rocket in the middle and return.
-    if not system_data.system:
-        grid[radius + 2][radius + 2] = MAP_EMOJIS.get("rocket", "R")
-        return grid
+    if system_data.system:    
+        system_data.load_system_data(json_interface=json_interface, guild=guild, get_wormholes=True)
+
+        # Place down the border.
+        system_radius = system_data.system_radius
+
+        for tile_y in range(y_size):
+            for tile_x in range(x_size):
+                if grid[tile_y + 2][tile_x + 2] == fill_emoji:
+                    continue
+                
+                if math.hypot(tile_x + top_left[0], tile_y + top_left[1]) >= system_radius + 2:
+                    grid[tile_y + 2][tile_x + 2] = blocker
+
+        # Star
+        star_x = system_data.star.system_xpos
+        star_y = system_data.star.system_ypos
+
+        if (star_x, star_y) in visible_coordinates:
+            grid[star_y + 2 - system_y + radius][star_x + 2 - system_x + radius] = system_data.star.get_emoji()
+        
+        # Asteroids (if there are any)
+        if system_data.asteroids is not None:
+            for asteroid in system_data.asteroids:
+                if (asteroid.system_xpos, asteroid.system_ypos) in visible_coordinates:
+                    grid[asteroid.system_ypos + 2 - system_y + radius][asteroid.system_xpos + 2 - system_x + radius] = asteroid.get_emoji()
+        
+        # Planets
+        for planet in system_data.planets:
+            if (planet.system_xpos, planet.system_ypos) in visible_coordinates:
+                grid[planet.system_ypos + 2 - system_y + radius][planet.system_xpos + 2 - system_x + radius] = planet.get_emoji()
+                
+        # Potential trade hub.
+        if system_data.trade_hub is not None:
+            trade_hub_x = system_data.trade_hub.system_xpos
+            trade_hub_y = system_data.trade_hub.system_ypos
+
+            if (trade_hub_x, trade_hub_y) in visible_coordinates:
+                grid[trade_hub_y + 2 - system_y + radius][trade_hub_x + 2 - system_x + radius] = system_data.trade_hub.get_emoji()
+                
+        # Potential merchant.
+        if system_data.merchant is not None:
+            merchant_x = system_data.merchant.system_xpos
+            merchant_y = system_data.merchant.system_ypos
+
+            if (merchant_x, merchant_y) in visible_coordinates:
+                grid[merchant_y + 2 - system_y + radius][merchant_x + 2 - system_x + radius] = system_data.merchant.get_emoji()
+        
+        # Potential wormhole.
+        if system_data.wormhole is not None:
+            wormhole_x = system_data.wormhole.system_xpos
+            wormhole_y = system_data.wormhole.system_ypos
+
+            if (wormhole_x, wormhole_y) in visible_coordinates:
+                grid[wormhole_y + 2 - system_y + radius][wormhole_x + 2 - system_x + radius] = system_data.wormhole.get_emoji()
+
+
+    # Add the rocket.
+    grid[radius + 2][radius + 2] = "rocket"
+
+    # Now, render the image.
     
-    system_data.load_system_data(json_interface=json_interface, guild=guild, get_wormholes=True)
+    img = Image.new(
+        mode = "RGBA",
+        size = ((x_size + 4) * 128, (y_size + 4) * 128),
+        color = (0, 0, 0, 0)
+    )
 
-    # Place down the border.
-    system_radius = system_data.system_radius
+    def place(name, x, y):
+        nonlocal img
+        img.paste(EMOJI_IMAGES.get(name), (x * 128, y * 128), mask=EMOJI_IMAGES.get(name))
 
-    for tile_y in range(y_size):
-        for tile_x in range(x_size):
-            if grid[tile_y + 2][tile_x + 2] == MAP_EMOJIS.get(fill_emoji):
-                continue
-            
-            if math.hypot(tile_x + top_left[0], tile_y + top_left[1]) >= system_radius + 2:
-                grid[tile_y + 2][tile_x + 2] = MAP_EMOJIS.get("no_entry")
+    for ypos, ydata in enumerate(grid):
+        for xpos, emoji in enumerate(ydata):
+            # If it's part of the map, place a background.
+            if not(xpos == 0 or xpos == x_size + 1 or \
+                ypos == 0 or ypos == y_size + 1 or emoji == fill_emoji):
+                place("background", xpos, ypos)
 
-    # Star
-    star_x = system_data.star.system_xpos
-    star_y = system_data.star.system_ypos
+            place(emoji, xpos, ypos)
 
-    if (star_x, star_y) in visible_coordinates:
-        grid[star_y + 2 - system_y + radius][star_x + 2 - system_x + radius] = system_data.star.get_emoji()
-    
-    # Asteroids (if there are any)
-    if system_data.asteroids is not None:
-        for asteroid in system_data.asteroids:
-            if (asteroid.system_xpos, asteroid.system_ypos) in visible_coordinates:
-                grid[asteroid.system_ypos + 2 - system_y + radius][asteroid.system_xpos + 2 - system_x + radius] = asteroid.get_emoji()
-    
-    # Planets
-    for planet in system_data.planets:
-        if (planet.system_xpos, planet.system_ypos) in visible_coordinates:
-            grid[planet.system_ypos + 2 - system_y + radius][planet.system_xpos + 2 - system_x + radius] = planet.get_emoji()
-            
-    # Potential trade hub.
-    if system_data.trade_hub is not None:
-        trade_hub_x = system_data.trade_hub.system_xpos
-        trade_hub_y = system_data.trade_hub.system_ypos
+    output_path = IMAGE_PATH + "space_map.png"
 
-        if (trade_hub_x, trade_hub_y) in visible_coordinates:
-            grid[trade_hub_y + 2 - system_y + radius][trade_hub_x + 2 - system_x + radius] = system_data.trade_hub.get_emoji()
-            
-    # Potential merchant.
-    if system_data.merchant is not None:
-        merchant_x = system_data.merchant.system_xpos
-        merchant_y = system_data.merchant.system_ypos
-
-        if (merchant_x, merchant_y) in visible_coordinates:
-            grid[merchant_y + 2 - system_y + radius][merchant_x + 2 - system_x + radius] = system_data.merchant.get_emoji()
-    
-    # Potential wormhole.
-    if system_data.wormhole is not None:
-        wormhole_x = system_data.wormhole.system_xpos
-        wormhole_y = system_data.wormhole.system_ypos
-
-        if (wormhole_x, wormhole_y) in visible_coordinates:
-            grid[wormhole_y + 2 - system_y + radius][wormhole_x + 2 - system_x + radius] = system_data.wormhole.get_emoji()
-
-
-    # Add the rocket and return.
-    grid[radius + 2][radius + 2] = MAP_EMOJIS.get("rocket", "R")
-    return grid
+    img.save(output_path)
+        
+    return output_path
 
             
 
