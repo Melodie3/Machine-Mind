@@ -8,6 +8,7 @@ import random
 
 # pip3 install pillow
 import PIL.Image as Image
+import PIL.ImageDraw as ImageDraw
 
 import bread.account as account
 import bread.generation as generation
@@ -968,16 +969,19 @@ def get_corruption_chance(
 def space_map(
         account: account.Bread_Account,
         json_interface: bread_cog.JSON_interface,
-        mode: typing.Union[str, None] = None
-    ) -> list[list[str]]:
+        mode: typing.Union[str, None] = None,
+        analyze_position: str = None
+    ) -> str:
     """Generates the map of a system or galaxy that can be sent in Discord.
 
     Args:
         account (account.Bread_Account): The account of the player calling the map.
-        mode (typing.Union[str, None], optional): The mode to use. 'galaxy' for the galaxy map. Defaults to the sysetm map for anything else. Defaults to None.
+        json_interface: (bread_cog.JSON_interface): The JSON interface.
+        mode (typing.Union[str, None], optional): The mode to use. 'galaxy' for the galaxy map. Defaults to the system map for anything else. Defaults to None.
+        analyze_position (str, optional): The location to hover the analysis on. Example: `a1` and `e5`. If None is passed it will not add the analysis. Only works on the system map. Defaults to None.
 
     Returns:
-        list[list[str]]: The map, each item in the list is a row of the map.
+        str: The path to the generated image.
     """
     galaxy_seed = json_interface.get_ascension_seed(account.get_prestige_level(), guild=account.get("guild_id"))
 
@@ -1017,7 +1021,8 @@ def space_map(
             galaxy_seed = galaxy_seed,
             ascension = ascension,
             telescope_level = sensor_level,
-            radius = radius
+            radius = radius,
+            analyze_position = analyze_position
         )
 
 ##########################################################################################
@@ -1032,7 +1037,22 @@ def galaxy_map(
         ascension: int,
         telescope_level: int,
         radius: int
-    ) -> list[list[str]]:
+    ) -> str:
+    """Generates the galaxy map as an image.
+
+    Args:
+        json_interface (bread_cog.JSON_interface): The JSON interface.
+        guild (typing.Union[discord.Guild, int, str]): The guild.
+        galaxy_x (int): The x position in the galaxy.
+        galaxy_y (int): The y position in the galaxy.
+        galaxy_seed (str): The seed of the galaxy.
+        ascension (int): The player's prestige level.
+        telescope_level (int): The player's telescope level.
+        radius (int): The radius of the visible area.
+
+    Returns:
+        str: The path to the generated file.
+    """
 
     bottom_right = (galaxy_x + radius, galaxy_y + radius)
     top_left = (galaxy_x - radius, galaxy_y - radius)
@@ -1137,8 +1157,9 @@ def system_map(
         galaxy_seed: str,
         ascension: int,
         telescope_level: int,
-        radius: int
-    ) -> list[list[str]]:
+        radius: int,
+        analyze_position: str = None
+    ) -> str:
     """Generates the emojis for the space map.
 
     Args:
@@ -1151,9 +1172,10 @@ def system_map(
         ascension (int): The ascension of the galaxy.
         telescope_level (int): The telescope level the player has.
         radius (int): The radius of the viewable area.
+        analyze_position (str, optional): The location to hover the analysis on. Example: `a1` and `e5`. If None is passed it will not add the analysis. Defaults to None.
 
     Returns:
-        list[list[str]]: _description_
+        str: The path to the generated file.
     """
     
     bottom_right = (system_x + radius, system_y + radius)
@@ -1293,6 +1315,7 @@ def system_map(
         size = ((x_size + 4) * 128, (y_size + 4) * 128),
         color = (0, 0, 0, 0)
     )
+    imgdraw = ImageDraw.Draw(img)
 
     def place(name, x, y):
         nonlocal img
@@ -1306,6 +1329,45 @@ def system_map(
                 place("background", xpos, ypos)
 
             place(emoji, xpos, ypos)
+    
+    if analyze_position is not None:
+        xpos = "abcdefghi".index(analyze_position[0])
+        ypos = int(analyze_position[1]) - 1
+        
+        width = 50
+
+        imgdraw.rectangle(
+            xy = (
+               (xpos + 2) * 128 - width,
+               (ypos + 2) * 128 - width,
+               (xpos + 3) * 128 + width,
+               (ypos + 3) * 128 + width
+            ),
+            outline = (255, 0, 0),
+            width = width
+        )
+
+        imgdraw.line(
+            xy = (
+               (xpos + 2) * 128 - 5,
+               (ypos + 2.5) * 128,
+               0,
+               (ypos + 2.5) * 128
+            ),
+            fill = (255, 0, 0),
+            width = width
+        )
+
+        imgdraw.line(
+            xy = (
+               width / 2 - 1,
+               0,
+               width / 2 - 1,
+               (ypos + 2.5) * 128
+            ),
+            fill = (255, 0, 0),
+            width = width
+        )
 
     output_path = IMAGE_PATH + "space_map.png"
 

@@ -4561,29 +4561,14 @@ anarchy - 1000% of your wager.
             return
         
         ##########################################################
-        ##### Generating and modifying the map.
+        ##### Generating the map.
 
-        map_lines = space.space_map(
+        map_path = space.space_map(
             account = user_account,
             json_interface = self.json_interface,
-            mode = "system"
+            mode = "system",
+            analyze_position = point
         )
-
-        red_line = ":red_square:"
-
-        for i in range(len(map_lines) - 2 - y_modifier):
-            map_lines[(i + 1) * -1][0] = red_line
-
-        for i in range(x_modifier + 1):
-            map_lines[y_modifier + 2][i + 1] = red_line
-        
-        for xmod, ymod in [(-1, -1), (0, -1), (1, -1), (1, 0), (1, 1), (0, 1), (-1, 1)]:
-            map_lines[y_modifier + 2 + ymod][x_modifier + 2 + xmod] = red_line
-
-        map_lines.append(red_line)
-        map_lines.append(red_line)
-
-        map_lines = ["".join(line) for line in map_lines]
 
         ##########################################################
         ##### Getting the analysis data.
@@ -4624,15 +4609,16 @@ anarchy - 1000% of your wager.
         ##########################################################        
         ##### Sending the message.
 
-        # Join the map lines and the analysis lines together.
-        analysis_lines = map_lines + analysis_lines
+        send_file = discord.File(map_path, filename="space_map.png")
+        file_path = "attachment://space_map.png"
 
         embed_send = discord.Embed(
             title = "Tile Analysis",
             description = "\n".join(analysis_lines),
-            color=8884479
+            color=8884479,
         )
-        await ctx.reply(embed=embed_send)
+        embed_send.set_image(url=file_path)
+        await ctx.reply(embed=embed_send, file=send_file)
 
 
 
