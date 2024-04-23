@@ -4635,7 +4635,7 @@ anarchy - 1000% of your wager.
             ctx: commands.Context,
             user_account: account.Bread_Account,
             day_seed: str,
-            hub_projects: list[projects.Project],
+            hub_projects: list[dict],
             hub: space.SystemTradeHub,
             actions: tuple[str],
 
@@ -4763,7 +4763,7 @@ anarchy - 1000% of your wager.
             ctx: commands.Context,
             user_account: account.Bread_Account,
             day_seed: str,
-            hub_projects: list[projects.Project],
+            hub_projects: list[dict],
             hub: space.SystemTradeHub,
             actions: tuple[str]
         ) -> None:
@@ -4961,7 +4961,7 @@ anarchy - 1000% of your wager.
             ctx: commands.Context,
             user_account: account.Bread_Account,
             day_seed: str,
-            hub_projects: list[projects.Project],
+            hub_projects: list[dict],
             hub: space.SystemTradeHub,
             actions: tuple[str]
         ) -> None:
@@ -5025,7 +5025,7 @@ anarchy - 1000% of your wager.
             ctx: commands.Context,
             user_account: account.Bread_Account,
             day_seed: str,
-            hub_projects: list[projects.Project],
+            hub_projects: list[dict],
             hub: space.SystemTradeHub,
             actions: tuple[str]
         ) -> None:

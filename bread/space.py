@@ -1710,6 +1710,7 @@ def get_trade_hub_projects(
     prestige_level = user_account.get_prestige_level()
     guild_id = user_account.get("guild_id")
     seed = json_interface.get_ascension_seed(prestige_level, guild_id)
+    daily_seed = json_interface.get_day_seed(user_account.get("guild_id"))
 
     out_projects = []
 
@@ -1725,8 +1726,8 @@ def get_trade_hub_projects(
     while len(out_projects) < 3:
         project_id += 1
 
-        key = f"project_{project_id + 1}"
-        rng = random.Random(utility.hash_args(seed, galaxy_x, galaxy_y, key))
+        key = f"project_{len(out_projects) + 1}"
+        rng = random.Random(utility.hash_args(seed, daily_seed, galaxy_x, galaxy_y, project_id))
 
         if len(out_projects) == 0 or (len(out_projects) == 2 and rng.randint(1, 2) == 1):
             project = rng.choice(projects.item_project_lists) # Full list -> Give/Take
