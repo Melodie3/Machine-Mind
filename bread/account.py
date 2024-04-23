@@ -56,6 +56,7 @@ class Bread_Account:
         username = self.get("username")
         display_name = self.get("display_name")
         guild_id = self.get("guild_id")
+        user_id = self.get("id")
         self.values = {
             "total_dough" : 0,
             "earned_dough" : 0,
@@ -63,7 +64,8 @@ class Bread_Account:
             "daily_rolls" : 0,
             "username": username,
             "display_name": display_name,
-            "guild_id": guild_id
+            "guild_id": guild_id,
+            "id": user_id
         }
 
     def daily_reset(self: typing.Self) -> None:
