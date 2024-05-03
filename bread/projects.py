@@ -958,6 +958,155 @@ class Round_Table(Project):
     
 ##### White chess pieces.
 
+class Royal_Summit(Project):
+    """Concept by Emily, written by ChatGPT."""
+    internal = "royal_summit"
+    
+    @classmethod
+    def name(
+            cls,
+            day_seed: str,
+            system_tile: space.SystemTradeHub
+        ) -> str:
+        rng = random.Random(utility.hash_args(day_seed, system_tile.tile_seed()))
+        
+        options = [
+            "Royal Summit",
+            "Diplomatic Assembly",
+            "Regal Conference"
+        ]
+
+        return rng.choice(options)
+
+    @classmethod
+    def description(
+            cls,
+            day_seed: str,
+            system_tile: space.SystemTradeHub
+        ) -> str:
+        rng = random.Random(utility.hash_args(day_seed, system_tile.tile_seed()))
+
+        cost = cls.get_price_description(day_seed, system_tile)
+        reward = cls.get_reward_description(day_seed, system_tile)
+
+        part_1 = [
+            "Hail, esteemed denizens!",
+            "Greetings, noble attendants!",
+            "Salutations, honored guests!"
+        ]
+
+        part_2 = [
+            "The esteemed visitors from a distant land have made a request.",
+            "Royalty from afar seeks counsel from the Trade Hub's finest minds.",
+            "A diplomatic entourage has arrived."
+        ]
+
+        part_3 = [
+            "Their arrival brings both opportunity and challenge.",
+            "The presence of visiting dignitaries prompts reflection on our shared responsibilities.",
+            "With the arrival of distinguished guests, the Trade Hub faces a momentous occasion."
+        ]
+
+        part_4 = [
+            "This occasion demands careful consideration.",
+            "The Trade Hub must rise to the occasion.",
+            "We are presented with a unique challenge."
+        ]
+        
+        part_5 = [
+            "The council is called upon to convene promptly.",
+            "A meeting of minds is essential to address the needs of our honored guests.",
+            "Swift action is required to accommodate the visiting royalty's request."
+        ]
+        
+        part_6 = [
+            "In the halls of deliberation,",
+            "Amidst the discussions,",
+            "During the council's session,"
+        ]
+        
+        part_7 = [
+            "strategies for diplomacy will be devised.",
+            "plans for hospitality will be formulated.",
+            "decisions regarding protocol will be made."
+        ]
+        
+        part_8 = [
+            f"With the resources of {cost},",
+            f"For the provision of {cost},",
+            f"Should someone supply {cost},"
+        ]
+        
+        part_9 = [
+            "the Trade Hub can offer a display of hospitality befitting royalty.",
+            "we can extend a warm welcome to our distinguished guests.",
+            "our esteemed visitors will be honored with the utmost respect and care."
+        ]
+        
+        part_10 = [
+            "And fear not, for generosity shall be duly rewarded!",
+            "Rest assured, there shall be recompense for acts of kindness!",
+            "Those who assist shall not go unrecognized!"
+        ]
+        
+        part_11 = [
+            f"The reward for extending hospitality is {reward}!",
+            f"Those who contribute shall receive a token of appreciation in the form of {reward}!",
+            f"A gesture of gratitude awaits those who lend their aid, in the form of {reward}!"
+        ]
+
+        return " ".join([
+            rng.choice(part_1),
+            rng.choice(part_2),
+            rng.choice(part_3),
+            rng.choice(part_4),
+            rng.choice(part_5),
+            rng.choice(part_6),
+            rng.choice(part_7),
+            rng.choice(part_8),
+            rng.choice(part_9),
+            rng.choice(part_10),
+            rng.choice(part_11)
+        ])
+
+    @classmethod
+    def completion(
+            cls: typing.Type[typing.Self],
+            day_seed: str,
+            system_tile: space.SystemTradeHub
+        ) -> str:
+        rng = random.Random(utility.hash_args(day_seed, system_tile.tile_seed()))
+
+        options = [
+            "Bravo! The Trade Hub's council has successfully orchestrated a grand reception for the visiting royalty! Through your collective efforts, the diplomatic mission has flourished, and bonds of friendship have been strengthened between distant realms!",
+            "Splendid work! The Trade Hub's hospitality has left a lasting impression on the visiting royalty! Your contributions have ensured that the diplomatic exchange has been a resounding success, fostering goodwill and understanding across borders!",
+            "Magnificent! The Trade Hub's council has navigated the complexities of diplomacy with finesse, earning accolades from the visiting dignitaries! Thanks to your dedication, the bonds of camaraderie between nations have been reaffirmed, promising a brighter future of cooperation and harmony!"
+        ]
+
+        return rng.choice(options)
+    
+    @classmethod
+    def get_cost(
+            cls,
+            day_seed: str,
+            system_tile: space.SystemTradeHub
+        ) -> list[tuple[str, int]]:
+        rng = random.Random(utility.hash_args(day_seed, system_tile.tile_seed()))
+
+        amount = rng.randint(1, 4) * 100
+        return [(values.white_king.text, amount)]
+    
+    @classmethod
+    def get_reward(
+            cls,
+            day_seed: str,
+            system_tile: space.SystemTradeHub
+        ) -> list[tuple[str, int]]:
+        rng = random.Random(utility.hash_args(day_seed, system_tile.tile_seed()))
+
+        amount = rng.randint(1, 4)
+        return [(values.anarchy_white_king.text, amount)]
+
 ##### Gems.
 
 class Emergency_Fuel(Project):
@@ -1207,7 +1356,7 @@ story_projects = [Essential_Oils]
 take_special_bread_projects = [Flatbread_Feast, Waffle_Machine]
 take_rare_bread_projects = [Chessatron_Repair]
 take_black_chess_piece_projects = [Round_Table]
-take_white_chess_piece_projects = [Chessatron_Repair]
+take_white_chess_piece_projects = [Royal_Summit]
 take_gem_projects = [Emergency_Fuel]
 take_misc_item_projects = [Chessatron_Repair]
 

@@ -5,6 +5,7 @@ import discord
 import math
 import typing
 import random
+import itertools
 
 # pip3 install pillow
 import PIL.Image as Image
@@ -1728,13 +1729,19 @@ def get_trade_hub_projects(
 
         key = f"project_{len(out_projects) + 1}"
         rng = random.Random(utility.hash_args(seed, daily_seed, galaxy_x, galaxy_y, project_id))
+        
+        project = projects.all_projects.copy()
 
-        if len(out_projects) == 0 or (len(out_projects) == 2 and rng.randint(1, 2) == 1):
-            project = rng.choice(projects.item_project_lists) # Full list -> Give/Take
-            project = rng.choice(project) # Give/Take -> Item type
-            project = rng.choice(project) # Item type -> Specific item
-        else:
-            project = rng.choice(projects.story_projects)
+        while isinstance(project, list):
+            if isinstance(project, list):
+                if len(project) == 0:
+                    break
+            
+            project = rng.choice(project)
+        
+        # If it broke out of the while loop then `project` will be a list, in which case we need to skip to the next iteration.
+        if isinstance(project, list):
+            continue
 
         # Prevent duplicates.
         if project.internal in used_names:
