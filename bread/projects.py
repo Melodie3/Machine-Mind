@@ -322,6 +322,82 @@ class Trade_Hub(Project):
         ) -> list[tuple[str, int]]:
         return [("total_dough", 2000000)] # Award 2 million dough on completion.
         
+#######################################################################################################
+##### Base project. ###################################################################################
+#######################################################################################################
+
+class Base_Project(Project):
+    """Written by ???."""
+    internal = "base_project"
+    
+    @classmethod
+    def name(
+            cls,
+            day_seed: str,
+            system_tile: space.SystemTradeHub
+        ) -> str:
+        rng = random.Random(utility.hash_args(day_seed, system_tile.tile_seed()))
+        
+        options = []
+
+        return rng.choice(options)
+
+    @classmethod
+    def description(
+            cls,
+            day_seed: str,
+            system_tile: space.SystemTradeHub
+        ) -> str:
+        rng = random.Random(utility.hash_args(day_seed, system_tile.tile_seed()))
+
+        cost = cls.get_price_description(day_seed, system_tile)
+        reward = cls.get_reward_description(day_seed, system_tile)
+
+        part_1 = []
+
+        part_2 = []
+
+        part_3 = []
+
+        part_4 = []
+        
+        part_5 = []
+
+        return " ".join([
+            rng.choice(part_1),
+            rng.choice(part_2),
+            rng.choice(part_3),
+            rng.choice(part_4),
+            rng.choice(part_5)
+        ])
+
+    @classmethod
+    def completion(
+            cls: typing.Type[typing.Self],
+            day_seed: str,
+            system_tile: space.SystemTradeHub
+        ) -> str:
+        rng = random.Random(utility.hash_args(day_seed, system_tile.tile_seed()))
+
+        options = []
+
+        return rng.choice(options)
+    
+    @classmethod
+    def get_cost(
+            cls,
+            day_seed: str,
+            system_tile: space.SystemTradeHub
+        ) -> list[tuple[str, int]]:
+        return []
+    
+    @classmethod
+    def get_reward(
+            cls,
+            day_seed: str,
+            system_tile: space.SystemTradeHub
+        ) -> list[tuple[str, int]]:
+        return []
 
 
 #######################################################################################################
@@ -731,6 +807,154 @@ class Waffle_Machine(Project):
 ##### Rare bread.
 
 ##### Black chess pieces.
+
+class Round_Table(Project):
+    """Concept by Emily, written by ChatGPT."""
+    internal = "round_table"
+    
+    @classmethod
+    def name(
+            cls,
+            day_seed: str,
+            system_tile: space.SystemTradeHub
+        ) -> str:
+        rng = random.Random(utility.hash_args(day_seed, system_tile.tile_seed()))
+        
+        options = [
+            "The Round Table",
+            "King Arthur",
+            "The Holy Knight",
+            "Gathering the Black Knights"
+        ]
+
+        return rng.choice(options)
+
+    @classmethod
+    def description(
+            cls,
+            day_seed: str,
+            system_tile: space.SystemTradeHub
+        ) -> str:
+        rng = random.Random(utility.hash_args(day_seed, system_tile.tile_seed()))
+
+        cost = cls.get_cost(day_seed, system_tile)[0][1]
+        reward = cls.get_reward_description(day_seed, system_tile)
+
+        part_1 = [
+            "Hark!",
+            "Behold!",
+            "Alas!"
+        ]
+
+        part_2 = [
+            "The noble knight King Arthur seeks aid!",
+            "King Arthur, the valiant defender of the realm, calls for assistance!",
+            "The gallant King Arthur requires your help!"
+        ]
+
+        part_3 = [
+            "The quest for assembling the legendary Round Table is at hand!",
+            "A mission to gather the bravest knights for King Arthur's Round Table has commenced!",
+            "The Holy Knight's sacred endeavor to unite the realm's finest knights under one banner has begun!"
+        ]
+
+        part_4 = [
+            "This is a dire hour,",
+            "Troubling times have fallen upon us,",
+            "A dark cloud looms over the kingdom,"
+        ]
+        
+        part_5 = [
+            "as the Round Table remains incomplete!",
+            "for King Arthur's Round Table lacks members!",
+            "with the Holy Knight's assembly yet unfinished!"
+        ]
+
+        part_6 = [
+            "Before the realm can achieve unity,",
+            "Until the noble Round Table is fully assembled,",
+            "Until the fellowship of knights is whole,"
+        ]
+
+        part_7 = [
+            "additional knights are required to join the cause!",
+            "more valiant souls must answer the call!",
+            "brave warriors must step forward to join the noble quest!"
+        ]
+
+        part_8 = [
+            f"With {cost} knights needed to complete the Round Table!",
+            f"Seeking {cost} honorable knights to fill the ranks!",
+            f"A total of {cost} gallant warriors are required for the Round Table's completion!"
+        ]
+
+        part_9 = [
+            "Fear not, for valor shall be rewarded!",
+            "But fret not, for those who aid shall be duly compensated!",
+            "Take heart, for those who answer the call shall be duly recognized!"
+        ]
+
+        part_10 = [
+            f"The reward for aiding in the assembly of the Round Table is {reward}!",
+            f"Those who join the noble cause shall be granted {reward} in recognition of their bravery!",
+            f"A bounty of {reward} awaits those who pledge their swords to the cause!"
+        ]
+
+        return " ".join([
+            rng.choice(part_1),
+            rng.choice(part_2),
+            rng.choice(part_3),
+            rng.choice(part_4),
+            rng.choice(part_5),
+            rng.choice(part_6),
+            rng.choice(part_7),
+            rng.choice(part_8),
+            rng.choice(part_9),
+            rng.choice(part_10)
+        ])
+
+    @classmethod
+    def completion(
+            cls: typing.Type[typing.Self],
+            day_seed: str,
+            system_tile: space.SystemTradeHub
+        ) -> str:
+        rng = random.Random(utility.hash_args(day_seed, system_tile.tile_seed()))
+
+        cost = cls.get_cost(day_seed, system_tile)[0][1]
+        reward = cls.get_reward_description(day_seed, system_tile)
+
+        options = [
+            f"Rejoice! The Round Table stands complete, thanks to the valorous souls who answered the call! With {cost} knights now sworn to the cause, the realm is one step closer to unity and peace. The Holy Knight extends heartfelt gratitude to all who contributed, and the promised {reward} shall soon find their way to the deserving hands of those who helped forge this legacy of valor and camaraderie. Onward, noble knights, for the realm awaits the dawn of a new era, united under the banner of King Arthur's Round Table!",
+            f"The Round Table, now complete with {cost} valiant knights, stands as a beacon of unity and honor in the realm. Let the heralds sing of the bravery of those who answered the call, for their names shall be forever etched in the annals of history. As a token of gratitude, {reward} shall be bestowed upon the gallant souls who helped realize this noble vision. May the fellowship forged around the Round Table endure through the ages, a testament to the strength of camaraderie and the triumph of valor!",
+            f"Victory! With {cost} noble knights now gathered around the Round Table, the realm's unity is assured and King Arthur's legacy preserved. Let the banners fly high and the trumpets sound in celebration of this momentous achievement! To those who heeded the call and joined the ranks of the Round Table, {reward} shall serve as a symbol of appreciation and honor. Together, we stand as guardians of peace and justice, bound by oath and valor, forever remembered in the songs and tales of old."
+        ]
+
+        return rng.choice(options)
+    
+    @classmethod
+    def get_cost(
+            cls,
+            day_seed: str,
+            system_tile: space.SystemTradeHub
+        ) -> list[tuple[str, int]]:
+        rng = random.Random(utility.hash_args(day_seed, system_tile.tile_seed()))
+
+        amount = rng.randint(4, 8) * 50
+
+        return [(values.black_knight.text, amount)]
+    
+    @classmethod
+    def get_reward(
+            cls,
+            day_seed: str,
+            system_tile: space.SystemTradeHub
+        ) -> list[tuple[str, int]]:
+        rng = random.Random(utility.hash_args(day_seed, system_tile.tile_seed()))
+
+        amount = rng.randint(4, 8) * 5
+
+        return [(values.gem_gold.text, amount)]
     
 ##### White chess pieces.
 
@@ -982,7 +1206,7 @@ story_projects = [Essential_Oils]
 # Except take_misc_item_projects, since it actually goes there lol.
 take_special_bread_projects = [Flatbread_Feast, Waffle_Machine]
 take_rare_bread_projects = [Chessatron_Repair]
-take_black_chess_piece_projects = [Chessatron_Repair]
+take_black_chess_piece_projects = [Round_Table]
 take_white_chess_piece_projects = [Chessatron_Repair]
 take_gem_projects = [Emergency_Fuel]
 take_misc_item_projects = [Chessatron_Repair]
