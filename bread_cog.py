@@ -2622,8 +2622,21 @@ anarchy - 1000% of your wager.
         help=bread_gamble_info
     )
     async def gamble(self, ctx,
-            amount: typing.Optional[parse_int] = commands.parameter(description = "The amount of dough to lay on the table.")
+            amount: typing.Optional[str] = commands.parameter(description = "The amount of dough to lay on the table.")
             ):
+        if amount == "all":
+            user_account = self.json_interface.get_account(ctx.author, guild = ctx.guild.id)
+            
+            amount = min(
+                user_account.get_dough(),
+                user_account.get_maximum_gamble_wager()
+            )
+        else:
+            try:
+                amount = parse_int(amount)
+            except ValueError:
+                amount = None
+
         if amount is None:
             await ctx.send(self.bread_gamble_info)
             return
@@ -2633,21 +2646,13 @@ anarchy - 1000% of your wager.
             await ctx.reply(f"Sorry, but you can only do that in {self.json_interface.get_rolling_channel(ctx.guild.id)}.")
             return
 
-        print(f"{ctx.author.display_name} gambled {amount} dough")
-
         user_account = self.json_interface.get_account(ctx.author, guild = ctx.guild.id)
         
         
 
         minimum_wager = 4
 
-        gamble_level = user_account.get("gamble_level")
-        #gamble_levels = [50, 500, 1500, 5000, 10000, 100000, 10000000]
-        gamble_levels = store.High_Roller_Table.gamble_levels
-        if gamble_level < len(gamble_levels):
-            maximum_wager = gamble_levels[gamble_level]
-        else:
-            maximum_wager = gamble_levels[-1]
+        maximum_wager = user_account.get_maximum_gamble_wager()
 
         if amount < minimum_wager or user_account.get("total_dough") < minimum_wager:
             await ctx.reply(f"The minimum wager is {minimum_wager}.")
@@ -2683,6 +2688,8 @@ anarchy - 1000% of your wager.
             reply += f"You don't have that much dough. I'll enter in {utility.smart_number(amount)} for you."
         elif reply != "":
             reply += "I'll enter that in for you."
+
+        print(f"{ctx.author.display_name} gambled {amount} dough")
 
 
         # if amount > maximum_wager and user_account.has("total_dough", maximum_wager):
