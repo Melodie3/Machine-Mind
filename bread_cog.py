@@ -3075,6 +3075,14 @@ anarchy - 1000% of your wager.
 
                     # So the amount needed message isn't sent, this will get overwitten later.
                     amount = 1000000
+                    
+        if fraction_denominator == 0:
+            await ctx.reply("Please explain how that fraction works.")
+            return
+
+        if fraction_denominator < 0:
+            await ctx.reply("You can't invest negative dough.")
+            return
         
         # This actually is required so it doen't send the needs an amount message, this will get overwitten later.
         if "all" in args or "half" in args or "quarter" in args:
@@ -3337,6 +3345,14 @@ anarchy - 1000% of your wager.
                     fraction_denominator = int(arg_split[1])
 
                     amount = -2
+                    
+        if fraction_denominator == 0:
+            await ctx.reply("Please explain how that fraction works.")
+            return
+
+        if fraction_denominator < 0:
+            await ctx.reply("You can't invest negative dough.")
+            return
         
         # then get the emote from the args
         for arg in args:
