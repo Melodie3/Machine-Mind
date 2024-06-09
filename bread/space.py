@@ -5,7 +5,7 @@ import discord
 import math
 import typing
 import random
-import itertools
+import io
 
 # pip3 install pillow
 import PIL.Image as Image
@@ -972,7 +972,7 @@ def space_map(
         json_interface: bread_cog.JSON_interface,
         mode: typing.Union[str, None] = None,
         analyze_position: str = None
-    ) -> str:
+    ) -> io.BytesIO:
     """Generates the map of a system or galaxy that can be sent in Discord.
 
     Args:
@@ -1038,7 +1038,7 @@ def galaxy_map(
         ascension: int,
         telescope_level: int,
         radius: int
-    ) -> str:
+    ) -> io.BytesIO:
     """Generates the galaxy map as an image.
 
     Args:
@@ -1139,11 +1139,11 @@ def galaxy_map(
 
             place(emoji, xpos, ypos)
 
-    output_path = IMAGE_PATH + "space_map.png"
-
-    img.save(output_path)
+    output = io.BytesIO()
+    img.save(output, "png")
+    output.seek(0)
         
-    return output_path
+    return output
 
 ##########################################################################################
 ##### SYSTEM MAP
@@ -1160,7 +1160,7 @@ def system_map(
         telescope_level: int,
         radius: int,
         analyze_position: str = None
-    ) -> str:
+    ) -> io.BytesIO:
     """Generates the emojis for the space map.
 
     Args:
@@ -1370,11 +1370,11 @@ def system_map(
             width = width
         )
 
-    output_path = IMAGE_PATH + "space_map.png"
-
-    img.save(output_path)
+    output = io.BytesIO()
+    img.save(output, "png")
+    output.seek(0)
         
-    return output_path
+    return output
 
             
 
