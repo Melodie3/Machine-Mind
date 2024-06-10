@@ -1325,8 +1325,7 @@ def system_map(
     for ypos, ydata in enumerate(grid):
         for xpos, emoji in enumerate(ydata):
             # If it's part of the map, place a background.
-            if not(xpos == 0 or xpos == x_size + 1 or \
-                ypos == 0 or ypos == y_size + 1 or emoji == fill_emoji):
+            if not emoji == fill_emoji:
                 place("background", xpos, ypos)
 
             place(emoji, xpos, ypos)
