@@ -276,7 +276,10 @@ class JSON_interface:
         print("Loading data for all guilds")
         for guild_id in all_json_guilds:
             print(f"Loading data for guild {guild_id}")
-            self.data[guild_id] = JSON_cog.get_filing_cabinet("bread", create_if_nonexistent=False, guild=guild_id)
+            data = JSON_cog.get_filing_cabinet("bread", create_if_nonexistent=False, guild=guild_id)
+            if data is None:
+                continue
+            self.data[guild_id] = data
             if self.data[guild_id] is not None:
                 self.all_guilds.append(guild_id)
                 print(f"Loaded data for guild {guild_id}")
