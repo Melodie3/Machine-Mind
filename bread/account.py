@@ -346,7 +346,7 @@ class Bread_Account:
             amount = round(amount * prestige_mult)  
         return amount   
 
-    def get_maximum_gamble_wager(self: typing.Self) -> int:
+    def get_maximum_gamble_wager(self) -> int:
         import bread.store as store
         """Returns the maximum amount of dough this account can gamble."""
         gamble_level = self.get("gamble_level")
