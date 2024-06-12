@@ -2622,7 +2622,8 @@ anarchy - 1000% of your wager.
 
     @bread.command(
         brief= "Risk / Reward.",
-        help=bread_gamble_info
+        help=bread_gamble_info,
+        aliases = ["gramble"]
     )
     async def gamble(self, ctx,
             amount: typing.Optional[parse_int] = commands.parameter(description = "The amount of dough to lay on the table.")
