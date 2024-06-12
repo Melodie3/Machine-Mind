@@ -3062,15 +3062,35 @@ anarchy - 1000% of your wager.
         
         # check for negatives and valid inputs. priority: negative, digit, all.
 
+        fraction_numerator = None
+        fraction_denominator = None
+
         for arg in args:
             if arg.startswith('-'):
                 await ctx.reply("You can't invest negative dough.")
                 return
             if is_digit(arg):
                 amount = parse_int(arg)
+            if arg.count("/") == 1:
+                arg_split = arg.split("/")
+                if is_digit(arg_split[0]) and is_digit(arg_split[1]):
+                    fraction_numerator = int(arg_split[0])
+                    fraction_denominator = int(arg_split[1])
 
-        if 'all' in args:
-            amount = 1000000000
+                    # So the amount needed message isn't sent, this will get overwitten later.
+                    amount = 1000000
+                    
+        if fraction_denominator == 0:
+            await ctx.reply("Please explain how that fraction works.")
+            return
+
+        if fraction_denominator < 0:
+            await ctx.reply("You can't invest negative dough.")
+            return
+        
+        # This actually is required so it doen't send the needs an amount message, this will get overwitten later.
+        if "all" in args or "half" in args or "quarter" in args:
+            amount = 10000000
         
         # get the emote from the args
 
@@ -3111,15 +3131,27 @@ anarchy - 1000% of your wager.
             # x //= n is the same as x = x // n, where // is floor division.
             amount //= stonk_value
 
+        account_dough = user_account.get_dough()
+
         # this is here instead of at the top so
         # 1. the amount detection doesn't get annoyed at you for using all and 
         # 2. there's hopefully no weird behaviour if you use dough and all args
         if "all" in args:
-            amount = user_account.get('total_dough') // stonk_value
+            amount = account_dough // stonk_value
+        
+        if "half" in args:
+            amount = account_dough // (stonk_value * 2)
+        
+        if "quarter" in args:
+            amount = account_dough // (stonk_value * 4)
+        
+
+        if fraction_numerator is not None:
+            amount = (account_dough * fraction_numerator) // (fraction_denominator * stonk_value)
 
         # now we buy the stonks
 
-        buy_amount = min(amount,user_account.get('total_dough') // stonk_value)
+        buy_amount = min(amount, account_dough // stonk_value)
         user_account.increment('total_dough',(-buy_amount * stonk_value))
         user_account.increment(emote.text, buy_amount)
         user_account.increment('investment_profit', (-buy_amount * stonk_value))
@@ -3288,6 +3320,9 @@ anarchy - 1000% of your wager.
         
         # check for negatives and valid inputs. priority: negative, digit, all.
 
+        fraction_numerator = None
+        fraction_denominator = None
+
         for arg in args:
             if arg.startswith('-'):
                 await ctx.reply("You can't divest negative dough.")
@@ -3296,9 +3331,32 @@ anarchy - 1000% of your wager.
                 amount = parse_int(arg)
             if arg == 'all':
                 amount = -1
+            if arg == "half":
+                fraction_numerator = 1
+                fraction_denominator = 2
+                amount = -2
+            if arg == "quarter":
+                fraction_numerator = 1
+                fraction_denominator = 4
+                amount = -2
             if arg == 'dough':
                 print("dough arg found in divest")
                 dough_value = True
+            if arg.count("/") == 1:
+                arg_split = arg.split("/")
+                if is_digit(arg_split[0]) and is_digit(arg_split[1]):
+                    fraction_numerator = int(arg_split[0])
+                    fraction_denominator = int(arg_split[1])
+
+                    amount = -2
+                    
+        if fraction_denominator == 0:
+            await ctx.reply("Please explain how that fraction works.")
+            return
+
+        if fraction_denominator < 0:
+            await ctx.reply("You can't invest negative dough.")
+            return
         
         # then get the emote from the args
         for arg in args:
@@ -3331,8 +3389,12 @@ anarchy - 1000% of your wager.
         # now we adjust the amount to make sure we don't sell more than we have
         if amount > user_account.get(emote.text) or amount == -1:
             amount = user_account.get(emote.text)
-
+        
+        if fraction_numerator is not None:
+            amount = (user_account.get(emote.text) * fraction_numerator) // fraction_denominator
+        
         # sell the stonks
+        amount = min(amount, user_account.get(emote.text))
         user_account.increment('total_dough', stonk_value*amount)
         user_account.increment(emote.text, -amount)
         user_account.increment('investment_profit', stonk_value*amount)
