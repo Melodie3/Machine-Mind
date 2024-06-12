@@ -5,7 +5,7 @@ import typing
 from bread.values import Emote
 import bread.utility as utility
 import bread.values as values
-import bread.store as store
+# import bread.store as store # commented out to avoid circular import
 import bread_cog
 bread_cog_ref = None
 
@@ -347,6 +347,7 @@ class Bread_Account:
         return amount   
 
     def get_maximum_gamble_wager(self: typing.Self) -> int:
+        import bread.store as store
         """Returns the maximum amount of dough this account can gamble."""
         gamble_level = self.get("gamble_level")
         gamble_levels = store.High_Roller_Table.gamble_levels
