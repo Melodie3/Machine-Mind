@@ -313,7 +313,7 @@ async def brick(ctx, member: typing.Optional[discord.Member], duration: typing.O
     # SPECIAL CASES
 
     # if person calling command is already in the list. Done to prevent spamming during the 10 second interval.
-    if target is ctx.author and target in brick_list:
+    if target is ctx.author and (target in brick_list or target.is_timed_out()):
         print(f"rejecting brick spam attempt from {target}")
         await ctx.reply("There's nothing you can do about it now.")
         return
