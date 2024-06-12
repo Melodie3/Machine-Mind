@@ -2708,7 +2708,13 @@ anarchy - 1000% of your wager.
             await ctx.reply(reply)
             await asyncio.sleep(1)
 
-        result = gamble.gamble()
+        # in case we want to troll the user, we can set a percentage chance for only bricks to appear
+        do_brick_troll = user_account.get("brick_troll_percentage") >= random.randint(1,100)
+
+        #
+        result = gamble.gamble(do_brick_troll)
+        #
+
         winnings = parse_int(amount * result["multiple"])
         #await ctx.send(f"You got a {result['result'].text} and won {winnings} dough.")
 
@@ -2740,7 +2746,7 @@ anarchy - 1000% of your wager.
         for i in range(grid_size):
             for k in range(grid_size):
                 if grid[i][k] is None:
-                    filler = gamble.gamble()['result'].text
+                    filler = gamble.gamble(do_brick_troll)['result'].text
                     grid[i][k] = filler
                     # grid[i][k] = random.choice(gamble.reward_values).text
         try:  #sometimes we'll get a timeout error and the function will crash, this should allow

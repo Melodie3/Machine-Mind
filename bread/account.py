@@ -40,6 +40,7 @@ class Bread_Account:
         "black_hole_conditions" : ["<:anarchy_chess:960772054746005534>", "<:gem_gold:1006498746718244944>", "14+"],
         "gifts_disabled" : False,
         "max_days_of_stored_rolls" : 1,
+        "brick_troll_percentage" : 0,
     }
 
 
