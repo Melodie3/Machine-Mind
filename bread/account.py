@@ -5,7 +5,7 @@ import typing
 from bread.values import Emote
 import bread.utility as utility
 import bread.values as values
-# import bread.store as store
+import bread.store as store
 import bread_cog
 bread_cog_ref = None
 
@@ -344,6 +344,15 @@ class Bread_Account:
             prestige_mult = self.get_prestige_multiplier()
             amount = round(amount * prestige_mult)  
         return amount   
+
+    def get_maximum_gamble_wager(self: typing.Self) -> int:
+        """Returns the maximum amount of dough this account can gamble."""
+        gamble_level = self.get("gamble_level")
+        gamble_levels = store.High_Roller_Table.gamble_levels
+        if gamble_level < len(gamble_levels):
+            return gamble_levels[gamble_level]
+        else:
+            return gamble_levels[-1]
 
     def has_category(self, category_name: str):
         if len(self.get_category(category_name)) > 0:
