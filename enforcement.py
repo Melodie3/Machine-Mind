@@ -97,19 +97,21 @@ async def brick_stats(ctx, member: discord.Member):
 
         total_bricks = 0
 
+        sn = utility.smart_number
+
         if "brick_count" not in file.keys():
             file["brick_count"] = 0
         output = f"Brick stats for {name}:\n\n"
         if "bricks" in file.keys():
-            output += f":bricks: - {file['bricks']}\n"
+            output += f":bricks: - {sn(file['bricks'])}\n"
             total_bricks += file["bricks"]
         if "golden_bricks" in file.keys():
-            output += f"{golden_brick_emoji} - {file['golden_bricks']}\n"
+            output += f"{golden_brick_emoji} - {sn(file['golden_bricks'])}\n"
             total_bricks += file["golden_bricks"]
         if "total_timeout" in file.keys():
-            output += f"Total timeout: {file['total_timeout']} minutes\n"
+            output += f"Total timeout: {sn(file['total_timeout'])} minutes\n"
         if total_bricks > 0:
-            output += f"Total bricks: {total_bricks}"
+            output += f"Total bricks: {sn(total_bricks)}"
 
         await ctx.send(output)
 
@@ -185,14 +187,14 @@ async def brick_leaderboard(ctx, user: discord.Member):
                     if utility.contains_ping(name):
                         name = file["username"]
                     if i == index:
-                        output += f"{i+1}. **{name}: {list_ref[id]}**\n"
+                        output += f"{i+1}. **{name}: {utility.smart_number(list_ref[id])}**\n"
                     else:
-                        output += f"{i+1}. {name}: {list_ref[id]}\n"
+                        output += f"{i+1}. {name}: {utility.smart_number(list_ref[id])}\n"
                 else:
                     output += f"{i+1}. \n"
 
             if index != -1:
-                output += f"\n{inquirer_name} is at position {index+1} with a count of {list_ref[str(user.id)]}.\n"
+                output += f"\n{inquirer_name} is at position {utility.smart_number(index+1)} with a count of {utility.smart_number(list_ref[str(user.id)])}.\n"
             output += "\n"
             
         message = await ctx.send(output)
@@ -313,7 +315,7 @@ async def brick(ctx, member: typing.Optional[discord.Member], duration: typing.O
     # SPECIAL CASES
 
     # if person calling command is already in the list. Done to prevent spamming during the 10 second interval.
-    if target is ctx.author and target in brick_list:
+    if target is ctx.author and (target in brick_list or target.is_timed_out()):
         print(f"rejecting brick spam attempt from {target}")
         await ctx.reply("There's nothing you can do about it now.")
         return

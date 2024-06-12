@@ -276,7 +276,10 @@ class JSON_interface:
         print("Loading data for all guilds")
         for guild_id in all_json_guilds:
             print(f"Loading data for guild {guild_id}")
-            self.data[guild_id] = JSON_cog.get_filing_cabinet("bread", create_if_nonexistent=False, guild=guild_id)
+            data = JSON_cog.get_filing_cabinet("bread", create_if_nonexistent=False, guild=guild_id)
+            if data is None:
+                continue
+            self.data[guild_id] = data
             if self.data[guild_id] is not None:
                 self.all_guilds.append(guild_id)
                 print(f"Loaded data for guild {guild_id}")
@@ -1717,7 +1720,7 @@ loaf_converter""",
 
     @bread.command(
         name="chessatron", 
-        aliases=["auto_chessatron"],
+        aliases=["auto_chessatron", "tron"],
         help="Toggle auto chessatron on or off. If no argument is given, it will create as many chessatrons for you as it can.",
         usage="on/off",
         brief="Toggle auto chessatron on or off."
@@ -2619,11 +2622,25 @@ anarchy - 1000% of your wager.
 
     @bread.command(
         brief= "Risk / Reward.",
-        help=bread_gamble_info
+        help=bread_gamble_info,
+        aliases = ["gramble"]
     )
     async def gamble(self, ctx,
-            amount: typing.Optional[parse_int] = commands.parameter(description = "The amount of dough to lay on the table.")
+            amount: typing.Optional[str] = commands.parameter(description = "The amount of dough to lay on the table.")
             ):
+        if amount == "all":
+            user_account = self.json_interface.get_account(ctx.author, guild = ctx.guild.id)
+            
+            amount = min(
+                user_account.get_dough(),
+                user_account.get_maximum_gamble_wager()
+            )
+        else:
+            try:
+                amount = parse_int(amount)
+            except ValueError:
+                amount = None
+
         if amount is None:
             await ctx.send(self.bread_gamble_info)
             return
@@ -2633,21 +2650,13 @@ anarchy - 1000% of your wager.
             await ctx.reply(f"Sorry, but you can only do that in {self.json_interface.get_rolling_channel(ctx.guild.id)}.")
             return
 
-        print(f"{ctx.author.display_name} gambled {amount} dough")
-
         user_account = self.json_interface.get_account(ctx.author, guild = ctx.guild.id)
         
         
 
         minimum_wager = 4
 
-        gamble_level = user_account.get("gamble_level")
-        #gamble_levels = [50, 500, 1500, 5000, 10000, 100000, 10000000]
-        gamble_levels = store.High_Roller_Table.gamble_levels
-        if gamble_level < len(gamble_levels):
-            maximum_wager = gamble_levels[gamble_level]
-        else:
-            maximum_wager = gamble_levels[-1]
+        maximum_wager = user_account.get_maximum_gamble_wager()
 
         if amount < minimum_wager or user_account.get("total_dough") < minimum_wager:
             await ctx.reply(f"The minimum wager is {minimum_wager}.")
@@ -2683,6 +2692,8 @@ anarchy - 1000% of your wager.
             reply += f"You don't have that much dough. I'll enter in {utility.smart_number(amount)} for you."
         elif reply != "":
             reply += "I'll enter that in for you."
+
+        print(f"{ctx.author.display_name} gambled {amount} dough")
 
 
         # if amount > maximum_wager and user_account.has("total_dough", maximum_wager):
@@ -3064,15 +3075,35 @@ anarchy - 1000% of your wager.
         
         # check for negatives and valid inputs. priority: negative, digit, all.
 
+        fraction_numerator = None
+        fraction_denominator = None
+
         for arg in args:
             if arg.startswith('-'):
                 await ctx.reply("You can't invest negative dough.")
                 return
             if is_digit(arg):
                 amount = parse_int(arg)
+            if arg.count("/") == 1:
+                arg_split = arg.split("/")
+                if is_digit(arg_split[0]) and is_digit(arg_split[1]):
+                    fraction_numerator = int(arg_split[0])
+                    fraction_denominator = int(arg_split[1])
 
-        if 'all' in args:
-            amount = 1000000000
+                    # So the amount needed message isn't sent, this will get overwitten later.
+                    amount = 1000000
+                    
+        if fraction_denominator == 0:
+            await ctx.reply("Please explain how that fraction works.")
+            return
+
+        if fraction_denominator < 0:
+            await ctx.reply("You can't invest negative dough.")
+            return
+        
+        # This actually is required so it doen't send the needs an amount message, this will get overwitten later.
+        if "all" in args or "half" in args or "quarter" in args:
+            amount = 10000000
         
         # get the emote from the args
 
@@ -3113,15 +3144,27 @@ anarchy - 1000% of your wager.
             # x //= n is the same as x = x // n, where // is floor division.
             amount //= stonk_value
 
+        account_dough = user_account.get_dough()
+
         # this is here instead of at the top so
         # 1. the amount detection doesn't get annoyed at you for using all and 
         # 2. there's hopefully no weird behaviour if you use dough and all args
         if "all" in args:
-            amount = user_account.get('total_dough') // stonk_value
+            amount = account_dough // stonk_value
+        
+        if "half" in args:
+            amount = account_dough // (stonk_value * 2)
+        
+        if "quarter" in args:
+            amount = account_dough // (stonk_value * 4)
+        
+
+        if fraction_numerator is not None:
+            amount = (account_dough * fraction_numerator) // (fraction_denominator * stonk_value)
 
         # now we buy the stonks
 
-        buy_amount = min(amount,user_account.get('total_dough') // stonk_value)
+        buy_amount = min(amount, account_dough // stonk_value)
         user_account.increment('total_dough',(-buy_amount * stonk_value))
         user_account.increment(emote.text, buy_amount)
         user_account.increment('investment_profit', (-buy_amount * stonk_value))
@@ -3290,6 +3333,9 @@ anarchy - 1000% of your wager.
         
         # check for negatives and valid inputs. priority: negative, digit, all.
 
+        fraction_numerator = None
+        fraction_denominator = None
+
         for arg in args:
             if arg.startswith('-'):
                 await ctx.reply("You can't divest negative dough.")
@@ -3298,9 +3344,32 @@ anarchy - 1000% of your wager.
                 amount = parse_int(arg)
             if arg == 'all':
                 amount = -1
+            if arg == "half":
+                fraction_numerator = 1
+                fraction_denominator = 2
+                amount = -2
+            if arg == "quarter":
+                fraction_numerator = 1
+                fraction_denominator = 4
+                amount = -2
             if arg == 'dough':
                 print("dough arg found in divest")
                 dough_value = True
+            if arg.count("/") == 1:
+                arg_split = arg.split("/")
+                if is_digit(arg_split[0]) and is_digit(arg_split[1]):
+                    fraction_numerator = int(arg_split[0])
+                    fraction_denominator = int(arg_split[1])
+
+                    amount = -2
+                    
+        if fraction_denominator == 0:
+            await ctx.reply("Please explain how that fraction works.")
+            return
+
+        if fraction_denominator < 0:
+            await ctx.reply("You can't invest negative dough.")
+            return
         
         # then get the emote from the args
         for arg in args:
@@ -3333,8 +3402,12 @@ anarchy - 1000% of your wager.
         # now we adjust the amount to make sure we don't sell more than we have
         if amount > user_account.get(emote.text) or amount == -1:
             amount = user_account.get(emote.text)
-
+        
+        if fraction_numerator is not None:
+            amount = (user_account.get(emote.text) * fraction_numerator) // fraction_denominator
+        
         # sell the stonks
+        amount = min(amount, user_account.get(emote.text))
         user_account.increment('total_dough', stonk_value*amount)
         user_account.increment(emote.text, -amount)
         user_account.increment('investment_profit', stonk_value*amount)
