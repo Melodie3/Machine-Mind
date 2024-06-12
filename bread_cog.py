@@ -1717,7 +1717,7 @@ loaf_converter""",
 
     @bread.command(
         name="chessatron", 
-        aliases=["auto_chessatron"],
+        aliases=["auto_chessatron", "tron"],
         help="Toggle auto chessatron on or off. If no argument is given, it will create as many chessatrons for you as it can.",
         usage="on/off",
         brief="Toggle auto chessatron on or off."
