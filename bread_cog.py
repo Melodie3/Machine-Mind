@@ -3097,7 +3097,7 @@ anarchy - 1000% of your wager.
             await ctx.reply("Please explain how that fraction works.")
             return
 
-        if fraction_denominator < 0:
+        if fraction_denominator is not None and fraction_denominator < 0:
             await ctx.reply("You can't invest negative dough.")
             return
         
@@ -3367,7 +3367,7 @@ anarchy - 1000% of your wager.
             await ctx.reply("Please explain how that fraction works.")
             return
 
-        if fraction_denominator < 0:
+        if fraction_denominator is not None and fraction_denominator < 0:
             await ctx.reply("You can't invest negative dough.")
             return
         
