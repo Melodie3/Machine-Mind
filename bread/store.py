@@ -1870,7 +1870,7 @@ class Gambit_Shop_Waffle(Gambit_shop_Item):
 # all_chess_pieces = [black_king, black_queen, black_knight, black_bishop, black_rook, black_pawn, white_pawn, white_rook, white_bishop, white_knight, white_queen, white_king]
 
 class Gambit_Shop_Black_Pawn(Gambit_shop_Item):
-    name = "gambit_shop_black_ppawn"
+    name = "gambit_shop_black_pawn"
     display_name = "e5"
     level_required = 2
     boost_item = values.black_pawn
@@ -1903,7 +1903,7 @@ class Gambit_Shop_Black_Rook(Gambit_shop_Item):
 
 class Gambit_Shop_Black_Queen(Gambit_shop_Item):
     name = "gambit_shop_black_queen"
-    display_name = "Botez Gambit"
+    display_name = "Queen's Gambit Declined"
     level_required = 2
     boost_item = values.black_queen
     boost_amount = 20
@@ -1911,7 +1911,7 @@ class Gambit_Shop_Black_Queen(Gambit_shop_Item):
 
 class Gambit_Shop_Black_King(Gambit_shop_Item):
     name = "gambit_shop_black_king"
-    display_name = "Bongcloud"
+    display_name = "King's Gambit Declined"
     level_required = 2
     boost_item = values.black_king
     boost_amount = 20
@@ -1921,7 +1921,7 @@ class Gambit_Shop_Black_King(Gambit_shop_Item):
 ##########################################################################################
 
 class Gambit_Shop_White_Pawn(Gambit_shop_Item):
-    name = "gambit_shop_white_ppawn"
+    name = "gambit_shop_white_pawn"
     display_name = "e4"
     level_required = 3
     boost_item = values.white_pawn
@@ -1954,7 +1954,7 @@ class Gambit_Shop_White_Rook(Gambit_shop_Item):
 
 class Gambit_Shop_White_Queen(Gambit_shop_Item):
     name = "gambit_shop_white_queen"
-    display_name = "Botez Gambit Accepted"
+    display_name = "Queen's Gambit Accepted"
     level_required = 3
     boost_item = values.white_queen
     boost_amount = 40
@@ -1962,7 +1962,7 @@ class Gambit_Shop_White_Queen(Gambit_shop_Item):
 
 class Gambit_Shop_White_King(Gambit_shop_Item):
     name = "gambit_shop_white_king"
-    display_name = "Double Bongcloud"
+    display_name = "King's Gambit Accepted"
     level_required = 3
     boost_item = values.white_king
     boost_amount = 40
@@ -2014,7 +2014,7 @@ class Gambit_Shop_Gem_Gold(Gambit_shop_Item):
 
 class Gambit_Shop_Anarchy_Black_Pawn(Gambit_shop_Item):
     name = "gambit_shop_anarchy_black_pawn"
-    display_name = "<AnarchyBpawnGambitName>"
+    display_name = "En Passant"
     level_required = 5
     boost_item = values.anarchy_black_pawn
     boost_amount = 90
@@ -2022,7 +2022,7 @@ class Gambit_Shop_Anarchy_Black_Pawn(Gambit_shop_Item):
 
 class Gambit_Shop_Anarchy_Black_Knight(Gambit_shop_Item):
     name = "gambit_shop_anarchy_black_knight"
-    display_name = "<AnarchyBknightGambitName>"
+    display_name = "Knight Boost"
     level_required = 5
     boost_item = values.anarchy_black_knight
     boost_amount = 90
@@ -2030,7 +2030,7 @@ class Gambit_Shop_Anarchy_Black_Knight(Gambit_shop_Item):
 
 class Gambit_Shop_Anarchy_Black_Bishop(Gambit_shop_Item):
     name = "gambit_shop_anarchy_black_bishop"
-    display_name = "<AnarchyBbishopGambitName>"
+    display_name = "Il Vaticano"
     level_required = 5
     boost_item = values.anarchy_black_bishop
     boost_amount = 90
@@ -2038,7 +2038,7 @@ class Gambit_Shop_Anarchy_Black_Bishop(Gambit_shop_Item):
 
 class Gambit_Shop_Anarchy_Black_Rook(Gambit_shop_Item):
     name = "gambit_shop_anarchy_black_rook"
-    display_name = "<AnarchyBrookGambitName>"
+    display_name = "Siberian Swipe"
     level_required = 5
     boost_item = values.anarchy_black_rook
     boost_amount = 90
@@ -2046,7 +2046,7 @@ class Gambit_Shop_Anarchy_Black_Rook(Gambit_shop_Item):
 
 class Gambit_Shop_Anarchy_Black_Queen(Gambit_shop_Item):
     name = "gambit_shop_anarchy_black_queen"
-    display_name = "<AnarchyBqueenGambitName>"
+    display_name = "Radioactive Beta Decay"
     level_required = 5
     boost_item = values.anarchy_black_queen
     boost_amount = 90
@@ -2054,7 +2054,7 @@ class Gambit_Shop_Anarchy_Black_Queen(Gambit_shop_Item):
 
 class Gambit_Shop_Anarchy_Black_King(Gambit_shop_Item):
     name = "gambit_shop_anarchy_black_king"
-    display_name = "<AnarchyBkingGambitName>"
+    display_name = "La Bastarda"
     level_required = 5
     boost_item = values.anarchy_black_king
     boost_amount = 90
@@ -2064,7 +2064,7 @@ class Gambit_Shop_Anarchy_Black_King(Gambit_shop_Item):
 
 class Gambit_Shop_Anarchy_White_Pawn(Gambit_shop_Item):
     name = "gambit_shop_anarchy_white_pawn"
-    display_name = "En Passant"
+    display_name = "Knook Promotion"
     level_required = 6
     boost_item = values.anarchy_white_pawn
     boost_amount = 180
@@ -2076,7 +2076,7 @@ class Gambit_Shop_Anarchy_White_Pawn(Gambit_shop_Item):
 
 class Gambit_Shop_Anarchy_White_Knight(Gambit_shop_Item):
     name = "gambit_shop_anarchy_white_knight"
-    display_name = "Knight Boost"
+    display_name = "Anti-Queen"
     level_required = 6
     boost_item = values.anarchy_white_knight
     boost_amount = 180
@@ -2084,7 +2084,7 @@ class Gambit_Shop_Anarchy_White_Knight(Gambit_shop_Item):
 
 class Gambit_Shop_Anarchy_White_Bishop(Gambit_shop_Item):
     name = "gambit_shop_anarchy_white_bishop"
-    display_name = "il Vaticano"
+    display_name = "Vacation Home"
     level_required = 6
     boost_item = values.anarchy_white_bishop
     boost_amount = 180
@@ -2092,7 +2092,7 @@ class Gambit_Shop_Anarchy_White_Bishop(Gambit_shop_Item):
 
 class Gambit_Shop_Anarchy_White_Rook(Gambit_shop_Item):
     name = "gambit_shop_anarchy_white_rook"
-    display_name = "Siberian Swipe"
+    display_name = "Vertical Castling"
     level_required = 6
     boost_item = values.anarchy_white_rook
     boost_amount = 180
@@ -2100,7 +2100,7 @@ class Gambit_Shop_Anarchy_White_Rook(Gambit_shop_Item):
 
 class Gambit_Shop_Anarchy_White_Queen(Gambit_shop_Item):
     name = "gambit_shop_anarchy_white_queen"
-    display_name = "Radioactive beta decay"
+    display_name = "Botez Gambit"
     level_required = 6
     boost_item = values.anarchy_white_queen
     boost_amount = 180
@@ -2108,7 +2108,7 @@ class Gambit_Shop_Anarchy_White_Queen(Gambit_shop_Item):
 
 class Gambit_Shop_Anarchy_White_King(Gambit_shop_Item):
     name = "gambit_shop_anarchy_white_king"
-    display_name = "La Bastarda"
+    display_name = "Double Bongcloud"
     level_required = 6
     boost_item = values.anarchy_white_king
     boost_amount = 180
