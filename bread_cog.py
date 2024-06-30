@@ -61,6 +61,7 @@ import typing
 import os
 import importlib
 import math
+import io
 
 from os import getenv
 from dotenv import load_dotenv
@@ -991,6 +992,33 @@ class Bread_cog(commands.Cog, name="Bread"):
         # await ctx.reply(output)
 
         #await self.do_chessboard_completion(ctx)
+
+            
+            
+
+    
+    ###########################################################################################################################
+    ######## BREAD EXPORT
+
+    @bread.command(
+        brief="Exports your stats data",
+        help = "Exports your or somebody else's stats into a JSON file.",
+        aliases = ["dump"]
+    )
+    async def export(self, ctx,
+            person: typing.Optional[discord.Member] = commands.parameter(description = "Who to export the stats of."),
+        ):
+        if person is None:
+            person = ctx.author
+
+        user_account = self.json_interface.get_account(person, ctx.guild)
+
+        file_text = json.dumps(user_account.values)
+
+        fake_file = io.StringIO(file_text)
+        final_file = discord.File(fake_file, filename="export.json")
+
+        await ctx.reply(file=final_file)
 
             
             
