@@ -75,22 +75,19 @@ class JSON_cog(commands.Cog, name="JSON"):
 
     @daily_task.before_loop
     async def before_daily(self):
-        print('Booting up JSON loop')
-        #wait to be closer to the hour
-        time = datetime.now()
+        # This just waits until it's time for the first iteration.
+        print("Starting JSON cog hourly loop, current time is {}.".format(datetime.now()))
 
-        if time.minute < 10:
-            # wait until 5 minutes after the hour
-            wait_time = max(10 - time.minute, 0)
-            print (f"waiting before JSONs loop for {wait_time} minutes")
-            await asyncio.sleep(60*wait_time)
-            print (time.strftime("Finished waiting at %H:%M:%S"))
-        elif time.minute > 10:
-            #wait into next hour
-            wait_time = max(70 - time.minute, 0)
-            print (f"waiting before JSON loop for {wait_time} minutes")
-            await asyncio.sleep(60*wait_time)
-            print (time.strftime("Finished waiting at %H:%M:%S"))
+        minute_in_hour = 5 # 5 would be X:05, 30 would be X:30.
+
+        wait_time = time.time() - (minute_in_hour * 60)
+        wait_time = 3600 - (wait_time % 3600) + 2 # Artificially add 2 seconds to ensure it stops at the correct time.
+
+        print("Waiting to start JSON cog hourly loop for {} minutes.".format(round(wait_time / 60, 2)))
+        
+        await asyncio.sleep(wait_time)
+        
+        print("Finished JSON cog hourly loop waiting at {}.".format(datetime.now()))
 
     
     
