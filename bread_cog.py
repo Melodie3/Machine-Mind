@@ -2415,6 +2415,39 @@ For example, "$bread gift Melodie all chess_pieces" would gift all your chess pi
             await ctx.reply("Needs an amount and what to gift.")
             return
 
+        # Gifting entire chess sets.
+        if emoji == "chess_set":
+            limiting_values = []
+
+            for piece in values.all_chess_pieces:
+                limiting_values.append(sender_account.get(piece.text) // values.all_chess_pieces_biased.count(piece))
+            
+            maximum_possible = min(limiting_values)
+
+            if maximum_possible == 0:
+                await ctx.reply("Sorry, you don't have any chess sets to gift.")
+                return
+            
+            item_amount = min(maximum_possible, amount)
+
+            if do_fraction:
+                if fraction_amount == "all":
+                    item_amount = maximum_possible
+                elif fraction_amount == "half":
+                    item_amount = maximum_possible // 2
+                elif fraction_amount == "third":
+                    item_amount = maximum_possible // 3
+                elif fraction_amount == "quarter": 
+                    item_amount = maximum_possible // 4
+            
+            # Now, recursively call this function for each item.
+            for item in values.all_chess_pieces:
+                await self.gift(ctx, target, item.text, item_amount * values.all_chess_pieces_biased.count(item))
+                await asyncio.sleep(1)
+                
+            await ctx.reply(f"Gifted {utility.write_count(item_amount, 'chess set')} to {receiver_account.get_display_name()}.")
+            return
+
             
         if sender_account.has_category(emoji):
             do_category_gift = True
