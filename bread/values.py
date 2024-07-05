@@ -450,6 +450,7 @@ chess_pieces_white_biased = [white_pawn,white_pawn,white_pawn,white_pawn,white_p
                              white_knight, white_knight,
                              white_queen,
                              white_king]
+all_chess_pieces_biased = chess_pieces_black_biased + chess_pieces_white_biased
 
 ##################### CHESS END
 
