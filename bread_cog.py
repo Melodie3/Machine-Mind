@@ -1521,7 +1521,7 @@ loaf_converter""",
             self.json_interface.set_account(ctx.author,user_account, guild = ctx.guild.id)
 
             if get_channel_permission_level(ctx) == PERMISSION_LEVEL_MAX and user_account.has("roll_summarizer"):
-                summarizer_commentary = rolls.summarize_roll(result)
+                summarizer_commentary = rolls.summarize_roll(result, user_account)
             
 
             print (f"{ctx.author.name} rolled {total_value} dough.")
