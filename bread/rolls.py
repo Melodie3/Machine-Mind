@@ -389,13 +389,16 @@ def test_account():
 # with moaks, each roll is worth about 6.4 dough
 # and each LC is worth about .7 dough per roll
 
-def summarize_roll(result):
+def summarize_roll(
+        result: dict,
+        account: account.Bread_Account
+    ) -> str:
 
     removals = []
 
     output = "\tSummary of results:\n"
     if "value" in result:
-        output += f"Total gain: **{utility.smart_number(result['value'])} dough**\n"
+        output += f"Total gain: **{utility.smart_number(result['value'])} dough** (You now have **{account.get_dough()} dough**)\n"
         removals.append("value")
 
     if "gambit_shop_bonus" in result:
