@@ -398,7 +398,7 @@ def summarize_roll(
 
     output = "\tSummary of results:\n"
     if "value" in result:
-        output += f"Total gain: **{utility.smart_number(result['value'])} dough** (You now have **{account.get_dough()} dough**)\n"
+        output += f"Total gain: **{utility.smart_number(result['value'])} dough** (You now have **{account.get_dough()} dough**.)\n"
         removals.append("value")
 
     if "gambit_shop_bonus" in result:
