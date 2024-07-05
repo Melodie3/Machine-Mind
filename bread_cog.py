@@ -2403,11 +2403,11 @@ For example, "$bread gift Melodie all chess_pieces" would gift all your chess pi
             amount = arg1
 
         # check if there's a fraction of the item we're supposed to gift
-        elif (type(arg1) is str and type(arg2) is str and arg1.lower() in ["all", "half", "quarter"]):
+        elif (type(arg1) is str and type(arg2) is str and arg1.lower() in ["all", "half", "quarter", "third"]):
             emoji = arg2     
             fraction_amount = arg1.lower() 
             do_fraction = True
-        elif (type(arg1) is str and type(arg2) is str and arg2.lower() in ["all", "half", "quarter"]):
+        elif (type(arg1) is str and type(arg2) is str and arg2.lower() in ["all", "half", "quarter", "third"]):
             emoji = arg1
             fraction_amount = arg2.lower()
             do_fraction = True
@@ -2433,6 +2433,8 @@ For example, "$bread gift Melodie all chess_pieces" would gift all your chess pi
                         item_amount = sender_account.get(item.text) // 2
                     elif fraction_amount == "quarter":
                         item_amount = sender_account.get(item.text) // 4
+                    elif fraction_amount == "third":
+                        item_amount = sender_account.get(item.text) // 3
                     
                     if item_amount > 0:
                         gifted_count += item_amount
@@ -2494,6 +2496,8 @@ For example, "$bread gift Melodie all chess_pieces" would gift all your chess pi
                 amount = base_amount // 2
             elif fraction_amount == "quarter":
                 amount = base_amount // 4
+            elif fraction_amount == "third":
+                amount = base_amount // 3
 
         if ctx.author.id == target.id:
             await ctx.reply("You can't gift bread to yourself, silly.")
@@ -3102,7 +3106,7 @@ anarchy - 1000% of your wager.
             return
         
         # This actually is required so it doen't send the needs an amount message, this will get overwitten later.
-        if "all" in args or "half" in args or "quarter" in args:
+        if "all" in args or "half" in args or "quarter" in args or "third" in args:
             amount = 10000000
         
         # get the emote from the args
@@ -3157,6 +3161,9 @@ anarchy - 1000% of your wager.
         
         if "quarter" in args:
             amount = account_dough // (stonk_value * 4)
+
+        if "third" in args:
+            amount = account_dough // (stonk_value * 3)
         
 
         if fraction_numerator is not None:
@@ -3351,6 +3358,10 @@ anarchy - 1000% of your wager.
             if arg == "quarter":
                 fraction_numerator = 1
                 fraction_denominator = 4
+                amount = -2
+            if arg == "third":
+                fraction_numerator = 1
+                fraction_denominator = 3
                 amount = -2
             if arg == 'dough':
                 print("dough arg found in divest")
