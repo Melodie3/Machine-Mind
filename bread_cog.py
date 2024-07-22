@@ -752,16 +752,39 @@ class Bread_cog(commands.Cog, name="Bread"):
             self: typing.Self,
             bot: commands.Bot
         ) -> None:
-        # Scramble the random seed.
-        random.seed(os.urandom(1024))
-        
-        #print("bread __init__ called")
         self.bot = bot
         self.daily_task.start()
 
     def cog_unload(self: typing.Self):
         self.daily_task.cancel()
         pass
+
+    def scramble_random_seed(self: typing.Self) -> None:
+        """Scrambles the random seed to make it harder to predict."""
+        try:
+            system_random = random.SystemRandom()
+            
+            all_guilds = self.json_interface.all_guilds
+
+            # Get the stonk data to use the shadow stonk values of a randomly selected guild.
+            stonks_file = self.json_interface.get_custom_file("stonks", guild = system_random.choice(all_guilds))
+
+            stonk_values = []
+            for stonk in shadow_stonks:
+                stonk_values.append(stonks_file.get(stonk, system_random.randint(25, 1000)))
+            
+            system_random.shuffle(stonk_values)
+
+            base = int.from_bytes(os.urandom(16))
+            mod = int.from_bytes(os.urandom(1024))
+            sum_mult_1 = stonk_values[0] * stonk_values[1]
+            sum_mult_2 = stonk_values[2] * stonk_values[3]
+
+            seed = int(base * (sum_mult_1 / sum_mult_2)) * mod
+
+            random.seed(seed)
+        except:
+            random.seed(os.urandom(1024))
 
     ########################################################################################################################
     #####      TASKS
@@ -776,7 +799,7 @@ class Bread_cog(commands.Cog, name="Bread"):
         
         # Scramble the random seed.
         # The seed doesn't really need to be scrambled every hour, but it doesn't hurt.
-        random.seed(os.urandom(1024))
+        self.scramble_random_seed()
 
         self.synchronize_usernames_internal()
         self.json_interface.internal_save() # Save every hour
@@ -6991,6 +7014,8 @@ async def setup(bot: commands.Bot):
         bread_cog.json_interface.internal_load()
     except BaseException as err:
         print(err)
+    
+    bread_cog.scramble_random_seed()
     #bot.add_cog(Chess_game(bot)) #do we want to actually have this be a *cog*, or just a helper class?
 
 #seems mostly useless since we can't call anything async
