@@ -42,6 +42,8 @@ class Bread_Account:
         "black_hole_conditions" : ["<:anarchy_chess:960772054746005534>", "<:gem_gold:1006498746718244944>", "14+"],
         "gifts_disabled" : False,
         "max_days_of_stored_rolls" : 1,
+        "max_random_chess_pieces_per_day": 2500,
+        "max_special_bread_packs_per_day": 5000000
     }
 
 
@@ -89,6 +91,11 @@ class Bread_Account:
             self.set("daily_gifts", 0)
         if self.has ("first_catch_level"):
             self.set("first_catch_remaining", self.get("first_catch_level"))
+        
+        if self.has("random_chess_piece_bought"):
+            self.set("random_chess_piece_bought", 0)
+        if self.has("special_bread_pack_bought"):
+            self.set("special_bread_pack_bought", 0)
 
     def increase_prestige_level(self: typing.Self) -> None:
         """Increases this account's prestige level by 1."""

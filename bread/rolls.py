@@ -78,15 +78,15 @@ def bread_roll(
     else:
         anarchy_piece_luck = -1 # With a negative number it's impossible to roll.
 
-        moak_multiplier = 1,
-        gem_gold_multiplier = 1,
-        gem_green_multiplier = 1,
-        gem_purple_multiplier = 1,
-        gem_blue_multiplier = 1,
-        gem_red_multiplier = 1,
-        anarchy_piece_multiplier = 1,
-        chess_piece_multiplier = 1,
-        rare_bread_multiplier = 1,
+        moak_multiplier = 1
+        gem_gold_multiplier = 1
+        gem_green_multiplier = 1
+        gem_purple_multiplier = 1
+        gem_blue_multiplier = 1
+        gem_red_multiplier = 1
+        anarchy_piece_multiplier = 1
+        chess_piece_multiplier = 1
+        rare_bread_multiplier = 1
         special_bread_multiplier = 1
 
 

@@ -2596,6 +2596,15 @@ loaf_converter""",
                 # removed item is None check, as item will never be None. see above.
                 await ctx.reply("Sorry, but you've already purchased as many of that as you can.")
                 return
+            
+            try:
+                if item.find_max_purchasable_count(user_account) <= 0:
+                    await ctx.reply("Sorry, but you've already purchased as many of that as you can.")
+                    return
+            except AttributeError:
+                # If an AttributeError was thrown the shop item probably doesn't have find_max_purchasable_count and we can ignore it.
+                pass
+
 
             # now we check if the user has enough dough
             if not item.is_affordable_for(user_account):
@@ -5365,7 +5374,7 @@ anarchy - 1000% of your wager.
 
         if move_map == "wormhole":
             if autopilot_level < 3:
-                await ctx.reply("Autopilot error:\nWormhole travel not possible.")
+                await ctx.reply("Autopilot error:\nWormhole travel not possible with existing autopilot system..")
                 self.currently_interacting.remove(ctx.author.id)
                 return
             
@@ -5537,7 +5546,7 @@ anarchy - 1000% of your wager.
             move_cost = cost_data.get("cost", 500)
         else:
             if autopilot_level < 1:
-                await ctx.reply("Autopilot error:\nGalaxy travel not possible.")
+                await ctx.reply("Autopilot error:\nGalaxy travel not possible with existing autopilot system.")
                 self.currently_interacting.remove(ctx.author.id)
                 return
             
@@ -5555,7 +5564,7 @@ anarchy - 1000% of your wager.
             )
 
             if autopilot_level < 2 and cost_data.get("nebula", False):
-                await ctx.reply("Autopilot error:\nNebula travel not possible.")
+                await ctx.reply("Autopilot error:\nNebula travel not possible with existing autopilot system.")
                 self.currently_interacting.remove(ctx.author.id)
                 return
 

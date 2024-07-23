@@ -525,8 +525,13 @@ class Random_Chess_Piece(Store_Item):
         # find the max purchasable amount of the item.
 
         dough = user_account.get("total_dough")
+        dough_limit = dough // cls.cost(user_account)
 
-        return dough // cls.cost(user_account)
+        limit = user_account.get("max_random_chess_pieces_per_day")
+        purchased = user_account.get("random_chess_piece_bought")
+        purchased_limit = max(limit - purchased, 0)
+
+        return min(dough_limit, purchased_limit)
 
     @classmethod
     def do_purchase(cls, user_account: account.Bread_Account, amount: int = 1):
@@ -597,6 +602,9 @@ class Random_Chess_Piece(Store_Item):
             for piece in purchased_pieces:
                 if purchased_pieces[piece] > 0:
                     out_str += f'{piece}: {purchased_pieces[piece]} \n'
+
+        user_account.increment("random_chess_piece_bought", original_amount)
+        
         return out_str
             
 
@@ -715,8 +723,13 @@ class Special_Bread_Pack(Store_Item):
     @classmethod
     def find_max_purchasable_count(cls, user_account: account.Bread_Account) -> int:
         dough = user_account.get("total_dough")
+        dough_limit = dough // cls.cost(user_account)
 
-        return dough // 350
+        limit = user_account.get("max_special_bread_packs_per_day")
+        purchased = user_account.get("special_bread_pack_bought")
+        purchased_limit = max(limit - purchased, 0)
+
+        return min(dough_limit, purchased_limit)
 
     @classmethod
     def do_purchase(cls, user_account: account.Bread_Account, amount = 1):
@@ -777,9 +790,11 @@ class Special_Bread_Pack(Store_Item):
             user_account.add_item_attributes(bread_type, amount=bought_bread_dict[bread_type.text])
 
         sn = utility.smart_number
-        output = ""
+        output = f"You have purchased {utility.write_count(amount, cls.display_name)}:\n"
         for item_text in bought_bread_dict.keys():
             output += f"{item_text} : +{sn(bought_bread_dict[item_text])}, -> {sn(user_account.get(item_text))}\n"
+        
+        user_account.increment("special_bread_pack_bought", amount)
             
         return output
 
