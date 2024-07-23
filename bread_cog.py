@@ -5,6 +5,7 @@ Patch Notes:
 - Modified Chessatron dough equation to buff Chessatron Contraption.
 - Decreased Chessatron Contraption max level to 10.
 - Changed the Random Chess Piece price scheme to be the chessatron value divided by 6, rounded up to the nearest 50.
+- You can now buy up to 2,500 Random Chess Pieces and 5,000,000 Special Bread Packs per day.
 
 
 (todo) test reply ping
