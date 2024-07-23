@@ -1128,16 +1128,15 @@ def galaxy_map(
             else:
                 place("background", xpos, ypos)
 
-            if xpos == (y_size + 4) // 2 and ypos == (y_size + 4) // 2:
-                place("rocket", xpos, ypos)
-                continue
-            
             emoji = tile_object.get_emoji(json_interface)
 
             if emoji == "background":
                 continue
 
             place(emoji, xpos, ypos)
+
+            if xpos == (y_size + 4) // 2 and ypos == (y_size + 4) // 2:
+                place("rocket", xpos, ypos)
 
     output = io.BytesIO()
     img.save(output, "png")
@@ -1305,10 +1304,6 @@ def system_map(
             if (wormhole_x, wormhole_y) in visible_coordinates:
                 grid[wormhole_y + 2 - system_y + radius][wormhole_x + 2 - system_x + radius] = system_data.wormhole.get_emoji()
 
-
-    # Add the rocket.
-    grid[radius + 2][radius + 2] = "rocket"
-
     # Now, render the image.
     
     img = Image.new(
@@ -1329,6 +1324,9 @@ def system_map(
                 place("background", xpos, ypos)
 
             place(emoji, xpos, ypos)
+
+    # Add the rocket.
+    place("rocket", radius + 2, radius + 2)
     
     if analyze_position is not None:
         xpos = "abcdefghi".index(analyze_position[0])
