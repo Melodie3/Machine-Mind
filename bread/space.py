@@ -56,7 +56,7 @@ MAP_EMOJIS = {
     "merchant": ":person_in_tuxedo:",
 }
 
-EMOJI_PATH = {
+EMOJI_PATHS = {
     # Numbers.
     "1": "images/1.png",
     "2": "images/2.png",
@@ -140,12 +140,14 @@ print("Bread Space: Loading map images.")
 
 EMOJI_IMAGES = {}
 
-for key, path in EMOJI_PATH.items():
+for key, path in EMOJI_PATHS.items():
     EMOJI_IMAGES[key] = Image.open(path).resize((128, 128))
 
 print("Bread Space: Map image loading complete.")
 
-IMAGE_PATH = "images/"
+
+########################################################################################
+##### Base SystemTile class.
 
 class SystemTile:
     def __init__(
@@ -950,10 +952,12 @@ def get_corruption_chance(
     """Returns the chance of a loaf becoming corrupted for any point in the galaxy. Between 0 and 1."""
     dist = math.hypot(xpos, ypos)
 
-    # The band where the chance is 0 is between 80 and 87.774.
+    # The band where the chance is 0 is between ~80 and ~87.774.
     if 80 <= dist <= 87.774:
         return 0.0
 
+    # `\frac{d^{2.15703654359}}{1000}+118e^{-0.232232152965\left(\frac{d}{22.5}\right)^{2}}-19`
+    # where `d` is the distance to (0, 0).
     return ((dist ** 2.15703654359 / 1000) + 118 * math.e ** (-0.232232152965 * (dist / 22.5) ** 2) - 19) / 100
 
             
@@ -982,7 +986,7 @@ def space_map(
         analyze_position (str, optional): The location to hover the analysis on. Example: `a1` and `e5`. If None is passed it will not add the analysis. Only works on the system map. Defaults to None.
 
     Returns:
-        str: The path to the generated image.
+        io.BytesIO: BytesIO object corresponding to the generated image.
     """
     galaxy_seed = json_interface.get_ascension_seed(account.get_prestige_level(), guild=account.get("guild_id"))
 
@@ -1052,7 +1056,7 @@ def galaxy_map(
         radius (int): The radius of the visible area.
 
     Returns:
-        str: The path to the generated file.
+        io.BytesIO: BytesIO object corresponding to the generated image.
     """
 
     bottom_right = (galaxy_x + radius, galaxy_y + radius)
@@ -1175,7 +1179,7 @@ def system_map(
         analyze_position (str, optional): The location to hover the analysis on. Example: `a1` and `e5`. If None is passed it will not add the analysis. Defaults to None.
 
     Returns:
-        str: The path to the generated file.
+        io.BytesIO: BytesIO object corresponding to the generated image.
     """
     
     bottom_right = (system_x + radius, system_y + radius)
@@ -1386,7 +1390,7 @@ def system_map(
     
 def generate_galaxy_seed() -> str:
     """Generates a random new galaxy seed."""
-    return "{:050x}".format(random.randrange(16 ** 64)) # Random 64 digit hexadecimal number.
+    return "{:064x}".format(random.randrange(16 ** 64)) # Random 64 digit hexadecimal number.
 
 def get_galaxy_coordinate(
         json_interface: bread_cog.JSON_interface,

@@ -72,10 +72,10 @@ PLANET_OPTIONS = {
 ### GALAXY GENERATION UTILITIES
 
 def generate_gradients(galaxy_seed: str) -> list:
-    """Generates the gradient and nebulae info for the galaxy.
+    """Generates the gradient info for the galaxy.
 
     Args:
-        galaxy_seed (int): The seed of the galaxy.
+        galaxy_seed (str): The seed of the galaxy.
 
     Returns:
         list: The gradient info in a list.
@@ -152,6 +152,14 @@ def gradient_modifier(
     return 0
 
 def generate_nebulae(galaxy_seed: str) -> list[dict]:
+    """Generates the nebula info for the given galaxy seed.
+
+    Args:
+        galaxy_seed (str): The galaxy seed.
+
+    Returns:
+        list[dict]: The nebula data.
+    """
     out = []
     previous_angle = 1
 

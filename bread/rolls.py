@@ -49,6 +49,8 @@ def bread_roll(
     
     # If the user has access to space.
     if user_account.get_space_level() >= 1:
+        # If the user has been to space, then check their current location and adjust the chance multipliers accordingly.
+
         anarchy_piece_luck = 1
         # Modifiers to Anarchy Piece luck go here.
 
@@ -76,6 +78,9 @@ def bread_roll(
         rare_bread_multiplier = rarity_modifiers.get(values.waffle)
         special_bread_multiplier = rarity_modifiers.get(values.croissant)
     else:
+        # If the user has not been to space, set all the multipliers to 1 to not adjust the rarities at all.
+        # In addition, set the anarchy piece luck to -1 to make it impossible to roll.
+
         anarchy_piece_luck = -1 # With a negative number it's impossible to roll.
 
         moak_multiplier = 1

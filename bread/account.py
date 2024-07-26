@@ -456,7 +456,7 @@ class Bread_Account:
 
     def get_chessatron_dough_amount(
             self: typing.Self,
-            include_prestige_boost = True
+            include_prestige_boost: bool = True
         ) -> int:
         """Calculates the amount of dough this player gets for each chessatron."""
         amount = values.chessatron.value
@@ -469,7 +469,7 @@ class Bread_Account:
     
     def get_anarchy_chessatron_dough_amount(
             self: typing.Self,
-            include_prestige_boost = True
+            include_prestige_boost: bool = True
         ) -> int:
         """Calulcates the amount of dough this player gets for each anarchy chessatron."""
         amount = values.anarchy_chessatron.value
