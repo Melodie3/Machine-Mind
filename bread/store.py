@@ -1432,6 +1432,10 @@ class Gambit_Shop_Black_Pawn(Gambit_shop_Item):
 class Gambit_Shop_Black_Knight(Gambit_shop_Item):
     name = "gambit_shop_black_knight"
     display_name = "King's Indian Defense"
+    aliases = [
+        "Kings Indian Defense", # No apostrophe.
+        "King’s Indian Defense" # iOS apostrophe.
+    ]
     level_required = 2
     boost_item = values.black_knight
     boost_amount = 20
