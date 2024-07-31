@@ -697,6 +697,11 @@ class Bread_cog(commands.Cog, name="Bread"):
         else:
             #getting archived data
             old_data = self.json_interface.archived_bread_data
+
+            if old_data is None:
+                await ctx.send(f"No archive data found for {user.name}")
+                return
+            
             id_str = str(user.id)
             #print(f"Searching for {id_str} in archived data {old_data.keys()}")
             if id_str in old_data.keys():
@@ -785,8 +790,21 @@ class Bread_cog(commands.Cog, name="Bread"):
         if get_channel_permission_level(ctx) < PERMISSION_LEVEL_BASIC:
             await ctx.send("Sorry, you can't do that here.")
             return
+        
+        archive_keywords = ["archive", "archived"]
+        chess_keywords = ["chess", "chess pieces", "pieces"]
+        gambit_keywords = ["gambit", "strategy", "gambit shop", "strategy shop"]
+        all_keywords = archive_keywords + chess_keywords + gambit_keywords
 
-        if (modifier is not None) and (modifier.lower() == "archive" or modifier.lower() == "archived"):
+        if user is not None and modifier is None:
+            names = [user.name, user.nick, user.global_name, user.display_name]
+            matches = [name.lower() in all_keywords for name in names if isinstance(name, str)]
+            if any(matches):
+                user = None
+                modifier = names[matches.index(True)]
+            
+
+        if modifier is not None and modifier.lower() in archive_keywords:
             # just call the old version, not worth it to try and implement it since accounts don't really understand
             # the existence of the archive
             await self.stats_old(ctx, user, modifier)
@@ -805,7 +823,7 @@ class Bread_cog(commands.Cog, name="Bread"):
         account = self.json_interface.get_account(user, ctx.guild.id)
 
         # bread stats chess
-        if (modifier is not None) and (modifier.lower() == "chess" or modifier.lower() == "chess pieces" or modifier.lower() == "pieces"):
+        if modifier is not None and modifier.lower() in chess_keywords:
             output = f"Chess pieces of {account.get_display_name()}:\n\n"
             for chess_piece in values.all_chess_pieces:
                 output += f"{chess_piece.text} - {account.get(chess_piece.text)}\n"
@@ -813,7 +831,7 @@ class Bread_cog(commands.Cog, name="Bread"):
             return
 
         # bread stats gambit
-        if (modifier is not None) and (modifier.lower() in ["gambit", "strategy", "gambit shop", "strategy shop"]):
+        if modifier is not None and modifier.lower() in gambit_keywords:
             output = f"Gambit shop bonuses for {account.get_display_name()}:\n\n"
             boosts = account.values.get("dough_boosts", {})
             for item in boosts.keys():
