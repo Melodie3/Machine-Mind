@@ -1028,7 +1028,7 @@ class Bread_cog(commands.Cog, name="Bread"):
 
         user_account = self.json_interface.get_account(person, ctx.guild)
 
-        file_text = json.dumps(user_account.values)
+        file_text = json.dumps(user_account.values, indent=4)
 
         fake_file = io.StringIO(file_text)
         final_file = discord.File(fake_file, filename="export.json")
@@ -1807,27 +1807,158 @@ loaf_converter""",
         aliases = ["gem_tron"]
     )
     async def gem_chessatron(self, ctx,
-            arg: typing.Optional[str] = commands.parameter(description = "The number of chessatrons to create.")
+            # arg: typing.Optional[str] = commands.parameter(description = "The number of chessatrons to create.")
+            *args
             ):
 
         user_account = self.json_interface.get_account(ctx.author, guild = ctx.guild.id)
-        gem_count = user_account.get(values.gem_red.text)
 
-        if gem_count < 32:
-            await utility.smart_reply(ctx, f"You need at least 32 red gems to create a chessatron.")
+        highest_gem_index = 1
+        number_of_chessatrons = None
+        emote = values.gem_red.text
+
+        # first get the gem, if applicable
+        for arg in args:
+            #test if is emoji
+            emote = values.get_emote_text(arg)
+            if emote is None:
+                # make sure it's an emote
+                continue
+
+            if emote == values.gem_red.text:
+                highest_gem_index = 1
+                break
+            elif emote == values.gem_blue.text:
+                highest_gem_index = 2
+                break
+            elif emote == values.gem_purple.text:
+                highest_gem_index = 3
+                break
+            elif emote == values.gem_green.text:
+                highest_gem_index = 4
+                break
+            elif emote == values.gem_gold.text:
+                highest_gem_index = 5
+                break
+        
+        # then get the count of chessatrons to try to make
+        for arg in args:
+            if is_numeric(arg):
+                number_of_chessatrons = parse_int(arg)
+                break
+        
+        if number_of_chessatrons is not None and number_of_chessatrons < 0:
+            await utility.smart_reply(ctx, "You can't make a negative number of chessatrons.")
+            return
+        
+
+        total_gem_count = 0
+        red_gems = user_account.get(values.gem_red.text)
+        blue_gems = user_account.get(values.gem_blue.text)
+        purple_gems = user_account.get(values.gem_purple.text)
+        green_gems = user_account.get(values.gem_green.text)
+        gold_gems = user_account.get(values.gem_gold.text) * 4
+
+
+        if highest_gem_index >= 1:
+            total_gem_count += red_gems
+        if highest_gem_index >= 2:
+            total_gem_count += blue_gems
+        if highest_gem_index >= 3:
+            total_gem_count += purple_gems
+        if highest_gem_index >= 4:
+            total_gem_count += green_gems
+        if highest_gem_index >= 5:
+            # 4 gems per gold gem
+            total_gem_count += gold_gems
+        
+
+        if number_of_chessatrons is None:
+            number_of_chessatrons = total_gem_count // 32
+        else:
+            number_of_chessatrons = min(total_gem_count // 32, number_of_chessatrons)
+
+        
+        
+
+        # gem_count = user_account.get(values.gem_red.text)
+
+        if total_gem_count < 32 or number_of_chessatrons == 0:
+            await utility.smart_reply(ctx, f"You need at least 32 gems to create a chessatron.")
             return
 
-        if arg is None:
-            arg = None
-            number_of_chessatrons = gem_count // 32 # integer division
-        elif is_numeric(arg):
-            arg = parse_int(arg)
-            number_of_chessatrons = min(gem_count // 32,arg) # integer division
-        else:
-            arg = None
-            number_of_chessatrons = gem_count // 32 # integer division
+        gems_needed = number_of_chessatrons * 32
 
-        user_account.increment(values.gem_red.text, -32*number_of_chessatrons)
+        if gems_needed > red_gems: # if not enough red gems to make all trons
+            gems_needed -= red_gems # then use all red gems in our count
+            red_gems_used = red_gems # mark that we've used all our red gems
+            red_gems = 0
+        else: # if enough red gems to make all trons
+            red_gems_used = gems_needed # mark that we've used all the red gems we need
+            gems_needed = 0
+            red_gems -= red_gems_used
+
+        if gems_needed > blue_gems:
+            gems_needed -= blue_gems
+            blue_gems_used = blue_gems
+            blue_gems = 0
+        else: # if enough blue gems to make all trons
+            blue_gems_used = gems_needed
+            gems_needed = 0
+            blue_gems -= blue_gems_used
+        
+        if gems_needed > purple_gems:
+            gems_needed -= purple_gems
+            purple_gems_used = purple_gems
+            purple_gems = 0
+        else: # if enough purple gems to make all trons
+            purple_gems_used = gems_needed
+            gems_needed = 0
+            purple_gems -= purple_gems_used
+
+        if gems_needed > green_gems:
+            gems_needed -= green_gems
+            green_gems_used = green_gems
+            green_gems = 0
+        else: # if enough green gems to make all trons
+            green_gems_used = gems_needed
+            gems_needed = 0
+            green_gems -= green_gems_used
+
+        if gems_needed > gold_gems:
+            gems_needed -= gold_gems
+            gold_gems_used = gold_gems
+            gold_gems = 0
+        else: # if enough gold gems to make all trons
+            gold_gems_used = gems_needed
+            gems_needed = 0
+            gold_gems -= gold_gems_used
+
+        if gems_needed > 0:
+            await utility.smart_reply(ctx, "It seems something went wrong.")
+            return
+
+        if gold_gems // 4 != gold_gems / 4:
+            # if we used a fraction of a gold gem
+            green_gems += round(((gold_gems / 4) - (gold_gems // 4)) * 4)
+
+        user_account.set(values.gem_red.text, red_gems)
+        user_account.set(values.gem_blue.text, blue_gems)
+        user_account.set(values.gem_purple.text, purple_gems)
+        user_account.set(values.gem_green.text, green_gems)
+        user_account.set(values.gem_gold.text, gold_gems // 4)
+
+        # if arg is None:
+        #     arg = None
+        #     number_of_chessatrons = gem_count // 32 # integer division
+        # elif is_numeric(arg):
+        #     arg = parse_int(arg)
+        #     number_of_chessatrons = min(gem_count // 32,arg) # integer division
+        # else:
+        #     arg = None
+        #     number_of_chessatrons = gem_count // 32 # integer division
+
+        # user_account.increment(values.gem_red.text, -32*number_of_chessatrons)
 
         user_account.increment(values.black_pawn.text, 8*number_of_chessatrons)
         user_account.increment(values.black_rook.text, 2*number_of_chessatrons)
@@ -1845,7 +1976,22 @@ loaf_converter""",
 
         self.json_interface.set_account(ctx.author, user_account, guild = ctx.guild.id)
 
-        await utility.smart_reply(ctx, f"You have used {32*number_of_chessatrons} red gems to make chess pieces.")
+        gems_list = []
+
+        if red_gems_used > 0:
+            gems_list.append(f"{red_gems_used} {values.gem_red.text}")
+        if blue_gems_used > 0:
+            gems_list.append(f"{blue_gems_used} {values.gem_blue.text}")
+        if purple_gems_used > 0:
+            gems_list.append(f"{purple_gems_used} {values.gem_purple.text}")
+        if green_gems_used > 0:
+            gems_list.append(f"{green_gems_used} {values.gem_green.text}")
+        if gold_gems_used > 0:
+            gems_list.append(f"{gold_gems_used // 4} {values.gem_gold.text}")
+
+        gems_string = ", ".join(gems_list)
+
+        await utility.smart_reply(ctx, f"You have used {gems_string} to make chess pieces.")
 
         await self.do_chessboard_completion(ctx, amount = parse_int(number_of_chessatrons))
 

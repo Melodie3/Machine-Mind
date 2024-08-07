@@ -79,7 +79,7 @@ class JSON_cog(commands.Cog, name="JSON"):
         # This just waits until it's time for the first iteration.
         print("Starting JSON cog hourly loop, current time is {}.".format(datetime.now()))
 
-        minute_in_hour = 5 # 5 would be X:05, 30 would be X:30.
+        minute_in_hour = 15 # 5 would be X:05, 30 would be X:30.
 
         wait_time = time.time() - (minute_in_hour * 60)
         wait_time = 3600 - (wait_time % 3600) + 2 # Artificially add 2 seconds to ensure it stops at the correct time.
