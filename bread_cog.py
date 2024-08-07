@@ -1785,7 +1785,8 @@ loaf_converter""",
     #####      BREAD GEM_CHESSATRON
 
     @bread.command(
-        help="Create a chessatron from red gems.",
+        help = "Create a chessatron from red gems.",
+        aliases = ["gem_tron"]
     )
     async def gem_chessatron(self, ctx,
             arg: typing.Optional[str] = commands.parameter(description = "The number of chessatrons to create.")
