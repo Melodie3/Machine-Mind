@@ -2158,6 +2158,11 @@ loaf_converter""",
             if i.name.lower() == item_name_2 or i.display_name.lower() == item_name_2:
                 item = i
                 break
+            # this is for aliases
+            aliases = [option.lower() for option in i.aliases]
+            if item_name in aliases or item_name_2 in aliases:
+                item = i
+                break
         else: # if the for loop doesn't break, run this. This should run the same as an 'if item is None' check.
             await ctx.reply("Sorry, but I don't recognize that item's name.")
             return
@@ -2238,7 +2243,8 @@ loaf_converter""",
                 #text += f"\n\nYou now have **{user_account.get(values.ascension_token.text)} {values.ascension_token.text}** remaining."
             else:
                 if text is None:
-                    text = f"You have purchased a {item.display_name}! You now have {user_account.get(item.name)} of them."
+                    an = "an" if item.display_name.lower()[0] in "aeiou" else "a"
+                    text = f"You have purchased {an} {item.display_name}! You now have {user_account.get(item.name)} of them."
 
                 #text += f"\n\nYou now have **{user_account.get('total_dough')} dough** remaining."
 
