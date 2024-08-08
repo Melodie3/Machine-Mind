@@ -2332,7 +2332,7 @@ loaf_converter""",
         else:
             description += "\n**You can ascend!**\n\n"
 
-        description += """If you would like to ascend, please type "I would like to ascend". Remember that this is a permanent action that cannot be undone."""
+        description += """If you would like to ascend, please type "I would like to ascend".\nIf you would like to ascend to the highest available ascension, please type "Take me to the latest ascension".\nRemember that this is a permanent action that cannot be undone."""
 
         await utility.smart_reply(ctx, description)
 
@@ -2345,19 +2345,31 @@ loaf_converter""",
             return 
         
         response = msg.content
-        if "i would like to ascend" in response.lower():
-            pass
+        next_ascension_msg = "i would like to ascend" in response.lower()
+        latest_ascension_msg = "take me to the latest ascension" in response.lower()
+
+        if next_ascension_msg and latest_ascension_msg:
+            await utility.smart_reply(ctx, "Contradictory messages, I see. Please come back when you are feeling more decisive.")
+            return
+        elif next_ascension_msg:
+            # now we can ascend
+            #user_account.increment(values.gem_gold.text, -1) # first remove the golden gem
+            user_account.increase_prestige_level()
+
+            description = f"Congratulations! You have ascended to a higher plane of existence. You are now at level {user_account.get_prestige_level()} of ascension. I wish you the best of luck on your journey!\n\n"
+            description += f"You have also recieved **1 {values.ascension_token.text}**. You will recieve more as you get more daily rolls. You can spend it at the hidden bakery to buy special upgrades. Find it with \"$bread hidden_bakery\"."
+            await utility.smart_reply(ctx, description)
+        elif latest_ascension_msg:
+            pre_ascension_tokens = user_account.get(values.ascension_token.text)
+            user_account.increase_prestige_to_goal(max_prestige_level)
+            post_ascension_tokens = user_account.get(values.ascension_token.text)
+
+            description = f"Congratulations! You have ascended to the highest plane of existence. You are now at level {user_account.get_prestige_level()} of ascension. I wish you the best of luck on your journey!\n\n"
+            description += f"You have also recieved **{post_ascension_tokens - pre_ascension_tokens} {values.ascension_token.text}**. You will recieve more as you get more daily rolls. You can spend it at the hidden bakery to buy special upgrades. Find it with \"$bread hidden_bakery\"."
+            await utility.smart_reply(ctx, description)
         else:
             await utility.smart_reply(ctx, "If you are not ready yet, that is okay.")
             return 
-
-        # now we can ascend
-        #user_account.increment(values.gem_gold.text, -1) # first remove the golden gem
-        user_account.increase_prestige_level()
-
-        description = f"Congratulations! You have ascended to a higher plane of existence. You are now at level {user_account.get_prestige_level()} of ascension. I wish you the best of luck on your journey!\n\n"
-        description += f"You have also recieved **1 {values.ascension_token.text}**. You will recieve more as you get more daily rolls. You can spend it at the hidden bakery to buy special upgrades. Find it with \"$bread hidden_bakery\"."
-        await utility.smart_reply(ctx, description)
 
         # and save the account
         self.json_interface.set_account(ctx.author, user_account, guild = ctx.guild.id)

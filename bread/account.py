@@ -7,7 +7,7 @@ from bread.values import Emote
 import bread.utility as utility
 import bread.values as values
 import bread.space as space
-# import bread.store as store
+import bread.store as store
 import bread_cog
 bread_cog_ref = None
 
@@ -176,7 +176,21 @@ class Bread_Account:
         # reset boosts file
         self.set("dough_boosts", dict())
 
-
+    def increase_prestige_to_goal(
+            self: typing.Self, 
+            goal: int
+        ) -> None:
+        prestige_level = self.get_prestige_level()
+        if goal <= prestige_level:
+            return
+        self.increase_prestige_level()
+        
+        for i in range(self.get_prestige_level(), goal):
+            max_level = store.Daily_rolls.max_level(self)
+            for j in range(max_level - self.get("max_daily_rolls")):
+                store.Daily_rolls.do_purchase(self)
+            
+            self.increase_prestige_level()
 
 
     ##############################################################
