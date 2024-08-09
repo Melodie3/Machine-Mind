@@ -5319,7 +5319,12 @@ anarchy - 1000% of your wager.
 
         for project_id, data in enumerate(hub_projects):
             message_lines += f"#{project_id + 1}: "
-            message_lines += data.get("project").display_info(day_seed=day_seed, system_tile=hub, completed=data.get("completed", False))
+            message_lines += data.get("project").display_info(
+                day_seed = day_seed,
+                system_tile = hub,
+                compress_description = True,
+                completed = data.get("completed", False)
+            )
             message_lines += "\n\n"
         
         message_lines += "To contribute to a project, use '$bread space hub contribute [project number] [amount] [item]'\nYou can get more information about a project with '$bread space hub info [project number]'"

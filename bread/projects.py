@@ -21,16 +21,27 @@ class Project:
             cls: typing.Type[typing.Self],
             day_seed: str,
             system_tile: space.SystemTradeHub,
+            compress_description: bool = False,
             completed: bool = False
         ) -> str:
         """Returns a string that represents this project, it includes the name and description, as well as some text if the project has been completed."""
         name = cls.name(day_seed, system_tile)
         description = cls.description(day_seed, system_tile)
 
+        if compress_description:
+            description_use = description[:250]
+            if not description_use.endswith(" "):
+                description_use += description[250:].split(" ")[0]
+            
+            description_use = description_use.strip()
+            description_use += "..."
+        else:
+            description_use = description
+
         completed_prefix = "~~" if completed else ""
         completed_suffix = "~~    COMPLETED" if completed else ""
 
-        return f"   **{completed_prefix}{name}:{completed_suffix}**\n{description}"
+        return f"   **{completed_prefix}{name}:{completed_suffix}**\n{description_use}"
 
     # Required for subclasses.
     @classmethod
@@ -550,16 +561,9 @@ class Essential_Oils(Project):
 
         return [(item.text, math.ceil(amounts[item]))]
 
-
-#######################################################################################################
-##### Take item projects. #############################################################################
-#######################################################################################################
-
-##### Special bread.
-
-class Flatbread_Feast(Project):
-    """Written by ChatGPT lol."""
-    internal = "flatbread_feast"
+class Bingobango(Project):
+    """Written by Kapola."""
+    internal = "bingobango"
     
     @classmethod
     def name(
@@ -570,9 +574,7 @@ class Flatbread_Feast(Project):
         rng = random.Random(utility.hash_args(day_seed, system_tile.tile_seed()))
         
         options = [
-            "Flatbread Feast",
-            "Crispy Crust",
-            "Flat Delight",
+            "Bingobango"
         ]
 
         return rng.choice(options)
@@ -587,44 +589,28 @@ class Flatbread_Feast(Project):
 
         cost = cls.get_price_description(day_seed, system_tile)
         reward = cls.get_reward_description(day_seed, system_tile)
-        name = cls.name(day_seed, system_tile)
 
         part_1 = [
-            "Amazing news!",
-            "Incredible discovery!",
-            "Unbelievable opportunity!"
+            "bingo"
         ]
 
         part_2 = [
-            "The Trade Hub has just received an exciting proposal!",
-            "A tempting offer has arrived for the Trade Hub!",
-            "The Trade Hub management is buzzing with news of a lucrative deal!"
+            "bango"
         ]
 
         part_3 = [
-            f"\nFor just {cost}, the Trade Hub can become a key supplier for the {name} event!",
-            f"\nInvest {cost} now, and the Trade Hub will secure a prominent role in the {name} festival!",
-            f"\nBy providing only {cost}, the Trade Hub will be the go-to source for the {name} celebration!"
+            f"bingobango {cost}..."
         ]
 
         part_4 = [
-            "Furthermore, for every event ticket sold, the Trade Hub will earn a percentage of the revenue!",
-            "Additionally, you'll receive a share of the profits for every guest attending the festival!",
-            "Plus, recruiting vendors for the event will earn the Trade Hub a commission for each sale made!"
-        ]
-
-        part_5 = [
-            f"{name} guarantees a return of {reward} upon participation!",
-            f"{name} promises a profit of {reward} for each flatbread contributed!",
-            f"With {name}, you're sure to reap rewards totaling {reward}!"
+            f"bingobango {reward}"
         ]
 
         return " ".join([
             rng.choice(part_1),
             rng.choice(part_2),
             rng.choice(part_3),
-            rng.choice(part_4),
-            rng.choice(part_5)
+            rng.choice(part_4)
         ])
 
     @classmethod
@@ -634,13 +620,158 @@ class Flatbread_Feast(Project):
             system_tile: space.SystemTradeHub
         ) -> str:
         rng = random.Random(utility.hash_args(day_seed, system_tile.tile_seed()))
-        reward = cls.get_reward_description(day_seed, system_tile)
-        name = cls.name(day_seed, system_tile)
 
         options = [
-            f"Incredible job! You provided all the {values.flatbread.text} required for the {name} and made {reward} from it!",
-            f"Very nice! {name} got all the {values.flatbread.text} they needed and you got {reward}!",
-            f"Awesome job! The {name} managed to get all the {values.flatbread.text} they needed and you got {reward} from the event!"
+            "bingobango!"
+        ]
+
+        return rng.choice(options)
+    
+    @classmethod
+    def get_cost(
+            cls,
+            day_seed: str,
+            system_tile: space.SystemTradeHub
+        ) -> list[tuple[str, int]]:
+        return [(values.anarchy_chess.text, 1)]
+    
+    @classmethod
+    def get_reward(
+            cls,
+            day_seed: str,
+            system_tile: space.SystemTradeHub
+        ) -> list[tuple[str, int]]:
+        rng = random.Random(utility.hash_args(day_seed, system_tile.tile_seed()))
+
+        amount = rng.randint(10, 20) * 2000
+
+        return [(values.normal_bread.text, amount)]
+
+
+#######################################################################################################
+##### Take item projects. #############################################################################
+#######################################################################################################
+
+##### Special bread.
+
+class Beach_Disappearance(Project):
+
+    """Concept by Duck, written by Kapola."""
+    internal = "beach_disappearance"
+    
+    @classmethod
+    def name(
+            cls,
+            day_seed: str,
+            system_tile: space.SystemTradeHub
+        ) -> str:
+        rng = random.Random(utility.hash_args(day_seed, system_tile.tile_seed()))
+        
+        options = [
+            "Beach Disappearance",
+            "Ecosystem Problem 2",
+            "Sand Witches",
+        ]
+
+        return rng.choice(options)
+
+    @classmethod
+    def description(
+            cls,
+            day_seed: str,
+            system_tile: space.SystemTradeHub
+        ) -> str:
+        rng = random.Random(utility.hash_args(day_seed, system_tile.tile_seed()))
+
+        cost = cls.get_price_description(day_seed, system_tile)
+        reward = cls.get_reward_description(day_seed, system_tile)
+
+        part_1 = [
+            "So, the Trade Hub has an animal ecosystem on board.",
+            "The Trade Hub design contains an on-board animal ecosystem.",
+            "The current Trade Hub model has its own animal ecosystem."
+        ]
+
+        part_2 = [
+            "Unfortunately, all the beaches on the ecosystem have mysteriously disappeared.",
+            "However, it has been struck with a problem; all the beaches are suspiciously gone.",
+            "There has been an issue with it recently though: the beaches are somehow all gone."
+        ]
+
+        part_3 = [
+            "We don't know exactly how they all disappeared;",
+            "The Trade Hub does not know the circumstances of the disappearance;",
+            "It is unknown how all these beacues have disappeared;"
+        ]
+
+        part_4 = [
+            "some think that they were washed away by the ocean,",
+            "experts believe the sand washed away into the water,",
+            "some believe the sand was gobbled up by the waters,"
+        ]
+
+        part_5 = [
+            "while others think it was the work of a sand-eating demon.",
+            "but others believe an ancient time spell is responsible.",
+            "while some believe it was the result of a devastating burrito."
+        ]
+
+        part_6 = [
+            "\nRegardless, we think we have found a solution;",
+            "\nAnyways, the Trade Hub believes they have a solution;",
+            "\nFortunately, a solution has most likely been found;"
+        ]
+        
+        part_7 = [
+            "it would involve summoning the sand back with some sandwitches.",
+            "the sand would be summoned by sandwitches.",
+            "sand could be brought back by the magical powers of sandwitches."
+        ]
+
+        part_8 = [
+            "However, the Trade Hub doesn't have quite enough for the project;",
+            "Unfortunately, the Hub doesn't keep enough of them on hand;",
+            "However, we do not have enough for something at a scale this big;"
+        ]
+
+        part_9 = [
+            "after all, the Hub is worried they might turn against us with their magical powers.",
+            "the Trade Hub never knows when those unstable creatures might ally with the French for a revolution.",
+            "we do not know what these unpredictable people will do if they discover we have been keeping their wands in secret."
+        ]
+
+        part_10 = [
+            f"We'd be willing to offer you {reward} if you found {cost} willing to help!",
+            f"You could get a huge {reward} from the Trade Hub if you found some {cost} for bringing the beaches back!",
+            f"If you provided {cost} that were willing to help, the Trade Hub would reward you with {reward}!"
+        ]
+
+
+        return " ".join([
+            rng.choice(part_1),
+            rng.choice(part_2),
+            rng.choice(part_3),
+            rng.choice(part_4),
+            rng.choice(part_5),
+            rng.choice(part_6),
+            rng.choice(part_7),
+            rng.choice(part_8),
+            rng.choice(part_9),
+            rng.choice(part_10),
+        ])
+
+    @classmethod
+    def completion(
+            cls: typing.Type[typing.Self],
+            day_seed: str,
+            system_tile: space.SystemTradeHub
+        ) -> str:
+        rng = random.Random(utility.hash_args(day_seed, system_tile.tile_seed()))
+
+        options = [
+            f"Woo! Thanks to you, all the beaches are back and the animals have returned to their usual life!",
+            f"Wow! All the beaches are back! I sure hope this drastic and radical environmental action won't cause any more problems in the future!",
+            f"Well, we succeeded, but at what cost?? The sandwitches are storming the Hub! Uprising! We must warn the... *gets dumped on by a huge pile of sand*"
         ]
 
         return rng.choice(options)
@@ -653,7 +784,580 @@ class Flatbread_Feast(Project):
         ) -> list[tuple[str, int]]:
         rng = random.Random(utility.hash_args(day_seed, system_tile.tile_seed()))
 
-        amount = rng.randint(10, 20) * 100 + 1000
+        amount = rng.randint(10, 20) * 1280
+
+        return [(values.sandwich.text, amount)]
+    
+    @classmethod
+    def get_reward(
+            cls,
+            day_seed: str,
+            system_tile: space.SystemTradeHub
+        ) -> list[tuple[str, int]]:
+        rng = random.Random(utility.hash_args(day_seed, system_tile.tile_seed()))
+
+        amount = rng.randint(10, 20) * 20
+
+        item = rng.choice(values.chess_pieces_black_biased)
+
+        return [(item.text, amount)]
+
+class Croissant_Cravings(Project):
+    """Written by Kapola"""
+    internal = "croissant_cravings"
+    
+    @classmethod
+    def name(
+            cls,
+            day_seed: str,
+            system_tile: space.SystemTradeHub
+        ) -> str:
+        rng = random.Random(utility.hash_args(day_seed, system_tile.tile_seed()))
+        
+        options = [
+            "Croissant Cravings",
+            "Alien Invasion",
+            "Appease the Overlords",
+        ]
+
+        return rng.choice(options)
+
+    @classmethod
+    def description(
+            cls,
+            day_seed: str,
+            system_tile: space.SystemTradeHub
+        ) -> str:
+        rng = random.Random(utility.hash_args(day_seed, system_tile.tile_seed()))
+
+        cost = cls.get_price_description(day_seed, system_tile)
+        reward = cls.get_reward_description(day_seed, system_tile)
+
+        part_1 = [
+            "We have received a most peculiar visit!",
+            "The Trade Hub is now the victim of an interesting arrival!",
+            "Some strange entities have come to the Trade Hub!"
+        ]
+
+        part_2 = [
+            "These alien overlords from a far away galaxy",
+            "Some extraterrestrials",
+            "A small group of aliens from outside our reach"
+        ]
+
+        part_3 = [
+            "have come as a delegation to talk to our species!",
+            "have arrived to this Trade Hub for negociations!",
+            "are now here, and they are not happy!"
+        ]
+
+        part_4 = [
+            "They threaten to destroy our entire galaxy,",
+            "This Trade Hub, planet, and even indeed the whole galaxy,",
+            "Their threats are most worrying; to destroy the galaxy,"
+        ]
+
+        part_5 = [
+            "if their requests are not completely fulfilled!",
+            "unless we can provide them with a huge offering!",
+            "unless they are given a huge compensation!"
+        ]
+
+        part_6 = [
+            "The overlords' power system is entirely powered by croissants,",
+            "The aliens feed exclusively on the most excellent croissants,",
+            "They are working on an artificial planet made entirely of croissants,"
+        ]
+        
+        part_7 = [
+            f"and they ask for {cost} for not making our galaxy implode!",
+            f"and if {cost} are not provided, they will declare war on our galaxy!",
+            f"and they require {cost} if we do not want to get blown to bits!"
+        ]
+
+        part_8 = [
+            f"The Trade Hub offers {reward} in the name of the galaxy to anyone who can provide this!",
+            f"We are ready to provide {reward} for anyone who can help us save the world!",
+            f"Anyone who can give this will be rewarded with {reward} in the name of our galaxy!"
+        ]
+
+        return " ".join([
+            rng.choice(part_1),
+            rng.choice(part_2),
+            rng.choice(part_3),
+            rng.choice(part_4),
+            rng.choice(part_5),
+            rng.choice(part_6),
+            rng.choice(part_7),
+            rng.choice(part_8),
+        ])
+
+    @classmethod
+    def completion(
+            cls: typing.Type[typing.Self],
+            day_seed: str,
+            system_tile: space.SystemTradeHub
+        ) -> str:
+        rng = random.Random(utility.hash_args(day_seed, system_tile.tile_seed()))
+        cost = cls.get_price_description(day_seed, system_tile)
+        reward = cls.get_reward_description(day_seed, system_tile)
+
+        options = [
+            f"Hooray! The offering of {cost} was provided and the aliens have left! Here is your reward!",
+            f"It worked! The aliens have left! Thank you for your help and here are your {reward}!",
+            f"You will be remembered here as the one who saved the galaxy from certain doom! And of course, your {reward} are here!"
+        ]
+
+        return rng.choice(options)
+    
+    @classmethod
+    def get_cost(
+            cls,
+            day_seed: str,
+            system_tile: space.SystemTradeHub
+        ) -> list[tuple[str, int]]:
+        rng = random.Random(utility.hash_args(day_seed, system_tile.tile_seed()))
+
+        amount = rng.randint(10, 20) * 1920
+
+        return [(values.croissant.text, amount)]
+    
+    @classmethod
+    def get_reward(
+            cls,
+            day_seed: str,
+            system_tile: space.SystemTradeHub
+        ) -> list[tuple[str, int]]:
+        rng = random.Random(utility.hash_args(day_seed, system_tile.tile_seed()))
+
+        amount = rng.randint(10, 20) * 30
+
+        item = rng.choice(values.chess_pieces_black_biased)
+
+        return [(item.text, amount)]
+
+class Appease_The_French(Project):
+    """Written by Lilly."""
+    internal = "appease_the_french"
+    
+    @classmethod
+    def name(
+            cls,
+            day_seed: str,
+            system_tile: space.SystemTradeHub
+        ) -> str:
+        rng = random.Random(utility.hash_args(day_seed, system_tile.tile_seed()))
+        
+        options = [
+            "Appease the French",
+            "Feed the French",
+            "Pacify the French"
+        ]
+
+        return rng.choice(options)
+
+    @classmethod
+    def description(
+            cls,
+            day_seed: str,
+            system_tile: space.SystemTradeHub
+        ) -> str:
+        rng = random.Random(utility.hash_args(day_seed, system_tile.tile_seed()))
+
+        cost = cls.get_price_description(day_seed, system_tile)
+        reward = cls.get_reward_description(day_seed, system_tile)
+
+        part_1 = [
+            "Revolution!",
+            "Rebellion!",
+            "An uprising is upon us!"
+        ]
+
+        part_2 = [
+            "The local French population have begun rioting!",
+            "The French employees on this trade hub have unionized and begun to riot!",
+            "The French are up in arms!"
+        ]
+
+        part_3 = [
+            "We told them they could have some cake, but that just made them angrier!",
+            "Luckily, we can hide in our state-of-the-art armory for now!",
+            "They seem really hungry, so we offered them some cake, but it didn't seem to help."
+        ]
+
+        part_4 = [
+            "If we want to keep our heads, we'd better appease them.",
+            "It's in our best interest to appease them to keep everything peaceful.",
+            "We'd better find a peaceful solution before anyone loses their head."
+        ]
+
+        part_5 = [
+            "As everyone knows, the best way to reason with a French person is to give them a baguette.",
+            "Luckily, data from the cafeteria shows that each and every one of the protestors love baguettes.",
+            "However, we know that French people love their baguettes!"
+        ]
+
+        part_6 = [
+            f"According to our top analysts, we'd need {cost} to ensure a peaceful solution to this problem.",
+            f"Our estimates suggest we need at least {cost} to end this conflict.",
+            f"If we were to get {cost}, we could give them out to the protestors, ending the conflict swiftly."
+        ]
+
+        part_7 = [
+            f"The management at this Trade Hub is offering a {reward} reward to anyone who can supply the baguettes necessary.",
+            f"We at the Trade Hub are generously offering {reward} to any person who can supply the baguettes we need.",
+            f"Our compensation fund is allowing {reward} to anyone who is willing to help end this revolution through yeasty means."
+        ]
+
+        return " ".join([
+            rng.choice(part_1),
+            rng.choice(part_2),
+            rng.choice(part_3),
+            rng.choice(part_4),
+            rng.choice(part_5),
+            rng.choice(part_6),
+            rng.choice(part_7)
+        ])
+
+    @classmethod
+    def completion(
+            cls: typing.Type[typing.Self],
+            day_seed: str,
+            system_tile: space.SystemTradeHub
+        ) -> str:
+        rng = random.Random(utility.hash_args(day_seed, system_tile.tile_seed()))
+        reward = cls.get_reward_description(day_seed, system_tile)
+
+        options = [
+            f"Thank goodness! We got all the baguettes we needed to stop the revolution, and as compensation, you will recieve {reward}!",
+            f"Just in time! The French were all given baguettes to appease them, and they've stopped revolting! As a thank you, please take {reward}!",
+            f"That was close! The revolutionaries have successfully been appeased by giving them baguettes! As a thanks for helping, take {reward}!"
+        ]
+
+        return rng.choice(options)
+    
+    @classmethod
+    def get_cost(
+            cls,
+            day_seed: str,
+            system_tile: space.SystemTradeHub
+        ) -> list[tuple[str, int]]:
+        rng = random.Random(utility.hash_args(day_seed, system_tile.tile_seed()))
+
+        amount = rng.randint(10, 20) * 1920
+
+        return [(values.stuffed_flatbread.text, amount)]
+    
+    @classmethod
+    def get_reward(
+            cls,
+            day_seed: str,
+            system_tile: space.SystemTradeHub
+        ) -> list[tuple[str, int]]:
+        rng = random.Random(utility.hash_args(day_seed, system_tile.tile_seed()))
+
+        amount = rng.randint(10, 20) * 15
+
+        return [(values.gem_red.text, amount)]
+
+class Flatbread_Shortage(Project):
+    """Concept by Lilly, written by Kapola."""
+    internal = "flatbread_shortage"
+    
+    @classmethod
+    def name(
+            cls,
+            day_seed: str,
+            system_tile: space.SystemTradeHub
+        ) -> str:
+        rng = random.Random(utility.hash_args(day_seed, system_tile.tile_seed()))
+        
+        options = [
+            "Flatbread Shortage",
+            "Not Enough Flatbreads",
+            "Quick Destuffing",
+        ]
+
+        return rng.choice(options)
+
+    @classmethod
+    def description(
+            cls,
+            day_seed: str,
+            system_tile: space.SystemTradeHub
+        ) -> str:
+        rng = random.Random(utility.hash_args(day_seed, system_tile.tile_seed()))
+
+        cost = cls.get_price_description(day_seed, system_tile)
+        reward = cls.get_reward_description(day_seed, system_tile)
+
+        part_1 = [
+            "So, we just ran out of flatbreads.",
+            "Well, the Trade Hub cafeteria just ran into a flatbread shortage.",
+            "Unfortunately, the cafeteria here is short on flatbread today."
+        ]
+
+        part_2 = [
+            "Moreover, tomorrow is NATIONAL FLATBREAD DAY! We CAN'T let this happen!",
+            "And to make matters worse, tomorrow we have a delegation of... important people, who have heard about our famous flatbreads!",
+            "We need some now, or else our flatbread-eating demon will destroy us for failing to provide our daily offering!"
+        ]
+
+        part_3 = [
+            "We asked all around the Trade Hub for any spare flatbreads,",
+            "We went everywhere to see if anyone had some flatbreads,",
+            "The Trade Hub asked just about everyone here if anyone had anything,"
+        ]
+
+        part_4 = [
+            "but we haven't been successful!",
+            "but the Hub hasn't found a single seller!",
+            "unfortunately there is no one ready to give anything!"
+        ]
+
+        part_5 = [
+            "Plus, our next flatbread shipping is in a month's time!",
+            "We won't get a cargo of flatbread for weeks either!",
+            "The Trade Hub's next incoming flatbread shipping is in several weeks, so we can't count on that."
+        ]
+
+        part_6 = [
+            "Thankfully, something might save us:",
+            "An unlikely savior might be upon us, however:",
+            "There are at least some good news:"
+        ]
+        
+        part_7 = [
+            "if we could just get some stuffed flatbreads instead,",
+            "if the Hub got its hands on some stuffed flatbreads,",
+            "if someone would just offer stuffed flatbreads instead,"
+        ]
+
+        part_8 = [
+            "it would just be a matter of removing the stuffing to use the flatbreads,",
+            "we would simply need to remove the stuffing,",
+            "we could just remove the stuffing to get the flatbreads,"
+        ]
+
+        part_9 = [
+            "and then store that for a later date!",
+            "and then the stuffing could just be stored to use later!",
+            "we have space to store that to use some other time!"
+        ]
+
+        part_10 = [
+            f"The Trade Hub's analysts estimate they would need around {cost} to fill the demands,",
+            f"The Trade Hub thinks a total of {cost} would be required for all flatbread requirements,",
+            f"It is estimated that {cost} would be needed to have enough flatbreads;"
+        ]
+
+        part_11 = [
+            f"moreover the Hub would be willing to give {reward} as thanks to anyone who would provide such a gift!",
+            f"and {reward} could be given if you helped us in our task!",
+            f"if you just helped us get there, these {reward} would be all yours!"
+        ]
+
+        return " ".join([
+            rng.choice(part_1),
+            rng.choice(part_2),
+            rng.choice(part_3),
+            rng.choice(part_4),
+            rng.choice(part_5),
+            rng.choice(part_6),
+            rng.choice(part_7),
+            rng.choice(part_8),
+            rng.choice(part_9),
+            rng.choice(part_10),
+            rng.choice(part_11)
+        ])
+
+    @classmethod
+    def completion(
+            cls: typing.Type[typing.Self],
+            day_seed: str,
+            system_tile: space.SystemTradeHub
+        ) -> str:
+        rng = random.Random(utility.hash_args(day_seed, system_tile.tile_seed()))
+        reward = cls.get_reward_description(day_seed, system_tile)
+
+        options = [
+            f"Okay, it was enough! Ah, right, your reward, here.",
+            f"Thanks for your help! Here is your {reward}.",
+            f"Ah, thankfully everything worked out in the end! Wondering when that extra stuffing will come in handy. By the way, here's your {reward}."
+        ]
+
+        return rng.choice(options)
+    
+    @classmethod
+    def get_cost(
+            cls,
+            day_seed: str,
+            system_tile: space.SystemTradeHub
+        ) -> list[tuple[str, int]]:
+        rng = random.Random(utility.hash_args(day_seed, system_tile.tile_seed()))
+
+        amount = rng.randint(10, 20) * 960
+
+        return [(values.stuffed_flatbread.text, amount)]
+    
+    @classmethod
+    def get_reward(
+            cls,
+            day_seed: str,
+            system_tile: space.SystemTradeHub
+        ) -> list[tuple[str, int]]:
+        rng = random.Random(utility.hash_args(day_seed, system_tile.tile_seed()))
+
+        amount = rng.randint(10, 20) * 10
+
+        item = rng.choice(values.chess_pieces_white_biased)
+
+        return [(item.text, amount)]
+
+class Too_Much_Stuffing(Project):
+    """Concept by Lilly, written by Kapola."""
+    internal = "flatbread_shortage"
+    
+    @classmethod
+    def name(
+            cls,
+            day_seed: str,
+            system_tile: space.SystemTradeHub
+        ) -> str:
+        rng = random.Random(utility.hash_args(day_seed, system_tile.tile_seed()))
+        
+        options = [
+            "Too Much Stuffing",
+            "Stuffed Flatbread Shortage",
+            "Quick Restuffing",
+        ]
+
+        return rng.choice(options)
+
+    @classmethod
+    def description(
+            cls,
+            day_seed: str,
+            system_tile: space.SystemTradeHub
+        ) -> str:
+        rng = random.Random(utility.hash_args(day_seed, system_tile.tile_seed()))
+
+        cost = cls.get_price_description(day_seed, system_tile)
+        reward = cls.get_reward_description(day_seed, system_tile)
+
+        part_1 = [
+            "So, we just ran out of stuffed flatbreads.",
+            "Well, the Trade Hub cafeteria just ran into a stuffed flatbread shortage.",
+            "Unfortunately, the cafeteria here is short on stuffed flatbread today."
+        ]
+
+        part_2 = [
+            "Moreover, tomorrow is NATIONAL STUFFED FLATBREAD DAY! We CAN'T let this happen!",
+            "And to make matters worse, tomorrow we have a delegation of... important people, who have heard about our famous stuffed flatbreads!",
+            "We need some now, or else our stuffed flatbread-eating god will destroy us for failing to provide our daily offering!"
+        ]
+
+        part_3 = [
+            "We asked all around the Trade Hub for any spare stuffed flatbreads,",
+            "We went everywhere to see if anyone had some stuffed flatbreads,",
+            "The Trade Hub asked just about everyone here if anyone had anything,"
+        ]
+
+        part_4 = [
+            "but we haven't been successful!",
+            "but the Hub hasn't found a single seller!",
+            "unfortunately there is no one ready to give anything!"
+        ]
+
+        part_5 = [
+            "Plus, our next stuffed flatbread shipping is in a month's time!",
+            "We won't get a cargo of stuffed flatbread for weeks either!",
+            "The Trade Hub's next incoming stuffed flatbread shipping is in several weeks, so we can't count on that."
+        ]
+
+        part_6 = [
+            "Thankfully, something might save us:",
+            "An unlikely savior might be upon us, however:",
+            "There are at least some good news:"
+        ]
+        
+        part_7 = [
+            "a lot of stuffing is just laying around in the Hub's food storage!",
+            "loads of stuffing alone is in our storage!",
+            "we have a bunch of leftover stuffing in the pantries!"
+        ]
+
+        part_8 = [
+            "We don't exactly know where it came from,",
+            "No one's sure why it's there,",
+            "The Trade Hub has no record of its existence,"
+        ]
+
+        part_9 = [
+            "but if we could just get some regular flatbreads,",
+            "however if the Hub got its hands on some normal flatbreads,",
+            "thankfully if someone would just offer flatbreads,"
+        ]
+
+        part_10 = [
+            "the stuffing could just be put right in!",
+            "it would just be a matter of filling them with the stuffing!",
+            "we'd just need to put the stuffing back in!"
+        ]
+
+        part_11 = [
+            f"The Trade Hub's analysts estimate they would need around {cost} to fill the demands,",
+            f"The Trade Hub thinks a total of {cost} would be required for all stuffed flatbread requirements,",
+            f"It is estimated that {cost} would be needed to have enough stuffed flatbreads;"
+        ]
+
+        part_12 = [
+            f"moreover the Hub would be willing to give {reward} as thanks to anyone who would provide such a gift!",
+            f"and {reward} could be given if you helped us in our task!",
+            f"if you just helped us get there, these {reward} would be all yours!"
+        ]
+
+        return " ".join([
+            rng.choice(part_1),
+            rng.choice(part_2),
+            rng.choice(part_3),
+            rng.choice(part_4),
+            rng.choice(part_5),
+            rng.choice(part_6),
+            rng.choice(part_7),
+            rng.choice(part_8),
+            rng.choice(part_9),
+            rng.choice(part_10),
+            rng.choice(part_11),
+            rng.choice(part_12)
+        ])
+
+    @classmethod
+    def completion(
+            cls: typing.Type[typing.Self],
+            day_seed: str,
+            system_tile: space.SystemTradeHub
+        ) -> str:
+        rng = random.Random(utility.hash_args(day_seed, system_tile.tile_seed()))
+        reward = cls.get_reward_description(day_seed, system_tile)
+
+        options = [
+            f"Okay, it was enough! Ah, right, your reward, here.",
+            f"Thanks for your help! Here is your {reward}.",
+            f"Ah, thankfully everything worked out in the end! Still wondering where that extra stuffing came from. What a strange thing, eh? By the way, here's your {reward}."
+        ]
+
+        return rng.choice(options)
+    
+    @classmethod
+    def get_cost(
+            cls,
+            day_seed: str,
+            system_tile: space.SystemTradeHub
+        ) -> list[tuple[str, int]]:
+        rng = random.Random(utility.hash_args(day_seed, system_tile.tile_seed()))
+
+        amount = rng.randint(10, 20) * 1440
 
         return [(values.flatbread.text, amount)]
     
@@ -665,11 +1369,13 @@ class Flatbread_Feast(Project):
         ) -> list[tuple[str, int]]:
         rng = random.Random(utility.hash_args(day_seed, system_tile.tile_seed()))
 
-        amount = rng.randint(10, 20) * 50 + 100
+        amount = rng.randint(10, 20) * 15
 
-        item = rng.choice(values.all_rare_breads)
+        item = rng.choice(values.chess_pieces_white_biased)
 
         return [(item.text, amount)]
+
+##### Rare bread.
 
 class Waffle_Machine(Project):
     """Concept by Emily, written by Duck."""
@@ -806,7 +1512,7 @@ class Waffle_Machine(Project):
         ) -> list[tuple[str, int]]:
         rng = random.Random(utility.hash_args(day_seed, system_tile.tile_seed()))
 
-        amount = rng.randint(10, 20) * 1000
+        amount = rng.randint(10, 20) * 1280
 
         return [(values.waffle.text, amount)]
     
@@ -818,16 +1524,446 @@ class Waffle_Machine(Project):
         ) -> list[tuple[str, int]]:
         rng = random.Random(utility.hash_args(day_seed, system_tile.tile_seed()))
 
+        amount = rng.randint(10, 20) * 20
+
+        return [(values.gem_red.text, amount)]
+
+class Stolen_Donuts(Project):
+    """Written by Kapola."""
+    internal = "Stolen_Donuts"
+    
+    @classmethod
+    def name(
+            cls,
+            day_seed: str,
+            system_tile: space.SystemTradeHub
+        ) -> str:
+        rng = random.Random(utility.hash_args(day_seed, system_tile.tile_seed()))
+        
+        options = [
+            "Stolen Donuts",
+            "Missing Donuts",
+            "Duck Donuts"
+        ]
+
+        return rng.choice(options)
+
+    @classmethod
+    def description(
+            cls,
+            day_seed: str,
+            system_tile: space.SystemTradeHub
+        ) -> str:
+        rng = random.Random(utility.hash_args(day_seed, system_tile.tile_seed()))
+
+        cost = cls.get_price_description(day_seed, system_tile)
+        reward = cls.get_reward_description(day_seed, system_tile)
+
+        part_1 = [
+            "In the Trade Hub's cafeteria there are many shops,",
+            "The Trade Hub's cafeteria has an abundance of stores,",
+            "The cafeteria in the Trade Hub has a lot of stores,"
+        ]
+
+        part_2 = [
+            "some of these stores sell useful items when traversing space, but some are restaurants.",
+            "a portion of the stores sell things like gems, and a portion are restaurants.",
+            "while a big chunk of the stores sell things useful to an adventurer, there are a few restaurants at the cafeteria."
+        ]
+
+        part_3 = [
+            "Most of the time these restaurants run without problems,",
+            "The majority of the time the restaurants serve customers perfectly fine,",
+            "A lot of the time everything runs as expected at these restaurants,"
+        ]
+
+        part_4 = [
+            "but not always...",
+            "but Murphy's Law will always come true...",
+            "but things are bound to go wrong..."
+        ]
+
+        part_5 = [
+            "You see, the Duck Donuts location at this Trade Hub has run into a slight issue.",
+            "As expected to happen eventually, the restaurant called Duck Donuts has found a problem.",
+            "Around last Sunday, the Duck Donuts restaurant reported some troubling news."
+        ]
+
+        part_6 = [
+            "All of their donut ingredients were stolen!",
+            "Every single ingredient they had to make donuts was taken by a thief!",
+            "The donut ingredients were robbed!"
+        ]
+
+        part_7 = [
+            "Until the new ingredients can arrive from corporate",
+            "Before new ingredients arrive",
+            "Prior to new ingredients arriving"
+        ]
+
+        part_8 = [
+            "Duck Donuts cannot serve anybody!",
+            "nobody can get any donuts!",
+            "no donuts can be served!"
+        ]
+
+        part_9 = [
+            "A estimation from Duck Donuts",
+            "A quick calculation",
+            "The current DonutModel™️ "
+        ]
+
+        part_10 = [
+            f"states that {cost} would be required to fill the gap.",
+            f"says just {cost} would be sufficient to keep customers happy.",
+            f"describes a scenario that would fix the issue, and it would only require {cost}!"
+        ]
+
+        part_11 = [
+            f"If somebody is able to provide the donuts required, Duck Donuts says they will be rewarded with {reward}!",
+            f"Duck Donuts has placed a bounty of {reward} to the first person able to provide the donuts required!",
+            f"A reward of {reward} has been posted by Duck Donuts to be claimed by whoever helps them in their time of need!"
+        ]
+
+        return " ".join([
+            rng.choice(part_1),
+            rng.choice(part_2),
+            rng.choice(part_3),
+            rng.choice(part_4),
+            rng.choice(part_5),
+            rng.choice(part_6),
+            rng.choice(part_7),
+            rng.choice(part_8),
+            rng.choice(part_9),
+            rng.choice(part_10),
+            rng.choice(part_11)
+        ])
+
+    @classmethod
+    def completion(
+            cls: typing.Type[typing.Self],
+            day_seed: str,
+            system_tile: space.SystemTradeHub
+        ) -> str:
+        rng = random.Random(utility.hash_args(day_seed, system_tile.tile_seed()))
+        cost = cls.get_price_description(day_seed, system_tile)
+
+        options = [
+            f"Yippee! The predictions were correct and exactly {cost} was sold!",
+            f"It worked! Exactly {cost} was sold at Duck Donuts and everybody was happy!",
+            "Very well done! All the donuts required were given and were all sold, every single one!"
+        ]
+
+        return rng.choice(options)
+    
+    @classmethod
+    def get_cost(
+            cls,
+            day_seed: str,
+            system_tile: space.SystemTradeHub
+        ) -> list[tuple[str, int]]:
+        rng = random.Random(utility.hash_args(day_seed, system_tile.tile_seed()))
+
+        amount = rng.randint(10, 20) * 1280
+
+        return [(values.doughnut.text, amount)]
+    
+    @classmethod
+    def get_reward(
+            cls,
+            day_seed: str,
+            system_tile: space.SystemTradeHub
+        ) -> list[tuple[str, int]]:
+        rng = random.Random(utility.hash_args(day_seed, system_tile.tile_seed()))
+
         amount = rng.randint(10, 20) * 10
 
-        item = rng.choice(values.chess_pieces_white_biased)
+        return [(values.gem_blue.text, amount)]
 
-        return [(item.text, amount)]
+class Ecosystem_Problem(Project):
+    """Written by Duck."""
+    internal = "ecosystem_problem"
     
-##### Rare bread.
+    @classmethod
+    def name(
+            cls,
+            day_seed: str,
+            system_tile: space.SystemTradeHub
+        ) -> str:
+        rng = random.Random(utility.hash_args(day_seed, system_tile.tile_seed()))
+        
+        options = [
+            "Ecosystem Problem",
+            "Stop it now!",
+            "Nefarious Birds"
+        ]
+
+        return rng.choice(options)
+
+    @classmethod
+    def description(
+            cls,
+            day_seed: str,
+            system_tile: space.SystemTradeHub
+        ) -> str:
+        rng = random.Random(utility.hash_args(day_seed, system_tile.tile_seed()))
+
+        cost = cls.get_price_description(day_seed, system_tile)
+        reward = cls.get_reward_description(day_seed, system_tile)
+
+        part_1 = [
+            "So, the Trade Hub has an animal ecosystem on board.",
+            "The Trade Hub design contains an on-board animal ecosystem.",
+            "The current Trade Hub model has its own animal ecosystem."
+        ]
+
+        part_2 = [
+            "Typically this ecosystem runs fine without human intervention,",
+            "Normally the ecosystem runs without a hitch,",
+            "Most of the time the ecosystem is self-sustaining and runs smoothly,"
+        ]
+
+        part_3 = [
+            "but things have gone awry recently.",
+            "but recently an issue has been spotted.",
+            "but in the past few days the ecosystem overseers have noticed a problem."
+        ]
+
+        part_4 = [
+            "Some birds have been seen recently doing something abnormal.",
+            "More and more birds as of late have been spotted doing something weird.",
+            "Most of the birds residing in a specific area have started doing something odd."
+        ]
+
+        part_5 = [
+            "Instead of flying around their typical area, they have started flying over the sea instead.",
+            "They've begun flying over the sea instead of their regular area.",
+            "The birds have been flying above the sea instead of where they typically reside."
+        ]
+
+        part_6 = [
+            "This is a big issue as they're no longer keeping the animal populations in check.",
+            "This is a problem because the birds have stopped making sure the animal population is normal.",
+            "By doing this the animal population is increasing to problematic amounts due to the absense of birds, which is a slight issue."
+        ]
+
+        part_7 = [
+            f"The wildlife experts on board the Trade Hub have concluded that by releasing {cost} into the wild it would solve the problem.",
+            f"The Trade Hub's wildlife experts think that adding {cost} to the ecosystem would result in things returning to normal.",
+            f"Onboard wildlife experts have predicted that introducing {cost} to the environment would be sufficient and fix the issues."
+        ]
+
+        part_8 = [
+            f"They are also offering {reward} to whoever is able to provide the needed items.",
+            f"A reward of {reward} has been announced by the wildlife experts.",
+            f"The wildlife experts have proposed {reward} to the first person to provide the required items."
+        ]
+
+        part_9 = [
+            "They found it under a tree one day, are slightly concerned it's magical, and want to get rid of it.",
+            "It was found in a cave on the west side of the ecosystem and the wildlife experts have their doubts as to whether it is actually from 1834 as Jeff keeps saying.",
+            "The wildlife experts are concerned it is releasing Blåhaj into the atmosphere. While this is not necessarily bad they're concerned it may affect the trout population."
+        ]
+
+        return " ".join([
+            rng.choice(part_1),
+            rng.choice(part_2),
+            rng.choice(part_3),
+            rng.choice(part_4),
+            rng.choice(part_5),
+            rng.choice(part_6),
+            rng.choice(part_7),
+            rng.choice(part_8),
+            rng.choice(part_9)
+        ])
+
+    @classmethod
+    def completion(
+            cls: typing.Type[typing.Self],
+            day_seed: str,
+            system_tile: space.SystemTradeHub
+        ) -> str:
+        rng = random.Random(utility.hash_args(day_seed, system_tile.tile_seed()))
+
+        options = [
+            "It worked! The animal population has returned to normal!",
+            "Success! The population of animals returned to what is considered normal by the wildlife experts.",
+            "Yippee! Everything went as expected and the ecosystem has returned to how it was prior to this unfortunate event."
+        ]
+
+        return rng.choice(options)
+    
+    @classmethod
+    def get_cost(
+            cls,
+            day_seed: str,
+            system_tile: space.SystemTradeHub
+        ) -> list[tuple[str, int]]:
+        rng = random.Random(utility.hash_args(day_seed, system_tile.tile_seed()))
+
+        amount = rng.randint(10, 20) * 1280
+
+        return [(values.bagel.text, amount)]
+    
+    @classmethod
+    def get_reward(
+            cls,
+            day_seed: str,
+            system_tile: space.SystemTradeHub
+        ) -> list[tuple[str, int]]:
+        rng = random.Random(utility.hash_args(day_seed, system_tile.tile_seed()))
+
+        amount = rng.randint(10, 20) * 5
+
+        return [(values.gem_purple.text, amount)]
 
 ##### Black chess pieces.
 
+class Board_Game_Festival(Project):
+    """Written by Kapola."""
+    internal = "board_game_festival"
+    
+    @classmethod
+    def name(
+            cls,
+            day_seed: str,
+            system_tile: space.SystemTradeHub
+        ) -> str:
+        rng = random.Random(utility.hash_args(day_seed, system_tile.tile_seed()))
+        
+        options = [
+            "Board Game Festival",
+            "GameFest",
+            "Missing Pawns"
+        ]
+
+        return rng.choice(options)
+
+    @classmethod
+    def description(
+            cls,
+            day_seed: str,
+            system_tile: space.SystemTradeHub
+        ) -> str:
+        rng = random.Random(utility.hash_args(day_seed, system_tile.tile_seed()))
+
+        cost = cls.get_cost(day_seed, system_tile)[0][1]
+        reward = cls.get_reward_description(day_seed, system_tile)
+
+        part_1 = [
+            "Okay, so you see, this Hub here holds an annual board game festival.",
+            "It is an annual occurence in this Trade Hub to hold a board game festival.",
+            "The GameFest is an annual board game festival that takes place in this Trade Hub and many others."
+        ]
+
+        part_2 = [
+            "In the festival there are lots of board games;",
+            "Many games are available at the festival;",
+            "There are a large amount of games to play at the festival;"
+        ]
+
+        part_3 = [
+            "checkers, The Minion, Katan, Capitalism Game, Crabble, and of course, Chess, are only some of the games you can play.",
+            "Detective, Le Monopole, The Minion, COVID-19 But There's 4 Of Them, and obviously, Chess, among many others."
+        ]
+
+        part_4 = [
+            "Now, you see, many of these games require some kind of playing pawns,",
+            "Many of those games require pawns to play,",
+            "A lot of board games among those are played with some sort of pawns,"
+        ]
+
+        part_5 = [
+            "however, every year, the same tragedy strikes: the Pawn Thief!",
+            "unfortunately, there is always one slight hiccup with that, every single year: the Pawn Thief!",
+            "however, in every instance of the festival, there was one issue with this: the Pawn Thief!"
+        ]
+
+        part_6 = [
+            "Every year, they come and steal all our pawns,",
+            "Every festival, all our pawns are stolen by this mysterious individual,",
+            "There is not a single time where the pawns were not taken by this masked figure,"
+        ]
+
+        part_7 = [
+            "and despite our best protection efforts, this year was no exception!",
+            "and well, even though we tried to prevent it, we again didn't succeed!",
+            "and unfortunately, they were again successful!"
+        ]
+
+        part_8 = [
+            "So as with every year, we are left asking our customers for help!",
+            "That means you will have to provide us with pawns if you wish for this event to happen!",
+            "Our only option is therefore to source our pawns from the future players!"
+        ]
+
+        part_9 = [
+            f"As with every year, we have a {reward} reward prepared in advance for exactly this event,",
+            f"Just like usual, we have a reward ({reward}) prepared specifically for this occasion,",
+            f"We have {reward} prepared for precisely this eventuality,"
+        ]
+
+        part_10 = [
+            f"that we will give to anyone who can provide us {cost} for the festival!",
+            f"and it will be given to any generous soul who can provide us {cost} for the festival!",
+            f"and anyone who can provide {cost} will find themself winner of this reward for saving the festival!"
+        ]
+
+        return " ".join([
+            rng.choice(part_1),
+            rng.choice(part_2),
+            rng.choice(part_3),
+            rng.choice(part_4),
+            rng.choice(part_5),
+            rng.choice(part_6),
+            rng.choice(part_7),
+            rng.choice(part_8),
+            rng.choice(part_9),
+            rng.choice(part_10)
+        ])
+
+    @classmethod
+    def completion(
+            cls: typing.Type[typing.Self],
+            day_seed: str,
+            system_tile: space.SystemTradeHub
+        ) -> str:
+        rng = random.Random(utility.hash_args(day_seed, system_tile.tile_seed()))
+
+        reward = cls.get_reward_description(day_seed, system_tile)
+
+        options = [
+            f"Well, that was enough! You earned yourself... a free spot in the next chess tournament! What, you were promised a *reward*? {reward}? Ugh, they weren't fooled again! Ah, just take it already! ",
+            f"Woo! The Festival is saved! Exactly like every other year! Here's your {reward}!",
+            f"You did it! Congratulations! The Board Game festival is up and running! Here's your {reward} as promised!"
+        ]
+
+        return rng.choice(options)
+    
+    @classmethod
+    def get_cost(
+            cls,
+            day_seed: str,
+            system_tile: space.SystemTradeHub
+        ) -> list[tuple[str, int]]:
+        rng = random.Random(utility.hash_args(day_seed, system_tile.tile_seed()))
+
+        amount = rng.randint(2, 6) * 1024
+
+        return [(values.black_pawn.text, amount)]
+    
+    @classmethod
+    def get_reward(
+            cls,
+            day_seed: str,
+            system_tile: space.SystemTradeHub
+        ) -> list[tuple[str, int]]:
+        rng = random.Random(utility.hash_args(day_seed, system_tile.tile_seed()))
+
+        amount = rng.randint(2, 6) * 8
+
+        return [(values.anarchy_black_pawn.text, amount)]
+    
 class Round_Table(Project):
     """Concept by Emily, written by ChatGPT."""
     internal = "round_table"
@@ -960,7 +2096,7 @@ class Round_Table(Project):
         ) -> list[tuple[str, int]]:
         rng = random.Random(utility.hash_args(day_seed, system_tile.tile_seed()))
 
-        amount = rng.randint(4, 8) * 50
+        amount = rng.randint(2,6) * 256
 
         return [(values.black_knight.text, amount)]
     
@@ -972,11 +2108,422 @@ class Round_Table(Project):
         ) -> list[tuple[str, int]]:
         rng = random.Random(utility.hash_args(day_seed, system_tile.tile_seed()))
 
-        amount = rng.randint(4, 8) * 5
+        amount = rng.randint(2, 6) * 2
 
-        return [(values.gem_gold.text, amount)]
+        return [(values.anarchy_black_knight.text, amount)]
+    
+class Chess_Tournament(Project):
+    """Written by Kapola."""
+    internal = "chess_tournament"
+    
+    @classmethod
+    def name(
+            cls,
+            day_seed: str,
+            system_tile: space.SystemTradeHub
+        ) -> str:
+        rng = random.Random(utility.hash_args(day_seed, system_tile.tile_seed()))
+        
+        options = [
+            "Chess Tournament",
+            "Bishops Missing",
+            "Tournament Problem"
+        ]
+
+        return rng.choice(options)
+
+    @classmethod
+    def description(
+            cls,
+            day_seed: str,
+            system_tile: space.SystemTradeHub
+        ) -> str:
+        rng = random.Random(utility.hash_args(day_seed, system_tile.tile_seed()))
+
+        cost = cls.get_cost(day_seed, system_tile)[0][1]
+        reward = cls.get_reward_description(day_seed, system_tile)
+
+        part_1 = [
+            "5 minutes until signups end for the Trade Hub Chess Tournament!",
+            "There are only 10 minutes left to enter the Chess Tourney!",
+            "To all visitors! Only 15 minutes until the Chess Tournament starts!"
+        ]
+
+        part_2 = [
+            "If you want to sign up, please head to the...",
+            "Prize for winning! Signups are at the...",
+            "We highly recommend you enter! You can find the inscriptions at..."
+        ]
+
+        part_3 = [
+            "wait, what's that?",
+            "what do I hear?",
+            "what is this news?"
+        ]
+
+        part_4 = [
+            "Oh no!",
+            "That's not good!",
+            "We have a problem here!"
+        ]
+
+        part_5 = [
+            "We ordered all the chess pieces for the tournament in bulk,",
+            "The pieces were supposed to come sorted by type,",
+            "We meant to have a bulk order of each piece,"
+        ]
+
+        part_6 = [
+            "but somehow the black bishops didn't get delivered!",
+            "but we did not receive any black bishops!",
+            "however the order of black bishops didn't get through!"
+        ]
+
+        part_7 = [
+            "Is there anyone who has some spares for us?",
+            "Would any generous soul be able to help the tourney?",
+            "Anyone with a donation to help?"
+        ]
+
+        part_8 = [
+            "We're in need of... um, let me check...",
+            "We need... yes? Ah...",
+            "What do we need? Let me see..."
+        ]
+
+        part_9 = [
+            f"{cost}!",
+            f"it looks like we need {cost}!",
+            f"that's a lot! We still need {cost}!"
+        ]
+
+        part_10 = [
+            f"The Trade Hub would offer {reward} in exchange for those pieces!",
+            f"We're offering a reward of {reward} for all those bishops!",
+            f"We have some {reward} to offer to someone who could help!"
+        ]
+
+        return " ".join([
+            rng.choice(part_1),
+            rng.choice(part_2),
+            rng.choice(part_3),
+            rng.choice(part_4),
+            rng.choice(part_5),
+            rng.choice(part_6),
+            rng.choice(part_7),
+            rng.choice(part_8),
+            rng.choice(part_9),
+            rng.choice(part_10)
+        ])
+
+    @classmethod
+    def completion(
+            cls: typing.Type[typing.Self],
+            day_seed: str,
+            system_tile: space.SystemTradeHub
+        ) -> str:
+        rng = random.Random(utility.hash_args(day_seed, system_tile.tile_seed()))
+
+        reward = cls.get_reward_description(day_seed, system_tile)
+
+        options = [
+            f"Let the tournament begin! Oh, right, your reward! Here it is, your precious {reward}!",
+            f"And here is your {reward}, as promised! The Trade Hub never lets down, huh? Well make sure to come back here in the future!",
+            f"There's your {reward}... wait, you're not participating in the tournament???"
+        ]
+
+        return rng.choice(options)
+    
+    @classmethod
+    def get_cost(
+            cls,
+            day_seed: str,
+            system_tile: space.SystemTradeHub
+        ) -> list[tuple[str, int]]:
+        rng = random.Random(utility.hash_args(day_seed, system_tile.tile_seed()))
+
+        amount = rng.randint(2,6) * 256
+
+        return [(values.black_bishop.text, amount)]
+    
+    @classmethod
+    def get_reward(
+            cls,
+            day_seed: str,
+            system_tile: space.SystemTradeHub
+        ) -> list[tuple[str, int]]:
+        rng = random.Random(utility.hash_args(day_seed, system_tile.tile_seed()))
+
+        amount = rng.randint(2, 6) * 2
+
+        return [(values.anarchy_black_bishop.text, amount)]
     
 ##### White chess pieces.
+
+class Fortress_Building(Project):
+    """Written by Kapola."""
+    internal = "fortress_building"
+    
+    @classmethod
+    def name(
+            cls,
+            day_seed: str,
+            system_tile: space.SystemTradeHub
+        ) -> str:
+        rng = random.Random(utility.hash_args(day_seed, system_tile.tile_seed()))
+        
+        options = [
+            "Fortress Building",
+            "New Defences",
+            "Materials Missing for Fortress"
+        ]
+
+        return rng.choice(options)
+
+    @classmethod
+    def description(
+            cls,
+            day_seed: str,
+            system_tile: space.SystemTradeHub
+        ) -> str:
+        rng = random.Random(utility.hash_args(day_seed, system_tile.tile_seed()))
+
+        cost = cls.get_price_description(day_seed, system_tile)
+        reward = cls.get_reward_description(day_seed, system_tile)
+
+        part_1 = [
+            "The Trade Hub's building a fortress right now,",
+            "We're getting equipped with a brand new fortress,",
+            "This construction space is for building a defense fortress,"
+        ]
+
+        part_2 = [
+            "which will help the Trade Hub defend against invaders!",
+            "in order to defend against an increasing number of bandits.",
+            "which is to protect the Trade Hub from rival spaceships!"
+        ]
+
+        part_3 = [
+            "It is one of the largest projects overseen here to date,",
+            "This huge project makes us all proud of this Hub,",
+            "The project is one of the biggest undertaken here,"
+        ]
+
+        part_4 = [
+            "but we just ran out of towers for it!",
+            "unfortunately while the walls are done, towers are lacking!",
+            "sadly we're missing materials for some towers."
+        ]
+        
+        part_5 = [
+            "What's that? They're called *rooks*? Why? Well, *rooks* then.",
+            "What, *rooks*? Why did we call them that? Ah well.",
+            "Wait, why are they *rooks*? Who chose that stupid name? Anyway."
+        ]
+        
+        part_6 = [
+            "If you could provide us with some... *rooks* to build the fortress,",
+            "If you just donated a couple \"rooks\" for the construction,",
+            "Please just help us get enough \"rooks\" for the building,"
+        ]
+        
+        part_7 = [
+            f"we could give you {reward}!",
+            f"and we could give you some... ah, yes, {reward}!",
+            f"and these {reward} would be all yours!"
+        ]
+        
+        part_8 = [
+            f"We just need {cost}, by the way.",
+            f"We need a full {cost}, and quick! We hear an invasion's on the way.",
+            f"{cost} is what you should give us, before the next raid arrives!"
+        ]
+
+        return " ".join([
+            rng.choice(part_1),
+            rng.choice(part_2),
+            rng.choice(part_3),
+            rng.choice(part_4),
+            rng.choice(part_5),
+            rng.choice(part_6),
+            rng.choice(part_7),
+            rng.choice(part_8)
+        ])
+
+    @classmethod
+    def completion(
+            cls: typing.Type[typing.Self],
+            day_seed: str,
+            system_tile: space.SystemTradeHub
+        ) -> str:
+        rng = random.Random(utility.hash_args(day_seed, system_tile.tile_seed()))
+        reward = cls.get_reward_description(day_seed, system_tile)
+
+        options = [
+            f"Look, here they come! And... ouch, destroyed! Well, thanks for the towers, I mean rooks, and take these {reward}!",
+            f"Well, the building is completed, hope it fares well! Here's your {reward}!",
+            f"Did you hear! The towers... I mean, rooks, were instrumental in defeating the latest raid! Ah, yes the {reward}, right, here it is!"
+        ]
+
+        return rng.choice(options)
+    
+    @classmethod
+    def get_cost(
+            cls,
+            day_seed: str,
+            system_tile: space.SystemTradeHub
+        ) -> list[tuple[str, int]]:
+        rng = random.Random(utility.hash_args(day_seed, system_tile.tile_seed()))
+
+        amount = rng.randint(2,6) * 256
+        return [(values.white_rook.text, amount)]
+    
+    @classmethod
+    def get_reward(
+            cls,
+            day_seed: str,
+            system_tile: space.SystemTradeHub
+        ) -> list[tuple[str, int]]:
+        rng = random.Random(utility.hash_args(day_seed, system_tile.tile_seed()))
+
+        amount = rng.randint(2, 6) * 2
+        return [(values.anarchy_white_rook.text, amount)]
+
+class Offering_Ritual(Project):
+    """Written by Kapola."""
+    internal = "offering_ritual"
+    
+    @classmethod
+    def name(
+            cls,
+            day_seed: str,
+            system_tile: space.SystemTradeHub
+        ) -> str:
+        rng = random.Random(utility.hash_args(day_seed, system_tile.tile_seed()))
+        
+        options = [
+            "Offering Ritual",
+            "Chess Piece Offering",
+            "Chess Offering Ritual"
+        ]
+
+        return rng.choice(options)
+
+    @classmethod
+    def description(
+            cls,
+            day_seed: str,
+            system_tile: space.SystemTradeHub
+        ) -> str:
+        rng = random.Random(utility.hash_args(day_seed, system_tile.tile_seed()))
+
+        cost = cls.get_price_description(day_seed, system_tile)
+        reward = cls.get_reward_description(day_seed, system_tile)
+
+        part_1 = [
+            "Attention attention!",
+            "Announcement to all Trade Hub customers!",
+            "Important announcement!"
+        ]
+
+        part_2 = [
+            "As you may already know,",
+            "You may already be aware of this, but",
+            "As you should know by now,"
+        ]
+
+        part_3 = [
+            "this Trade Hub holds a daily offering ritual to appease our gods.",
+            "this Trade Hub has a long-standing tradition of holding daily offerings burned by fire.",
+            "here there are daily rituals that we believe are required to keep the Trade Hub running."
+        ]
+
+        part_4 = [
+            "The sacrifice varies each day,",
+            "What it is that we offer depends on a complicated calendar,",
+            "The offered item is chosen by a complex process to make our overlords happy,"
+        ]
+        
+        part_5 = [
+            "and this day, the item chosen is a chess piece,",
+            "and today, our calendars dictate a chess piece should be offered,",
+            "and our system specifies that today it is a chess piece that is needed for sacrifice,"
+        ]
+        
+        part_6 = [
+            "more specifically a white queen used for standard tournament play!",
+            "particularly a type of white queen piece!",
+            "specifically a standard white queen chess piece!"
+        ]
+        
+        part_7 = [
+            "However, it appears the Trade Hub is all out of stock!",
+            "Unfortunately, the Trade Hub sold all the stock it had left a few days ago!",
+            "Sadly, all these have been sold out, and the shipment that was supposed to arrive 2 days ago is still stuck in Albuquerque."
+        ]
+        
+        part_8 = [
+            "We will therefore need to source our offerings from the populace!",
+            "Our only option is then to find the missing pieces from the people!",
+            "This is why we must ask you, dear customers, to provide us with our needs!"
+        ]
+        
+        part_9 = [
+            f"There is a {reward} reward put up to anyone who can provide {cost} to help our cause!",
+            f"There are still a whopping {cost} needed for the offering; the Trade Hub offers {reward} to anyone who can provide this!",
+            f"Anyone who can provide the missing {cost} will be rewarded with {reward}!"
+        ]
+
+        return " ".join([
+            rng.choice(part_1),
+            rng.choice(part_2),
+            rng.choice(part_3),
+            rng.choice(part_4),
+            rng.choice(part_5),
+            rng.choice(part_6),
+            rng.choice(part_7),
+            rng.choice(part_8),
+            rng.choice(part_9)
+        ])
+
+    @classmethod
+    def completion(
+            cls: typing.Type[typing.Self],
+            day_seed: str,
+            system_tile: space.SystemTradeHub
+        ) -> str:
+        rng = random.Random(utility.hash_args(day_seed, system_tile.tile_seed()))
+        reward = cls.get_reward_description(day_seed, system_tile)
+
+        options = [
+            f"{reward} are now yours! And don't question what we did to those pieces.",
+            f"The whole thing went absolutely perfectly, and the offering was successfully sent to the endless flames of hell and despair! Here are your totally legally obtained {reward}.",
+            f"YES, THANKS TO YOU WE WERE ABLE TO CONTINUE OUR CHESS PIECE TRAFFICKI- uh I mean, yes, the ritual went very well! Just take these {reward}!"
+        ]
+
+        return rng.choice(options)
+    
+    @classmethod
+    def get_cost(
+            cls,
+            day_seed: str,
+            system_tile: space.SystemTradeHub
+        ) -> list[tuple[str, int]]:
+        rng = random.Random(utility.hash_args(day_seed, system_tile.tile_seed()))
+
+        amount = rng.randint(2,6) * 128
+        return [(values.white_queen.text, amount)]
+    
+    @classmethod
+    def get_reward(
+            cls,
+            day_seed: str,
+            system_tile: space.SystemTradeHub
+        ) -> list[tuple[str, int]]:
+        rng = random.Random(utility.hash_args(day_seed, system_tile.tile_seed()))
+
+        amount = rng.randint(2, 6)
+        return [(values.anarchy_white_queen.text, amount)]
 
 class Royal_Summit(Project):
     """Concept by Emily, written by ChatGPT."""
@@ -1239,7 +2786,674 @@ class Emergency_Fuel(Project):
 
         return [(values.gem_blue.text, amount)]
 
+class Gem_Mining(Project):
+    """Written by Duck."""
+    internal = "gem_mining"
+    
+    @classmethod
+    def name(
+            cls,
+            day_seed: str,
+            system_tile: space.SystemTradeHub
+        ) -> str:
+        rng = random.Random(utility.hash_args(day_seed, system_tile.tile_seed()))
+        
+        options = [
+            "Gem Mining",
+            "Mining World",
+            "Mining Request",
+        ]
+
+        return rng.choice(options)
+
+    @classmethod
+    def description(
+            cls,
+            day_seed: str,
+            system_tile: space.SystemTradeHub
+        ) -> str:
+        rng = random.Random(utility.hash_args(day_seed, system_tile.tile_seed()))
+
+        cost = cls.get_price_description(day_seed, system_tile)
+        reward = cls.get_reward_description(day_seed, system_tile)
+
+        part_1 = [
+            "Of all the things in the reaches of space",
+            "Throughout the wonders in the depths of space",
+            "Of all the marvels in the depths of space"
+        ]
+
+        part_2 = [
+            "\nNothing compares to this nice little place",
+            "\nNothing can match this solitary place",
+            "\nNothing compares to this quaint little place"
+        ]
+
+        part_3 = [
+            "\nA good mining planet crunching out gems",
+            "\nA mining planet, producing nice gems",
+            "\nPlanets for mining are making the gems"
+        ]
+
+        part_4 = [
+            "\nThe things were the source and also the stems",
+            "\nThey are are the heart and also the stems",
+            "\nThey're the lifeblood, the roots, and also the stems"
+        ]
+
+        part_5 = [
+            "\nThe tools broke down, they're in need of repair",
+            "\nThe tools are broken, they need some repair,",
+            "\nThe tools have failed, they need urgent repair,"
+        ]
+
+        part_6 = [
+            "\nThey're asking folks for whatever they spare",
+            "\nThey're in need of help, for all you can spare",
+            "\nThey are seeking aid, for all you can spare."
+        ]
+
+        part_7 = [
+            "\nSupplies of blue are very sufficient",
+            "\nSupplies of blue, abundant, sufficient",
+            "\nProviding blue gems would be sufficient"
+        ]
+
+        part_8 = [
+            "\nReturning to calls of \"very efficient\"",
+            "\nHeeding the calls of \"work done proficient\"",
+            "\nResponding to calls for work quite proficient."
+        ]
+
+        part_9 = [
+            f"\n\n{reward} has been stated by the mining world for providing {cost}.",
+            f"\n\nA reward of {reward} has been posted for a cost of {cost}.",
+            f"\n\nThe mining world has offered {reward} for anyone able to provide {cost}."
+        ]
+
+        return " ".join([
+            rng.choice(part_1),
+            rng.choice(part_2),
+            rng.choice(part_3),
+            rng.choice(part_4),
+            rng.choice(part_5),
+            rng.choice(part_6),
+            rng.choice(part_7),
+            rng.choice(part_8),
+            rng.choice(part_9)
+        ])
+
+    @classmethod
+    def completion(
+            cls: typing.Type[typing.Self],
+            day_seed: str,
+            system_tile: space.SystemTradeHub
+        ) -> str:
+        rng = random.Random(utility.hash_args(day_seed, system_tile.tile_seed()))
+
+        options = [
+            "The gems were enough and the mining planet has returned to full efficiency!",
+            "Yay! The gems you gave were sufficient to bring the mining planet to maximum efficiency!",
+            "You did it! Congratulations! The mining planet is back up and running! I will now take your spleen."
+        ]
+
+        return rng.choice(options)
+    
+    @classmethod
+    def get_cost(
+            cls,
+            day_seed: str,
+            system_tile: space.SystemTradeHub
+        ) -> list[tuple[str, int]]:
+        rng = random.Random(utility.hash_args(day_seed, system_tile.tile_seed()))
+
+        amount = rng.randint(2, 6) * 50 + 100
+
+        return [(values.gem_blue.text, amount)]
+    
+    @classmethod
+    def get_reward(
+            cls,
+            day_seed: str,
+            system_tile: space.SystemTradeHub
+        ) -> list[tuple[str, int]]:
+        rng = random.Random(utility.hash_args(day_seed, system_tile.tile_seed()))
+
+        amount = rng.randint(2, 6) * 45
+
+        return [(values.gem_purple.text, amount)]
+
+class Jewelry_Store(Project):
+    """Written by Kapola."""
+    internal = "jewelry_store"
+    
+    @classmethod
+    def name(
+            cls,
+            day_seed: str,
+            system_tile: space.SystemTradeHub
+        ) -> str:
+        rng = random.Random(utility.hash_args(day_seed, system_tile.tile_seed()))
+        
+        options = [
+            "Jewelry Store",
+            "New Jewelry Shop",
+            "Jewelry Shop Opening",
+        ]
+
+        return rng.choice(options)
+
+    @classmethod
+    def description(
+            cls,
+            day_seed: str,
+            system_tile: space.SystemTradeHub
+        ) -> str:
+        rng = random.Random(utility.hash_args(day_seed, system_tile.tile_seed()))
+
+        cost = cls.get_price_description(day_seed, system_tile)
+        reward = cls.get_reward_description(day_seed, system_tile)
+
+        part_1 = [
+            "Announcement! Looking for volunteers to sell gems!",
+            "Hello there, you! It looks like you may be able to help us!",
+            "The Trade Hub is in need of gems, looking for any help!"
+        ]
+
+        part_2 = [
+            "The brand new jewelry store is about to open,",
+            "We're preparing for the grand opening of our new jewelry shop,",
+            "Our new shop for jewelry is almost ready,"
+        ]
+
+        part_3 = [
+            "but we're missing a type of gem, the purple ones.",
+            "however purple gems are lacking.",
+            "sadly our last purple gems were just shipped yesterday."
+        ]
+
+        part_4 = [
+            "The Trade Hub is looking for people to sell their gems,",
+            "We're taking any donations that we can get,",
+            "The Trade Hub would greatly appreciate any donations,"
+        ]
+
+        part_5 = [
+            "and a generous reward will be offered in exchange for it!",
+            "and we have a reward on the table!",
+            "and you could be the winner of a large prize!"
+        ]
+
+        part_6 = [
+            f"All you need is to give us the required {cost},",
+            f"We just need {cost} from you,",
+            f"We're only asking for {cost},"
+        ]
+
+        part_7 = [
+            f"and you would get {reward} in exchange.",
+            f"and the {reward} we're offering definitely seems worth that!",
+            f"and you'll obtain a generous {reward}."
+        ]
+
+        return " ".join([
+            rng.choice(part_1),
+            rng.choice(part_2),
+            rng.choice(part_3),
+            rng.choice(part_4),
+            rng.choice(part_5),
+            rng.choice(part_6),
+            rng.choice(part_7)
+        ])
+
+    @classmethod
+    def completion(
+            cls: typing.Type[typing.Self],
+            day_seed: str,
+            system_tile: space.SystemTradeHub
+        ) -> str:
+        rng = random.Random(utility.hash_args(day_seed, system_tile.tile_seed()))
+        reward = cls.get_reward_description(day_seed, system_tile)
+
+        options = [
+            f"Aaaaaaand... the jewelry store is opening... now! Special thanks for the help, and here are your {reward}!",
+            f"The grand opening was successful and in time! You shall receive your {reward} in the next 5 business seconds.",
+            f"Well, that was a success! Your {reward} are right here!"
+        ]
+
+        return rng.choice(options)
+    
+    @classmethod
+    def get_cost(
+            cls,
+            day_seed: str,
+            system_tile: space.SystemTradeHub
+        ) -> list[tuple[str, int]]:
+        rng = random.Random(utility.hash_args(day_seed, system_tile.tile_seed()))
+
+        amount = rng.randint(2, 6) * 50 + 100
+
+        return [(values.gem_purple.text, amount)]
+    
+    @classmethod
+    def get_reward(
+            cls,
+            day_seed: str,
+            system_tile: space.SystemTradeHub
+        ) -> list[tuple[str, int]]:
+        rng = random.Random(utility.hash_args(day_seed, system_tile.tile_seed()))
+
+        amount = rng.randint(2, 6) * 45
+
+        return [(values.gem_green.text, amount)]
+
+class Generator_Breakdown(Project):
+    """Written by Kapola."""
+    internal = "generator_breakdown"
+    
+    @classmethod
+    def name(
+            cls,
+            day_seed: str,
+            system_tile: space.SystemTradeHub
+        ) -> str:
+        rng = random.Random(utility.hash_args(day_seed, system_tile.tile_seed()))
+        
+        options = [
+            "Generator Breakdown",
+            "Backup Generator Fuel",
+            "Generator Repair",
+        ]
+
+        return rng.choice(options)
+
+    @classmethod
+    def description(
+            cls,
+            day_seed: str,
+            system_tile: space.SystemTradeHub
+        ) -> str:
+        rng = random.Random(utility.hash_args(day_seed, system_tile.tile_seed()))
+
+        cost = cls.get_price_description(day_seed, system_tile)
+        reward = cls.get_reward_description(day_seed, system_tile)
+
+        part_1 = [
+            "Hey, you! Yes, you!",
+            "Announcement! Help required!",
+            "We need help with something please!"
+        ]
+
+        part_2 = [
+            "The Trade Hub's main generator just broke!",
+            "Our power source has suffered a catastrophic failure!",
+            "The generator keeping the Trade Hub running broke down!"
+        ]
+
+        part_3 = [
+            "It will take a good while to fix the generator.",
+            "Unfortunately, our engineers are all on vacation!",
+            "It'll be weeks before a new one can be installed."
+        ]
+
+        part_4 = [
+            "We do have a green-gem-powered backup generator,",
+            "The Trade Hub has a backup power source running on green gems,",
+            "The backup generator using green gems could be activated,"
+        ]
+
+        part_5 = [
+            "but the Hub is lacking the fuel to run it.",
+            "however the gem supply here is running dry!",
+            "sadly all our remaining green gems were just sold."
+        ]
+
+        part_6 = [
+            f"The Trade Hub estimates it will need {cost} to run the backup generator while the main one is fixed.",
+            f"A total of {cost} are required to power the Trade Hub before the main generator is back.",
+            f"{cost} are needed to keep the Trade Hub running in the meantime."
+        ]
+
+        part_7 = [
+            "We are looking for people to volunteers their green gems,",
+            "A green gem donation would be greatly appreciated,",
+            "The gems can only come from the Hub's customers,"
+        ]
+
+        part_8 = [
+            f"and anyone who can provide enough will receive {reward} as compensation!",
+            f"and worry not for if you are the one to return power, you will be given {reward}!",
+            f"and you will be rewarded with {reward} as compensation if you can supply us with fuel!"
+        ]
+
+        return " ".join([
+            rng.choice(part_1),
+            rng.choice(part_2),
+            rng.choice(part_3),
+            rng.choice(part_4),
+            rng.choice(part_5),
+            rng.choice(part_6),
+            rng.choice(part_7),
+            rng.choice(part_8)
+        ])
+
+    @classmethod
+    def completion(
+            cls: typing.Type[typing.Self],
+            day_seed: str,
+            system_tile: space.SystemTradeHub
+        ) -> str:
+        rng = random.Random(utility.hash_args(day_seed, system_tile.tile_seed()))
+        reward = cls.get_reward_description(day_seed, system_tile)
+
+        options = [
+            f"Thanks to you the Trade Hub can keep running while the generator is fixed! Here are your {reward}!",
+            f"The Trade Hub can keep running now with your contribution! Your {reward} are here as promised.",
+            f"It was a close call, but nothing went wrong while the power was out and it is now restored! You can take your {reward}."
+        ]
+
+        return rng.choice(options)
+    
+    @classmethod
+    def get_cost(
+            cls,
+            day_seed: str,
+            system_tile: space.SystemTradeHub
+        ) -> list[tuple[str, int]]:
+        rng = random.Random(utility.hash_args(day_seed, system_tile.tile_seed()))
+
+        amount = rng.randint(2, 6) * 50 + 100
+
+        return [(values.gem_green.text, amount)]
+    
+    @classmethod
+    def get_reward(
+            cls,
+            day_seed: str,
+            system_tile: space.SystemTradeHub
+        ) -> list[tuple[str, int]]:
+        rng = random.Random(utility.hash_args(day_seed, system_tile.tile_seed()))
+
+        amount = rng.randint(2, 6) * 12
+
+        return [(values.gem_gold.text, amount)]
+
+class Gem_Salesman(Project):
+    """Written by Kapola."""
+    internal = "gem_salesman"
+    
+    @classmethod
+    def name(
+            cls,
+            day_seed: str,
+            system_tile: space.SystemTradeHub
+        ) -> str:
+        rng = random.Random(utility.hash_args(day_seed, system_tile.tile_seed()))
+        
+        options = [
+            "Gem Salesman",
+            "Travelling Merchant",
+            "Gold Gem Restock",
+        ]
+
+        return rng.choice(options)
+
+    @classmethod
+    def description(
+            cls,
+            day_seed: str,
+            system_tile: space.SystemTradeHub
+        ) -> str:
+        rng = random.Random(utility.hash_args(day_seed, system_tile.tile_seed()))
+
+        cost = cls.get_price_description(day_seed, system_tile)
+        reward = cls.get_reward_description(day_seed, system_tile)
+
+        part_1 = [
+            "Hey there!",
+            "Oh, dear friend!",
+            "'ello!"
+        ]
+
+        part_2 = [
+            "Back to this good ol' Trade Hub today",
+            "I've come back 'ere in these great times",
+            "Returned to this place"
+        ]
+
+        part_3 = [
+            "for a little restockin' on gold gems!",
+            "'cause my gold gem supply was getting empty!",
+            "'cause I was missin' some gems to sell!"
+        ]
+
+        part_4 = [
+            "If ya don't know me, I'm just the ol' gem merchant!",
+            "I ain't seen you before... Boris' my name, the gem salesman!",
+            "I'm a regular around these parts. I'm a gem salesman!"
+        ]
+
+        part_5 = [
+            "I come always to this place 'cause the vibes 'ere are good...",
+            "One of the best Trade Hubs to go around, this place, ya know?",
+            "This place is very nice, eh? That's why I spend my time here when I'm around."
+        ]
+
+        part_6 = [
+            "Usually they always have some gems to stock me on...",
+            "Never fails to sell a good price here, stocks always full...",
+            "I always trust this place to restock my stuffs..."
+        ]
+
+        part_7 = [
+            "looks like they ran out this time though, haha!",
+            "bound to run out eventually though, am I right?",
+            "had to break that streak at some point though!"
+        ]
+
+        part_8 = [
+            "Hey, if ya could just sell me what I need, I'd be real pleased!",
+            "Lookin' like you might have what I need though. Could buy ye stuffs!",
+            "Think you could help a pal here?"
+        ]
+
+        part_9 = [
+            f"I only need {cost} anyway...",
+            f"Buyin' some {cost}...",
+            f"All it would require is {cost}..."
+        ]
+
+        part_10 = [
+            f"think {reward}'s a good price for that?",
+            f"for {reward}, would ya be ready to sell?",
+            f"I have some {reward} to pay with too!"
+        ]
+
+        return " ".join([
+            rng.choice(part_1),
+            rng.choice(part_2),
+            rng.choice(part_3),
+            rng.choice(part_4),
+            rng.choice(part_5),
+            rng.choice(part_6),
+            rng.choice(part_7),
+            rng.choice(part_8),
+            rng.choice(part_9),
+            rng.choice(part_10)
+        ])
+
+    @classmethod
+    def completion(
+            cls: typing.Type[typing.Self],
+            day_seed: str,
+            system_tile: space.SystemTradeHub
+        ) -> str:
+        rng = random.Random(utility.hash_args(day_seed, system_tile.tile_seed()))
+        reward = cls.get_reward_description(day_seed, system_tile)
+
+        options = [
+            f"Aight, thanks for helpin' you pal here! Hope to see ya around these parts soon, and take these {reward}!",
+            f"Ay, thank you for ye help! Have these {reward}. And ya can take this too, don't'ya want? Been tryin' to get rid of it since someone gave it to me at random on the street... told me it was a spleen o' some kind.",
+            f"Well, I sure do 'preciate ya lendin' a hand to your ol' buddy here! Hope to see ya 'round this area again, and don't forget to grab these here {reward}!",
+            f"Oi, I do 'preciate your kindness to an ol' man like me! Like promised the {reward} is now yours for the takin'. If you like I could throw in this ol' Blåhaj emitting rock I found in a random trash can at another trade hub once.",
+            f"Well, slap my knee and shuck my corn! Ain’t you just a blessin’ sent straight from heaven, helpin’ out your ol’ pal like that! I reckon I’ll be seein’ ya 'round these parts quicker than a jackrabbit on a hot griddle. Now, don’t y’all dare forget to take these here {reward} with ya, ya hear me, sugar?"
+        ]
+
+        return rng.choice(options)
+    
+    @classmethod
+    def get_cost(
+            cls,
+            day_seed: str,
+            system_tile: space.SystemTradeHub
+        ) -> list[tuple[str, int]]:
+        rng = random.Random(utility.hash_args(day_seed, system_tile.tile_seed()))
+
+        amount = rng.randint(2, 6) * 25 + 100
+
+        return [(values.gem_gold.text, amount)]
+    
+    @classmethod
+    def get_reward(
+            cls,
+            day_seed: str,
+            system_tile: space.SystemTradeHub
+        ) -> list[tuple[str, int]]:
+        rng = random.Random(utility.hash_args(day_seed, system_tile.tile_seed()))
+
+        amount = rng.randint(2, 6) * 2
+
+        item_1 = rng.choice(values.anarchy_pieces_black_biased)
+        item_2 = rng.choice(values.anarchy_pieces_white_biased)
+
+
+        return [(item_1.text, amount), (item_2.text, amount)]
+
 ##### Misc items.
+
+class Omega_Order(Project):
+    """Written by Kapola."""
+    internal = "omega_order"
+    
+    @classmethod
+    def name(
+            cls,
+            day_seed: str,
+            system_tile: space.SystemTradeHub
+        ) -> str:
+        rng = random.Random(utility.hash_args(day_seed, system_tile.tile_seed()))
+        
+        options = [
+            "Omega Order",
+            "Omega Chessatron Shipping",
+            "Omega Trons Missing",
+        ]
+
+        return rng.choice(options)
+
+    @classmethod
+    def description(
+            cls,
+            day_seed: str,
+            system_tile: space.SystemTradeHub
+        ) -> str:
+        rng = random.Random(utility.hash_args(day_seed, system_tile.tile_seed()))
+
+        cost = cls.get_price_description(day_seed, system_tile)
+        reward = cls.get_reward_description(day_seed, system_tile)
+
+        part_1 = [
+            "How unfortunate!",
+            "Uh oh...",
+            "Hey, you! We need your help!"
+        ]
+
+        part_2 = [
+            "Someone ordered a huge order of omega chessatrons,",
+            "The Trade Hub has an enormous shipping of omegas to send,",
+            "The Trade Hub needs to ship a lot of omegas to a customer,"
+        ]
+
+        part_3 = [
+            "but we're missing half the MoaKs needed for them!",
+            "sadly our Many of a Kinds are not sufficient!",
+            "howver we are missing a crucial part of the order!"
+        ]
+
+        part_4 = [
+            "All nearby supply sources are exhausted as well.",
+            "Unfortunately, we have no way of obtaining more in time.",
+            "We have asked many for help, but no one had enough."
+        ]
+
+        part_5 = [
+            "If you have enough to complete the order,",
+            "If you possess the MoaKs needed to finish alchemizing,",
+            "If you can help us obtain the required resources,"
+        ]
+
+        part_6 = [
+            "the Trade Hub is willing to offer you a large compensation!",
+            "you would be rewarded with much riches!",
+            "we could give you a huge reward!"
+        ]
+
+        part_7 = [
+            f"The Hub is offering {reward} for {cost}!",
+            f"You would be given {reward} if you provided us with {cost}!",
+            f"If you can provide {cost}, we would give you {reward}!"
+        ]
+
+        return " ".join([
+            rng.choice(part_1),
+            rng.choice(part_2),
+            rng.choice(part_3),
+            rng.choice(part_4),
+            rng.choice(part_5),
+            rng.choice(part_6),
+            rng.choice(part_7)
+        ])
+
+    @classmethod
+    def completion(
+            cls: typing.Type[typing.Self],
+            day_seed: str,
+            system_tile: space.SystemTradeHub
+        ) -> str:
+        rng = random.Random(utility.hash_args(day_seed, system_tile.tile_seed()))
+        reward = cls.get_reward_description(day_seed, system_tile)
+
+        options = [
+            f"Amazing! Thanks to you and the {values.anarchy_chess.text} you provided, we were able to finish up and ship the entire order. Here are your {reward}!",
+            f"Many thanks for your generous donation of {values.anarchy_chess.text}! We managed to send the fuull shipping of omegas; here are your {reward}!",
+            f"Incredible! You've really saved the day on this one; the order made it on time! Here is the {reward} you were promised."
+        ]
+
+        return rng.choice(options)
+    
+    @classmethod
+    def get_cost(
+            cls,
+            day_seed: str,
+            system_tile: space.SystemTradeHub
+        ) -> list[tuple[str, int]]:
+        rng = random.Random(utility.hash_args(day_seed, system_tile.tile_seed()))
+
+        amount = rng.randint(2, 6)
+
+        return [(values.anarchy_chess.text, amount)]
+    
+    @classmethod
+    def get_reward(
+            cls,
+            day_seed: str,
+            system_tile: space.SystemTradeHub
+        ) -> list[tuple[str, int]]:
+        rng = random.Random(utility.hash_args(day_seed, system_tile.tile_seed()))
+
+        amount = rng.randint(2, 6)
+
+        return [(values.omega_chessatron.text, amount)]
 
 class Chessatron_Repair(Project):
     """Written by Duck."""
@@ -1373,12 +3587,12 @@ story_projects = [Essential_Oils]
 # Chessatron_Repair appears a lot here since it doesn't like it when a list is empty.
 # When projects are made for those categories Chessatron_Repair can be removed.
 # Except take_misc_item_projects, since it actually goes there lol.
-take_special_bread_projects = [Flatbread_Feast, Waffle_Machine]
-take_rare_bread_projects = []
-take_black_chess_piece_projects = [Round_Table]
-take_white_chess_piece_projects = [Royal_Summit]
-take_gem_projects = [Emergency_Fuel]
-take_misc_item_projects = [Chessatron_Repair]
+take_special_bread_projects = [Too_Much_Stuffing, Flatbread_Shortage, Appease_The_French, Croissant_Cravings, Beach_Disappearance]
+take_rare_bread_projects = [Board_Game_Festival, Ecosystem_Problem, Stolen_Donuts]
+take_black_chess_piece_projects = [Chess_Tournament, Round_Table]
+take_white_chess_piece_projects = [Royal_Summit, Offering_Ritual, Fortress_Building]
+take_gem_projects = [Gem_Salesman, Generator_Breakdown, Jewelry_Store, Gem_Mining, Emergency_Fuel]
+take_misc_item_projects = [Chessatron_Repair, Omega_Order]
 
 take_item_project_lists = [
     take_special_bread_projects,
