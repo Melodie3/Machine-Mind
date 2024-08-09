@@ -246,6 +246,12 @@ recipes = {
 		}
     ],
 
+    "anarchy_omega_chessatron": [
+        {
+            "cost": [(values.chessatron, 25), (values.omega_chessatron, 1), (values.anarchy_chessatron, 5)]
+        }
+    ],
+
     "fuel": [
         {
             "cost": [(values.gem_red, 2)],
@@ -295,9 +301,24 @@ recipes = {
 
     ######################################################################################
 
+    "bread" : [
+        {
+            "cost": [(values.corrupted_bread, 10)],
+            "requirement": [("space_level", 1)]
+        }
+    ],
+
+    ######################################################################################
+
     "doughnut" : [
         {
 			"cost": [(values.normal_bread, 25)]
+		},
+        {
+			"cost": [(values.normal_bread, 10), (values.bagel.text, 2)]
+		},
+        {
+			"cost": [(values.normal_bread, 10), (values.waffle.text, 2)]
 		},
         {
             "cost": [(values.corrupted_bread, 75)],
@@ -310,6 +331,12 @@ recipes = {
 			"cost": [(values.normal_bread, 25)]
 		},
         {
+			"cost": [(values.normal_bread, 10), (values.doughnut.text, 2)]
+		},
+        {
+			"cost": [(values.normal_bread, 10), (values.waffle.text, 2)]
+		},
+        {
             "cost": [(values.corrupted_bread, 75)],
             "requirement": [("space_level", 1)]
         }
@@ -318,6 +345,12 @@ recipes = {
     "waffle" : [
         {
 			"cost": [(values.normal_bread, 25)]
+		},
+        {
+			"cost": [(values.normal_bread, 10), (values.doughnut.text, 2)]
+		},
+        {
+			"cost": [(values.normal_bread, 10), (values.bagel.text, 2)]
 		},
         {
             "cost": [(values.corrupted_bread, 75)],
@@ -332,6 +365,18 @@ recipes = {
 			"cost": [(values.normal_bread, 10)]
 		},
         {
+			"cost": [(values.normal_bread, 5), (values.stuffed_flatbread.text, 2)]
+		},
+        {
+			"cost": [(values.normal_bread, 5), (values.sandwich.text, 2)]
+		},
+        {
+			"cost": [(values.normal_bread, 5), (values.french_bread.text, 2)]
+		},
+        {
+			"cost": [(values.normal_bread, 5), (values.croissant.text, 2)]
+		},
+        {
             "cost": [(values.corrupted_bread, 25)],
             "requirement": [("space_level", 1)]
         }
@@ -340,6 +385,18 @@ recipes = {
     "stuffed_flatbread" : [
         {
 			"cost": [(values.normal_bread, 10)]
+		},
+        {
+			"cost": [(values.normal_bread, 5), (values.flatbread.text, 2)]
+		},
+        {
+			"cost": [(values.normal_bread, 5), (values.sandwich.text, 2)]
+		},
+        {
+			"cost": [(values.normal_bread, 5), (values.french_bread.text, 2)]
+		},
+        {
+			"cost": [(values.normal_bread, 5), (values.croissant.text, 2)]
 		},
         {
             "cost": [(values.corrupted_bread, 25)],
@@ -352,6 +409,18 @@ recipes = {
 			"cost": [(values.normal_bread, 10)]
 		},
         {
+			"cost": [(values.normal_bread, 5), (values.flatbread.text, 2)]
+		},
+        {
+			"cost": [(values.normal_bread, 5), (values.stuffed_flatbread.text, 2)]
+		},
+        {
+			"cost": [(values.normal_bread, 5), (values.french_bread.text, 2)]
+		},
+        {
+			"cost": [(values.normal_bread, 5), (values.croissant.text, 2)]
+		},
+        {
             "cost": [(values.corrupted_bread, 25)],
             "requirement": [("space_level", 1)]
         }
@@ -360,6 +429,18 @@ recipes = {
     "french_bread" : [
         {
 			"cost": [(values.normal_bread, 10)]
+		},
+        {
+			"cost": [(values.normal_bread, 5), (values.flatbread.text, 2)]
+		},
+        {
+			"cost": [(values.normal_bread, 5), (values.stuffed_flatbread.text, 2)]
+		},
+        {
+			"cost": [(values.normal_bread, 5), (values.sandwich.text, 2)]
+		},
+        {
+			"cost": [(values.normal_bread, 5), (values.croissant.text, 2)]
 		},
         {
             "cost": [(values.corrupted_bread, 25)],
@@ -372,6 +453,18 @@ recipes = {
 			"cost": [(values.normal_bread, 10)]
 		},
         {
+			"cost": [(values.normal_bread, 5), (values.flatbread.text, 2)]
+		},
+        {
+			"cost": [(values.normal_bread, 5), (values.stuffed_flatbread.text, 2)]
+		},
+        {
+			"cost": [(values.normal_bread, 5), (values.sandwich.text, 2)]
+		},
+        {
+			"cost": [(values.normal_bread, 5), (values.french_bread.text, 2)]
+		},
+        {
             "cost": [(values.corrupted_bread, 25)],
             "requirement": [("space_level", 1)]
         }
@@ -381,15 +474,15 @@ recipes = {
 
     "Wpawnanarchy": [
         {
-            "cost": [(values.anarchy_black_pawn, 250), (values.white_pawn, 100), (values.doughnut, 1250), (values.bagel, 1250), (values.waffle, 1250), (values.gem_purple, 3)],
+            "cost": [(values.anarchy_black_pawn, 2), (values.white_pawn, 50), (values.doughnut, 100), (values.bagel, 100), (values.waffle, 100), (values.gem_purple, 3)],
             "requirement": [("space_level", 1)]
         },
         {
-            "cost": [(values.anarchy_black_pawn, 250), (values.white_pawn, 100), (values.croissant, 1250), (values.stuffed_flatbread, 1250), (values.flatbread, 1250), (values.sandwich, 1250), (values.french_bread, 1250), (values.gem_purple, 3)],
+            "cost": [(values.anarchy_black_pawn, 2), (values.white_pawn, 50), (values.croissant, 100), (values.stuffed_flatbread, 100), (values.flatbread, 100), (values.sandwich, 100), (values.french_bread, 100), (values.gem_purple, 3)],
             "requirement": [("space_level", 1)]
         },
         {
-            "cost": [(values.anarchy_black_pawn, 375), (values.white_pawn, 100), (values.gem_purple, 3)],
+            "cost": [(values.anarchy_black_pawn, 3), (values.white_pawn, 25), (values.gem_purple, 1)],
             "requirement": [("space_level", 1)]
         },
         {
@@ -400,19 +493,19 @@ recipes = {
 
     "Wknightanarchy": [
         {
-            "cost": [(values.anarchy_black_knight, 125), (values.white_knight, 100), (values.croissant, 2500), (values.bagel, 3125), (values.gem_purple, 3)],
+            "cost": [(values.anarchy_black_knight, 1), (values.white_knight, 75), (values.croissant, 500), (values.bagel, 250), (values.gem_purple, 5)],
             "requirement": [("space_level", 1)]
         },
         {
-            "cost": [(values.anarchy_black_knight, 250), (values.white_knight, 100), (values.croissant, 2500), (values.gem_purple, 3)],
+            "cost": [(values.anarchy_black_knight, 2), (values.white_knight, 50), (values.croissant, 500), (values.gem_purple, 3)],
             "requirement": [("space_level", 1)]
         },
         {
-            "cost": [(values.anarchy_black_knight, 375), (values.white_knight, 100), (values.gem_purple, 3)],
+            "cost": [(values.anarchy_black_knight, 3), (values.white_knight, 25), (values.gem_purple, 1)],
             "requirement": [("space_level", 1)]
         },
         {
-            "cost": [(values.anarchy_black_knight, 125), (values.white_knight, 100), (values.bagel, 9375), (values.gem_purple, 3)],
+            "cost": [(values.anarchy_black_knight, 2), (values.white_knight, 50), (values.bagel, 750), (values.gem_purple, 3)],
             "requirement": [("space_level", 1)]
         },
         {
@@ -423,19 +516,19 @@ recipes = {
 
     "Wbishopanarchy": [
         {
-            "cost": [(values.anarchy_black_bishop, 125), (values.white_bishop, 100), (values.french_bread, 2500), (values.doughnut, 3125), (values.gem_purple, 3)],
+            "cost": [(values.anarchy_black_bishop, 1), (values.white_bishop, 75), (values.french_bread, 500), (values.doughnut, 250), (values.gem_purple, 5)],
             "requirement": [("space_level", 1)]
         },
         {
-            "cost": [(values.anarchy_black_bishop, 250), (values.white_bishop, 100), (values.french_bread, 2500), (values.gem_purple, 3)],
+            "cost": [(values.anarchy_black_bishop, 2), (values.white_bishop, 50), (values.french_bread, 500), (values.gem_purple, 3)],
             "requirement": [("space_level", 1)]
         },
         {
-            "cost": [(values.anarchy_black_bishop, 375), (values.white_bishop, 100), (values.gem_purple, 3)],
+            "cost": [(values.anarchy_black_bishop, 3), (values.white_bishop, 25), (values.gem_purple, 1)],
             "requirement": [("space_level", 1)]
         },
         {
-            "cost": [(values.anarchy_black_bishop, 125), (values.white_bishop, 100), (values.doughnut, 9375), (values.gem_purple, 3)],
+            "cost": [(values.anarchy_black_bishop, 2), (values.white_bishop, 50), (values.doughnut, 750), (values.gem_purple, 3)],
             "requirement": [("space_level", 1)]
         },
         {
@@ -446,19 +539,19 @@ recipes = {
 
     "Wrookanarchy": [
         {
-            "cost": [(values.anarchy_black_rook, 125), (values.white_rook, 100), (values.sandwich, 2500), (values.waffle, 3125), (values.gem_purple, 3)],
+            "cost": [(values.anarchy_black_rook, 1), (values.white_rook, 75), (values.sandwich, 500), (values.waffle, 250), (values.gem_purple, 5)],
             "requirement": [("space_level", 1)]
         },
         {
-            "cost": [(values.anarchy_black_rook, 250), (values.white_rook, 100), (values.sandwich, 2500), (values.gem_purple, 3)],
+            "cost": [(values.anarchy_black_rook, 2), (values.white_rook, 50), (values.sandwich, 500), (values.gem_purple, 3)],
             "requirement": [("space_level", 1)]
         },
         {
-            "cost": [(values.anarchy_black_rook, 375), (values.white_rook, 100), (values.gem_purple, 3)],
+            "cost": [(values.anarchy_black_rook, 3), (values.white_rook, 25), (values.gem_purple, 1)],
             "requirement": [("space_level", 1)]
         },
         {
-            "cost": [(values.anarchy_black_rook, 125), (values.white_rook, 100), (values.waffle, 9375), (values.gem_purple, 3)],
+            "cost": [(values.anarchy_black_rook, 2), (values.white_rook, 50), (values.waffle, 750), (values.gem_purple, 3)],
             "requirement": [("space_level", 1)]
         },
         {
@@ -469,19 +562,19 @@ recipes = {
 
     "Wqueenanarchy": [
         {
-            "cost": [(values.anarchy_black_queen, 125), (values.white_queen, 100), (values.stuffed_flatbread, 2500), (values.doughnut, 3125), (values.gem_purple, 3)],
+            "cost": [(values.anarchy_black_queen, 1), (values.white_queen, 75), (values.stuffed_flatbread, 500), (values.doughnut, 250), (values.gem_purple, 5)],
             "requirement": [("space_level", 1)]
         },
         {
-            "cost": [(values.anarchy_black_queen, 250), (values.white_queen, 100), (values.stuffed_flatbread, 2500), (values.gem_purple, 3)],
+            "cost": [(values.anarchy_black_queen, 2), (values.white_queen, 50), (values.stuffed_flatbread, 500), (values.gem_purple, 3)],
             "requirement": [("space_level", 1)]
         },
         {
-            "cost": [(values.anarchy_black_queen, 375), (values.white_queen, 100), (values.gem_purple, 3)],
+            "cost": [(values.anarchy_black_queen, 3), (values.white_queen, 25), (values.gem_purple, 1)],
             "requirement": [("space_level", 1)]
         },
         {
-            "cost": [(values.anarchy_black_queen, 125), (values.white_queen, 100), (values.doughnut, 9375), (values.gem_purple, 3)],
+            "cost": [(values.anarchy_black_queen, 2), (values.white_queen, 50), (values.doughnut, 750), (values.gem_purple, 3)],
             "requirement": [("space_level", 1)]
         },
         {
@@ -492,19 +585,19 @@ recipes = {
 
     "Wkinganarchy": [
         {
-            "cost": [(values.anarchy_black_king, 125), (values.white_king, 100), (values.flatbread, 2500), (values.bagel, 3125), (values.gem_purple, 3)],
+            "cost": [(values.anarchy_black_king, 1), (values.white_king, 75), (values.flatbread, 500), (values.bagel, 250), (values.gem_purple, 5)],
             "requirement": [("space_level", 1)]
         },
         {
-            "cost": [(values.anarchy_black_king, 250), (values.white_king, 100), (values.flatbread, 2500), (values.gem_purple, 3)],
+            "cost": [(values.anarchy_black_king, 2), (values.white_king, 50), (values.flatbread, 500), (values.gem_purple, 3)],
             "requirement": [("space_level", 1)]
         },
         {
-            "cost": [(values.anarchy_black_king, 375), (values.white_king, 100), (values.gem_purple, 3)],
+            "cost": [(values.anarchy_black_king, 3), (values.white_king, 25), (values.gem_purple, 1)],
             "requirement": [("space_level", 1)]
         },
         {
-            "cost": [(values.anarchy_black_king, 125), (values.white_king, 100), (values.bagel, 9375), (values.gem_purple, 3)],
+            "cost": [(values.anarchy_black_king, 2), (values.white_king, 50), (values.bagel, 750), (values.gem_purple, 3)],
             "requirement": [("space_level", 1)]
         },
         {
@@ -517,7 +610,7 @@ recipes = {
 
     "Bpawnanarchy": [
         {
-            "cost": [(values.anarchy_white_pawn, 125), (values.black_pawn, 100), (values.gem_purple, 3)],
+            "cost": [(values.anarchy_white_pawn, 1)],
             "requirement": [("space_level", 1)]
         },
         {
@@ -528,7 +621,7 @@ recipes = {
 
     "Bknightanarchy": [
         {
-            "cost": [(values.anarchy_white_knight, 125), (values.black_knight, 100), (values.gem_purple, 3)],
+            "cost": [(values.anarchy_white_knight, 1)],
             "requirement": [("space_level", 1)]
         },
         {
@@ -539,7 +632,7 @@ recipes = {
 
     "Bbishopanarchy": [
         {
-            "cost": [(values.anarchy_white_bishop, 125), (values.black_bishop, 100), (values.gem_purple, 3)],
+            "cost": [(values.anarchy_white_bishop, 1)],
             "requirement": [("space_level", 1)]
         },
         {
@@ -550,7 +643,7 @@ recipes = {
 
     "Brookanarchy": [
         {
-            "cost": [(values.anarchy_white_rook, 125), (values.black_rook, 100), (values.gem_purple, 3)],
+            "cost": [(values.anarchy_white_rook, 1)],
             "requirement": [("space_level", 1)]
         },
         {
@@ -561,7 +654,7 @@ recipes = {
 
     "Bqueenanarchy": [
         {
-            "cost": [(values.anarchy_white_queen, 125), (values.black_queen, 100), (values.gem_purple, 3)],
+            "cost": [(values.anarchy_white_queen, 1)],
             "requirement": [("space_level", 1)]
         },
         {
@@ -572,7 +665,7 @@ recipes = {
 
     "Bkinganarchy": [
         {
-            "cost": [(values.anarchy_white_king, 125), (values.black_king, 100), (values.gem_purple, 3)],
+            "cost": [(values.anarchy_white_king, 1)],
             "requirement": [("space_level", 1)]
         },
         {

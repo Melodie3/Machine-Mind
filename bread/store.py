@@ -1368,6 +1368,9 @@ class Corruption_Negation(Prestige_Store_Item):
     
     @classmethod
     def can_be_purchased(cls, user_account: account.Bread_Account) -> bool:
+        if user_account.get_space_level() < 1:
+            return False
+        
         if user_account.get_prestige_level() >= 5:
             level = user_account.get(cls.name) + 1
             if level <= cls.max_level(user_account):
@@ -1468,13 +1471,13 @@ class Bread_Rocket(Space_Shop_Item):
     def get_costs(cls):
         base = [(values.croissant.text, 5000), (values.flatbread.text, 5000), (values.stuffed_flatbread.text, 5000), (values.sandwich.text, 5000), (values.french_bread.text, 5000), \
              (values.doughnut.text, 1000), (values.bagel.text, 1000), (values.waffle.text, 1000), \
-             (values.chessatron.text, 150), (values.gem_gold.text, 15)]
+             (values.chessatron.text, 75), (values.gem_gold.text, 15)]
         
         out = [[]]
         for level in range(8):
             out.append(
                 [
-                    (item, amount * 2 ** level)
+                    (item, int(amount * 1.5 ** level))
                     for item, amount in base
                 ]
             )
@@ -1485,26 +1488,26 @@ class Bread_Rocket(Space_Shop_Item):
     def description(cls, user_account: account.Bread_Account) -> str:
         level = user_account.get(cls.name)
         # (a2 locked) Tier 1: Access to space.
-        #             Tier 2: Fuel tank 1, Upgraded telescopes 1, Fuel research 4
-        #             Tier 3: Fuel tank 2
-        # (a3 locked) Tier 4: Fuel tank 3 (Galaxy travel)
-        #             Tier 5: Fuel tank 4, Upgraded telescopes 2
-        # (a4 locked) Tier 6: Fuel tank 5 (Nebula travel)
-        #             Tier 7: Fuel tank 6
-        # (a5 locked) Tier 8: Fuel tank 7 (Wormhole travel?), Upgraded telescopes 3
+        #             Tier 2: Upgraded telescopes 1, Fuel research 4
+        #             Tier 3: Engine Efficiency 1
+        # (a3 locked) Tier 4: (Galaxy travel)
+        #             Tier 5: Upgraded telescopes 2, Engine Efficiency 2
+        # (a4 locked) Tier 6: (Nebula travel)
+        #             Tier 7: Engine Efficiency 3
+        # (a5 locked) Tier 8: (Wormhole travel), Upgraded telescopes 3
 
         if level == 0:
             return "A Bread Rocket that allows access to space."
         
         upgrades = [
             "go to space.",
-            f"upgrade your fuel tank, upgrade your telescopes and research new methods of creating {values.fuel.text}.",
-            "upgrade your fuel tank.",
-            "upgrade your fuel tank and traverse through the galaxy.",
-            "upgrade your fuel tank and upgrade your telescopes.",
-            "upgrade your fuel tank and adventure through nebulae.",
-            "upgrade your fuel tank.",
-            "upgrade your fuel tank and upgrade your telescopes.",
+            f"upgrade your telescopes and research new methods of creating {values.fuel.text}.",
+            "use your fuel more efficiently.",
+            "traverse through the galaxy.",
+            "upgrade your telescopes and use your fuel more efficiently.",
+            "adventure through nebulae.",
+            "use your fuel more efficiently.",
+            "upgrade your telescopes.",
         ]
         return f"An upgraded Bread Rocket that can take your further in the vast reaches of space.\nThis upgraded rocket will allow you to {upgrades[level]}"
     
@@ -1699,7 +1702,58 @@ class Multiroller_Terminal(Space_Shop_Item):
         super().do_purchase(user_account)
         return "You have acquired the Multiroller Terminal, you can configure it with '$bread multiroller`."
 
-space_shop_items = [Bread_Rocket, Upgraded_Autopilot, Fuel_Research, Upgraded_Telescopes, Multiroller_Terminal]
+class Advanced_Exploration(Space_Shop_Item):
+    name = "advanced_exploration"
+    display_name = "Advanced Exploration"
+
+    @classmethod
+    def cost(cls, user_account: account.Bread_Account) -> list[tuple[values.Emote, int]]:
+        level = user_account.get(cls.name)
+
+        anarchy_tron = int(1 + (level // 4))
+        omega = int(1 + (level // 2))
+        chessatron = int(100 + (level * 50))
+        bread = int(50 * (1.5 ** level))
+
+        return [
+            (values.anarchy_chessatron.text, anarchy_tron),
+            (values.omega_chessatron.text, omega),
+            (values.chessatron.text, chessatron),
+            (values.bread.text, bread)
+        ]
+    
+    @classmethod
+    def max_level(cls, user_account: account.Bread_Account = None) -> typing.Optional[int]:
+        return 1024
+
+    @classmethod
+    def description(cls, user_account: account.Bread_Account) -> str:
+        level = user_account.get(cls.name) + 1  
+        description_mult = utility.write_number_of_times(level + 1)
+        return f"Advanced exploration devices resulting in loaves being {description_mult} more likely to be an anarchy chess piece."
+    
+class Engine_Efficiency(Space_Shop_Item):
+    name = "engine_efficiency"
+    display_name = "Engine_Efficiency"
+
+    consumption_multipliers = [1, 0.85, 0.7, 0.5]
+
+    @classmethod
+    def get_costs(cls):
+        return [
+            [],
+            [(values.fuel.text, 150), (values.gem_purple.text, 40), (values.gem_green, 20)],
+            [(values.fuel.text, 250), (values.gem_purple.text, 60), (values.gem_green, 30)],
+            [(values.fuel.text, 350), (values.gem_purple.text, 80), (values.gem_green, 40)]
+        ]
+
+    
+    @classmethod
+    def description(cls, user_account: account.Bread_Account) -> str:
+        level = user_account.get(cls.name) + 1
+        return f"More efficient engines resuling in {cls.consumption_multipliers[level]}% fuel consumption when moving."
+
+space_shop_items = [Bread_Rocket, Upgraded_Autopilot, Fuel_Research, Upgraded_Telescopes, Multiroller_Terminal, Advanced_Exploration, Engine_Efficiency]
 
 #############################################################################################################
 #############################################################################################################
@@ -1720,8 +1774,8 @@ class Gambit_Shop_Level(Custom_price_item):
             [(values.gem_red.text, 3)], # Black chess pieces
             [(values.gem_blue.text, 3)], # White chess pieces
             [(values.gem_purple.text, 3)], # Gems
-            [(values.anarchy_chessatron.text, 3), (values.gem_green.text, 100)], # Black anarchy pieces
-            [(values.anarchy_chessatron.text, 15), (values.gem_gold.text, 100)] # White anarchy pieces
+            [(values.anarchy_chessatron.text, 2), (values.gem_green.text, 100)], # Black anarchy pieces
+            [(values.anarchy_chessatron.text, 3), (values.gem_gold.text, 100)] # White anarchy pieces
         ]
 
     @classmethod
@@ -1736,6 +1790,13 @@ class Gambit_Shop_Level(Custom_price_item):
     def do_purchase(cls, user_account: account.Bread_Account):
         super().do_purchase(user_account)
         return f"Congratulations! You unlocked a level of the Gambit Shop."
+
+    @classmethod
+    def can_be_purchased(cls, user_account: account.Bread_Account) -> bool:
+        return super().can_be_purchased(user_account)
+
+    
+    
 
 #this is the generic item we purchase in the strategy shop
 class Gambit_shop_Item(Custom_price_item):
@@ -2032,48 +2093,52 @@ class Gambit_Shop_Anarchy_Black_Pawn(Gambit_shop_Item):
     display_name = "En Passant"
     level_required = 5
     boost_item = values.anarchy_black_pawn
-    boost_amount = 90
-    raw_cost = [(values.anarchy_black_pawn.text, 100), (values.black_pawn.text, 250), (values.gem_purple.text, 50)]
+    boost_amount = 900
+    raw_cost = [(values.anarchy_black_pawn.text, 50), (values.black_pawn.text, 250), (values.gem_purple.text, 50)]
+
+    @classmethod
+    def description(cls, user_account: account.Bread_Account) -> str:
+        return super().description(user_account) + "\nHoly Hell!"
 
 class Gambit_Shop_Anarchy_Black_Knight(Gambit_shop_Item):
     name = "gambit_shop_anarchy_black_knight"
     display_name = "Knight Boost"
     level_required = 5
     boost_item = values.anarchy_black_knight
-    boost_amount = 90
-    raw_cost = [(values.anarchy_black_pawn.text, 100), (values.anarchy_black_knight.text, 75), (values.black_knight.text, 250), (values.gem_purple.text, 50)]
+    boost_amount = 900
+    raw_cost = [(values.anarchy_black_pawn.text, 50), (values.anarchy_black_knight.text, 25), (values.black_knight.text, 250), (values.gem_purple.text, 50)]
 
 class Gambit_Shop_Anarchy_Black_Bishop(Gambit_shop_Item):
     name = "gambit_shop_anarchy_black_bishop"
     display_name = "Il Vaticano"
     level_required = 5
     boost_item = values.anarchy_black_bishop
-    boost_amount = 90
-    raw_cost = [(values.anarchy_black_pawn.text, 100), (values.anarchy_black_bishop.text, 75), (values.black_bishop.text, 250), (values.gem_purple.text, 50)]
+    boost_amount = 900
+    raw_cost = [(values.anarchy_black_pawn.text, 50), (values.anarchy_black_bishop.text, 25), (values.black_bishop.text, 250), (values.gem_purple.text, 50)]
 
 class Gambit_Shop_Anarchy_Black_Rook(Gambit_shop_Item):
     name = "gambit_shop_anarchy_black_rook"
     display_name = "Siberian Swipe"
     level_required = 5
     boost_item = values.anarchy_black_rook
-    boost_amount = 90
-    raw_cost = [(values.anarchy_black_pawn.text, 100), (values.anarchy_black_rook.text, 75), (values.black_rook.text, 250), (values.gem_purple.text, 50)]
+    boost_amount = 900
+    raw_cost = [(values.anarchy_black_pawn.text, 50), (values.anarchy_black_rook.text, 25), (values.black_rook.text, 250), (values.gem_purple.text, 50)]
 
 class Gambit_Shop_Anarchy_Black_Queen(Gambit_shop_Item):
     name = "gambit_shop_anarchy_black_queen"
     display_name = "Radioactive Beta Decay"
     level_required = 5
     boost_item = values.anarchy_black_queen
-    boost_amount = 90
-    raw_cost = [(values.anarchy_black_pawn.text, 100), (values.anarchy_black_queen.text, 75), (values.black_queen.text, 250), (values.gem_purple.text, 50)]
+    boost_amount = 900
+    raw_cost = [(values.anarchy_black_pawn.text, 50), (values.anarchy_black_queen.text, 25), (values.black_queen.text, 250), (values.gem_purple.text, 50)]
 
 class Gambit_Shop_Anarchy_Black_King(Gambit_shop_Item):
     name = "gambit_shop_anarchy_black_king"
     display_name = "La Bastarda"
     level_required = 5
     boost_item = values.anarchy_black_king
-    boost_amount = 90
-    raw_cost = [(values.anarchy_black_pawn.text, 100), (values.anarchy_black_king.text, 75), (values.black_king.text, 250), (values.gem_purple.text, 50)]
+    boost_amount = 900
+    raw_cost = [(values.anarchy_black_pawn.text, 50), (values.anarchy_black_king.text, 25), (values.black_king.text, 250), (values.gem_purple.text, 50)]
 
 ##########################################################################################
 
@@ -2082,52 +2147,48 @@ class Gambit_Shop_Anarchy_White_Pawn(Gambit_shop_Item):
     display_name = "Knook Promotion"
     level_required = 6
     boost_item = values.anarchy_white_pawn
-    boost_amount = 180
-    raw_cost = [(values.anarchy_white_pawn.text, 100), (values.white_pawn.text, 250), (values.gem_green.text, 50)]
-
-    @classmethod
-    def description(cls, user_account: account.Bread_Account) -> str:
-        return super().description(user_account) + "\nHoly Hell!"
+    boost_amount = 1800
+    raw_cost = [(values.anarchy_white_pawn.text, 50), (values.white_pawn.text, 250), (values.gem_green.text, 50)]
 
 class Gambit_Shop_Anarchy_White_Knight(Gambit_shop_Item):
     name = "gambit_shop_anarchy_white_knight"
     display_name = "Anti-Queen"
     level_required = 6
     boost_item = values.anarchy_white_knight
-    boost_amount = 180
-    raw_cost = [(values.anarchy_white_pawn.text, 100), (values.anarchy_white_knight.text, 75), (values.white_knight.text, 250), (values.gem_green.text, 50)]
+    boost_amount = 1800
+    raw_cost = [(values.anarchy_white_pawn.text, 50), (values.anarchy_white_knight.text, 25), (values.white_knight.text, 250), (values.gem_green.text, 50)]
 
 class Gambit_Shop_Anarchy_White_Bishop(Gambit_shop_Item):
     name = "gambit_shop_anarchy_white_bishop"
     display_name = "Vacation Home"
     level_required = 6
     boost_item = values.anarchy_white_bishop
-    boost_amount = 180
-    raw_cost = [(values.anarchy_white_pawn.text, 100), (values.anarchy_white_bishop.text, 75), (values.white_bishop.text, 250), (values.gem_green.text, 50)]
+    boost_amount = 1800
+    raw_cost = [(values.anarchy_white_pawn.text, 50), (values.anarchy_white_bishop.text, 25), (values.white_bishop.text, 250), (values.gem_green.text, 50)]
 
 class Gambit_Shop_Anarchy_White_Rook(Gambit_shop_Item):
     name = "gambit_shop_anarchy_white_rook"
     display_name = "Vertical Castling"
     level_required = 6
     boost_item = values.anarchy_white_rook
-    boost_amount = 180
-    raw_cost = [(values.anarchy_white_pawn.text, 100), (values.anarchy_white_rook.text, 75), (values.white_rook.text, 250), (values.gem_green.text, 50)]
+    boost_amount = 1800
+    raw_cost = [(values.anarchy_white_pawn.text, 50), (values.anarchy_white_rook.text, 25), (values.white_rook.text, 250), (values.gem_green.text, 50)]
 
 class Gambit_Shop_Anarchy_White_Queen(Gambit_shop_Item):
     name = "gambit_shop_anarchy_white_queen"
     display_name = "Botez Gambit"
     level_required = 6
     boost_item = values.anarchy_white_queen
-    boost_amount = 180
-    raw_cost = [(values.anarchy_white_pawn.text, 100), (values.anarchy_white_queen.text, 75), (values.white_queen.text, 250), (values.gem_green.text, 50)]
+    boost_amount = 1800
+    raw_cost = [(values.anarchy_white_pawn.text, 50), (values.anarchy_white_queen.text, 25), (values.white_queen.text, 250), (values.gem_green.text, 50)]
 
 class Gambit_Shop_Anarchy_White_King(Gambit_shop_Item):
     name = "gambit_shop_anarchy_white_king"
     display_name = "Double Bongcloud"
     level_required = 6
     boost_item = values.anarchy_white_king
-    boost_amount = 180
-    raw_cost = [(values.anarchy_white_pawn.text, 100), (values.anarchy_white_king.text, 75), (values.white_king.text, 250), (values.gem_green.text, 50)]
+    boost_amount = 1800
+    raw_cost = [(values.anarchy_white_pawn.text, 50), (values.anarchy_white_king.text, 25), (values.white_king.text, 250), (values.gem_green.text, 50)]
 
 ##########################################################################################
 

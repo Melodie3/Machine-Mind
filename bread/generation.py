@@ -620,9 +620,6 @@ def generate_system(
     if not(trade_hub_xpos or trade_hub_ypos):
         trade_hub_ypos = rng.randint(0, 1) * -2 + 1
 
-    merchant_xpos = trade_hub_xpos * -1
-    merchant_ypos = trade_hub_ypos * -1
-
     star_type = rng.choices(
         population = list(STAR_WEIGHTS.keys()),
         weights = list(STAR_WEIGHTS.values())
@@ -775,10 +772,6 @@ def generate_system(
             "xpos": trade_hub_xpos,
             "ypos": trade_hub_ypos,
             "level": int(has_trade_hub)
-        },
-        "merchant": {
-            "xpos": merchant_xpos,
-            "ypos": merchant_ypos
         },
         "wormhole": wormhole_data,
         "radius": math.ceil(largest_distance) + 1,

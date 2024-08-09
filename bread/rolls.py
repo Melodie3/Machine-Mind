@@ -51,8 +51,7 @@ def bread_roll(
     if user_account.get_space_level() >= 1:
         # If the user has been to space, then check their current location and adjust the chance multipliers accordingly.
 
-        anarchy_piece_luck = 1
-        # Modifiers to Anarchy Piece luck go here.
+        anarchy_piece_luck = 1 + user_account.get(store.Advanced_Exploration.name)
 
         #### Planet-based roll modifiers.
 
@@ -416,8 +415,9 @@ def loaf_roll(
 
     elif random.randint(1, 2**13) < (anarchy_piece_luck * anarchy_piece_multiplier):
         # anarchy piece
+        white_piece_chances = store.chess_piece_distribution_levels[user_account.get("chess_piece_equalizer")]
 
-        if random.randint(1, 4) == 1:
+        if random.randint(1, 100) <= white_piece_chances:
             # White anarchy piece
             output["emote"] = random.choice(values.anarchy_pieces_white_biased)
             output["commentary"] = "Your Karma has been increased by 20 points."
@@ -430,7 +430,7 @@ def loaf_roll(
         #chess piece
         # user_chess_pieces = user_account.get_all_items_with_attribute_unrolled("chess_pieces")
 
-        white_piece_chances = store.chess_piece_distribution_levels[ user_account.get("chess_piece_equalizer") ]
+        white_piece_chances = store.chess_piece_distribution_levels[user_account.get("chess_piece_equalizer")]
 
         if random.randint(1,100) <= white_piece_chances: # white pieces
             # unfound_white_pieces = utility.array_subtract(values.chess_pieces_white_biased, user_chess_pieces)

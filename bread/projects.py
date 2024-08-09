@@ -279,35 +279,35 @@ class Trade_Hub(Project):
         return [
             # Level 1:
             [
-                (values.anarchy_chess.text, 1),
+                (values.anarchy_chess.text, 1), (values.chessatron.text, 20),
                 (values.gem_gold.text, 100), (values.gem_green.text, 200), (values.gem_purple.text, 400), (values.gem_blue.text, 800), (values.gem_red.text, 1600),
                 (values.doughnut.text, 10000), (values.waffle.text, 10000), (values.bagel.text, 10000),
                 (values.croissant.text, 20000), (values.french_bread.text, 20000), (values.sandwich.text, 20000), (values.stuffed_flatbread.text, 20000), (values.flatbread.text, 20000)
             ],
             # Level 2:
             [
-                (values.anarchy_chess.text, 5),
+                (values.anarchy_chess.text, 5), (values.chessatron.text, 40),
                 (values.gem_gold.text, 200), (values.gem_green.text, 400), (values.gem_purple.text, 800), (values.gem_blue.text, 1600), (values.gem_red.text, 3200),
                 (values.doughnut.text, 20000), (values.waffle.text, 20000), (values.bagel.text, 20000),
                 (values.croissant.text, 40000), (values.french_bread.text, 40000), (values.sandwich.text, 40000), (values.stuffed_flatbread.text, 40000), (values.flatbread.text, 40000)
             ],
             # Level 3:
             [
-                (values.anarchy_chess.text, 10),
+                (values.anarchy_chess.text, 10), (values.chessatron.text, 80),
                 (values.gem_gold.text, 400), (values.gem_green.text, 800), (values.gem_purple.text, 1600), (values.gem_blue.text, 3200), (values.gem_red.text, 6400),
                 (values.doughnut.text, 40000), (values.waffle.text, 40000), (values.bagel.text, 40000),
                 (values.croissant.text, 80000), (values.french_bread.text, 80000), (values.sandwich.text, 80000), (values.stuffed_flatbread.text, 80000), (values.flatbread.text, 80000)
             ],
             # Level 4:
             [
-                (values.anarchy_chess.text, 20),
+                (values.anarchy_chess.text, 20), (values.chessatron.text, 160), (values.anarchy_chessatron.text, 1),
                 (values.gem_gold.text, 800), (values.gem_green.text, 1600), (values.gem_purple.text, 3200), (values.gem_blue.text, 6400), (values.gem_red.text, 12800),
                 (values.doughnut.text, 80000), (values.waffle.text, 80000), (values.bagel.text, 80000),
                 (values.croissant.text, 160000), (values.french_bread.text, 160000), (values.sandwich.text, 160000), (values.stuffed_flatbread.text, 160000), (values.flatbread.text, 160000)
             ],
             # Level 5:
             [
-                (values.anarchy_chess.text, 40),
+                (values.anarchy_chess.text, 40), (values.chessatron.text, 320), (values.anarchy_chessatron.text, 4),
                 (values.gem_gold.text, 1600), (values.gem_green.text, 3200), (values.gem_purple.text, 6400), (values.gem_blue.text, 12800), (values.gem_red.text, 25600),
                 (values.doughnut.text, 160000), (values.waffle.text, 160000), (values.bagel.text, 160000),
                 (values.croissant.text, 320000), (values.french_bread.text, 320000), (values.sandwich.text, 320000), (values.stuffed_flatbread.text, 320000), (values.flatbread.text, 320000)

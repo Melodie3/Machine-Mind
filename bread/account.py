@@ -487,6 +487,7 @@ class Bread_Account:
         ) -> int:
         """Calulcates the amount of dough this player gets for each anarchy chessatron."""
         amount = values.anarchy_chessatron.value
+        amount += (self.get(values.anarchy_omega_chessatron.text) * 50_000) * self.get_shadowmega_boost_amount()
         
         if include_prestige_boost:
             prestige_mult = self.get_prestige_multiplier()
@@ -521,6 +522,12 @@ class Bread_Account:
 
     ##############################################################
     # Space related methods.
+
+    def get_engine_efficiency_multiplier(
+            self: typing.Self
+        ) -> float:
+        tiers = store.Engine_Efficiency.consumption_multipliers
+        return tiers[self.get(store.Engine_Efficiency.name)]
     
     def get_corruption_chance(
             self: typing.Self,

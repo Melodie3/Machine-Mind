@@ -53,7 +53,6 @@ MAP_EMOJIS = {
     "trade_hub": ":post_office:",
     "asteroid": ":rock:",
     "wormhole": ":hole:",
-    "merchant": ":person_in_tuxedo:",
 }
 
 EMOJI_PATHS = {
@@ -94,7 +93,6 @@ EMOJI_PATHS = {
     "black_hole": "images/black_hole.png",
     "wormhole": "images/wormhole.png",
     "trade_hub": "images/trade_hub.png",
-    "merchant": "images/merchant.png",
     "asteroid": "images/asteroid.png",
 
     # Special breads.
@@ -440,110 +438,6 @@ class SystemPlanet(SystemTile):
             return "special_bread"
         
         return self.planet_type.name
-    
-########################################################
-
-class SystemMerchant(SystemTile):
-    def __init__(
-            self: typing.Self,
-            galaxy_seed: str,
-
-            galaxy_xpos: int,
-            galaxy_ypos: int,
-            system_xpos: int,
-            system_ypos: int
-        ) -> None:
-        super().__init__(galaxy_seed, galaxy_xpos, galaxy_ypos, system_xpos, system_ypos)
-        self.type = "merchant"
-
-        self.trades_internal = None
-    
-    def get_emoji(self: typing.Self) -> str:
-        return "merchant"
-
-    def get_analysis(
-            self: typing.Self,
-            guild: typing.Union[discord.Guild, int, str],
-            json_interface: bread_cog.JSON_interface
-        ) -> list[str]:
-        return [
-                "Object type: Merchant",
-                "Use '$bread space merchant' when within viewing range to talk with them."
-            ]
-
-    def get_trades(
-            self: typing.Self,
-            guild: typing.Union[discord.Guild, int, str],
-            json_interface: bread_cog.JSON_interface
-        ) -> list[tuple]:
-        if self.trades_internal is None:
-            self.load_trades(guild, json_interface)
-        
-        return self.trades_internal
-
-    def load_trades(
-            self: typing.Self,
-            guild: typing.Union[discord.Guild, int, str],
-            json_interface: bread_cog.JSON_interface
-        ) -> None:
-        tick_seed = json_interface.get_tick_seed(guild)
-        
-        trades = []
-        
-        trade_amount = 5
-
-        all_emotes = values.all_emotes.copy()
-
-        for emote in all_emotes.copy():
-            if emote.trade_value is None:
-                all_emotes.remove(emote)
-        
-
-        for trade_id in range(trade_amount):
-            rng = random.Random(utility.hash_args(self.tile_seed(), tick_seed, trade_id))
-
-            give = rng.choice(all_emotes)
-            give_amount = 1
-
-            take = rng.choice(all_emotes)
-            take_amount = 1
-
-            if take == give:
-                while take == give:
-                    take = rng.choice(all_emotes)
-            
-            if give.trade_value > take.trade_value:
-                take_amount = round(give.trade_value / take.trade_value)
-            else:
-                give_amount = round(take.trade_value / give.trade_value)
-            
-            trades.append((
-                (give, give_amount), (take, take_amount)
-            ))
-        
-        self.trades_internal = trades
-    
-    def describe_trades(
-            self: typing.Self,
-            guild: typing.Union[discord.Guild, int, str],
-            json_interface: bread_cog.JSON_interface
-        ) -> list[str]:
-        trades = self.get_trades(guild, json_interface)
-
-        out = []
-
-        for trade_id, trade_data in enumerate(trades):
-            give, take = trade_data
-
-            out.append("{trade_id}: {take_amount} {take_item} for {give_amount} {give_item}".format(
-                trade_id = trade_id + 1,
-                take_amount = utility.smart_number(take[1]),
-                take_item = take[0].text,
-                give_amount = utility.smart_number(give[1]),
-                give_item = give[0].text,
-            ))
-        
-        return out
         
 ########################################################
 
@@ -623,7 +517,6 @@ class GalaxyTile:
             asteroids: list[SystemAsteroid] = None,
             planets: list[SystemPlanet] = None,
             wormhole: SystemWormhole = None,
-            merchant: SystemMerchant = None
         ) -> None:
         """Object that represents a tile within the galaxy.
 
@@ -643,7 +536,6 @@ class GalaxyTile:
             asteroids (list[SystemAsteroid], optional): List of SystemTile objects for each tile in this system that is part of an asteroid belt. If there are no asteroids then pass an empty list. Defaults to None.
             planets (list[SystemPlanet], optional): A list of SystemTile objects for each planet in this system. Defaults to None.
             wormhole (SystemWormhole, optional): A SystemWormhole object for a wormhole in this system. Defaults to None.
-            merchant (SystemMerchant, optional): A SystemMerchant object for a merchant in this system. Defaults to None.
         """
         self.galaxy_seed = galaxy_seed
         self.ascension = ascension
@@ -661,7 +553,6 @@ class GalaxyTile:
         self.trade_hub = trade_hub
         self.planets = planets
         self.wormhole = wormhole
-        self.merchant = merchant
 
         if self.star is not None and \
                 self.asteroids is not None and \
@@ -812,24 +703,6 @@ class GalaxyTile:
                 planet_deviation = planet_data.get("deviation")
             ))
         
-        # Setup any merchants in this system.
-
-        if merchant_on_tile(
-                ascension = self.ascension,
-                guild = guild,
-                json_interface = json_interface,
-                tile_x = self.xpos,
-                tile_y = self.ypos,
-                validate_system = False
-            ):            
-            self.merchant = SystemMerchant(
-                galaxy_seed = self.galaxy_seed,
-                galaxy_xpos = self.xpos,
-                galaxy_ypos = self.ypos,
-                system_xpos = raw_data.get("merchant", {}).get("xpos", 0),
-                system_ypos = raw_data.get("merchant", {}).get("ypos", 0)
-            )
-        
         self.planets = planets
         
         self.loaded = True
@@ -929,10 +802,6 @@ class GalaxyTile:
         if self.wormhole is not None:
             if self.wormhole.system_xpos == system_x and self.wormhole.system_ypos == system_y:
                 return self.wormhole
-        
-        if self.merchant is not None:
-            if self.merchant.system_xpos == system_x and self.merchant.system_ypos == system_y:
-                return self.merchant
         
         # Lastly, check if any asteroids match up.
         for asteroid in self.asteroids:
@@ -1291,14 +1160,6 @@ def system_map(
 
             if (trade_hub_x, trade_hub_y) in visible_coordinates:
                 grid[trade_hub_y + 2 - system_y + radius][trade_hub_x + 2 - system_x + radius] = system_data.trade_hub.get_emoji()
-                
-        # Potential merchant.
-        if system_data.merchant is not None:
-            merchant_x = system_data.merchant.system_xpos
-            merchant_y = system_data.merchant.system_ypos
-
-            if (merchant_x, merchant_y) in visible_coordinates:
-                grid[merchant_y + 2 - system_y + radius][merchant_x + 2 - system_x + radius] = system_data.merchant.get_emoji()
         
         # Potential wormhole.
         if system_data.wormhole is not None:
@@ -1775,47 +1636,6 @@ def get_trade_hub_projects(
 ###################################################################################################################################
 ###################################################################################################################################
 
-def merchant_on_tile(
-        ascension: int,
-        guild: typing.Union[discord.Guild, int, str],
-        json_interface: bread_cog.JSON_interface,
-        tile_x: int,
-        tile_y: int,
-        validate_system: bool = True
-    ) -> bool:
-    """Determines whether there is a merchant on the given tile and, by default, will only do that check if the given tile contains a system."""
-    galaxy_seed = json_interface.get_ascension_seed(ascension_id=ascension, guild=guild)
-
-    if validate_system:
-        system_data = generation.galaxy_single(
-            galaxy_seed = galaxy_seed,
-            x = tile_x,
-            y = tile_y
-        )
-
-        if not system_data.get("system", False):
-            return False
-    
-    tick_seed = json_interface.get_tick_seed(guild)
-
-    chance_merchant = 8 # So a merchant should appear in a system about every 2 days.
-
-    rng = random.Random(utility.hash_args(galaxy_seed, tick_seed, tile_x, tile_y, separator="-"))
-
-    return rng.randrange(0, chance_merchant) == 0
-
-
-            
-
-        
-
-
-
-
-###################################################################################################################################
-###################################################################################################################################
-###################################################################################################################################
-
 def get_spawn_location(
         json_interface: bread_cog.JSON_interface,
         user_account: account.Bread_Account
@@ -1901,6 +1721,8 @@ def allowed_gifting(
         end = p2_location
     ))
 
+    levels = []
+
     # Run the code that checks the player's location for a trade hub for both players.
     for player in [player_1, player_2]:
         player_tile = player.get_galaxy_tile(json_interface=json_interface)
@@ -1920,9 +1742,15 @@ def allowed_gifting(
             continue
 
         level = player_tile.trade_hub.trade_hub_level
+        levels.append(level)
 
         # If the distance is less than or equal to the max distance of the trade hub, then gifting is possible.
         if distance <= store.trade_hub_distances[level]:
+            return True
+    
+    if len(levels) >= 2:
+        if (levels[0] >= 3 and levels[1] >= 2) or \
+           (levels[1] >= 3 and levels[0] >= 2):
             return True
     
     # If nothing fired, then gifting is not possible.

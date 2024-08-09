@@ -1,11 +1,17 @@
 """
 Patch Notes: 
 - Added space.
+  - Currently only available on a9, when a9 finishes it will be available from a2 and above.
+  - Added a Space Shop accessible via "$bread space shop"
+  - In order to access space you need to purchase a Bread Rocket in the Space Shop.
+  - The anarchy piece set can be found when bread rolling in space.
+- Special and rare bread can now be alchemized out of :bread: and other specials of the same rarity.
 - You can now use fractions in gifting to specify a custom amount.
 - Modified Chessatron dough equation to buff Chessatron Contraption.
 - Decreased Chessatron Contraption max level to 10.
 - Changed the Random Chess Piece price scheme to be the chessatron value divided by 6, rounded up to the nearest 50.
 - You can now buy up to 2,500 Random Chess Pieces and 5,000,000 Special Bread Packs per day.
+- You can now ascend to the highest ascension from any ascension if you have the ascension requirements on your current ascension.
 
 
 (todo) test reply ping
@@ -4743,7 +4749,7 @@ anarchy - 1000% of your wager.
 
         amount_left = user_account.get(item.text)
         
-        await ctx.reply(f"You have contributed {amount_contribute} {item.text} to levelling up the Trade Hub!\nYou now have {amount_left} {item.text} remaining.")
+        await ctx.reply(f"You have contributed {utility.smart_number(amount_contribute)} {item.text} to levelling up the Trade Hub!\nYou now have {utility.smart_number(amount_left)} {item.text} remaining.")
 
         # Check for completion.
 
@@ -4939,7 +4945,7 @@ anarchy - 1000% of your wager.
 
         amount_left = user_account.get(item.text)
         
-        await ctx.reply(f"You have contributed {amount_contribute} {item.text} to the {project.name(day_seed, hub)} project.\nYou now have {amount_left} {item.text} remaining.")
+        await ctx.reply(f"You have contributed {utility.smart_number(amount_contribute)} {item.text} to the {project.name(day_seed, hub)} project.\nYou now have {utility.smart_number(amount_left)} {item.text} remaining.")
 
         updated_required = project.get_remaining_items(
             day_seed = day_seed,
@@ -4986,7 +4992,7 @@ anarchy - 1000% of your wager.
                 amount = math.ceil(win_amount * percent_cut)
                 player_account.increment(win_item, amount)
 
-                items_added.append(f"{amount} {win_item}")
+                items_added.append(f"{amount} {utility.smart_number(win_item)}")
 
             player_account.increment("projects_completed", 1)
 
@@ -5034,8 +5040,8 @@ anarchy - 1000% of your wager.
         message_lines += f"\n{project.description(day_seed, hub)}"
         message_lines += f"\n\nCompleted: {':white_check_mark:' if project_data.get('completed', False) else ':x:'}"
         message_lines += "\nCollected items: {have}/{total} ({percent}%)".format(
-            have = amount_contributed,
-            total = amount_needed,
+            have = utility.smart_number(amount_contributed),
+            total = utility.smart_number(amount_needed),
             percent = round(100 * project.get_progress_percent(day_seed, hub, contributions), 2)
         )
         if amount_contributed != amount_needed:
@@ -5400,11 +5406,11 @@ anarchy - 1000% of your wager.
                 self.currently_interacting.remove(ctx.author.id)
                 return
             
-            move_cost = space.MOVE_FUEL_WORMHOLE
+            move_cost = int(space.MOVE_FUEL_WORMHOLE * user_account.get_engine_efficiency_multiplier())
             
             if move_location not in confirm_text:
                 current_fuel = user_account.get(values.fuel.text)
-                await utility.smart_reply(ctx, f"You are trying to travel through the wormhole.\nThis will require **{move_cost}** {values.fuel.text}.\nYou have {current_fuel} {values.fuel.text}.\nAre you sure you want to move? Yes or No.")
+                await utility.smart_reply(ctx, f"You are trying to travel through the wormhole.\nThis will require **{utility.smart_number(move_cost)}** {values.fuel.text}.\nYou have {current_fuel} {values.fuel.text}.\nAre you sure you want to move? Yes or No.")
             
                 def check(m: discord.Message):
                     return m.author.id == ctx.author.id and m.channel.id == ctx.channel.id 
@@ -5457,7 +5463,7 @@ anarchy - 1000% of your wager.
 
             fuel_left = user_account.get(values.fuel.text)
 
-            await utility.smart_reply(ctx, f"Autopilot success:\nSucessfully travelled through the wormhole..\n\nYou have **{fuel_left} {values.fuel.text}** remaining.")
+            await utility.smart_reply(ctx, f"Autopilot success:\nSucessfully travelled through the wormhole..\n\nYou have **{utility.smart_number(fuel_left)} {values.fuel.text}** remaining.")
 
             self.currently_interacting.remove(ctx.author.id)
             return
@@ -5556,7 +5562,7 @@ anarchy - 1000% of your wager.
                 end_position = end_location
             )
 
-            move_cost = cost_data.get("cost", 500)
+            move_cost = int(cost_data.get("cost", 500) * user_account.get_engine_efficiency_multiplier())
         else:
             if autopilot_level < 1:
                 await ctx.reply("Autopilot error:\nGalaxy travel not possible with existing autopilot system.")
@@ -5581,11 +5587,11 @@ anarchy - 1000% of your wager.
                 self.currently_interacting.remove(ctx.author.id)
                 return
 
-            move_cost = cost_data.get("cost", 500)
+            move_cost = int(cost_data.get("cost", 500) * user_account.get_engine_efficiency_multiplier())
 
         if confirm not in confirm_text:
             current_fuel = user_account.get(values.fuel.text)
-            await utility.smart_reply(ctx, f"You are trying to move from {start_location} to {end_location}.\nThis will require **{move_cost}** {values.fuel.text}.\nYou have {current_fuel} {values.fuel.text}.\nAre you sure you want to move? Yes or No.")
+            await utility.smart_reply(ctx, f"You are trying to move from {start_location} to {end_location}.\nThis will require **{utility.smart_number(move_cost)}** {values.fuel.text}.\nYou have {utility.smart_number(current_fuel)} {values.fuel.text}.\nAre you sure you want to move? Yes or No.")
             
             def check(m: discord.Message):
                 return m.author.id == ctx.author.id and m.channel.id == ctx.channel.id 
@@ -5684,145 +5690,9 @@ anarchy - 1000% of your wager.
 
         fuel_left = user_account.get(values.fuel.text)
 
-        await utility.smart_reply(ctx, f"Autopilot success:\nSuccessfully moved to {end_location} on the {move_map} map, using {move_cost} {values.fuel.text}.\n\nYou have **{fuel_left} {values.fuel.text}** remaining.")
+        await utility.smart_reply(ctx, f"Autopilot success:\nSuccessfully moved to {end_location} on the {move_map} map, using {utility.smart_number(move_cost)} {values.fuel.text}.\n\nYou have **{utility.smart_number(fuel_left)} {values.fuel.text}** remaining.")
 
         self.currently_interacting.remove(ctx.author.id)
-        
-    ########################################################################################################################
-    #####      BREAD SPACE MERCHANT
-    
-    @space.command(
-        name = "merchant",
-        brief = "Talk with travelling merchants.",
-        description = "Talk with travelling merchants."
-    )
-    async def space_merchant(self, ctx,
-            trade_id: typing.Optional[parse_int] = commands.parameter(description = "The trade id to trade."),
-            amount: typing.Optional[parse_int] = commands.parameter(description = "The amount of times to trade.")
-        ):
-        if amount is None:
-            amount = 1
-        # Viewing merchant trades can be done in any channel with basic permissions,
-        # however actually trading with a merchant requires activity level or higher.
-        if get_channel_permission_level(ctx) < PERMISSION_LEVEL_BASIC:
-            await utility.smart_reply(ctx, f"Thank you for discussing trading with merchants! You can do so over in {self.json_interface.get_rolling_channel(ctx.guild.id)}.")
-            return
-        
-        user_account = self.json_interface.get_account(ctx.author, guild = ctx.guild.id)
-
-        if user_account.get_space_level() < 1:
-            await ctx.reply("You do not have a rocket that can communicate with merchants. You can purchase a Bread Rocket from the Space Shop.")
-            return
-        
-        galaxy_location = user_account.get_galaxy_location(self.json_interface)
-
-        # Now to see if the player is in the same system as a merchant.
-
-        on_tile = space.merchant_on_tile(
-            ascension = user_account.get_prestige_level(),
-            guild = ctx.guild.id,
-            json_interface = self.json_interface,
-            tile_x = galaxy_location[0],
-            tile_y = galaxy_location[1],
-            validate_system = True
-        )
-
-        if not on_tile:
-            await ctx.reply("There does not appear to be any merchants nearby.")
-            return
-        
-        galaxy_seed = self.json_interface.get_ascension_seed(user_account.get_prestige_level(), ctx.guild.id)
-
-        galaxy_tile = space.get_galaxy_coordinate(
-            json_interface = self.json_interface,
-            guild = ctx.guild.id,
-            galaxy_seed = galaxy_seed,
-            ascension = user_account.get_prestige_level(),
-            xpos = galaxy_location[0],
-            ypos = galaxy_location[1],
-            load_data = True
-        )
-        
-        merchant_object = galaxy_tile.merchant
-
-        system_location = user_account.get_system_location()
-
-        merchant_x = merchant_object.system_xpos
-        merchant_y = merchant_object.system_ypos
-        player_x = system_location[0]
-        player_y = system_location[1]
-
-        telescope_level = user_account.get(store.Upgraded_Telescopes.name)
-
-        distance = round(math.sqrt(int(merchant_x - player_x + 0.5) ** 2 + int(merchant_y - player_y + 0.5) ** 2))
-
-        if distance >= telescope_level + 1:
-            print(distance)
-            await ctx.reply("There does not appear to be any merchants nearby.")
-            return
-
-        # Finally, we can actually start working with trades.
-
-        if amount == 0:
-            await ctx.reply("Trading 0 times, an incredible feat.")
-            return
-
-        if amount < 0:
-            await ctx.reply("Typically merchants tend to not be in favor of negative trading.")
-            return
-        
-        merchant_object.load_trades(
-            guild = ctx.guild,
-            json_interface = self.json_interface
-        )
-        
-        if trade_id is None:
-            # Time to list the trades!
-            trade_lines = merchant_object.describe_trades(ctx.guild, self.json_interface)
-
-            await ctx.reply("Merchant trades:\n\n{trades}\n\nUse '$bread space merchant [trade id] [amount]' to trade.".format(
-                trades = "\n\n".join(trade_lines)
-            ))
-            return
-
-        trade_data = merchant_object.get_trades(ctx.guild, self.json_interface)
-        
-        if not(1 <= trade_id <= len(trade_data)):
-            await ctx.reply("There is no trade with that id.")
-            return
-        
-        give_data = trade_data[trade_id - 1][0]
-        take_data = trade_data[trade_id - 1][1]
-
-        print(give_data, take_data)
-
-        take_player = user_account.get(take_data[0].text)
-
-        if take_player < take_data[1] * amount:
-            await ctx.reply("You don't have enough of that to trade.")
-            return
-        
-        # Remove required item.
-        user_account.increment(
-            take_data[0],
-            take_data[1] * amount
-        )
-        
-        # Give traded item.
-        user_account.increment(
-            give_data[0],
-            give_data[1] * amount
-        )
-
-        self.json_interface.set_account(ctx.author, user_account, guild = ctx.guild.id)
-
-        await ctx.reply("Success, you have traded {take_amount} {take_item} for {receive_amount} {receive_item}".format(
-            take_amount = utility.smart_number(take_data[1] * amount),
-            take_item = take_data[0].text,
-            receive_amount = utility.smart_number(give_data[1] * amount),
-            receive_item = give_data[0].text
-        ))
-
 
 
 
@@ -5937,7 +5807,7 @@ anarchy - 1000% of your wager.
                 await utility.smart_reply(ctx, f"Very well done! You have collected all the anarchy pieces!\n\n{board}")
                 await asyncio.sleep(1)
 
-                await utility.smart_reply(ctx, f"Not only have you been awarded the prestigious {values.anarchy_chessatron.text}, but you also have been awarded **{total_dough_value//trons_to_make} dough**!")
+                await utility.smart_reply(ctx, f"Not only have you been awarded the prestigious {values.anarchy_chessatron.text}, but you also have been awarded **{utility.smart_number(total_dough_value//trons_to_make)} dough**!")
                 await asyncio.sleep(1)
 
         elif trons_to_make < 5000:
