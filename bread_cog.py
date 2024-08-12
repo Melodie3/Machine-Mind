@@ -1722,7 +1722,7 @@ loaf_converter""",
             return
         
         if setting is None:
-            await ctx.reply("Please provide a Multiroller Terminal setting.\nEither a number of active Multirollers to set or 'off' to shutdown the terminal.")
+            await ctx.reply("Please provide a Multiroller Terminal setting.\nEither a number of active Multirollers to set or 'off' to shutdown the terminal and use the maximum possible.")
             return
         
         if setting == "off":
