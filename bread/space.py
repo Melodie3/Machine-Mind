@@ -1009,8 +1009,7 @@ def galaxy_map(
 
             place(emoji, xpos, ypos)
 
-            if xpos == (y_size + 4) // 2 and ypos == (y_size + 4) // 2:
-                place("rocket", xpos, ypos)
+    place("rocket", radius + 2, radius + 2)
 
     output = io.BytesIO()
     img.save(output, "png")
