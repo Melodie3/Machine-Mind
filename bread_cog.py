@@ -4430,7 +4430,9 @@ anarchy - 1000% of your wager.
             output.append(f"With {account.write_count('telescope_level', 'telescope level')}, you can see in a {sn(account.get('telescope_level') + 2)} tile radius area.")
 
         if account.has("advanced_exploration"):
-            output.append(f"With {account.write_count('advanced_exploration', 'level')} of Advanced Exploration, you're {utility.write_number_of_times(account.get('advanced_exploration') + 1)} more likely to get an anarchy chess piece.")
+            amount = account.get('advanced_exploration') + 1
+            number_suffix = "more" if amount > 2 else "as"
+            output.append(f"With {account.write_count('advanced_exploration', 'level')} of Advanced Exploration, you're {utility.write_number_of_times(amount)} {number_suffix} likely to get an anarchy chess piece than normal.")
 
         if account.has("engine_efficiency"):
             level = account.get('advanced_exploration')

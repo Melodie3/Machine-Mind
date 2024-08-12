@@ -295,7 +295,6 @@ class Welcome_Packet(Store_Item):
 
         return f"Inside the packet was **{amount} dough**! Congratulations!"
 
-
 class Daily_rolls(Store_Item):
     name = "max_daily_rolls"
     display_name = "Extra daily roll"
@@ -343,7 +342,6 @@ class Daily_rolls(Store_Item):
             if level in ascension_token_levels:
                 user_account.increment(token_text, 1)
                 return f"In addition to buying a daily roll, you have acquired **1 {token_text}**! You now have **{user_account.get(token_text)} {token_text}**."
-
 
 class Loaf_Converter(Store_Item):
     name = "loaf_converter"
@@ -495,9 +493,6 @@ class Compound_Roller(Store_Item):
         else:
             return False
         #return super().can_be_purchased(user_account)
-
-    
-
 
 class Random_Chess_Piece(Store_Item):
     name = "random_chess_piece"
@@ -923,7 +918,6 @@ class Black_Hole_Technology(Custom_price_item):
     def get_cost_types(cls, user_account: account.Bread_Account, level: int = None):
         return [values.gem_purple.text]
 
-
 class Bling(Custom_price_item):
     name = "bling"
     display_name = "Bling"
@@ -1133,7 +1127,6 @@ class Prestige_Store_Item(Store_Item):
     def get_cost_types(cls, user_account: account.Bread_Account, level: int = None):
         return [values.ascension_token.text]
 
-
 class High_Roller_Table(Prestige_Store_Item):
     name = "gamble_level"
     display_name = "High Roller Table"
@@ -1236,8 +1229,6 @@ class Chess_Piece_Equalizer(Prestige_Store_Item):
     @classmethod
     def max_level(cls, user_account: account.Bread_Account = None) -> typing.Optional[int]:
         return 3
-
-    
 
 class MoaK_Booster(Prestige_Store_Item):
     name = "moak_booster"
@@ -1798,6 +1789,10 @@ class Advanced_Exploration(Space_Shop_Item):
         level = user_account.get(cls.name) + 1  
         description_mult = utility.write_number_of_times(level + 1)
         return f"Advanced exploration devices resulting in loaves being {description_mult} as likely to be an anarchy chess piece."
+
+    @classmethod
+    def get_cost_types(cls, user_account: account.Bread_Account, level: int = None):
+        return [values.anarchy_chessatron.text, values.omega_chessatron.text, values.chessatron.text, values.normal_bread.text]
     
 class Engine_Efficiency(Space_Shop_Item):
     name = "engine_efficiency"
@@ -2042,8 +2037,6 @@ class Gambit_Shop_Waffle(Gambit_shop_Item):
 
 ##########################################################################################
 
-# all_chess_pieces = [black_king, black_queen, black_knight, black_bishop, black_rook, black_pawn, white_pawn, white_rook, white_bishop, white_knight, white_queen, white_king]
-
 class Gambit_Shop_Black_Pawn(Gambit_shop_Item):
     name = "gambit_shop_black_pawn"
     display_name = "e5"
@@ -2091,7 +2084,6 @@ class Gambit_Shop_Black_King(Gambit_shop_Item):
     boost_item = values.black_king
     boost_amount = 20
     raw_cost = [(values.black_pawn.text, 25), (values.black_king.text, 10), (values.gem_red.text, 1)]
-
 
 ##########################################################################################
 
