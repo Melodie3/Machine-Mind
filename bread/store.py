@@ -1719,7 +1719,7 @@ class Advanced_Exploration(Space_Shop_Item):
             (values.anarchy_chessatron.text, anarchy_tron),
             (values.omega_chessatron.text, omega),
             (values.chessatron.text, chessatron),
-            (values.bread.text, bread)
+            (values.normal_bread.text, bread)
         ]
     
     @classmethod
