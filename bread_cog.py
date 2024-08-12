@@ -5704,8 +5704,8 @@ anarchy - 1000% of your wager.
 
                 system_radius = system_data.get("radius")
 
-                out_x = int(math.cos(angle) * system_radius + 2)
-                out_y = int(math.sin(angle) * system_radius + 2)
+                out_x = int(math.cos(angle) * system_radius)
+                out_y = int(math.sin(angle) * system_radius)
 
                 user_account.set("system_xpos", out_x)
                 user_account.set("system_ypos", out_y)
