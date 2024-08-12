@@ -1057,8 +1057,23 @@ class Test_Strategy_Item(Custom_price_item):
 
 normal_store_items = [Welcome_Packet, Daily_rolls, Loaf_Converter, Multiroller, Compound_Roller, Extra_Gamble, Random_Chess_Piece, Special_Bread_Pack, Roll_Summarizer, Black_Hole_Technology, Bling, LC_booster, ]
 
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 ##############################################################################################################
-##############################################################################################################
+##### Hidden bakery. #########################################################################################
 ##############################################################################################################
 
 # todo: make a prestige store base class
@@ -1383,6 +1398,21 @@ class Corruption_Negation(Prestige_Store_Item):
         return f"You have bought a level of Corruption Negation, be careful out there."
 
 prestige_store_items = [Daily_Discount_Card, Self_Converting_Yeast, MoaK_Booster, Chess_Piece_Equalizer, High_Roller_Table, Chessatron_Contraption, Ethereal_Shine, First_Catch, Fuel_Refinement, Corruption_Negation]
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
 #############################################################################################################
 ##### Space shop. ###########################################################################################
@@ -1755,11 +1785,24 @@ class Engine_Efficiency(Space_Shop_Item):
 
 space_shop_items = [Bread_Rocket, Upgraded_Autopilot, Fuel_Research, Upgraded_Telescopes, Multiroller_Terminal, Advanced_Exploration, Engine_Efficiency]
 
-#############################################################################################################
-#############################################################################################################
-#############################################################################################################
 
-#gambit shop items
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+#############################################################################################################
+##### Gambit shop. ##########################################################################################
+#############################################################################################################
 
 # first we'll make the item for unlocking the store itself
 class Gambit_Shop_Level(Custom_price_item):
