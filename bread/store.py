@@ -1490,11 +1490,11 @@ class Bread_Rocket(Space_Shop_Item):
         # (a2 locked) Tier 1: Access to space.
         #             Tier 2: Upgraded telescopes 1, Fuel research 4
         #             Tier 3: Engine Efficiency 1
-        # (a3 locked) Tier 4: (Galaxy travel)
+        # (a3 locked) Tier 4: Upgraded Autopilot 1 (Galaxy travel)
         #             Tier 5: Upgraded telescopes 2, Engine Efficiency 2
-        # (a4 locked) Tier 6: (Nebula travel)
+        # (a4 locked) Tier 6: Upgraded Autopilot 2 (Nebula travel)
         #             Tier 7: Engine Efficiency 3
-        # (a5 locked) Tier 8: (Wormhole travel), Upgraded telescopes 3
+        # (a5 locked) Tier 8: Upgraded Autopilot 3 (Wormhole travel), Upgraded telescopes 3
 
         if level == 0:
             return "A Bread Rocket that allows access to space."
@@ -1660,8 +1660,8 @@ class Upgraded_Telescopes(Space_Shop_Item):
         return [
             [],
             [(values.gem_purple.text, 50), (values.chessatron.text, 75)],
-            [(values.gem_green.text, 75), (values.chessatron.text, 225), (values.anarchy_chessatron.text, 3)],
-            [(values.gem_gold.text, 100), (values.chessatron.text, 675), (values.anarchy_chessatron.text, 27)],
+            [(values.gem_green.text, 75), (values.chessatron.text, 100)],
+            [(values.gem_gold.text, 100), (values.chessatron.text, 125), (values.anarchy_chessatron.text, 1)],
         ]
     
     @classmethod
@@ -1751,7 +1751,7 @@ class Engine_Efficiency(Space_Shop_Item):
     @classmethod
     def description(cls, user_account: account.Bread_Account) -> str:
         level = user_account.get(cls.name) + 1
-        return f"More efficient engines resuling in {cls.consumption_multipliers[level]}% fuel consumption when moving."
+        return f"More efficient engines resulting in only {round(cls.consumption_multipliers[level] * 100)}% fuel consumption when moving."
 
 space_shop_items = [Bread_Rocket, Upgraded_Autopilot, Fuel_Research, Upgraded_Telescopes, Multiroller_Terminal, Advanced_Exploration, Engine_Efficiency]
 
