@@ -858,13 +858,16 @@ def get_galaxy_spawn(galaxy_seed: str) -> tuple[int, int]:
         for angle_mod_amount in range(359):
             angle_mod = (angle_mod_amount + 1) // 2 * (1 if angle_mod_amount % 2 == 0 else -1)
 
-            for mod_amount in range(6):
+            for mod_amount in range(5):
                 check_distance = 83 + ((mod_amount + 2) // 2 * (1 if mod_amount % 2 == 0 else -1))
 
                 spawn_x = math.cos(math.radians(angle + angle_mod)) * check_distance
                 spawn_y = math.sin(math.radians(angle + angle_mod)) * check_distance
 
                 spawn_data = galaxy_single(galaxy_seed, round(spawn_x + MAP_RADIUS), round(spawn_y + MAP_RADIUS))
+
+                if spawn_data.get("in_nebula", False):
+                    continue
 
                 if spawn_data.get("system", False):
                     # We found a system!!
