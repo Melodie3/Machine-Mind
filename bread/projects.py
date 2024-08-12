@@ -3708,9 +3708,6 @@ class Chessatron_Repair(Project):
 
 story_projects = [Essential_Oils, Bingobango]
 
-# Chessatron_Repair appears a lot here since it doesn't like it when a list is empty.
-# When projects are made for those categories Chessatron_Repair can be removed.
-# Except take_misc_item_projects, since it actually goes there lol.
 take_special_bread_projects = [Too_Much_Stuffing, Flatbread_Shortage, Appease_The_French, Croissant_Cravings, Beach_Disappearance]
 take_rare_bread_projects = [Ecosystem_Problem, Stolen_Donuts, Waffle_Machine]
 take_black_chess_piece_projects = [Board_Game_Festival, Electrical_Issue, Chess_Tournament]
