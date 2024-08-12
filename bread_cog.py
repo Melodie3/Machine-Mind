@@ -6368,7 +6368,7 @@ anarchy - 1000% of your wager.
         account.set("spellcheck", True)
         account.set("roll_summarizer", 1)
 
-        account.set("prestige_level", 1)
+        account.set("prestige_level", 2)
 
         items = values.all_shinies
         
@@ -6382,6 +6382,9 @@ anarchy - 1000% of your wager.
         items.append(values.normal_bread)
         items.append(values.anarchy_chess)
         items.append(values.chessatron)
+        items.append(values.anarchy_chessatron)
+        items.append(values.omega_chessatron)
+        items.append(values.anarchy_omega_chessatron)
         items.append(values.fuel)
 
         for emote in items:

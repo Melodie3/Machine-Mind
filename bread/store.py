@@ -1537,9 +1537,9 @@ class Bread_Rocket(Space_Shop_Item):
             "upgrade your telescopes and use your fuel more efficiently.",
             "adventure through nebulae.",
             "use your fuel more efficiently.",
-            "upgrade your telescopes.",
+            "explore wormholes and upgrade your telescopes.",
         ]
-        return f"An upgraded Bread Rocket that can take your further in the vast reaches of space.\nThis upgraded rocket will allow you to {upgrades[level]}"
+        return f"An upgraded Bread Rocket allows you to {upgrades[level]}"
     
     @classmethod
     def can_be_purchased(cls, user_account: account.Bread_Account) -> bool:
@@ -1551,7 +1551,6 @@ class Bread_Rocket(Space_Shop_Item):
         ascension = user_account.get_prestige_level()
         if ascension < 2:
             return False
-        
 
         if level >= 8:
             return ascension >= 5
@@ -1563,8 +1562,32 @@ class Bread_Rocket(Space_Shop_Item):
             return ascension >= 3
         
         return True
+    
+    @classmethod
+    def do_purchase(cls, user_account: account.Bread_Account):
+        super().do_purchase(user_account)
 
-        
+        level = user_account.get(cls.name)
+
+        message = f"You have constructed the tier {level} Bread Rocket!"
+
+        unlocks = [
+            "",
+            "You can now view space via '$bread space map'.\nUse '$help bread space' to view a list of commands.",
+            "The Upgraded Telescopes and Fuel Research shop items have been added to the Space Shop.",
+            "The Engine Efficiency shop item has been added to the Space Shop.",
+            "The Upgraded Autopilot shop item has been added to the Space Shop.",
+            "The second tier of Upgraded Telescopes and Engine Efficiency shop items are now available to purchase.",
+            "The second tier of Upgraded Autopilot is now available to purchase.",
+            "The third tier of Engine Efficiency is now available to purchase.",
+            "The third tier of Upgraded Autopilot and Upgraded Telescopes are now available to purchase."
+        ]
+
+        message += "\n"
+        message += unlocks[level]
+
+        return message
+    
 class Upgraded_Autopilot(Space_Shop_Item):
     name = "autopilot_level"
     display_name = "Upgraded Autopilot"
@@ -1575,7 +1598,7 @@ class Upgraded_Autopilot(Space_Shop_Item):
             [],
             [(values.gem_gold.text, 100)],
             [(values.anarchy_chess.text, 10)],
-            [(values.anarchy_chessatron, 5)]
+            [(values.anarchy_chessatron.text, 5)]
         ]
     
     @classmethod
@@ -1595,17 +1618,19 @@ class Upgraded_Autopilot(Space_Shop_Item):
             return False
         
         level = user_account.get(cls.name) + 1
-        prestige_level = user_account.get_prestige_level()
+        space_level = user_account.get_space_level()
 
-        if prestige_level <= 2:
+        if space_level <= 3:
             return False
         
-        # Only return True if the prestige level is greater than or equal to the level plus 2.
-        # This means that for level 1 you need to have a prestige level of 3 or higher.
-        # For level 2, prestige level of 4 or higher.
-        return prestige_level >= level + 2
-    
+        if space_level <= 5:
+            return level <= 1
+        
+        if space_level <= 7:
+            return level <= 2
 
+        return True
+    
 #### UNUSED
 class Fuel_Tank(Space_Shop_Item):
     name = "fuel_tank"
@@ -1622,7 +1647,7 @@ class Fuel_Tank(Space_Shop_Item):
             [(values.gem_green.text, 100)],
             [(values.gem_gold.text, 50)],
             [(values.anarchy_chess.text, 5)],
-            [(values.anarchy_chessatron, 5)],
+            [(values.anarchy_chessatron.text, 5)],
         ]
     
     @classmethod
@@ -1670,16 +1695,9 @@ class Fuel_Research(Space_Shop_Item):
         if not super().can_be_purchased(user_account):
             return False
         
-        conversion_rates = [1, 3, 9, 27, 150]
-        level = user_account.get(cls.name) + 1
-        fuel_tank = user_account.get(Fuel_Tank.name)
-
-        # Only allow the purchase if the amount you'd get from the next item is less than the amount of fuel you can store.
-        if conversion_rates[level] > Fuel_Tank.tank_values[fuel_tank]:
-            return False
+        space_level = user_account.get_space_level()
         
-        return True
-
+        return space_level >= 2
 
 class Upgraded_Telescopes(Space_Shop_Item):
     name = "telescope_level"
@@ -1700,6 +1718,25 @@ class Upgraded_Telescopes(Space_Shop_Item):
         size = level + 2
 
         return f"An improved set of telescopes that allows you to see {size} spaces in any direction."
+    
+    @classmethod
+    def can_be_purchased(cls, user_account: account.Bread_Account) -> bool:
+        if not super().can_be_purchased(user_account):
+            return False
+        
+        level = user_account.get(cls.name) + 1
+        space_level = user_account.get_space_level()
+
+        if space_level <= 1:
+            return False
+        
+        if space_level <= 4:
+            return level <= 1
+        
+        if space_level <= 7:
+            return level <= 2
+        
+        return True
 
 class Multiroller_Terminal(Space_Shop_Item):
     name = "multiroller_terminal"
@@ -1760,7 +1797,7 @@ class Advanced_Exploration(Space_Shop_Item):
     def description(cls, user_account: account.Bread_Account) -> str:
         level = user_account.get(cls.name) + 1  
         description_mult = utility.write_number_of_times(level + 1)
-        return f"Advanced exploration devices resulting in loaves being {description_mult} more likely to be an anarchy chess piece."
+        return f"Advanced exploration devices resulting in loaves being {description_mult} as likely to be an anarchy chess piece."
     
 class Engine_Efficiency(Space_Shop_Item):
     name = "engine_efficiency"
@@ -1772,9 +1809,9 @@ class Engine_Efficiency(Space_Shop_Item):
     def get_costs(cls):
         return [
             [],
-            [(values.fuel.text, 150), (values.gem_purple.text, 40), (values.gem_green, 20)],
-            [(values.fuel.text, 250), (values.gem_purple.text, 60), (values.gem_green, 30)],
-            [(values.fuel.text, 350), (values.gem_purple.text, 80), (values.gem_green, 40)]
+            [(values.fuel.text, 150), (values.gem_purple.text, 40), (values.gem_green.text, 20)],
+            [(values.fuel.text, 250), (values.gem_purple.text, 60), (values.gem_green.text, 30)],
+            [(values.fuel.text, 350), (values.gem_purple.text, 80), (values.gem_green.text, 40)]
         ]
 
     
@@ -1782,6 +1819,25 @@ class Engine_Efficiency(Space_Shop_Item):
     def description(cls, user_account: account.Bread_Account) -> str:
         level = user_account.get(cls.name) + 1
         return f"More efficient engines resulting in only {round(cls.consumption_multipliers[level] * 100)}% fuel consumption when moving."
+    
+    @classmethod
+    def can_be_purchased(cls, user_account: account.Bread_Account) -> bool:
+        if not super().can_be_purchased(user_account):
+            return False
+        
+        level = user_account.get(cls.name) + 1
+        space_level = user_account.get_space_level()
+
+        if space_level <= 2:
+            return False
+        
+        if space_level <= 4:
+            return level <= 1
+        
+        if space_level <= 6:
+            return level <= 2
+        
+        return True
 
 space_shop_items = [Bread_Rocket, Upgraded_Autopilot, Fuel_Research, Upgraded_Telescopes, Multiroller_Terminal, Advanced_Exploration, Engine_Efficiency]
 
