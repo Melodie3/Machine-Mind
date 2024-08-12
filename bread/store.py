@@ -1078,6 +1078,7 @@ normal_store_items = [Welcome_Packet, Daily_rolls, Loaf_Converter, Multiroller, 
 class Prestige_Store_Item(Store_Item):
     name = "prestige_store_item"
     display_name = "Prestige Store Item"
+    listed_requirement = None
 
     #required
     @classmethod
@@ -1330,6 +1331,7 @@ class First_Catch(Prestige_Store_Item):
 class Fuel_Refinement(Prestige_Store_Item):
     name = "fuel_refinement"
     display_name = "Fuel Refinement"
+    listed_requirement = "Construct a tier 1 Bread Rocket in the Space Shop."
 
     costs = [0, 1, 1, 1, 1, 2, 2, 2, 2]
 
@@ -1357,6 +1359,7 @@ class Fuel_Refinement(Prestige_Store_Item):
 class Corruption_Negation(Prestige_Store_Item):
     name = "corruption_negation"
     display_name = "Corruption Negation"
+    listed_requirement = "Construct a tier 4 Bread Rocket in the Space Shop."
 
     costs = [0, 1, 1, 2, 2, 3]
 
@@ -1376,14 +1379,11 @@ class Corruption_Negation(Prestige_Store_Item):
     
     @classmethod
     def can_be_purchased(cls, user_account: account.Bread_Account) -> bool:
-        if user_account.get_space_level() < 1:
+        # If the space level is less than 4 (which unlocks galaxy travel) then don't allow this to be purchased.
+        if user_account.get_space_level() < 4:
             return False
         
-        if user_account.get_prestige_level() >= 5:
-            level = user_account.get(cls.name) + 1
-            if level <= cls.max_level(user_account):
-                return True
-        return False
+        return super().can_be_purchased(user_account)
 
     @classmethod
     def do_purchase(cls, user_account: account.Bread_Account):
