@@ -20,6 +20,8 @@ import bread.utility as utility
 # Decorative
 # flowers
 
+square_root_of_2 = 1.4142135623730950488
+
 
 ascension_token_levels = [50, 150, 450, 1000, 1660]
 
@@ -1771,7 +1773,7 @@ class Advanced_Exploration(Space_Shop_Item):
         anarchy_tron = int(1 + (level // 4))
         omega = int(1 + (level // 2))
         chessatron = int(100 + (level * 50))
-        bread = int(50 * (1.5 ** level))
+        bread = int(50 * (square_root_of_2 ** level))
 
         return [
             (values.anarchy_chessatron.text, anarchy_tron),
