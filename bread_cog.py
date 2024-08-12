@@ -6361,33 +6361,31 @@ anarchy - 1000% of your wager.
 
         account.set("total_dough", 10000000000000000000000000000)
         account.set("loaf_converter", 128)
-        account.set("max_daily_rolls", 1600)
+        account.set("max_daily_rolls", 1200)
+        account.set("auto_chessatron", False)
 
         account.set("space_level", 1)
-        account.set("telescope_level", 3)
-        account.set("system_xpos", -1)
-        account.set("system_ypos", 0)
-        account.set("galaxy_xpos", 203)
-        account.set("galaxy_ypos", 89)
-        account.set("fuel_tank", 3)
-        account.set("fuel_research", 4)
-        account.set("galaxy_move_count", 1)
-
-        account.set("multiroller", 7)
-        account.set("compound_roller", 5)
+        account.set("spellcheck", True)
         account.set("roll_summarizer", 1)
 
-        account.set("prestige_level", 6)
-        account.set(values.ascension_token.text, 50)
-        account.set(values.chessatron.text, 250)
+        account.set("prestige_level", 1)
 
-        for word in [values.gem_red.text, values.gem_blue.text, values.gem_purple.text, values.gem_green.text, values.gem_gold.text]:
-            account.set(word, 1600)
+        items = values.all_shinies
+        
+        items.extend(values.all_chess_pieces)
+        items.extend(values.all_anarchy_pieces)
+        items.extend(values.all_special_breads)
+        items.extend(values.all_rare_breads)
+        items.extend(values.shadow_emotes)
 
-        account.set(values.anarchy_chess.text, 5)
+        items.append(values.ascension_token)
+        items.append(values.normal_bread)
+        items.append(values.anarchy_chess)
+        items.append(values.chessatron)
+        items.append(values.fuel)
 
-        for word in [":doughnut:", ":bagel:", ":waffle:", ":croissant:", ":flatbread:", ":stuffed_flatbread:", ":sandwich:", ":french_bread:", values.fuel.text]:
-            account.set(word, 20000)
+        for emote in items:
+            account.set(emote.text, 50000000000)
 
         self.json_interface.set_account(user, account, guild = ctx.guild.id)
         await ctx.send("Done.")
