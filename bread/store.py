@@ -1734,7 +1734,7 @@ class Advanced_Exploration(Space_Shop_Item):
     
 class Engine_Efficiency(Space_Shop_Item):
     name = "engine_efficiency"
-    display_name = "Engine_Efficiency"
+    display_name = "Engine Efficiency"
 
     consumption_multipliers = [1, 0.85, 0.7, 0.5]
 
