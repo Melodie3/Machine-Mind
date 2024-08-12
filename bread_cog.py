@@ -4678,6 +4678,10 @@ anarchy - 1000% of your wager.
 
         for index, item in enumerate(analysis_lines):
             analysis_lines[index] = f"{line_emoji} {item}"
+        
+        analysis_lines.append(line_emoji)
+        analysis_lines.append(f"{line_emoji} Command to move there:")
+        analysis_lines.append(f"{line_emoji} $bread space move system {point} y")
 
         ##########################################################        
         ##### Sending the message.
