@@ -4365,7 +4365,7 @@ anarchy - 1000% of your wager.
         account = self.json_interface.get_account(ctx.author, guild = ctx.guild.id)
 
         if account.get_space_level() < 1:
-            await ctx.reply("You do not yet have a rocket.\nYou can purchase one from the Space Shop.")
+            await ctx.reply("You do not yet have a rocket.\nYou can purchase one from the Space Shop, which is viewable via '$bread space shop'.")
             return
         
         # Player has a rocket!
@@ -4374,7 +4374,7 @@ anarchy - 1000% of your wager.
 
         # Generate a list of the bread space subcommands and their help text.
         for cmd in self.space.commands:
-            message += f"  '$bread space {cmd.name}': {cmd.brief}\n"
+            message += f"\t'$bread space {cmd.name}': {cmd.brief}\n"
         
         await ctx.reply(message)
         
@@ -4553,14 +4553,11 @@ anarchy - 1000% of your wager.
         if mode == "galaxy":
             prefix = "Galaxy map:"
             middle = f"Your current galaxy location: {user_account.get_galaxy_location(json_interface=self.json_interface)}.\nCorruption chance: {corruption_chance}%."
-            suffix = "You can use '$bread space map' to view the map for the system you're in."
+            suffix = "You can use '$bread space map' to view the map for the system you're in.\n\nUse '$bread space move galaxy' to move around on this map."
         else:
             prefix = "System map:"
             middle = f"Your current galaxy location: {user_account.get_galaxy_location(json_interface=self.json_interface)}.\nYour current system location: {user_account.get_system_location()}.\nCorruption chance: {corruption_chance}%."
-            suffix = "You can use '$bread space map galaxy' to view the galaxy map."
-
-        # lines = ["".join(item) for item in map_data]
-        # lines = "\n".join(lines)
+            suffix = "You can use '$bread space map galaxy' to view the galaxy map.\n\nUse '$bread space move system' to move around on this map.\nUse '$bread space analyze' to get more information about somewhere."
 
         send_file = discord.File(map_data, filename="space_map.png")
         file_path = "attachment://space_map.png"
