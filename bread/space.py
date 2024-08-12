@@ -94,6 +94,7 @@ EMOJI_PATHS = {
     "wormhole": "images/wormhole.png",
     "trade_hub": "images/trade_hub.png",
     "asteroid": "images/asteroid.png",
+    "bread": "images/bread.png",
 
     # Special breads.
     "croissant": "images/croissant.png",
