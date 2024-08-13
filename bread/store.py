@@ -37,6 +37,7 @@ trade_hub_distances = [0, 2, 8, 32, 128, 512]
 class Store_Item:
     name = "generic_item"
     display_name = "Generic Item" # did you just say "generic excuse"??
+    aliases = []
 
     @classmethod
     def cost(
@@ -299,7 +300,8 @@ class Welcome_Packet(Store_Item):
 
 class Daily_rolls(Store_Item):
     name = "max_daily_rolls"
-    display_name = "Extra daily roll"
+    display_name = "Extra Daily Roll"
+    aliases = ["daily roll", "extra roll"]
 
     @classmethod
     def cost(cls, user_account: account.Bread_Account) -> int:
@@ -348,6 +350,7 @@ class Daily_rolls(Store_Item):
 class Loaf_Converter(Store_Item):
     name = "loaf_converter"
     display_name = "Loaf Converter"
+    aliases = ["lc"]
 
     @classmethod
     def cost(cls, user_account: account.Bread_Account) -> int:
@@ -591,8 +594,6 @@ class Random_Chess_Piece(Store_Item):
 
         out_str = ''
         if original_amount == 1:
-            # set piece_text to the only member of the purchased_pieces dict
-            piece_text = list(purchased_pieces.keys())[0]
             out_str = f'Congratulations! You have purchased a {piece_text}!'
         else:
             out_str = "Congratulations! You have purchased the following chess pieces:\n"
@@ -798,6 +799,7 @@ class Special_Bread_Pack(Store_Item):
 class Extra_Gamble(Store_Item):
     name = "extra_gamble"
     display_name = "Extra Gamble"
+    aliases = ["gamble", "gramble", "extra gramble"]
 
     @classmethod
     def cost(cls, user_account: account.Bread_Account) -> int:
@@ -882,6 +884,7 @@ class Roll_Summarizer(Store_Item):
 class Black_Hole_Technology(Custom_price_item):
     name = "black_hole"
     display_name = "Black Hole Technology"
+    aliases = ["black hole"]
 
     @classmethod
     def get_costs(cls):
@@ -994,6 +997,7 @@ class Bling(Custom_price_item):
 class LC_booster(Custom_price_item):
     name = "LC_booster"
     display_name = "Recipe Refinement"
+    aliases = ["rr"]
 
     @classmethod
     def get_costs(cls):
@@ -1133,6 +1137,7 @@ class Prestige_Store_Item(Store_Item):
 class High_Roller_Table(Prestige_Store_Item):
     name = "gamble_level"
     display_name = "High Roller Table"
+    aliases = ["hrt"]
 
     gamble_levels = [50, 500, 1500, 5000, 10000, 100000, 10000000, 1000000000, 1000000000000]
 
@@ -1165,6 +1170,7 @@ class High_Roller_Table(Prestige_Store_Item):
 class Daily_Discount_Card(Prestige_Store_Item):
     name = "max_daily_rolls_discount"
     display_name = "Daily Discount Card"
+    aliases = ["ddc"]
 
     #costs = [0, 1, 1, 1, 2, 2, 2, 3]
 
@@ -1188,6 +1194,7 @@ class Daily_Discount_Card(Prestige_Store_Item):
 class Self_Converting_Yeast(Prestige_Store_Item):
     name = "loaf_converter_discount"
     display_name = "Self Converting Yeast"
+    aliases = ["scy"]
 
     # costs = [0, 1, 1, 1, 2, 2, 2, 3]
 
@@ -1215,6 +1222,7 @@ class Self_Converting_Yeast(Prestige_Store_Item):
 class Chess_Piece_Equalizer(Prestige_Store_Item):
     name = "chess_piece_equalizer"
     display_name = "Chess Piece Equalizer"
+    aliases = "cpe"
 
     costs = [0, 1, 2, 3]
     
@@ -1236,6 +1244,7 @@ class Chess_Piece_Equalizer(Prestige_Store_Item):
 class MoaK_Booster(Prestige_Store_Item):
     name = "moak_booster"
     display_name = "MoaK Booster"
+    aliases = ["mb"]
 
     costs = [0, 2, 2, 3, 3, 4]
 
@@ -1256,6 +1265,7 @@ class MoaK_Booster(Prestige_Store_Item):
 class Chessatron_Contraption(Prestige_Store_Item):
     name = "chessatron_shadow_boost"
     display_name = "Chessatron Contraption"
+    aliases = ["cc"]
 
     costs = [0, 1, 1, 2, 2]
 
@@ -1279,6 +1289,7 @@ class Chessatron_Contraption(Prestige_Store_Item):
 class Ethereal_Shine(Prestige_Store_Item):
     name = "shadow_gold_gem_luck_boost"
     display_name = "Ethereal Shine"
+    aliases = ["es"]
 
     costs = [0, 1, 1, 2, 2]
 
@@ -1303,6 +1314,7 @@ class Ethereal_Shine(Prestige_Store_Item):
 class First_Catch(Prestige_Store_Item):
     name = "first_catch_level"
     display_name = "First Catch of the Day"
+    aliases = ["fcotd"]
 
     costs = [0, 1, 1, 2, 2, 3]
 
@@ -2050,6 +2062,10 @@ class Gambit_Shop_Black_Pawn(Gambit_shop_Item):
 class Gambit_Shop_Black_Knight(Gambit_shop_Item):
     name = "gambit_shop_black_knight"
     display_name = "King's Indian Defense"
+    aliases = [
+        "Kings Indian Defense", # No apostrophe.
+        "King’s Indian Defense" # iOS apostrophe.
+    ]
     level_required = 2
     boost_item = values.black_knight
     boost_amount = 20

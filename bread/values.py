@@ -526,6 +526,7 @@ chess_pieces_white_biased = [
 ]
 chess_pieces_black = [black_pawn, black_rook, black_bishop, black_knight, black_queen, black_king]
 chess_pieces_white = [white_pawn, white_rook, white_bishop, white_knight, white_queen, white_king]
+all_chess_pieces_biased = chess_pieces_black_biased + chess_pieces_white_biased
 
 ##################### CHESS END
 
@@ -988,6 +989,8 @@ all_emotes = [normal_bread,
 
 def get_emote(text: str) -> typing.Optional[Emote]:
     """Returns an Emote object if the given text represents that emote, or None if no emote matches."""
+    if len(text) == 0:
+        return None
     # return None
 
     text = text.lower()

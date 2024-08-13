@@ -43,7 +43,8 @@ class Bread_Account:
         "gifts_disabled" : False,
         "max_days_of_stored_rolls" : 1,
         "max_random_chess_pieces_per_day": 2500,
-        "max_special_bread_packs_per_day": 5000000
+        "max_special_bread_packs_per_day": 5000000,
+        "brick_troll_percentage" : 0
     }
 
 
@@ -494,6 +495,16 @@ class Bread_Account:
             amount = round(amount * prestige_mult)
 
         return amount
+
+    def get_maximum_gamble_wager(self) -> int:
+        import bread.store as store
+        """Returns the maximum amount of dough this account can gamble."""
+        gamble_level = self.get("gamble_level")
+        gamble_levels = store.High_Roller_Table.gamble_levels
+        if gamble_level < len(gamble_levels):
+            return gamble_levels[gamble_level]
+        else:
+            return gamble_levels[-1]
 
     def has_category(
             self: typing.Self,

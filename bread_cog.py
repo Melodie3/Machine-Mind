@@ -68,6 +68,8 @@ import importlib
 import math
 import traceback
 import re
+import time
+import io
 
 from os import getenv
 from dotenv import load_dotenv
@@ -349,7 +351,10 @@ class JSON_interface:
         print("Loading data for all guilds")
         for guild_id in all_json_guilds:
             print(f"Loading data for guild {guild_id}")
-            self.data[guild_id] = JSON_cog.get_filing_cabinet("bread", create_if_nonexistent=False, guild=guild_id)
+            data = JSON_cog.get_filing_cabinet("bread", create_if_nonexistent=False, guild=guild_id)
+            if data is None:
+                continue
+            self.data[guild_id] = data
             if self.data[guild_id] is not None:
                 self.all_guilds.append(guild_id)
                 print(f"Loaded data for guild {guild_id}")
@@ -844,23 +849,19 @@ class Bread_cog(commands.Cog, name="Bread"):
     
     @daily_task.before_loop
     async def before_daily(self: typing.Self):
-        print('Booting up loop')
-        #wait to be closer to the hour
-        time = datetime.now()
+        # This just waits until it's time for the first iteration.
+        print("Starting Bread cog hourly loop, current time is {}.".format(datetime.now()))
 
-        if time.minute < 5:
-            # wait until 5 minutes after the hour
-            wait_time = max(5 - time.minute, 0)
-            print (f"waiting before bread loop for {wait_time} minutes")
-            await asyncio.sleep(60*wait_time)
-            print (time.strftime("Finished waiting at %H:%M:%S"))
+        minute_in_hour = 5 # 5 would be X:05, 30 would be X:30.
 
-        elif time.minute > 5:
-            #wait into next hour
-            wait_time = max(65 - time.minute, 0)
-            print (f"waiting before bread loop for {wait_time} minutes")
-            await asyncio.sleep(60*wait_time)
-            print (time.strftime("Finished waiting at %H:%M:%S"))
+        wait_time = time.time() - (minute_in_hour * 60)
+        wait_time = 3600 - (wait_time % 3600) + 2 # Artificially add 2 seconds to ensure it stops at the correct time.
+
+        print("Waiting to start Bread cog hourly loop for {} minutes.".format(round(wait_time / 60, 2)))
+        
+        await asyncio.sleep(wait_time)
+        
+        print("Finished Bread cog hourly loop waiting at {}.".format(datetime.now()))
     
     ########################################################################################################################
     #####      ANNOUNCE
@@ -1043,6 +1044,11 @@ class Bread_cog(commands.Cog, name="Bread"):
         else:
             #getting archived data
             old_data = self.json_interface.archived_bread_data
+
+            if old_data is None:
+                await ctx.send(f"No archive data found for {user.name}")
+                return
+            
             id_str = str(user.id)
             #print(f"Searching for {id_str} in archived data {old_data.keys()}")
             if id_str in old_data.keys():
@@ -1131,8 +1137,21 @@ class Bread_cog(commands.Cog, name="Bread"):
         if get_channel_permission_level(ctx) < PERMISSION_LEVEL_BASIC:
             await ctx.send("Sorry, you can't do that here.")
             return
+        
+        archive_keywords = ["archive", "archived"]
+        chess_keywords = ["chess", "chess pieces", "pieces"]
+        gambit_keywords = ["gambit", "strategy", "gambit shop", "strategy shop"]
+        all_keywords = archive_keywords + chess_keywords + gambit_keywords
 
-        if (modifier is not None) and (modifier.lower() == "archive" or modifier.lower() == "archived"):
+        if user is not None and modifier is None:
+            names = [user.name, user.nick, user.global_name, user.display_name]
+            matches = [name.lower() in all_keywords for name in names if isinstance(name, str)]
+            if any(matches):
+                user = None
+                modifier = names[matches.index(True)]
+            
+
+        if modifier is not None and modifier.lower() in archive_keywords:
             # just call the old version, not worth it to try and implement it since accounts don't really understand
             # the existence of the archive
             await self.stats_old(ctx, user, modifier)
@@ -1156,8 +1175,8 @@ class Bread_cog(commands.Cog, name="Bread"):
             return
 
         # bread stats chess
-        if (modifier is not None) and (modifier.lower() == "chess" or modifier.lower() == "chess pieces" or modifier.lower() == "pieces"):
-            output = f"Chess pieces of {user_account.get_display_name()}:\n\n"
+        if modifier is not None and modifier.lower() in chess_keywords:
+            output = f"Chess pieces of {account.get_display_name()}:\n\n"
             for chess_piece in values.all_chess_pieces:
                 output += f"{chess_piece.text} - {user_account.get(chess_piece.text)}\n"
             
@@ -1171,9 +1190,9 @@ class Bread_cog(commands.Cog, name="Bread"):
             return
 
         # bread stats gambit
-        if (modifier is not None) and (modifier.lower() in ["gambit", "strategy", "gambit shop", "strategy shop"]):
-            output = f"Gambit shop bonuses for {user_account.get_display_name()}:\n\n"
-            boosts = user_account.values.get("dough_boosts", {})
+        if modifier is not None and modifier.lower() in gambit_keywords:
+            output = f"Gambit shop bonuses for {account.get_display_name()}:\n\n"
+            boosts = account.values.get("dough_boosts", {})
             for item in boosts.keys():
                 output += f"{item} - {boosts[item]}\n"
             if len(boosts) == 0:
@@ -1243,9 +1262,11 @@ class Bread_cog(commands.Cog, name="Bread"):
             if user_account.has("corruption_negation"):
                 output += f"You have a {round(abs(user_account.get_corruption_negation_multiplier() * 100 - 100))}% lower chance of a loaf becoming corrupted with {user_account.write_count('corruption_negation', 'level')} of Corruption Negation.\n"
 
-        output += "\nIndividual stats:\n"
-        if user_account.has(":bread:"):
-            output += f":bread: - {sn(user_account.get(':bread:'))}\n"
+        output_2 = ""
+
+        output_2 += "\nIndividual stats:\n"
+        if account.has(":bread:"):
+            output_2 += f":bread: - {sn(account.get(':bread:'))}\n"
 
         # list all special breads
         # special_breads = account.get_all_items_with_attribute("special_bread")
@@ -1262,11 +1283,11 @@ class Bread_cog(commands.Cog, name="Bread"):
 
         #     text = selected_special_breads[i].text
 
-        #     output += f"{account.get(text)} {text} "
+        #     output_2 += f"{account.get(text)} {text} "
         #     if i != len(selected_special_breads) - 1:
-        #         output += ", "
+        #         output_2 += ", "
         #     else:
-        #         output += "\n"
+        #         output_2 += "\n"
 
         display_list = ["special_bread", "rare_bread", "misc_bread", "shiny", "shadow", "misc", "unique" ]
 
@@ -1287,66 +1308,97 @@ class Bread_cog(commands.Cog, name="Bread"):
                 text = cleaned_items[i].text
                 # if account.get(text) == 0:
                 #     continue #skip empty values
-                output += f"{sn(user_account.get(text))} {text} "
+                output_2 += f"{sn(account.get(text))} {text} "
                 if i != len(cleaned_items) - 1:
-                    output += ", "
+                    output_2 += ", "
                 else:
-                    output += "\n"
+                    output_2 += "\n"
 
-        output2 = ""
+        output_3 = ""
 
         #make chess board
         board = self.format_chess_pieces(user_account.values)
         if board != "":
-            output2 += "\n" + board + "\n"
+            output_3 += "\n" + board + "\n"
 
         # list highest roll stats
 
-        if user_account.has("highest_roll", 11):
-            output2 += f"Your highest roll was {user_account.get('highest_roll')}.\n"
+        if account.has("highest_roll", 11):
+            output_3 += f"Your highest roll was {account.get('highest_roll')}.\n"
             comma = False
-            if user_account.has("eleven_breads"):
-                output2 += f"11 - {user_account.write_number_of_times('eleven_breads')}"
+            if account.has("eleven_breads"):
+                output_3 += f"11 - {account.write_number_of_times('eleven_breads')}"
                 comma = True
             if user_account.has("twelve_breads"):
                 if comma:
-                    output2 += ", "
-                output2 += f"12 - {user_account.write_number_of_times('twelve_breads')}"
+                    output_3 += ", "
+                output_3 += f"12 - {account.write_number_of_times('twelve_breads')}"
                 comma = True
             if user_account.has("thirteen_breads"):
                 if comma:
-                    output2 += ", "
-                output2 += f"13 - {user_account.write_number_of_times('thirteen_breads')}"
+                    output_3 += ", "
+                output_3 += f"13 - {account.write_number_of_times('thirteen_breads')}"
                 comma = True
             if user_account.has("fourteen_or_higher"):
                 if comma:
-                    output2 += ", "
-                output2 += f"14+ - {user_account.write_number_of_times('fourteen_or_higher')}"
+                    output_3 += ", "
+                output_3 += f"14+ - {account.write_number_of_times('fourteen_or_higher')}"
                 comma = True
             if comma:
-                output2 += "."
-            output2 += "\n"
+                output_3 += "."
+            output_3 += "\n"
 
         # list 10 and 1 roll stats
-        output2 += f"You've found a single solitary loaf {user_account.write_number_of_times('natural_1')}, and the full ten loaves {user_account.write_number_of_times('ten_breads')}.\n"
+        output_3 += f"You've found a single solitary loaf {account.write_number_of_times('natural_1')}, and the full ten loaves {account.write_number_of_times('ten_breads')}.\n"
 
         # list the rest of the stats
 
-        if user_account.has("lottery_win"):
-            output2 += f"You've won the lottery {user_account.write_number_of_times('lottery_win')}!\n"
-        if user_account.has("chess_pieces"):
-            output2 += f"You have {user_account.write_count('chess_pieces', 'Chess Piece')}.\n"
-        if user_account.has("special_bread"):
-            output2 += f"You have {user_account.write_count('special_bread', 'Special Bread')}.\n"
+        if account.has("lottery_win"):
+            output_3 += f"You've won the lottery {account.write_number_of_times('lottery_win')}!\n"
+        if account.has("chess_pieces"):
+            output_3 += f"You have {account.write_count('chess_pieces', 'Chess Piece')}.\n"
+        if account.has("special_bread"):
+            output_3 += f"You have {account.write_count('special_bread', 'Special Bread')}.\n"
         
-        if len(output) + len(output2) < 1900:
-            await ctx.reply( output + output2 )
+        if len(output) + len(output_2) + len(output_3) < 1900:
+            await ctx.reply( output + output_2 + output_3 )
+        elif len(output) + len(output_2) < 1900:
+            await ctx.reply( output + output_2 )
+            await ctx.reply( "Stats continued:\n" + output_3 )
         else:
             await ctx.reply( output )
-            await ctx.reply( "Stats continued:\n" + output2 )
+            await ctx.reply( "Stats continued:\n" + output_2 )
+            await ctx.reply( "Stats continued:\n" + output_3 )
         # await ctx.reply(output)
 
         #await self.do_chessboard_completion(ctx)
+
+            
+            
+
+    
+    ###########################################################################################################################
+    ######## BREAD EXPORT
+
+    @bread.command(
+        brief="Exports your stats data",
+        help = "Exports your or somebody else's stats into a JSON file.",
+        aliases = ["dump"]
+    )
+    async def export(self, ctx,
+            person: typing.Optional[discord.Member] = commands.parameter(description = "Who to export the stats of."),
+        ):
+        if person is None:
+            person = ctx.author
+
+        user_account = self.json_interface.get_account(person, ctx.guild)
+
+        file_text = json.dumps(user_account.values, indent=4)
+
+        fake_file = io.StringIO(file_text)
+        final_file = discord.File(fake_file, filename="export.json")
+
+        await ctx.reply(file=final_file)
 
             
             
@@ -1940,7 +1992,7 @@ loaf_converter""",
             self.json_interface.set_account(ctx.author,user_account, guild = ctx.guild.id)
 
             if get_channel_permission_level(ctx) == PERMISSION_LEVEL_MAX and user_account.has("roll_summarizer"):
-                summarizer_commentary = rolls.summarize_roll(result)
+                summarizer_commentary = rolls.summarize_roll(result, user_account)
             
 
             print (f"{ctx.author.name} rolled {total_value} dough.")
@@ -2152,7 +2204,7 @@ loaf_converter""",
 
     @bread.command(
         name="chessatron", 
-        aliases=["auto_chessatron"],
+        aliases=["auto_chessatron", "tron"],
         help="Toggle auto chessatron on or off. If no argument is given, it will create as many chessatrons for you as it can.",
         usage="on/off",
         brief="Toggle auto chessatron on or off."
@@ -2191,30 +2243,162 @@ loaf_converter""",
     #####      BREAD GEM_CHESSATRON
 
     @bread.command(
-        help="Create a chessatron from red gems.",
+        help = "Create a chessatron from red gems.",
+        aliases = ["gem_tron"]
     )
     async def gem_chessatron(self, ctx,
-            arg: typing.Optional[str] = commands.parameter(description = "The number of chessatrons to create.")
+            # arg: typing.Optional[str] = commands.parameter(description = "The number of chessatrons to create.")
+            *args
             ):
 
         user_account = self.json_interface.get_account(ctx.author, guild = ctx.guild.id)
-        gem_count = user_account.get(values.gem_red.text)
 
-        if gem_count < 32:
-            await utility.smart_reply(ctx, f"You need at least 32 red gems to create a chessatron.")
+        highest_gem_index = 1
+        number_of_chessatrons = None
+        emote = values.gem_red.text
+
+        # first get the gem, if applicable
+        for arg in args:
+            #test if is emoji
+            emote = values.get_emote_text(arg)
+            if emote is None:
+                # make sure it's an emote
+                continue
+
+            if emote == values.gem_red.text:
+                highest_gem_index = 1
+                break
+            elif emote == values.gem_blue.text:
+                highest_gem_index = 2
+                break
+            elif emote == values.gem_purple.text:
+                highest_gem_index = 3
+                break
+            elif emote == values.gem_green.text:
+                highest_gem_index = 4
+                break
+            elif emote == values.gem_gold.text:
+                highest_gem_index = 5
+                break
+        
+        # then get the count of chessatrons to try to make
+        for arg in args:
+            if is_numeric(arg):
+                number_of_chessatrons = parse_int(arg)
+                break
+        
+        if number_of_chessatrons is not None and number_of_chessatrons < 0:
+            await utility.smart_reply(ctx, "You can't make a negative number of chessatrons.")
+            return
+        
+
+        total_gem_count = 0
+        red_gems = user_account.get(values.gem_red.text)
+        blue_gems = user_account.get(values.gem_blue.text)
+        purple_gems = user_account.get(values.gem_purple.text)
+        green_gems = user_account.get(values.gem_green.text)
+        gold_gems = user_account.get(values.gem_gold.text) * 4
+
+
+        if highest_gem_index >= 1:
+            total_gem_count += red_gems
+        if highest_gem_index >= 2:
+            total_gem_count += blue_gems
+        if highest_gem_index >= 3:
+            total_gem_count += purple_gems
+        if highest_gem_index >= 4:
+            total_gem_count += green_gems
+        if highest_gem_index >= 5:
+            # 4 gems per gold gem
+            total_gem_count += gold_gems
+        
+
+        if number_of_chessatrons is None:
+            number_of_chessatrons = total_gem_count // 32
+        else:
+            number_of_chessatrons = min(total_gem_count // 32, number_of_chessatrons)
+
+        
+        
+
+        # gem_count = user_account.get(values.gem_red.text)
+
+        if total_gem_count < 32 or number_of_chessatrons == 0:
+            await utility.smart_reply(ctx, f"You need at least 32 gems to create a chessatron.")
             return
 
-        if arg is None:
-            arg = None
-            number_of_chessatrons = gem_count // 32 # integer division
-        elif is_numeric(arg):
-            arg = parse_int(arg)
-            number_of_chessatrons = min(gem_count // 32,arg) # integer division
-        else:
-            arg = None
-            number_of_chessatrons = gem_count // 32 # integer division
+        gems_needed = number_of_chessatrons * 32
 
-        user_account.increment(values.gem_red.text, -32*number_of_chessatrons)
+        if gems_needed > red_gems: # if not enough red gems to make all trons
+            gems_needed -= red_gems # then use all red gems in our count
+            red_gems_used = red_gems # mark that we've used all our red gems
+            red_gems = 0
+        else: # if enough red gems to make all trons
+            red_gems_used = gems_needed # mark that we've used all the red gems we need
+            gems_needed = 0
+            red_gems -= red_gems_used
+
+        if gems_needed > blue_gems:
+            gems_needed -= blue_gems
+            blue_gems_used = blue_gems
+            blue_gems = 0
+        else: # if enough blue gems to make all trons
+            blue_gems_used = gems_needed
+            gems_needed = 0
+            blue_gems -= blue_gems_used
+        
+        if gems_needed > purple_gems:
+            gems_needed -= purple_gems
+            purple_gems_used = purple_gems
+            purple_gems = 0
+        else: # if enough purple gems to make all trons
+            purple_gems_used = gems_needed
+            gems_needed = 0
+            purple_gems -= purple_gems_used
+
+        if gems_needed > green_gems:
+            gems_needed -= green_gems
+            green_gems_used = green_gems
+            green_gems = 0
+        else: # if enough green gems to make all trons
+            green_gems_used = gems_needed
+            gems_needed = 0
+            green_gems -= green_gems_used
+
+        if gems_needed > gold_gems:
+            gems_needed -= gold_gems
+            gold_gems_used = gold_gems
+            gold_gems = 0
+        else: # if enough gold gems to make all trons
+            gold_gems_used = gems_needed
+            gems_needed = 0
+            gold_gems -= gold_gems_used
+
+        if gems_needed > 0:
+            await utility.smart_reply(ctx, "It seems something went wrong.")
+            return
+
+        if gold_gems // 4 != gold_gems / 4:
+            # if we used a fraction of a gold gem
+            green_gems += round(((gold_gems / 4) - (gold_gems // 4)) * 4)
+
+        user_account.set(values.gem_red.text, red_gems)
+        user_account.set(values.gem_blue.text, blue_gems)
+        user_account.set(values.gem_purple.text, purple_gems)
+        user_account.set(values.gem_green.text, green_gems)
+        user_account.set(values.gem_gold.text, gold_gems // 4)
+
+        # if arg is None:
+        #     arg = None
+        #     number_of_chessatrons = gem_count // 32 # integer division
+        # elif is_numeric(arg):
+        #     arg = parse_int(arg)
+        #     number_of_chessatrons = min(gem_count // 32,arg) # integer division
+        # else:
+        #     arg = None
+        #     number_of_chessatrons = gem_count // 32 # integer division
+
+        # user_account.increment(values.gem_red.text, -32*number_of_chessatrons)
 
         user_account.increment(values.black_pawn.text, 8*number_of_chessatrons)
         user_account.increment(values.black_rook.text, 2*number_of_chessatrons)
@@ -2232,7 +2416,22 @@ loaf_converter""",
 
         self.json_interface.set_account(ctx.author, user_account, guild = ctx.guild.id)
 
-        await utility.smart_reply(ctx, f"You have used {32*number_of_chessatrons} red gems to make chess pieces.")
+        gems_list = []
+
+        if red_gems_used > 0:
+            gems_list.append(f"{red_gems_used} {values.gem_red.text}")
+        if blue_gems_used > 0:
+            gems_list.append(f"{blue_gems_used} {values.gem_blue.text}")
+        if purple_gems_used > 0:
+            gems_list.append(f"{purple_gems_used} {values.gem_purple.text}")
+        if green_gems_used > 0:
+            gems_list.append(f"{green_gems_used} {values.gem_green.text}")
+        if gold_gems_used > 0:
+            gems_list.append(f"{gold_gems_used // 4} {values.gem_gold.text}")
+
+        gems_string = ", ".join(gems_list)
+
+        await utility.smart_reply(ctx, f"You have used {gems_string} to make chess pieces.")
 
         await self.do_chessboard_completion(ctx, amount = parse_int(number_of_chessatrons))
 
@@ -2590,6 +2789,11 @@ loaf_converter""",
             if i.name.lower() == item_name_2 or i.display_name.lower() == item_name_2:
                 item = i
                 break
+            # this is for aliases
+            aliases = [option.lower() for option in i.aliases]
+            if item_name in aliases or item_name_2 in aliases:
+                item = i
+                break
         else: # if the for loop doesn't break, run this. This should run the same as an 'if item is None' check.
             await ctx.reply("Sorry, but I don't recognize that item's name.")
             return
@@ -2679,7 +2883,8 @@ loaf_converter""",
                 #text += f"\n\nYou now have **{user_account.get(values.ascension_token.text)} {values.ascension_token.text}** remaining."
             else:
                 if text is None:
-                    text = f"You have purchased a {item.display_name}! You now have {user_account.get(item.name)} of them."
+                    an = "an" if item.display_name.lower()[0] in "aeiou" else "a"
+                    text = f"You have purchased {an} {item.display_name}! You now have {user_account.get(item.name)} of them."
 
                 #text += f"\n\nYou now have **{user_account.get('total_dough')} dough** remaining."
 
@@ -2823,9 +3028,17 @@ For example, "$bread gift Melodie all chess_pieces" would gift all your chess pi
             if sender_account.values["allowed"] == False:
                 await ctx.reply("Sorry, you are not allowed to gift bread.")
                 return
+                
+        bot_list = [ # These can always be gifted to.
+            960869046323134514, # Machine-Mind
+            973811353036927047, # Latent-Dreamer
+            966474721619238972, # Tigran-W-Petrosian
+            1029793702136254584, # Bingo-Bot
+            466378653216014359, # PluralKit
+        ]
 
         if receiver_account.get_prestige_level() > sender_account.get_prestige_level():
-            if receiver_account.get("id") != 960869046323134514: # always can gift to MM
+            if receiver_account.get("id") not in bot_list: # can always gift to bots
                 await ctx.reply("Sorry, you can't gift to someone who has a higher ascension level than you.")
                 return
             
@@ -2868,16 +3081,17 @@ For example, "$bread gift Melodie all chess_pieces" would gift all your chess pi
         elif is_int(arg2):
             amount = int(arg2)
             emoji = arg1
-        
-        elif is_fraction(arg1):
-            do_fraction = True
             amount = 1
-            fraction_numerator, fraction_denominator = parse_fraction(arg1)
-            emoji = arg2
-        elif is_fraction(arg2):
+        elif (type(arg1) is int and arg2 is None):
+            emoji = "dough"
+            amount = arg1
+
+        # check if there's a fraction of the item we're supposed to gift
+        elif (type(arg1) is str and type(arg2) is str and arg1.lower() in ["all", "half", "quarter", "third"]):
+            emoji = arg2     
+            fraction_amount = arg1.lower() 
             do_fraction = True
-            amount = 1
-            fraction_numerator, fraction_denominator = parse_fraction(arg2)
+        elif (type(arg1) is str and type(arg2) is str and arg2.lower() in ["all", "half", "quarter", "third"]):
             emoji = arg1
         
         elif str(arg1).lower() in ["all", "half", "quarter"] or \
@@ -2905,23 +3119,6 @@ For example, "$bread gift Melodie all chess_pieces" would gift all your chess pi
             await ctx.reply("Needs an amount and what to gift.")
             return
 
-        if (amount < 0):
-            print(f"Rejecting steal request from {ctx.author.display_name}")
-            await ctx.reply("Trying to steal bread? Mum won't be very happy about that.")
-            await ctx.invoke(self.bot.get_command('brick'), member=ctx.author, duration="1")
-            return
-        
-        if (amount == 0):
-            print(f"Rejecting 0 bread request from {ctx.author.display_name}")
-            await ctx.reply("That's not much of a gift.")
-            return
-
-        if ctx.author.id == target.id:
-            await ctx.reply("You can't gift bread to yourself, silly.")
-            print(f"rejecting self gift request from {target.display_name} for amount {amount}.")
-            
-            return     
-        
         def gift(
                 sender_member: discord.Member,
                 receiver_member: discord.Member,
@@ -2937,6 +3134,39 @@ For example, "$bread gift Melodie all chess_pieces" would gift all your chess pi
             # Save the accounts after gifting to ensure nothing is overwritten.
             self.json_interface.set_account(sender_member, sender, guild = ctx.guild.id)
             self.json_interface.set_account(target, receiver, guild = ctx.guild.id)
+
+        # Gifting entire chess sets.
+        if emoji == "chess_set":
+            limiting_values = []
+
+            for piece in values.all_chess_pieces:
+                limiting_values.append(sender_account.get(piece.text) // values.all_chess_pieces_biased.count(piece))
+            
+            maximum_possible = min(limiting_values)
+
+            if maximum_possible == 0:
+                await ctx.reply("Sorry, you don't have any chess sets to gift.")
+                return
+            
+            item_amount = min(maximum_possible, amount)
+
+            if do_fraction:
+                if fraction_amount == "all":
+                    item_amount = maximum_possible
+                elif fraction_amount == "half":
+                    item_amount = maximum_possible // 2
+                elif fraction_amount == "third":
+                    item_amount = maximum_possible // 3
+                elif fraction_amount == "quarter": 
+                    item_amount = maximum_possible // 4
+            
+            # Now, recursively call this function for each item.
+            for item in values.all_chess_pieces:
+                await self.gift(ctx, target, item.text, item_amount * values.all_chess_pieces_biased.count(item))
+                await asyncio.sleep(1)
+                
+            await ctx.reply(f"Gifted {utility.write_count(item_amount, 'chess set')} to {receiver_account.get_display_name()}.")
+            return
 
             
         if sender_account.has_category(emoji):
@@ -2954,6 +3184,28 @@ For example, "$bread gift Melodie all chess_pieces" would gift all your chess pi
         if do_category_gift is True:
             gifted_count = 0
 
+            if do_fraction is True:
+                # we recursively call gift for each item in the category, after calculating the amount
+                for item in sender_account.get_category(emoji):
+                    item_amount = 0
+                    if fraction_amount == "all":
+                        item_amount = sender_account.get(item.text)
+                    elif fraction_amount == "half":
+                        item_amount = sender_account.get(item.text) // 2
+                    elif fraction_amount == "quarter":
+                        item_amount = sender_account.get(item.text) // 4
+                    elif fraction_amount == "third":
+                        item_amount = sender_account.get(item.text) // 3
+                    
+                    if item_amount > 0:
+                        gifted_count += item_amount
+                        await self.gift(ctx, target, item.text, item_amount)
+                        await asyncio.sleep(1)
+            else:
+                # we recursively call gift for each item in the category
+                # and then return
+                for item in sender_account.get_category(emoji):
+                    # we want to guarantee a successful gifting so we will gift less than "amount" if necessary
             for item in sender_account.get_category(emoji):
                 if do_fraction:
                     item_amount = sender_account.get(item.text) * fraction_numerator // fraction_denominator
@@ -3003,12 +3255,40 @@ For example, "$bread gift Melodie all chess_pieces" would gift all your chess pi
             else:
                 base_amount = sender_account.get(item)
 
+            
+            if fraction_amount == "all":
+                amount = base_amount
+            elif fraction_amount == "half":
+                amount = base_amount // 2
+            elif fraction_amount == "quarter":
+                amount = base_amount // 4
+            elif fraction_amount == "third":
+                amount = base_amount // 3
+
+        if ctx.author.id == target.id:
+            await ctx.reply("You can't gift bread to yourself, silly.")
+            print(f"rejecting self gift request from {target.display_name} for amount {amount}.")
+            
+            return
+
+        if (amount < 0):
+            print(f"Rejecting steal request from {ctx.author.display_name}")
+            await ctx.reply("Trying to steal bread? Mum won't be very happy about that.")
+            await ctx.invoke(self.bot.get_command('brick'), member=ctx.author, duration="1")
+            return
+        
+        if (amount == 0):
+            print(f"Rejecting 0 bread request from {ctx.author.display_name}")
+            await ctx.reply("That's not much of a gift.")
+            return
+
+        
             amount = base_amount * fraction_numerator // fraction_denominator
 
         # enforce maxumum gift amount to players of lower prestige level
         if receiver_account.get_prestige_level() < sender_account.get_prestige_level() and \
             item == "total_dough" and \
-            receiver_account.get("id") != 960869046323134514: #machine mind
+            receiver_account.get("id") not in bot_list: # can always gift to bots
             already_gifted = receiver_account.get("daily_gifts")
             max_gift = receiver_account.get_maximum_daily_gifts()
             leftover = max_gift - already_gifted
@@ -3027,7 +3307,7 @@ For example, "$bread gift Melodie all chess_pieces" would gift all your chess pi
         # no gifting stonks to people of lower prestige level
         if receiver_account.get_prestige_level() < sender_account.get_prestige_level() and \
             emote is not None and \
-            receiver_account.get("id") != 960869046323134514: #machine mind
+            receiver_account.get("id") not in bot_list: # can always gift to bots
             if emote.text in all_stonks:
                 await ctx.reply("Sorry, you can't gift stonks to people of lower prestige level.")
                 return
@@ -3113,11 +3393,25 @@ anarchy - 1000% of your wager.
 
     @bread.command(
         brief= "Risk / Reward.",
-        help=bread_gamble_info
+        help=bread_gamble_info,
+        aliases = ["gramble"]
     )
     async def gamble(self, ctx,
-            amount: typing.Optional[parse_int] = commands.parameter(description = "The amount of dough to lay on the table.")
+            amount: typing.Optional[str] = commands.parameter(description = "The amount of dough to lay on the table.")
             ):
+        if amount == "all":
+            user_account = self.json_interface.get_account(ctx.author, guild = ctx.guild.id)
+            
+            amount = min(
+                user_account.get_dough(),
+                user_account.get_maximum_gamble_wager()
+            )
+        else:
+            try:
+                amount = parse_int(amount)
+            except ValueError:
+                amount = None
+
         if amount is None:
             await ctx.send(self.bread_gamble_info)
             return
@@ -3127,27 +3421,15 @@ anarchy - 1000% of your wager.
             await ctx.reply(f"Sorry, but you can only do that in {self.json_interface.get_rolling_channel(ctx.guild.id)}.")
             return
 
-        print(f"{ctx.author.display_name} gambled {amount} dough")
-
         user_account = self.json_interface.get_account(ctx.author, guild = ctx.guild.id)
-        if user_account.has("total_dough", amount):
-            pass
-        else:
-            await ctx.reply("You don't have that much dough.")
-            return
+        
         
 
         minimum_wager = 4
 
-        gamble_level = user_account.get("gamble_level")
-        #gamble_levels = [50, 500, 1500, 5000, 10000, 100000, 10000000]
-        gamble_levels = store.High_Roller_Table.gamble_levels
-        if gamble_level < len(gamble_levels):
-            maximum_wager = gamble_levels[gamble_level]
-        else:
-            maximum_wager = gamble_levels[-1]
+        maximum_wager = user_account.get_maximum_gamble_wager()
 
-        if amount < minimum_wager:
+        if amount < minimum_wager or user_account.get("total_dough") < minimum_wager:
             await ctx.reply(f"The minimum wager is {minimum_wager}.")
             return
 
@@ -3163,10 +3445,40 @@ anarchy - 1000% of your wager.
             return
         self.currently_interacting.append(ctx.author.id)
 
+        # if user_account.has("total_dough", amount):
+        #     pass
+        # else:
+        #     # await ctx.reply("You don't have that much dough.")
+        #     # return
+        #     amount = user_account.get("total_dough")
+        #     await ctx.reply(f"You don't have that much dough. I'll enter in {amount} for you.")
+        reply = ""
         if amount > maximum_wager:
-            await ctx.reply(f"The maximum wager is {utility.smart_number(maximum_wager)}. I'll enter that in for you.")
-            await asyncio.sleep(1)
+            # set to maximum wager and notify
             amount = maximum_wager
+            reply = f"The maximum wager is {utility.smart_number(maximum_wager)}. "
+        if amount > user_account.get("total_dough"):
+            # set to maximum dough and notify
+            amount = user_account.get("total_dough")
+            reply += f"You don't have that much dough. I'll enter in {utility.smart_number(amount)} for you."
+        elif reply != "":
+            reply += "I'll enter that in for you."
+
+        print(f"{ctx.author.display_name} gambled {amount} dough")
+
+
+        # if amount > maximum_wager and user_account.has("total_dough", maximum_wager):
+        #     await ctx.reply(f"The maximum wager is {utility.smart_number(maximum_wager)}. I'll enter that in for you.")
+        #     await asyncio.sleep(1)
+        #     amount = maximum_wager
+        # elif amount > maximum_wager and not user_account.has("total_dough", maximum_wager):
+        #     amount = min(maximum_wager, user_account.get("total_dough"))
+        #     await ctx.reply(f"You don't have that much dough. I'll enter in {utility.smart_number(amount)} for you.")
+        #     await asyncio.sleep(1)
+        # elif not user_account.has("total_dough", amount):
+        #     await ctx.reply("You don't have that much dough. I'll enter in the maximum amount for you.")
+        #     await asyncio.sleep(1)
+        #     amount = user_account.get("total_dough")
 
         user_account.increment("total_dough", -amount) 
         user_account.increment("daily_gambles", 1)
@@ -3174,8 +3486,17 @@ anarchy - 1000% of your wager.
         
         self.json_interface.set_account(ctx.author, user_account, ctx.guild.id)
 
+        if reply != "":
+            await ctx.reply(reply)
+            await asyncio.sleep(1)
 
-        result = gamble.gamble()
+        # in case we want to troll the user, we can set a percentage chance for only bricks to appear
+        do_brick_troll = user_account.get("brick_troll_percentage") >= random.randint(1,100)
+
+        #
+        result = gamble.gamble(do_brick_troll)
+        #
+
         winnings = parse_int(amount * result["multiple"])
         #await ctx.send(f"You got a {result['result'].text} and won {winnings} dough.")
 
@@ -3207,7 +3528,7 @@ anarchy - 1000% of your wager.
         for i in range(grid_size):
             for k in range(grid_size):
                 if grid[i][k] is None:
-                    filler = gamble.gamble()['result'].text
+                    filler = gamble.gamble(do_brick_troll)['result'].text
                     grid[i][k] = filler
                     # grid[i][k] = random.choice(gamble.reward_values).text
         try:  #sometimes we'll get a timeout error and the function will crash, this should allow
@@ -3530,15 +3851,35 @@ anarchy - 1000% of your wager.
         
         # check for negatives and valid inputs. priority: negative, digit, all.
 
+        fraction_numerator = None
+        fraction_denominator = None
+
         for arg in args:
             if arg.startswith('-'):
                 await ctx.reply("You can't invest negative dough.")
                 return
             if is_digit(arg):
                 amount = parse_int(arg)
+            if arg.count("/") == 1:
+                arg_split = arg.split("/")
+                if is_digit(arg_split[0]) and is_digit(arg_split[1]):
+                    fraction_numerator = int(arg_split[0])
+                    fraction_denominator = int(arg_split[1])
 
-        if 'all' in args:
-            amount = 1000000000
+                    # So the amount needed message isn't sent, this will get overwitten later.
+                    amount = 1000000
+                    
+        if fraction_denominator == 0:
+            await ctx.reply("Please explain how that fraction works.")
+            return
+
+        if fraction_denominator is not None and fraction_denominator < 0:
+            await ctx.reply("You can't invest negative dough.")
+            return
+        
+        # This actually is required so it doen't send the needs an amount message, this will get overwitten later.
+        if "all" in args or "half" in args or "quarter" in args or "third" in args:
+            amount = 10000000
         
         # get the emote from the args
 
@@ -3579,15 +3920,30 @@ anarchy - 1000% of your wager.
             # x //= n is the same as x = x // n, where // is floor division.
             amount //= stonk_value
 
+        account_dough = user_account.get_dough()
+
         # this is here instead of at the top so
         # 1. the amount detection doesn't get annoyed at you for using all and 
         # 2. there's hopefully no weird behaviour if you use dough and all args
         if "all" in args:
-            amount = user_account.get('total_dough') // stonk_value
+            amount = account_dough // stonk_value
+        
+        if "half" in args:
+            amount = account_dough // (stonk_value * 2)
+        
+        if "quarter" in args:
+            amount = account_dough // (stonk_value * 4)
+
+        if "third" in args:
+            amount = account_dough // (stonk_value * 3)
+        
+
+        if fraction_numerator is not None:
+            amount = (account_dough * fraction_numerator) // (fraction_denominator * stonk_value)
 
         # now we buy the stonks
 
-        buy_amount = min(amount,user_account.get('total_dough') // stonk_value)
+        buy_amount = min(amount, account_dough // stonk_value)
         user_account.increment('total_dough',(-buy_amount * stonk_value))
         user_account.increment(emote.text, buy_amount)
         user_account.increment('investment_profit', (-buy_amount * stonk_value))
@@ -3756,6 +4112,9 @@ anarchy - 1000% of your wager.
         
         # check for negatives and valid inputs. priority: negative, digit, all.
 
+        fraction_numerator = None
+        fraction_denominator = None
+
         for arg in args:
             if arg.startswith('-'):
                 await ctx.reply("You can't divest negative dough.")
@@ -3764,9 +4123,36 @@ anarchy - 1000% of your wager.
                 amount = parse_int(arg)
             if arg == 'all':
                 amount = -1
+            if arg == "half":
+                fraction_numerator = 1
+                fraction_denominator = 2
+                amount = -2
+            if arg == "quarter":
+                fraction_numerator = 1
+                fraction_denominator = 4
+                amount = -2
+            if arg == "third":
+                fraction_numerator = 1
+                fraction_denominator = 3
+                amount = -2
             if arg == 'dough':
                 print("dough arg found in divest")
                 dough_value = True
+            if arg.count("/") == 1:
+                arg_split = arg.split("/")
+                if is_digit(arg_split[0]) and is_digit(arg_split[1]):
+                    fraction_numerator = int(arg_split[0])
+                    fraction_denominator = int(arg_split[1])
+
+                    amount = -2
+                    
+        if fraction_denominator == 0:
+            await ctx.reply("Please explain how that fraction works.")
+            return
+
+        if fraction_denominator is not None and fraction_denominator < 0:
+            await ctx.reply("You can't invest negative dough.")
+            return
         
         # then get the emote from the args
         for arg in args:
@@ -3799,8 +4185,12 @@ anarchy - 1000% of your wager.
         # now we adjust the amount to make sure we don't sell more than we have
         if amount > user_account.get(emote.text) or amount == -1:
             amount = user_account.get(emote.text)
-
+        
+        if fraction_numerator is not None:
+            amount = (user_account.get(emote.text) * fraction_numerator) // fraction_denominator
+        
         # sell the stonks
+        amount = min(amount, user_account.get(emote.text))
         user_account.increment('total_dough', stonk_value*amount)
         user_account.increment(emote.text, -amount)
         user_account.increment('investment_profit', stonk_value*amount)
@@ -4061,19 +4451,19 @@ anarchy - 1000% of your wager.
         if count is None:
             count = 1
         if count == 0:
-            await ctx.reply("Alright, I have made zero of those for you...")
+            await utility.smart_reply(ctx, "Alright, I have made zero of those for you...")
             return
         if count < 0:
-            await ctx.reply("The laws of alchemy prevent me from utilizing negative energy.")
+            await utility.smart_reply(ctx, "The laws of alchemy prevent me from utilizing negative energy.")
             return
         if count > 1000000000000000:
-            await ctx.reply("That is an unreasonable number of items to alchemize. Please try again with a smaller number.")
+            await utility.smart_reply(ctx, "That is an unreasonable number of items to alchemize. Please try again with a smaller number.")
             return
 
         # print(f"{ctx.author.name} requested to alchemize {count} {target_item}.")
 
         if get_channel_permission_level(ctx) < PERMISSION_LEVEL_ACTIVITIES:
-            await ctx.reply(f"Thank you for your interest in bread alchemy. Please find the alchemical circle is present in {self.json_interface.get_rolling_channel(ctx.guild.id)}.")
+            await utility.smart_reply(ctx, f"Thank you for your interest in bread alchemy. Please find the alchemical circle is present in {self.json_interface.get_rolling_channel(ctx.guild.id)}.")
             return
 
         #check if they're already alchemizing
@@ -4099,12 +4489,12 @@ anarchy - 1000% of your wager.
             #####      GET ITEM
 
             if (target_item is None):
-                await ctx.reply("Welcome to the alchemy circle. Please say the item you would like to create.")
+                await utility.smart_reply(ctx, "Welcome to the alchemy circle. Please say the item you would like to create.")
                 try:
                     msg = await self.bot.wait_for('message', check = check, timeout = 60.0)
                 except asyncio.TimeoutError: 
                     # at this point, the check didn't become True, let's handle it.
-                    await ctx.reply(f"My patience is limited. Come back when you know what you want.")
+                    await utility.smart_reply(ctx, f"My patience is limited. Come back when you know what you want.")
                     self.currently_interacting.remove(ctx.author.id)
                     return
                 target_item = msg.content #values.get_emote(msg.content)
@@ -4116,7 +4506,7 @@ anarchy - 1000% of your wager.
             target_emote = values.get_emote(target_item)
 
             if (target_emote is None):
-                await ctx.reply(f"I do not recognize that item. Please start over.")
+                await utility.smart_reply(ctx, f"I do not recognize that item. Please start over.")
                 self.currently_interacting.remove(ctx.author.id)
                 return
 
@@ -4125,7 +4515,7 @@ anarchy - 1000% of your wager.
 
             if target_emote.name in alchemy.recipes.keys():
                 if user_account.get("max_daily_rolls") < store.Daily_rolls.max_level(user_account) and target_emote.name in [emote.name for emote in values.all_one_of_a_kind]:  
-                    await ctx.reply(f"I'm sorry, but you cannot alchemize any {target_emote.text} right now.")
+                    await utility.smart_reply(ctx, f"I'm sorry, but you cannot alchemize any {target_emote.text} right now.")
                     self.currently_interacting.remove(ctx.author.id)
                     return
                 recipe_list = alchemy.recipes[target_emote.name].copy()
@@ -4146,11 +4536,11 @@ anarchy - 1000% of your wager.
                                 
                 if len(recipe_list) == 0:
                     # Either the recipe list was initially blank, in which there is some issue, or the user has not unlocked any recipes for the item yet.
-                    await ctx.reply(f"I'm sorry, but your technology has not yet found a way to create {target_emote.text}.")
+                    await utility.smart_reply(ctx, f"I'm sorry, but your technology has not yet found a way to create {target_emote.text}.")
                     self.currently_interacting.remove(ctx.author.id)
                     return
             else:
-                await ctx.reply(f"There are no recipes to create {target_emote.text}. Perhaps research has not progressed far enough.")
+                await utility.smart_reply(ctx, f"There are no recipes to create {target_emote.text}. Perhaps research has not progressed far enough.")
                 self.currently_interacting.remove(ctx.author.id)
                 return
 
@@ -4184,30 +4574,30 @@ anarchy - 1000% of your wager.
                     recipes_description += f"{ingredient.text}: {user_account.get(ingredient.text)}\n"
             
                 recipes_description += "\nPlease reply with either the number of the recipe you would like to use, or \"cancel\"."
-                await ctx.reply(recipes_description)
+                await utility.smart_reply(ctx, recipes_description)
                 
                 try:
                     msg = await self.bot.wait_for('message', check = check, timeout = 60.0)
                 except asyncio.TimeoutError: 
                     # at this point, the check didn't become True, let's handle it.
-                    await ctx.reply(f"My patience is limited. This offering is rejected.")
+                    await utility.smart_reply(ctx, f"My patience is limited. This offering is rejected.")
                     self.currently_interacting.remove(ctx.author.id)
                     return
 
                 if "cancel" in msg.content.lower():
-                    await ctx.reply("You have cancelled this transaction.")
+                    await utility.smart_reply(ctx, "You have cancelled this transaction.")
                     self.currently_interacting.remove(ctx.author.id)
                     return
 
                 try:
                     recipe_num = parse_int(msg.content)
                 except ValueError:
-                    await ctx.reply(f"I do not recognize that as a number. Please try again from the beginning.")
+                    await utility.smart_reply(ctx, f"I do not recognize that as a number. Please try again from the beginning.")
                     self.currently_interacting.remove(ctx.author.id)
                     return
             
             if recipe_num > len(recipe_list) or recipe_num < 1:
-                await ctx.reply(f"That is not a valid recipe number. Please start over.")
+                await utility.smart_reply(ctx, f"That is not a valid recipe number. Please start over.")
                 self.currently_interacting.remove(ctx.author.id)
                 return
 
@@ -4236,23 +4626,23 @@ anarchy - 1000% of your wager.
                     question_text += f"{pair[0].text}: {user_account.get(pair[0].text)} of {pair[1] * count}\n"
                         
                 question_text += "\nWould you like to proceed? Yes or No."
-                await ctx.reply(question_text)
+                await utility.smart_reply(ctx, question_text)
 
                 try:
                     msg = await self.bot.wait_for('message', check = check, timeout = 60.0)
                 except asyncio.TimeoutError:
-                    await ctx.reply(f"My patience is limited. This offering is rejected.")
+                    await utility.smart_reply(ctx, f"My patience is limited. This offering is rejected.")
                     self.currently_interacting.remove(ctx.author.id)
                     return
                 
                 if "yes" in msg.content.lower():
                     pass
                 elif "no" in msg.content.lower():
-                    await ctx.reply("You have rejected this recipe.")
+                    await utility.smart_reply(ctx, "You have rejected this recipe.")
                     self.currently_interacting.remove(ctx.author.id)
                     return
                 else:
-                    await ctx.reply("I do not recognize your response. You may come back when you are feeling more decisive.")
+                    await utility.smart_reply(ctx, "I do not recognize your response. You may come back when you are feeling more decisive.")
                     self.currently_interacting.remove(ctx.author.id)
                     return
 
@@ -4268,7 +4658,7 @@ anarchy - 1000% of your wager.
                 # print(f"{ctx.author.display_name} is attempting to alchemize {count} {target_emote.name}")
                 # print(f"cost is {cost} and posessions is {posessions}")
                 if posessions < cost:
-                    await ctx.reply(f"You do not have enough {pair[0].text} to create {count} {target_emote.text}. This offering is rejected.")
+                    await utility.smart_reply(ctx, f"You do not have enough {pair[0].text} to create {count} {target_emote.text}. This offering is rejected.")
                     self.currently_interacting.remove(ctx.author.id)
                     return
             
@@ -4304,7 +4694,7 @@ anarchy - 1000% of your wager.
             if target_emote.gives_alchemy_award() and not override_dough:
                 output += f"\nYou have also been awarded **{value} dough** for your efforts."
 
-            await ctx.reply(output)
+            await utility.smart_reply(ctx, output)
 
             await self.do_chessboard_completion(ctx)
             await self.anarchy_chessatron_completion(ctx)

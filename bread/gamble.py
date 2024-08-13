@@ -37,7 +37,7 @@ reward_values = [values.brick,
 
 
 
-def gamble() -> dict:
+def gamble(brick_troll = False) -> dict:
     """Generates a single item for a gamble board, including that item's reward."""
 
     # filler = filler_values.copy()
@@ -45,13 +45,23 @@ def gamble() -> dict:
     result = None
     found_result = False
 
-    chance_brick = 4
-    chance_nothing = 19
-    chance_quarter = 26
-    chance_half = 25
-    chance_double = 15
-    chance_quadruple = 10
-    chance_ten_times = 1
+    if brick_troll: # 100% brick
+        chance_brick = 100
+        chance_nothing = 0
+        chance_quarter = 0
+        chance_half = 0
+        chance_double = 0
+        chance_quadruple = 0
+        chance_ten_times = 0
+
+    else:
+        chance_brick = 4
+        chance_nothing = 19
+        chance_quarter = 26
+        chance_half = 25
+        chance_double = 15
+        chance_quadruple = 10
+        chance_ten_times = 1
     
     total_chance = chance_brick + chance_nothing + chance_quarter + chance_half + chance_double + chance_quadruple + chance_ten_times
 
