@@ -1141,7 +1141,8 @@ class Bread_cog(commands.Cog, name="Bread"):
         archive_keywords = ["archive", "archived"]
         chess_keywords = ["chess", "chess pieces", "pieces"]
         gambit_keywords = ["gambit", "strategy", "gambit shop", "strategy shop"]
-        all_keywords = archive_keywords + chess_keywords + gambit_keywords
+        space_keywords = ["space"]
+        all_keywords = archive_keywords + chess_keywords + gambit_keywords + space_keywords
 
         if user is not None and modifier is None:
             names = [user.name, user.nick, user.global_name, user.display_name]
@@ -1170,13 +1171,13 @@ class Bread_cog(commands.Cog, name="Bread"):
         user_account = self.json_interface.get_account(user, ctx.guild.id) # type: account.Bread_Account
 
         # bread stats space
-        if (modifier is not None) and (modifier.lower() in ["space"]):
+        if (modifier is not None) and modifier.lower() in space_keywords:
             await self.space_stats(ctx, user)
             return
 
         # bread stats chess
         if modifier is not None and modifier.lower() in chess_keywords:
-            output = f"Chess pieces of {account.get_display_name()}:\n\n"
+            output = f"Chess pieces of {user_account.get_display_name()}:\n\n"
             for chess_piece in values.all_chess_pieces:
                 output += f"{chess_piece.text} - {user_account.get(chess_piece.text)}\n"
             
@@ -1191,8 +1192,8 @@ class Bread_cog(commands.Cog, name="Bread"):
 
         # bread stats gambit
         if modifier is not None and modifier.lower() in gambit_keywords:
-            output = f"Gambit shop bonuses for {account.get_display_name()}:\n\n"
-            boosts = account.values.get("dough_boosts", {})
+            output = f"Gambit shop bonuses for {user_account.get_display_name()}:\n\n"
+            boosts = user_account.values.get("dough_boosts", {})
             for item in boosts.keys():
                 output += f"{item} - {boosts[item]}\n"
             if len(boosts) == 0:
@@ -1265,25 +1266,25 @@ class Bread_cog(commands.Cog, name="Bread"):
         output_2 = ""
 
         output_2 += "\nIndividual stats:\n"
-        if account.has(":bread:"):
-            output_2 += f":bread: - {sn(account.get(':bread:'))}\n"
+        if user_account.has(":bread:"):
+            output_2 += f":bread: - {sn(user_account.get(':bread:'))}\n"
 
         # list all special breads
-        # special_breads = account.get_all_items_with_attribute("special_bread")
+        # special_breads = user_account.get_all_items_with_attribute("special_bread")
         # selected_special_breads = list()
         # for i in range(len(special_breads)):
         #     # skip the ones that are also rare
         #     if "rare_bread" in special_breads[i].attributes:
         #         continue
             
-        #     if account.has(special_breads[i].text):
+        #     if user_account.has(special_breads[i].text):
         #         selected_special_breads.append(special_breads[i])
 
         # for i in range(len(selected_special_breads)):
 
         #     text = selected_special_breads[i].text
 
-        #     output_2 += f"{account.get(text)} {text} "
+        #     output_2 += f"{user_account.get(text)} {text} "
         #     if i != len(selected_special_breads) - 1:
         #         output_2 += ", "
         #     else:
@@ -1306,9 +1307,9 @@ class Bread_cog(commands.Cog, name="Bread"):
             for i in range(len(cleaned_items)):
 
                 text = cleaned_items[i].text
-                # if account.get(text) == 0:
+                # if user_account.get(text) == 0:
                 #     continue #skip empty values
-                output_2 += f"{sn(account.get(text))} {text} "
+                output_2 += f"{sn(user_account.get(text))} {text} "
                 if i != len(cleaned_items) - 1:
                     output_2 += ", "
                 else:
@@ -1323,42 +1324,42 @@ class Bread_cog(commands.Cog, name="Bread"):
 
         # list highest roll stats
 
-        if account.has("highest_roll", 11):
-            output_3 += f"Your highest roll was {account.get('highest_roll')}.\n"
+        if user_account.has("highest_roll", 11):
+            output_3 += f"Your highest roll was {user_account.get('highest_roll')}.\n"
             comma = False
-            if account.has("eleven_breads"):
-                output_3 += f"11 - {account.write_number_of_times('eleven_breads')}"
+            if user_account.has("eleven_breads"):
+                output_3 += f"11 - {user_account.write_number_of_times('eleven_breads')}"
                 comma = True
             if user_account.has("twelve_breads"):
                 if comma:
                     output_3 += ", "
-                output_3 += f"12 - {account.write_number_of_times('twelve_breads')}"
+                output_3 += f"12 - {user_account.write_number_of_times('twelve_breads')}"
                 comma = True
             if user_account.has("thirteen_breads"):
                 if comma:
                     output_3 += ", "
-                output_3 += f"13 - {account.write_number_of_times('thirteen_breads')}"
+                output_3 += f"13 - {user_account.write_number_of_times('thirteen_breads')}"
                 comma = True
             if user_account.has("fourteen_or_higher"):
                 if comma:
                     output_3 += ", "
-                output_3 += f"14+ - {account.write_number_of_times('fourteen_or_higher')}"
+                output_3 += f"14+ - {user_account.write_number_of_times('fourteen_or_higher')}"
                 comma = True
             if comma:
                 output_3 += "."
             output_3 += "\n"
 
         # list 10 and 1 roll stats
-        output_3 += f"You've found a single solitary loaf {account.write_number_of_times('natural_1')}, and the full ten loaves {account.write_number_of_times('ten_breads')}.\n"
+        output_3 += f"You've found a single solitary loaf {user_account.write_number_of_times('natural_1')}, and the full ten loaves {user_account.write_number_of_times('ten_breads')}.\n"
 
         # list the rest of the stats
 
-        if account.has("lottery_win"):
-            output_3 += f"You've won the lottery {account.write_number_of_times('lottery_win')}!\n"
-        if account.has("chess_pieces"):
-            output_3 += f"You have {account.write_count('chess_pieces', 'Chess Piece')}.\n"
-        if account.has("special_bread"):
-            output_3 += f"You have {account.write_count('special_bread', 'Special Bread')}.\n"
+        if user_account.has("lottery_win"):
+            output_3 += f"You've won the lottery {user_account.write_number_of_times('lottery_win')}!\n"
+        if user_account.has("chess_pieces"):
+            output_3 += f"You have {user_account.write_count('chess_pieces', 'Chess Piece')}.\n"
+        if user_account.has("special_bread"):
+            output_3 += f"You have {user_account.write_count('special_bread', 'Special Bread')}.\n"
         
         if len(output) + len(output_2) + len(output_3) < 1900:
             await ctx.reply( output + output_2 + output_3 )
@@ -3082,24 +3083,21 @@ For example, "$bread gift Melodie all chess_pieces" would gift all your chess pi
             amount = int(arg2)
             emoji = arg1
             amount = 1
+        elif is_fraction(arg1):
+            do_fraction = True
+            amount = 1
+            fraction_numerator, fraction_denominator = parse_fraction(arg1)
+            emoji = arg2
         elif (type(arg1) is int and arg2 is None):
             emoji = "dough"
             amount = arg1
-
-        # check if there's a fraction of the item we're supposed to gift
-        elif (type(arg1) is str and type(arg2) is str and arg1.lower() in ["all", "half", "quarter", "third"]):
-            emoji = arg2     
-            fraction_amount = arg1.lower() 
-            do_fraction = True
-        elif (type(arg1) is str and type(arg2) is str and arg2.lower() in ["all", "half", "quarter", "third"]):
-            emoji = arg1
         
-        elif str(arg1).lower() in ["all", "half", "quarter"] or \
-            str(arg2).lower() in ["all", "half", "quarter"]:
+        elif str(arg1).lower() in ["all", "half", "third", "quarter"] or \
+            str(arg2).lower() in ["all", "half", "third", "quarter"]:
             do_fraction = True
             amount = 1
 
-            if str(arg1).lower() in ["all", "half", "quarter"]:
+            if str(arg1).lower() in ["all", "half", "third", "quarter"]:
                 parse = str(arg1).lower()
                 emoji = arg2
             else:
@@ -3112,12 +3110,23 @@ For example, "$bread gift Melodie all chess_pieces" would gift all your chess pi
             elif parse == "half":
                 fraction_numerator = 1
                 fraction_denominator = 2
-            else:
+            elif parse == "quarter":
                 fraction_numerator = 1
                 fraction_denominator = 4
+            else:
+                fraction_numerator = 1
+                fraction_denominator = 3
         else:
             await ctx.reply("Needs an amount and what to gift.")
             return
+        
+        if do_fraction:
+            if fraction_numerator > fraction_denominator:
+                await ctx.reply("You can't gift more than what you have.")
+                return
+            elif fraction_numerator == 0:
+                await ctx.reply("That's not much of a gift.")
+                return
 
         def gift(
                 sender_member: discord.Member,
@@ -3151,14 +3160,7 @@ For example, "$bread gift Melodie all chess_pieces" would gift all your chess pi
             item_amount = min(maximum_possible, amount)
 
             if do_fraction:
-                if fraction_amount == "all":
-                    item_amount = maximum_possible
-                elif fraction_amount == "half":
-                    item_amount = maximum_possible // 2
-                elif fraction_amount == "third":
-                    item_amount = maximum_possible // 3
-                elif fraction_amount == "quarter": 
-                    item_amount = maximum_possible // 4
+                item_amount = maximum_possible * fraction_numerator // fraction_denominator
             
             # Now, recursively call this function for each item.
             for item in values.all_chess_pieces:
@@ -3168,44 +3170,15 @@ For example, "$bread gift Melodie all chess_pieces" would gift all your chess pi
             await ctx.reply(f"Gifted {utility.write_count(item_amount, 'chess set')} to {receiver_account.get_display_name()}.")
             return
 
-            
         if sender_account.has_category(emoji):
             do_category_gift = True
             print(f"category gift of {emoji} detected")
-        
-        if do_fraction:
-            if fraction_numerator > fraction_denominator:
-                await ctx.reply("You can't gift more than what you have.")
-                return
-            elif fraction_numerator == 0:
-                await ctx.reply("That's not much of a gift.")
-                return
 
         if do_category_gift is True:
             gifted_count = 0
-
-            if do_fraction is True:
-                # we recursively call gift for each item in the category, after calculating the amount
-                for item in sender_account.get_category(emoji):
-                    item_amount = 0
-                    if fraction_amount == "all":
-                        item_amount = sender_account.get(item.text)
-                    elif fraction_amount == "half":
-                        item_amount = sender_account.get(item.text) // 2
-                    elif fraction_amount == "quarter":
-                        item_amount = sender_account.get(item.text) // 4
-                    elif fraction_amount == "third":
-                        item_amount = sender_account.get(item.text) // 3
-                    
-                    if item_amount > 0:
-                        gifted_count += item_amount
-                        await self.gift(ctx, target, item.text, item_amount)
-                        await asyncio.sleep(1)
-            else:
-                # we recursively call gift for each item in the category
-                # and then return
-                for item in sender_account.get_category(emoji):
-                    # we want to guarantee a successful gifting so we will gift less than "amount" if necessary
+            
+            # we recursively call gift for each item in the category
+            # and then return
             for item in sender_account.get_category(emoji):
                 if do_fraction:
                     item_amount = sender_account.get(item.text) * fraction_numerator // fraction_denominator
@@ -3224,9 +3197,7 @@ For example, "$bread gift Melodie all chess_pieces" would gift all your chess pi
             else:
                 await utility.smart_reply(ctx, f"Sorry, you don't have any {emoji} to gift.")
 
-            return
-
-        
+            return        
 
         emote = None
 
@@ -3255,15 +3226,7 @@ For example, "$bread gift Melodie all chess_pieces" would gift all your chess pi
             else:
                 base_amount = sender_account.get(item)
 
-            
-            if fraction_amount == "all":
-                amount = base_amount
-            elif fraction_amount == "half":
-                amount = base_amount // 2
-            elif fraction_amount == "quarter":
-                amount = base_amount // 4
-            elif fraction_amount == "third":
-                amount = base_amount // 3
+            amount = base_amount * fraction_numerator // fraction_denominator
 
         if ctx.author.id == target.id:
             await ctx.reply("You can't gift bread to yourself, silly.")
@@ -3282,8 +3245,6 @@ For example, "$bread gift Melodie all chess_pieces" would gift all your chess pi
             await ctx.reply("That's not much of a gift.")
             return
 
-        
-            amount = base_amount * fraction_numerator // fraction_denominator
 
         # enforce maxumum gift amount to players of lower prestige level
         if receiver_account.get_prestige_level() < sender_account.get_prestige_level() and \
