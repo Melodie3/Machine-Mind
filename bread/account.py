@@ -7,7 +7,7 @@ from bread.values import Emote
 import bread.utility as utility
 import bread.values as values
 import bread.space as space
-import bread.store as store
+import bread.store as store # Mel if this causes a circular import please DM me (Duck)
 import bread_cog
 bread_cog_ref = None
 

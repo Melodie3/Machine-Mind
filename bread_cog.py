@@ -70,6 +70,7 @@ import traceback
 import re
 import time
 import io
+import copy
 
 from os import getenv
 from dotenv import load_dotenv
@@ -3069,8 +3070,6 @@ For example, "$bread gift Melodie all chess_pieces" would gift all your chess pi
         do_fraction = False
         amount = 0
         do_category_gift = False
-        
-        print(arg1, arg2)
 
         if arg2 is None:
             amount = 1
@@ -4922,7 +4921,12 @@ anarchy - 1000% of your wager.
         )
         unfortunate_embed.set_image(url=file_path)
 
-        await ctx.reply(embed=unfortunate_embed, file=send_file)
+        try:
+            # We need to copy send_file here because if we don't and this message is unable to send
+            # when it sends it below it won't have the image. I'm not sure why this happens, but it does.
+            await ctx.reply(embed=unfortunate_embed, file=copy.deepcopy(send_file))
+        except discord.HTTPException:
+            await ctx.send(ctx.author.mention, embed=unfortunate_embed, file=send_file)
         
     ########################################################################################################################
     #####      BREAD SPACE ANALYZE
@@ -5045,7 +5049,13 @@ anarchy - 1000% of your wager.
             color=8884479,
         )
         embed_send.set_image(url=file_path)
-        await ctx.reply(embed=embed_send, file=send_file)
+        
+        try:
+            # We need to copy send_file here because if we don't and this message is unable to send
+            # when it sends it below it won't have the image. I'm not sure why this happens, but it does.
+            await ctx.reply(embed=embed_send, file=copy.deepcopy(send_file))
+        except discord.HTTPException:
+            await ctx.send(ctx.author.mention, embed=embed_send, file=send_file)
 
 
 
