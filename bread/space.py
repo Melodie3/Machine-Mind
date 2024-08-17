@@ -66,7 +66,9 @@ EMOJI_PATHS = {
     "7": "images/7.png",
     "8": "images/8.png",
     "9": "images/9.png",
-    # yoggers
+    "10": "images/10.png", # yoggers
+    "11": "images/11.png",
+
     # Letters.
     "a": "images/a.png",
     "b": "images/b.png",
@@ -77,6 +79,8 @@ EMOJI_PATHS = {
     "g": "images/g.png",
     "h": "images/h.png",
     "i": "images/i.png",
+    "j": "images/j.png",
+    "k": "images/k.png",
     
     # Filler.
     "border": "images/border.png",
@@ -867,7 +871,7 @@ def space_map(
     # Position in the galaxy.
     x_galaxy, y_galaxy = account.get_galaxy_location(json_interface=json_interface)
 
-    radius = sensor_level + 1
+    radius = sensor_level + 2
 
     ascension = account.get_prestige_level()
 
@@ -935,7 +939,7 @@ def galaxy_map(
     x_size = max(bottom_right[0], top_left[0]) - min(bottom_right[0], top_left[0]) + 1
     y_size = max(bottom_right[1], top_left[1]) - min(bottom_right[1], top_left[1]) + 1
 
-    letters = "abcdefghi"
+    letters = "abcdefghijk"
 
     corners = [
         (0, 0), (0, 1), (1, 0),
@@ -944,7 +948,7 @@ def galaxy_map(
         (x_size + 3, y_size + 3), (x_size + 3, y_size + 2), (x_size + 2, y_size + 3),
     ]
     
-    size_check = x_size - round(2.1 * (telescope_level ** 0.3)) # https://www.desmos.com/calculator/hanhwjrrhc
+    size_check = x_size - round(2 * ((telescope_level + 1) ** 0.5)) # https://www.desmos.com/calculator/jbtcaxcbl6
     
     img = Image.new(
         mode = "RGBA",
@@ -1061,7 +1065,7 @@ def system_map(
     border_emoji = "border"
     blocker = "blocker"
 
-    letters = "abcdefghi"
+    letters = "abcdefghijk"
 
     corners = [
         (0, 0), (0, 1), (1, 0),
@@ -1070,7 +1074,7 @@ def system_map(
         (x_size + 3, y_size + 3), (x_size + 3, y_size + 2), (x_size + 2, y_size + 3),
     ]
 
-    size_check = x_size - round(2.1 * (telescope_level ** 0.3)) # https://www.desmos.com/calculator/hanhwjrrhc
+    size_check = x_size - round(2 * ((telescope_level + 1) ** 0.5)) # https://www.desmos.com/calculator/jbtcaxcbl6
 
     visible_coordinates = []
 
@@ -1194,7 +1198,7 @@ def system_map(
     place("rocket", radius + 2, radius + 2)
     
     if analyze_position is not None:
-        xpos = "abcdefghi".index(analyze_position[0])
+        xpos = "abcdefghijk".index(analyze_position[0])
         ypos = int(analyze_position[1]) - 1
         
         width = 50

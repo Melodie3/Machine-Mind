@@ -4788,7 +4788,17 @@ anarchy - 1000% of your wager.
                 "travel through wormholes"
             ]
 
-            output.append(f"With a level {sn(autopilot_level)} autopilot, you can {messages[autopilot_level]}.")
+            message = ""
+            for i in range(1, autopilot_level + 1):
+                if i != 1:
+                    message += ", "
+
+                if i == autopilot_level:
+                    message += "and "
+
+                message += messages[i]
+
+            output.append(f"With a level {sn(autopilot_level)} autopilot you can {message}.")
 
         if account.has("fuel_research"):
             output.append(f"By having {account.write_count('fuel_research', 'level')} of fuel research, you can use {store.Fuel_Research.highest_gem[account.get('fuel_research')]} or any lower gem for making fuel.")
@@ -4973,14 +4983,15 @@ anarchy - 1000% of your wager.
             return
 
         telescope_level = user_account.get("telescope_level")
-        radius = telescope_level + 1
+        radius = telescope_level + 2
         diameter = radius * 2 + 1
 
-        letters = "abcdefghi"
+        letters = "abcdefghijk"
 
-        pattern = "([a-{letter_end}])([1-{number_end}])".format(
+        pattern = "([a-{letter_end}])([1-{number_end}]{{1,{times}}})".format(
             letter_end = letters[diameter - 1],
-            number_end = diameter
+            number_end = min(diameter, 9),
+            times = len(str(diameter))
         )
         
         matched = re.match(pattern, point.lower())
@@ -4989,7 +5000,7 @@ anarchy - 1000% of your wager.
             await ctx.reply(HELP_MSG)
             return
         
-        x_modifier = "abcdefghi".index(matched.group(1)) # group 1 is the letter.
+        x_modifier = "abcdefghijk".index(matched.group(1)) # group 1 is the letter.
         y_modifier = int(matched.group(2)) - 1 # group 2 is the number.
 
         if round(math.hypot(abs(x_modifier - radius), abs(y_modifier - radius))) > radius:
@@ -5889,21 +5900,22 @@ anarchy - 1000% of your wager.
             self.currently_interacting.remove(ctx.author.id)
             return
         
-        if len(move_location) != 2:
+        if len(move_location) > 3:
             await ctx.reply(HELP_MSG)
 
             self.currently_interacting.remove(ctx.author.id)
             return
 
         telescope_level = user_account.get("telescope_level")
-        radius = telescope_level + 1
+        radius = telescope_level + 2
         diameter = radius * 2 + 1
 
-        letters = "abcdefghi"
+        letters = "abcdefghijk"
 
-        pattern = "([a-{letter_end}])([1-{number_end}])".format(
+        pattern = "([a-{letter_end}])([1-{number_end}]{{1,{times}}})".format(
             letter_end = letters[diameter - 1],
-            number_end = diameter
+            number_end = min(diameter, 9),
+            times = len(str(diameter))
         )
         
         matched = re.match(pattern, move_location.lower())
@@ -5914,7 +5926,7 @@ anarchy - 1000% of your wager.
             self.currently_interacting.remove(ctx.author.id)
             return
         
-        x_modifier = "abcdefghi".index(matched.group(1)) # group 1 is the letter.
+        x_modifier = "abcdefghijk".index(matched.group(1)) # group 1 is the letter.
         y_modifier = int(matched.group(2)) - 1 # group 2 is the number.
 
         if round(math.hypot(abs(x_modifier - radius), abs(y_modifier - radius))) > radius:

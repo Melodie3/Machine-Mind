@@ -1641,7 +1641,7 @@ class Fuel_Tank(Space_Shop_Item):
     name = "fuel_tank"
     display_name = "Fuel Tank"
 
-    multiplier = space.MOVE_FUEL_GALAXY * 5
+    multiplier = 875 # space.MOVE_FUEL_GALAXY * 5
 
     @classmethod
     def cost(cls, user_account: account.Bread_Account) -> list[tuple[values.Emote, int]]:
@@ -1717,9 +1717,9 @@ class Upgraded_Telescopes(Space_Shop_Item):
     @classmethod
     def description(cls, user_account: account.Bread_Account) -> str:
         level = user_account.get(cls.name)
-        size = level + 2
+        size = level + 3
 
-        return f"An improved set of telescopes that allows you to see {size} spaces in any direction."
+        return f"An improved set of telescopes that allows you to see {size} spaces in any direction on the map."
     
     @classmethod
     def can_be_purchased(cls, user_account: account.Bread_Account) -> bool:
@@ -1804,7 +1804,7 @@ class Advanced_Exploration(Space_Shop_Item):
     @classmethod
     def description(cls, user_account: account.Bread_Account) -> str:
         level = user_account.get(cls.name) + 1
-        return f"Advanced exploration devices allowing the use of {round(level * cls.per_level * 100, 4)}% of your Loaf Converters when rolling anarchy chess pieces, up to 128 Loaf Converters."
+        return f"Advanced exploration devices allowing the use of {round(level * cls.per_level * 100, 4)}% of your Loaf Converters when rolling anarchy chess pieces, up to 127 Loaf Converters."
 
     @classmethod
     def get_cost_types(cls, user_account: account.Bread_Account, level: int = None):
