@@ -2316,20 +2316,20 @@ loaf_converter""",
         
 
         if number_of_chessatrons is None:
-            number_of_chessatrons = total_gem_count // 32
+            number_of_chessatrons = total_gem_count // 64
         else:
-            number_of_chessatrons = min(total_gem_count // 32, number_of_chessatrons)
+            number_of_chessatrons = min(total_gem_count // 64, number_of_chessatrons)
 
         
         
 
         # gem_count = user_account.get(values.gem_red.text)
 
-        if total_gem_count < 32 or number_of_chessatrons == 0:
-            await utility.smart_reply(ctx, f"You need at least 32 gems to create a chessatron.")
+        if total_gem_count < 64 or number_of_chessatrons == 0:
+            await utility.smart_reply(ctx, f"You need at least 64 gems to create a chessatron.")
             return
 
-        gems_needed = number_of_chessatrons * 32
+        gems_needed = number_of_chessatrons * 64
 
         if gems_needed > red_gems: # if not enough red gems to make all trons
             gems_needed -= red_gems # then use all red gems in our count
@@ -2392,15 +2392,15 @@ loaf_converter""",
 
         # if arg is None:
         #     arg = None
-        #     number_of_chessatrons = gem_count // 32 # integer division
+        #     number_of_chessatrons = gem_count // 64 # integer division
         # elif is_numeric(arg):
         #     arg = parse_int(arg)
-        #     number_of_chessatrons = min(gem_count // 32,arg) # integer division
+        #     number_of_chessatrons = min(gem_count // 64,arg) # integer division
         # else:
         #     arg = None
-        #     number_of_chessatrons = gem_count // 32 # integer division
+        #     number_of_chessatrons = gem_count // 64 # integer division
 
-        # user_account.increment(values.gem_red.text, -32*number_of_chessatrons)
+        # user_account.increment(values.gem_red.text, -64*number_of_chessatrons)
 
         user_account.increment(values.black_pawn.text, 8*number_of_chessatrons)
         user_account.increment(values.black_rook.text, 2*number_of_chessatrons)
@@ -4793,9 +4793,10 @@ anarchy - 1000% of your wager.
             output.append(f"With {account.write_count('telescope_level', 'telescope level')}, you can see in a {sn(account.get('telescope_level') + 2)} tile radius area.")
 
         if account.has("advanced_exploration"):
-            amount = account.get('advanced_exploration') + 1
-            number_suffix = "more" if amount > 2 else "as"
-            output.append(f"With {account.write_count('advanced_exploration', 'level')} of Advanced Exploration, you're {utility.write_number_of_times(amount)} {number_suffix} likely to get an anarchy chess piece than normal.")
+            rr = account.get_recipe_refinement_multiplier()
+            lcs = account.get(store.Loaf_Converter.name)
+            amount = account.get_anarchy_piece_luck((lcs + 1) * rr) - 1
+            output.append(f"With {account.write_count('advanced_exploration', 'level')} of Advanced Exploration, {int(amount)} of your Loaf Converters are used to find anarchy chess pieces.")
 
         if account.has("engine_efficiency"):
             level = account.get('advanced_exploration')
@@ -4849,7 +4850,7 @@ anarchy - 1000% of your wager.
         # we get the account of the user who called it
         user_account = self.json_interface.get_account(ctx.author, guild = ctx.guild.id)
 
-        if user_account.get_prestige_level() < 2:
+        if user_account.get_prestige_level() < 1:
             await ctx.reply("The entrance to this shop is nowhere to be found, perhaps you need to ascend.")
             return
 

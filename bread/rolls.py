@@ -51,7 +51,7 @@ def bread_roll(
     if user_account.get_space_level() >= 1:
         # If the user has been to space, then check their current location and adjust the chance multipliers accordingly.
 
-        anarchy_piece_luck = 1 + user_account.get(store.Advanced_Exploration.name)
+        anarchy_piece_luck = user_account.get_anarchy_piece_luck(roll_luck * lc_boost)
 
         #### Planet-based roll modifiers.
 
@@ -366,9 +366,25 @@ def loaf_roll(
     output = {}
     output["extra_profit"] = 0
 
+    if random.randint(1, 2**14) <= (anarchy_piece_luck * anarchy_piece_multiplier):
+        # anarchy piece
+        white_piece_chances = store.chess_piece_distribution_levels[user_account.get("chess_piece_equalizer")]
+
+        if random.randint(1, 100) <= white_piece_chances:
+            # White anarchy piece
+            output["emote"] = random.choice(values.anarchy_pieces_white_biased)
+            output["commentary"] = "Your Karma has been increased by 20 points."
+        else:
+            # Black anarchy piece
+            output["emote"] = random.choice(values.anarchy_pieces_black_biased)
+            output["commentary"] = "Your Karma has been increased by 10 points."
+    
+    elif random.random() < corruption_chance: # Corrupted bread :|
+        output["commentary"] = ""
+        output["emote"] = values.corrupted_bread
 
     # MoaKs
-    if random.randint(1, moak_rarity_multiplier * 2**15) <= (moak_luck * moak_multiplier):
+    elif random.randint(1, moak_rarity_multiplier * 2**15) <= (moak_luck * moak_multiplier):
         # one-of-a-kind
         # output["emote"] = random.choice([
         #                                     #values.holy_hell, 
@@ -379,10 +395,6 @@ def loaf_roll(
         output["emote"] = values.anarchy_chess
         output["commentary"] = "That sure is pretty rare!"
         output["extra_profit"] = user_account.get("max_daily_rolls") * 10 # between 10 and 10,000 extra
-    
-    elif random.random() < corruption_chance: # Corrupted bread :|
-        output["commentary"] = ""
-        output["emote"] = values.corrupted_bread
 
     elif random.randint(1, 2**22) <= (gem_luck * gem_gold_multiplier):
         # gold gem
@@ -412,19 +424,6 @@ def loaf_roll(
         # red gem
         output["emote"] = values.gem_red
         output["commentary"] = "Shiny."
-
-    elif random.randint(1, 2**13) < (anarchy_piece_luck * anarchy_piece_multiplier):
-        # anarchy piece
-        white_piece_chances = store.chess_piece_distribution_levels[user_account.get("chess_piece_equalizer")]
-
-        if random.randint(1, 100) <= white_piece_chances:
-            # White anarchy piece
-            output["emote"] = random.choice(values.anarchy_pieces_white_biased)
-            output["commentary"] = "Your Karma has been increased by 20 points."
-        else:
-            # Black anarchy piece
-            output["emote"] = random.choice(values.anarchy_pieces_black_biased)
-            output["commentary"] = "Your Karma has been increased by 10 points."
 
     elif random.randint(1, 2**11) <= (luck * chess_piece_multiplier):
         #chess piece

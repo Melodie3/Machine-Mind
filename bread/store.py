@@ -1554,17 +1554,17 @@ class Bread_Rocket(Space_Shop_Item):
             return False
 
         ascension = user_account.get_prestige_level()
-        if ascension < 2:
+        if ascension < 1:
             return False
 
         if level >= 8:
-            return ascension >= 5
-
-        elif level >= 6:
             return ascension >= 4
 
-        elif level >= 4:
+        elif level >= 6:
             return ascension >= 3
+
+        elif level >= 4:
+            return ascension >= 2
         
         return True
     
@@ -1778,35 +1778,45 @@ class Advanced_Exploration(Space_Shop_Item):
     name = "advanced_exploration"
     display_name = "Advanced Exploration"
 
+    per_level = 0.00015
+
     @classmethod
     def cost(cls, user_account: account.Bread_Account) -> list[tuple[values.Emote, int]]:
         level = user_account.get(cls.name)
 
-        anarchy_tron = int(1 + (level // 4))
+        anarchy_tron = int(max(level - 4, 0))
         omega = int(1 + (level // 2))
         chessatron = int(100 + (level * 50))
-        bread = int(50 * (square_root_of_2 ** level))
+        bread = int(50 * (4 ** (level // 2)))
 
-        return [
-            (values.anarchy_chessatron.text, anarchy_tron),
+        out = [
             (values.omega_chessatron.text, omega),
             (values.chessatron.text, chessatron),
             (values.normal_bread.text, bread)
         ]
+
+        if anarchy_tron > 0:
+            out.append((values.anarchy_chessatron.text, anarchy_tron))
+        
+        return out
     
     @classmethod
     def max_level(cls, user_account: account.Bread_Account = None) -> typing.Optional[int]:
-        return 1024
+        return 10
 
     @classmethod
     def description(cls, user_account: account.Bread_Account) -> str:
-        level = user_account.get(cls.name) + 1  
-        description_mult = utility.write_number_of_times(level + 1)
-        return f"Advanced exploration devices resulting in loaves being {description_mult} as likely to be an anarchy chess piece."
+        level = user_account.get(cls.name) + 1
+        return f"Advanced exploration devices allowing the use of {round(level * cls.per_level * 100, 4)}% of your Loaf Converters when rolling anarchy chess pieces, up to 128 Loaf Converters."
 
     @classmethod
     def get_cost_types(cls, user_account: account.Bread_Account, level: int = None):
-        return [values.anarchy_chessatron.text, values.omega_chessatron.text, values.chessatron.text, values.normal_bread.text]
+        out = [values.omega_chessatron.text, values.chessatron.text, values.normal_bread.text]
+
+        if user_account.get(cls.name) >= 6:
+            out.append(values.anarchy_chessatron.text)
+
+        return out
     
 class Engine_Efficiency(Space_Shop_Item):
     name = "engine_efficiency"
@@ -1901,7 +1911,15 @@ class Gambit_Shop_Level(Custom_price_item):
 
     @classmethod
     def can_be_purchased(cls, user_account: account.Bread_Account) -> bool:
-        return super().can_be_purchased(user_account)
+        if not super().can_be_purchased(user_account):
+            return False
+        
+        level = user_account.get(cls.name) + 1
+
+        if level >= 5: # Anarchy pieces.
+            return user_account.get_space_level() > 0
+        
+        return True
 
     
     

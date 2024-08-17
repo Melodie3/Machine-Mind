@@ -407,9 +407,24 @@ class Bread_Account:
         return 1 - (level * 0.1)
     
     def get_fuel_refinement_boost(self: typing.Self) -> float:
-        """Returns the multiplier for fuel this player has. The eqution is `1 + (fr * 0.25)`, where `fr` is the player's `fuel_refinemnt` stat."""
+        """Returns the multiplier for fuel this player has. The equation is `1 + (fr * 0.25)`, where `fr` is the player's `fuel_refinemnt` stat."""
         level = self.get("fuel_refinement")
         return 1 + (level * 0.25)
+    
+    def get_recipe_refinement_multiplier(self: typing.Self) -> int:
+        """Returns the luck multiplier from recipe refinement. Equation: `2 ^ rr` where `rr` is the player's recipe refinement level."""
+        return 2 ** self.get("LC_booster")
+    
+    def get_anarchy_piece_luck(
+            self: typing.Self,
+            roll_luck: int
+        ) -> float:
+        """Returns the luck of anarchy pieces. `roll_luck` is assumed to be `(loaf_converter + 1) * recipe_refinement_multiplier`"""
+        return min(
+            1 + (store.Advanced_Exploration.per_level * self.get(store.Advanced_Exploration.name)) * (roll_luck - self.get_recipe_refinement_multiplier()),
+            128 # 128 is the cap.
+        )
+    
             
 
     def get_shadowmega_boost_count(self: typing.Self) -> int:

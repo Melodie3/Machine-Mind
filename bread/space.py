@@ -30,7 +30,7 @@ MAP_RADIUS_SQUARED = MAP_RADIUS ** 2
 MOVE_FUEL_SYSTEM = 25
 MOVE_FUEL_GALAXY = 175
 MOVE_FUEL_GALAXY_NEBULA = 350
-MOVE_FUEL_WORMHOLE = 700
+MOVE_FUEL_WORMHOLE = 314
 
 ## Emojis:
 
@@ -66,7 +66,7 @@ EMOJI_PATHS = {
     "7": "images/7.png",
     "8": "images/8.png",
     "9": "images/9.png",
-
+    # yoggers
     # Letters.
     "a": "images/a.png",
     "b": "images/b.png",

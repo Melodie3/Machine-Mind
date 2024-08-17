@@ -35,7 +35,7 @@ recipes = {
             "cost": [(values.black_pawn, 3)]
         },
         {
-            "cost": [(values.gem_red, 1)]
+            "cost": [(values.gem_red, 2)]
         }
     ],
     "Wrook": [
@@ -52,7 +52,7 @@ recipes = {
             "cost": [(values.black_rook, 2), (values.waffle, 75)]
         },
         {
-            "cost": [(values.gem_red, 1)]
+            "cost": [(values.gem_red, 2)]
         }
     ],
         "Wknight" : [
@@ -69,7 +69,7 @@ recipes = {
 			"cost": [(values.black_knight, 2), (values.bagel, 75)]
 		},
         {
-			"cost": [(values.gem_red, 1)]
+			"cost": [(values.gem_red, 2)]
 		}
     ],
 
@@ -87,7 +87,7 @@ recipes = {
 			"cost": [(values.black_bishop, 2), (values.doughnut, 75)]
 		},
         {
-			"cost": [(values.gem_red, 1)]
+			"cost": [(values.gem_red, 2)]
 		}
     ],
 
@@ -105,7 +105,7 @@ recipes = {
 			"cost": [(values.black_queen, 2), (values.doughnut, 75)]
 		},
         {
-			"cost": [(values.gem_red, 1)]
+			"cost": [(values.gem_red, 2)]
 		}
     ],
 
@@ -123,7 +123,7 @@ recipes = {
 			"cost": [(values.black_king, 2), (values.bagel, 75)]
 		},
         {
-			"cost": [(values.gem_red, 1)]
+			"cost": [(values.gem_red, 2)]
 		}
     ],
 
@@ -134,7 +134,7 @@ recipes = {
 			"cost": [(values.white_pawn, 1)]
 		},
         {
-			"cost": [(values.gem_red, 1)]
+			"cost": [(values.gem_red, 2)]
 		}
     ],
 
@@ -143,7 +143,7 @@ recipes = {
 			"cost": [(values.white_rook, 1)]
 		},
         {
-			"cost": [(values.gem_red, 1)]
+			"cost": [(values.gem_red, 2)]
 		}
     ],
 
@@ -152,7 +152,7 @@ recipes = {
 			"cost": [(values.white_knight, 1)]
 		},
         {
-			"cost": [(values.gem_red, 1)]
+			"cost": [(values.gem_red, 2)]
 		}
     ],
 
@@ -161,7 +161,7 @@ recipes = {
 			"cost": [(values.white_bishop, 1)]
 		},
         {
-			"cost": [(values.gem_red, 1)]
+			"cost": [(values.gem_red, 2)]
 		}
     ],
 
@@ -170,7 +170,7 @@ recipes = {
 			"cost": [(values.white_queen, 1)]
 		},
         {
-			"cost": [(values.gem_red, 1)]
+			"cost": [(values.gem_red, 2)]
 		}
     ],
 
@@ -179,7 +179,7 @@ recipes = {
 			"cost": [(values.white_king, 1)]
 		},
         {
-			"cost": [(values.gem_red, 1)]
+			"cost": [(values.gem_red, 2)]
 		}
     ],
 
