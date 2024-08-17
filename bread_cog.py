@@ -4774,6 +4774,10 @@ anarchy - 1000% of your wager.
 
         output.append(f"You have a tier {sn(account.get_space_level())} Bread Rocket.")
 
+        daily_fuel_cap = account.get_daily_fuel_cap()
+        output.append(f"You've used {sn(daily_fuel_cap - account.get('daily_fuel'))} of your {sn(daily_fuel_cap)} daily fuel.")
+        output.append("")
+
         if account.has(store.Upgraded_Autopilot.name):
             autopilot_level = account.get(store.Upgraded_Autopilot.name)
 
@@ -4801,6 +4805,10 @@ anarchy - 1000% of your wager.
         if account.has("engine_efficiency"):
             level = account.get('advanced_exploration')
             output.append(f"You use {round((1 - store.Engine_Efficiency.consumption_multipliers[level]) * 100)}% less fuel with {account.write_count('engine_efficiency', 'level')} of Engine Efficiency.")
+
+        if account.has("fuel_tank"):
+            level = account.get('fuel_tank')
+            output.append(f"Your daily fuel cap is increased by {sn(level * store.Fuel_Tank.multiplier)} with {utility.write_count(level, 'Fuel Tank level')}.")
         
         output.append("")
         output.append(f"Throughout your time in space you've created {utility.write_count(account.get('trade_hubs_created'), 'Trade Hub')} and helped contribute to {utility.write_count(account.get('projects_completed'), 'completed project')}.")
@@ -5802,7 +5810,9 @@ anarchy - 1000% of your wager.
             
             if move_location not in confirm_text:
                 current_fuel = user_account.get(values.fuel.text)
-                await utility.smart_reply(ctx, f"You are trying to travel through the wormhole.\nThis will require **{utility.smart_number(move_cost)}** {values.fuel.text}.\nYou have {current_fuel} {values.fuel.text}.\nAre you sure you want to move? Yes or No.")
+                daily_fuel = user_account.get("daily_fuel")
+                
+                await utility.smart_reply(ctx, f"You are trying to travel through the wormhole.\nThis will require **{utility.smart_number(move_cost)}** {values.fuel.text}.\nYou have {utility.smart_number(current_fuel)} {values.fuel.text} and {utility.smart_number(daily_fuel)} daily fuel.\nAre you sure you want to move? Yes or No.")
             
                 def check(m: discord.Message):
                     return m.author.id == ctx.author.id and m.channel.id == ctx.channel.id 
@@ -5825,7 +5835,9 @@ anarchy - 1000% of your wager.
                     self.currently_interacting.remove(ctx.author.id)
                     return
         
-            player_fuel = user_account.get(values.fuel.text)
+            fuel_item = user_account.get(values.fuel.text)
+            daily_fuel = user_account.get("daily_fuel")
+            player_fuel = fuel_item + daily_fuel
 
             if player_fuel < move_cost:
                 await utility.smart_reply(ctx, "Autopilot error:\nLacking required fuel, aborting.")
@@ -5840,7 +5852,13 @@ anarchy - 1000% of your wager.
             end_system_location = (pair_tile.system_xpos, pair_tile.system_ypos)
 
             # Remove the fuel.
-            user_account.increment(values.fuel.text, -move_cost)
+            # Daily fuel is prioritized over regular fuel.
+            if move_cost > daily_fuel:
+                user_account.set("daily_fuel", 0)
+                user_account.increment(values.fuel.text, -(move_cost - daily_fuel))
+            else:
+                user_account.increment("daily_fuel", -move_cost)
+
 
             # Update the player's galaxy location.
             user_account.set("galaxy_xpos", end_galaxy_location[0])
@@ -5853,9 +5871,10 @@ anarchy - 1000% of your wager.
             # Save the player account.
             self.json_interface.set_account(ctx.author.id, user_account, guild = ctx.guild.id)
 
-            fuel_left = user_account.get(values.fuel.text)
+            item_left = user_account.get(values.fuel.text)
+            daily_fuel = user_account.get("daily_fuel")
 
-            await utility.smart_reply(ctx, f"Autopilot success:\nSucessfully travelled through the wormhole..\n\nYou have **{utility.smart_number(fuel_left)} {values.fuel.text}** remaining.")
+            await utility.smart_reply(ctx, f"Autopilot success:\nSucessfully travelled through the wormhole..\n\nYou have **{utility.smart_number(item_left)} {values.fuel.text}** and **{utility.smart_number(daily_fuel)} daily fuel** remaining.")
 
             self.currently_interacting.remove(ctx.author.id)
             return
@@ -5983,7 +6002,9 @@ anarchy - 1000% of your wager.
 
         if confirm not in confirm_text:
             current_fuel = user_account.get(values.fuel.text)
-            await utility.smart_reply(ctx, f"You are trying to move from {start_location} to {end_location}.\nThis will require **{utility.smart_number(move_cost)}** {values.fuel.text}.\nYou have {utility.smart_number(current_fuel)} {values.fuel.text}.\nAre you sure you want to move? Yes or No.")
+            daily_fuel = user_account.get("daily_fuel")
+
+            await utility.smart_reply(ctx, f"You are trying to move from {start_location} to {end_location}.\nThis will require **{utility.smart_number(move_cost)}** {values.fuel.text}.\nYou have {utility.smart_number(current_fuel)} {values.fuel.text} and {utility.smart_number(daily_fuel)} daily fuel.\nAre you sure you want to move? Yes or No.")
             
             def check(m: discord.Message):
                 return m.author.id == ctx.author.id and m.channel.id == ctx.channel.id 
@@ -6007,7 +6028,9 @@ anarchy - 1000% of your wager.
                 self.currently_interacting.remove(ctx.author.id)
                 return
         
-        player_fuel = user_account.get(values.fuel.text)
+        fuel_item = user_account.get(values.fuel.text)
+        daily_fuel = user_account.get("daily_fuel")
+        player_fuel = fuel_item + daily_fuel
 
         if player_fuel < move_cost:
             await utility.smart_reply(ctx, "Autopilot error:\nLacking required fuel, aborting.")
@@ -6016,7 +6039,12 @@ anarchy - 1000% of your wager.
             return
         
         # Remove the fuel.
-        user_account.increment(values.fuel.text, -move_cost)
+        # Daily fuel is prioritized over regular fuel.
+        if move_cost > daily_fuel:
+            user_account.set("daily_fuel", 0)
+            user_account.increment(values.fuel.text, -(move_cost - daily_fuel))
+        else:
+            user_account.increment("daily_fuel", -move_cost)
 
         if move_map == "system":
             x_key = "system_xpos"
@@ -6080,9 +6108,10 @@ anarchy - 1000% of your wager.
         # Save the player account.
         self.json_interface.set_account(ctx.author.id, user_account, guild = ctx.guild.id)
 
-        fuel_left = user_account.get(values.fuel.text)
+        item_left = user_account.get(values.fuel.text)
+        daily_fuel = user_account.get("daily_fuel")
 
-        await utility.smart_reply(ctx, f"Autopilot success:\nSuccessfully moved to {end_location} on the {move_map} map, using {utility.smart_number(move_cost)} {values.fuel.text}.\n\nYou have **{utility.smart_number(fuel_left)} {values.fuel.text}** remaining.")
+        await utility.smart_reply(ctx, f"Autopilot success:\nSuccessfully moved to {end_location} on the {move_map} map, using {utility.smart_number(move_cost)} {values.fuel.text}.\n\nYou have **{utility.smart_number(item_left)} {values.fuel.text}** and **{utility.smart_number(daily_fuel)} daily fuel** remaining.")
 
         self.currently_interacting.remove(ctx.author.id)
 

@@ -8,6 +8,7 @@ import numpy as np
 import bread.account as account
 import bread.values as values
 import bread.utility as utility
+import bread.space as space
 
 # loaf converter
 # 1 - 2/3 single loafs converted to special
@@ -1636,42 +1637,38 @@ class Upgraded_Autopilot(Space_Shop_Item):
 
         return True
     
-#### UNUSED
 class Fuel_Tank(Space_Shop_Item):
     name = "fuel_tank"
-    display_name = "Upgraded Fuel Tank"
-    tank_values = [100, 150, 200, 300, 400, 500, 600, 700]
+    display_name = "Fuel Tank"
+
+    multiplier = space.MOVE_FUEL_GALAXY * 5
 
     @classmethod
-    def get_costs(cls):
+    def cost(cls, user_account: account.Bread_Account) -> list[tuple[values.Emote, int]]:
+        level = user_account.get(cls.name) + 1
+
+        fuel = int(cls.multiplier * level)
+        green_gems = 10
+        gold_gems = 5
+
         return [
-            [],
-            [(values.gem_red.text, 400)],
-            [(values.gem_blue.text, 300)],
-            [(values.gem_purple.text, 200)],
-            [(values.gem_green.text, 100)],
-            [(values.gem_gold.text, 50)],
-            [(values.anarchy_chess.text, 5)],
-            [(values.anarchy_chessatron.text, 5)],
+            (values.fuel.text, fuel),
+            (values.gem_green.text, green_gems),
+            (values.gem_gold.text, gold_gems)
         ]
     
     @classmethod
     def description(cls, user_account: account.Bread_Account) -> str:
-        level = user_account.get(cls.name)
-        return f"An upgraded fuel tank that can store up to {cls.tank_values[level + 1]} {values.fuel.text}."
+        level = user_account.get(cls.name) + 1
+        return f"An upgraded fuel tank that increases your daily fuel to {500 + cls.multiplier * level} {values.fuel.text}."
 
     @classmethod
-    def can_be_purchased(cls, user_account: account.Bread_Account) -> bool:
-        if not super().can_be_purchased(user_account):
-            return False
-        
-        level = user_account.get(cls.name) + 1
-        space_level = user_account.get_space_level()
-
-        if level > space_level - 1:
-            return False
-        
-        return True
+    def get_cost_types(cls, user_account: account.Bread_Account, level: int = None) -> list[str | values.Emote]:
+        return [values.fuel.text, values.gem_green.text, values.gem_gold.text]
+    
+    @classmethod
+    def max_level(cls, user_account: account.Bread_Account = None) -> int | None:
+        return 32 # 28,500 daily fuel.
 
 class Fuel_Research(Space_Shop_Item):
     name = "fuel_research"
@@ -1858,7 +1855,7 @@ class Engine_Efficiency(Space_Shop_Item):
         
         return True
 
-space_shop_items = [Bread_Rocket, Upgraded_Autopilot, Fuel_Research, Upgraded_Telescopes, Multiroller_Terminal, Advanced_Exploration, Engine_Efficiency]
+space_shop_items = [Bread_Rocket, Upgraded_Autopilot, Fuel_Tank, Fuel_Research, Upgraded_Telescopes, Multiroller_Terminal, Advanced_Exploration, Engine_Efficiency]
 
 
 

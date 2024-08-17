@@ -97,6 +97,8 @@ class Bread_Account:
             self.set("random_chess_piece_bought", 0)
         if self.has("special_bread_pack_bought"):
             self.set("special_bread_pack_bought", 0)
+        
+        self.set("daily_fuel", self.get_daily_fuel_cap())
 
     def increase_prestige_level(self: typing.Self) -> None:
         """Increases this account's prestige level by 1."""
@@ -128,7 +130,7 @@ class Bread_Account:
                                 "daily_gambles", "daily_rolls",
                                 "multiroller", "compound_roller", "roll_summarizer", "black_hole", "multiroller_terminal", "multiroller_active",
                                 "investment_profit", "gamble_winnings",
-                                "space_level", "telescope_level", "autopilot_level", "fuel_tank", "fuel_research", "multiroller_terminal", 
+                                "space_level", "telescope_level", "autopilot_level", "fuel_tank", "fuel_research", "multiroller_terminal", "advanced_exploration", "engine_efficiency",
                                 "galaxy_move_count", "galaxy_xpos", "galaxy_ypos", "system_xpos", "system_ypos", "projects_completed", "trade_hubs_created",
         ]
         untouched =            ["lifetime_earned_dough", "lifetime_dough", "lifetime_gambles","highest_roll", ]
@@ -173,6 +175,8 @@ class Bread_Account:
                 key = "first_catch_remaining",
                 value = self.get("first_catch_level")
             )
+        
+        self.set("daily_fuel", self.get_daily_fuel_cap())
 
         # reset boosts file
         self.set("dough_boosts", dict())
@@ -425,7 +429,8 @@ class Bread_Account:
             128 # 128 is the cap.
         )
     
-            
+    def get_daily_fuel_cap(self: typing.Self):
+        return 500 + store.Fuel_Tank.multiplier * self.get(store.Fuel_Tank.name)        
 
     def get_shadowmega_boost_count(self: typing.Self) -> int:
         """Returns the amount of shadowmega chessatrons that can be used to get more dough, so the number of active shadowmegas."""
