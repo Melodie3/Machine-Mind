@@ -1641,15 +1641,15 @@ class Fuel_Tank(Space_Shop_Item):
     name = "fuel_tank"
     display_name = "Fuel Tank"
 
-    multiplier = 875 # space.MOVE_FUEL_GALAXY * 5
+    multiplier = 350 # space.MOVE_FUEL_GALAXY * 2
 
     @classmethod
     def cost(cls, user_account: account.Bread_Account) -> list[tuple[values.Emote, int]]:
         level = user_account.get(cls.name) + 1
 
         fuel = int(cls.multiplier * level)
-        green_gems = 10
-        gold_gems = 5
+        green_gems = 20 * level
+        gold_gems = 5 * level
 
         return [
             (values.fuel.text, fuel),
@@ -1668,7 +1668,12 @@ class Fuel_Tank(Space_Shop_Item):
     
     @classmethod
     def max_level(cls, user_account: account.Bread_Account = None) -> int | None:
-        return 32 # 28,500 daily fuel.
+        return 32 # 11,300 daily fuel.
+    
+    @classmethod
+    def do_purchase(cls, user_account: account.Bread_Account):
+        super().do_purchase(user_account)
+        return f"You have purchased the level {user_account.get(cls.name)} Fuel Tank, your daily fuel will be available tomorrow.\nThe fuel tank comes with a note, it reads \"NO RETURNS, NO WARRANTY, NO SPLEEN.\""
 
 class Fuel_Research(Space_Shop_Item):
     name = "fuel_research"

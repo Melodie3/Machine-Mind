@@ -430,7 +430,8 @@ class Bread_Account:
         )
     
     def get_daily_fuel_cap(self: typing.Self):
-        return 500 + store.Fuel_Tank.multiplier * self.get(store.Fuel_Tank.name)        
+        """Returns the maximum amount of daily fuel this account can have. This is `350 * fuel_tank + 100` where `fuel_tank` is the fuel tank level."""
+        return store.Fuel_Tank.multiplier * self.get(store.Fuel_Tank.name) + 100 # 100 base daily fuel.
 
     def get_shadowmega_boost_count(self: typing.Self) -> int:
         """Returns the amount of shadowmega chessatrons that can be used to get more dough, so the number of active shadowmegas."""

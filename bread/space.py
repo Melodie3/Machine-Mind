@@ -224,7 +224,8 @@ class SystemTile:
     def get_analysis(
             self: typing.Self,
             guild: typing.Union[discord.Guild, int, str],
-            json_interface: bread_cog.JSON_interface
+            json_interface: bread_cog.JSON_interface,
+            detailed: bool = False
         ) -> list[str]:
         """Generates a list of strings that describe this tile, to be used by the analysis command."""
         return [self.__str__()]
@@ -251,7 +252,8 @@ class SystemEmpty(SystemTile):
     def get_analysis(
             self: typing.Self,
             guild: typing.Union[discord.Guild, int, str],
-            json_interface: bread_cog.JSON_interface
+            json_interface: bread_cog.JSON_interface,
+            detailed: bool = False
         ) -> list[str]:
         return ["There seems to be nothing here."]
     
@@ -280,7 +282,8 @@ class SystemStar(SystemTile):
     def get_analysis(
             self: typing.Self,
             guild: typing.Union[discord.Guild, int, str],
-            json_interface: bread_cog.JSON_interface
+            json_interface: bread_cog.JSON_interface,
+            detailed: bool = False
         ) -> list[str]:
         return [
                 "Object type: Star",
@@ -308,7 +311,8 @@ class SystemAsteroid(SystemTile):
     def get_analysis(
             self: typing.Self,
             guild: typing.Union[discord.Guild, int, str],
-            json_interface: bread_cog.JSON_interface
+            json_interface: bread_cog.JSON_interface,
+            detailed: bool = False
         ) -> list[str]:
         return [
                 "Object type: Asteroid",
@@ -340,7 +344,8 @@ class SystemTradeHub(SystemTile):
     def get_analysis(
             self: typing.Self,
             guild: typing.Union[discord.Guild, int, str],
-            json_interface: bread_cog.JSON_interface
+            json_interface: bread_cog.JSON_interface,
+            detailed: bool = False
         ) -> list[str]:
         return [
                 "Object type: Trade Hub",
@@ -379,7 +384,8 @@ class SystemPlanet(SystemTile):
     def get_analysis(
             self: typing.Self,
             guild: typing.Union[discord.Guild, int, str],
-            json_interface: bread_cog.JSON_interface
+            json_interface: bread_cog.JSON_interface,
+            detailed: bool = False
         ) -> list[str]:
         day_seed = json_interface.get_day_seed(guild=guild)
         ascension = json_interface.ascension_from_seed(guild=guild, galaxy_seed=self.galaxy_seed)
@@ -404,6 +410,36 @@ class SystemPlanet(SystemTile):
             "Many of a Kind": values.anarchy_chess,
             "Anarchy Piece": values.anarchy_black_pawn
         }
+
+        if not detailed:
+            deviation = self.planet_deviation
+
+            ranges = [
+                (float('-inf'), 0.50, "boinge"),
+                (0.50, 0.75, "Extremely Stable"),
+                (0.75, 0.85, "Very Stable"),
+                (0.85, 0.95, "Stable"),
+                (0.95, 1.05, "Neutral"),
+                (1.05, 1.15, "Unstable"),
+                (1.15, 1.25, "Very Unstable"),
+                (1.25, float('inf'), "Extremely Unstable")
+            ]
+            
+            result = next(
+                text for lower, upper, text in ranges
+                if (lower < deviation <= upper and upper > 1) or \
+                   (lower <= deviation < upper and upper < 1) or \
+                   (lower <= deviation <= upper and (upper > 1 and lower < 1))
+            )
+
+            result = [
+                "Object type: Planet",
+                f"Planet type: {self.planet_type.text}",
+                f"Stability: {result}",
+                f"Primary Modifier: {round(planet_modifiers.get(self.planet_type), 3)}"
+            ]
+
+            return result
 
         result = [
             "Object type: Planet",
@@ -469,7 +505,8 @@ class SystemWormhole(SystemTile):
     def get_analysis(
             self: typing.Self,
             guild: typing.Union[discord.Guild, int, str],
-            json_interface: bread_cog.JSON_interface
+            json_interface: bread_cog.JSON_interface,
+            detailed: bool = False
         ) -> list[str]:
         return [
                 "Object type: Wormhole",

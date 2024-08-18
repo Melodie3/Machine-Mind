@@ -4775,7 +4775,7 @@ anarchy - 1000% of your wager.
         output.append(f"You have a tier {sn(account.get_space_level())} Bread Rocket.")
 
         daily_fuel_cap = account.get_daily_fuel_cap()
-        output.append(f"You've used {sn(daily_fuel_cap - account.get('daily_fuel'))} of your {sn(daily_fuel_cap)} daily fuel.")
+        output.append(f"Out of your {sn(daily_fuel_cap)} daily fuel you have {sn(account.get('daily_fuel'))} remaining.")
         output.append("")
 
         if account.has(store.Upgraded_Autopilot.name):
@@ -4800,6 +4800,10 @@ anarchy - 1000% of your wager.
 
             output.append(f"With a level {sn(autopilot_level)} autopilot you can {message}.")
 
+        if account.has("fuel_tank"):
+            level = account.get('fuel_tank')
+            output.append(f"Your daily fuel cap is increased by {sn(level * store.Fuel_Tank.multiplier)} with {utility.write_count(level, 'Fuel Tank level')}.")
+
         if account.has("fuel_research"):
             output.append(f"By having {account.write_count('fuel_research', 'level')} of fuel research, you can use {store.Fuel_Research.highest_gem[account.get('fuel_research')]} or any lower gem for making fuel.")
 
@@ -4815,10 +4819,6 @@ anarchy - 1000% of your wager.
         if account.has("engine_efficiency"):
             level = account.get('advanced_exploration')
             output.append(f"You use {round((1 - store.Engine_Efficiency.consumption_multipliers[level]) * 100)}% less fuel with {account.write_count('engine_efficiency', 'level')} of Engine Efficiency.")
-
-        if account.has("fuel_tank"):
-            level = account.get('fuel_tank')
-            output.append(f"Your daily fuel cap is increased by {sn(level * store.Fuel_Tank.multiplier)} with {utility.write_count(level, 'Fuel Tank level')}.")
         
         output.append("")
         output.append(f"Throughout your time in space you've created {utility.write_count(account.get('trade_hubs_created'), 'Trade Hub')} and helped contribute to {utility.write_count(account.get('projects_completed'), 'completed project')}.")
@@ -4957,7 +4957,8 @@ anarchy - 1000% of your wager.
         description = "Analyze and get information about planets.\n\nTo get a guide for the point parameter, look at the system map."
     )
     async def space_analyze(self, ctx,
-            point: typing.Optional[str] = commands.parameter(description="The point around you to analyze.")
+            point: typing.Optional[str] = commands.parameter(description="The point around you to analyze."),
+            modifier: typing.Optional[str] = commands.parameter(description="Optional modifier.")
         ):
         if get_channel_permission_level(ctx) < PERMISSION_LEVEL_ACTIVITIES:
             await ctx.reply(f"Thank you for trying to analyze a system! The nearest science center is in {self.json_interface.get_rolling_channel(ctx.guild.id)}.")
@@ -5019,6 +5020,8 @@ anarchy - 1000% of your wager.
 
         ##########################################################
         ##### Getting the analysis data.
+        
+        detailed = modifier == "detailed"
 
         galaxy_x, galaxy_y = user_account.get_galaxy_location(json_interface=self.json_interface)
 
@@ -5035,15 +5038,24 @@ anarchy - 1000% of your wager.
         player_x, player_y = user_account.get_system_location()
 
         if system_data.system:
+            tile_x = x_modifier - radius + player_x
+            tile_y = y_modifier - radius + player_y
+
+            if detailed:
+                if tile_x != player_x or tile_y != player_y:
+                    await ctx.reply("Your scientific sensors are unable to get a detailed report of celestial bodies you're not on top of.")
+                    return
+
             tile_analyze = system_data.get_system_tile(
                 json_interface = self.json_interface,
-                system_x = x_modifier - radius + player_x,
-                system_y = y_modifier - radius + player_y
+                system_x = tile_x,
+                system_y = tile_y
             )
 
             analysis_lines = tile_analyze.get_analysis(
                 guild = ctx.guild.id,
-                json_interface = self.json_interface
+                json_interface = self.json_interface,
+                detailed = detailed
             )
         else:
             analysis_lines = ["There is nothing here."]
@@ -5054,8 +5066,13 @@ anarchy - 1000% of your wager.
             analysis_lines[index] = f"{line_emoji} {item}"
         
         analysis_lines.append(line_emoji)
-        analysis_lines.append(f"{line_emoji} Command to move there:")
+        analysis_lines.append(f"{line_emoji} Analysis footer:")
+        analysis_lines.append(f"{line_emoji} Move command:")
         analysis_lines.append(f"{line_emoji} $bread space move system {point} y")
+        if not detailed:
+            analysis_lines.append(line_emoji)
+            analysis_lines.append(f"{line_emoji} Attempt a detailed analysis:")
+            analysis_lines.append(f"{line_emoji} $bread space analyze {point} detailed")
 
         ##########################################################        
         ##### Sending the message.
