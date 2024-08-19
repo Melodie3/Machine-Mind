@@ -1896,7 +1896,7 @@ loaf_converter""",
         
         #can be rolled but not recorded
         elif get_channel_permission_level(ctx) < PERMISSION_LEVEL_MAX:
-            if user_account.get("daily_rolls") == 0:
+            if user_account.get("daily_rolls") <= 0:
                 allowed_commentary = f"Thank you for rolling. Remember, any new rolls will only be saved in {self.json_interface.get_rolling_channel(ctx.guild.id)}."
                 record = True
             else:
