@@ -1,6 +1,9 @@
 from discord.ext import commands
 import typing
 import os
+import importlib
+
+import verification
 
 
 
@@ -56,7 +59,7 @@ class Bootstrap_cog(commands.Cog, name="Bootstrap"):
         brief = "Updates the bot from Git",
         hidden = True
     )
-    @commands.is_owner()
+    @commands.check(verification.is_admin_check)
     async def update(self, ctx):
         await ctx.reply("Pulling from Git.")
 
@@ -74,7 +77,7 @@ class Bootstrap_cog(commands.Cog, name="Bootstrap"):
         hidden = True,
         aliases = ["reload"]
     )
-    @commands.is_owner()
+    @commands.check(verification.is_admin_check)
     async def load(self, ctx, *args):
         print("Running Load command. Bot Ref is "+str(self))
         
@@ -163,6 +166,8 @@ async def reload(ctx):
 
 async def setup(bot: commands.Bot):
     print("Setting up Bootstrap Cog")
+    importlib.reload(verification)
+    
     cog = Bootstrap_cog(bot)
     cog.bot_ref = bot
     await bot.add_cog(cog)

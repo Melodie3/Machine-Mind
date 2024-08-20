@@ -708,6 +708,14 @@ class JSON_interface:
         if "rolling_channel" not in guild_info.keys():
             return "<#967544442468843560>" # bread roll channel link in default guild
         return guild_info["rolling_channel"]
+    
+    def get_approved_admins(
+            self: typing.Self,
+            guild: typing.Union[discord.Guild, int, str]
+        ) -> list[str]:
+        """Gives a list of user ids for the approved admins in the given guild."""
+        guild_data = self.get_guild_info(guild)
+        return guild_data.get("approved_admins", [])
 
 
     ####################################
@@ -767,6 +775,8 @@ class Bread_cog(commands.Cog, name="Bread"):
         ) -> None:
         self.bot = bot
         self.daily_task.start()
+
+        bot.json_interface = self.json_interface
 
     def cog_unload(self: typing.Self):
         self.daily_task.cancel()
@@ -6296,8 +6306,10 @@ anarchy - 1000% of your wager.
         brief="[Restricted]",
     )
     async def admin(self, ctx):
-        if not verification.from_owner(ctx.author):
+        if not (await verification.is_admin_check(ctx)):
             await ctx.reply(verification.get_rejection_reason())
+            return
+        
         if ctx.invoked_subcommand is None:
             print("admin called on nothing")
             return
@@ -6342,7 +6354,7 @@ anarchy - 1000% of your wager.
         brief="sets a value manually",
         help = "Usage: bread admin set [optional Member] key value [optional 'force']"
     )
-    @commands.is_owner()
+    @commands.check(verification.is_admin_check)
     async def set(self, ctx, 
                     user: typing.Optional[discord.Member], 
                     key: str,
@@ -6391,7 +6403,7 @@ anarchy - 1000% of your wager.
         brief="sets a value manually",
         help = "Usage: bread admin set [optional Member] key value [optional 'force']"
     )
-    @commands.is_owner()
+    @commands.check(verification.is_admin_check)
     async def increment(self, ctx, 
                     user: discord.Member, 
                     key: str,
@@ -6439,7 +6451,7 @@ anarchy - 1000% of your wager.
     #####      ADMIN RESET_ACCOUNT
 
     @admin.group()
-    @commands.is_owner()
+    @commands.check(verification.is_admin_check)
     async def reset_account(self, ctx, user: discord.Member):
         if await self.await_confirmation(ctx) is False:
             return
@@ -6457,7 +6469,7 @@ anarchy - 1000% of your wager.
     #####      ADMIN COPY_ACCOUNT
 
     @admin.group()
-    @commands.is_owner()
+    @commands.check(verification.is_admin_check)
     async def copy_account(self, ctx, origin_user: discord.Member, target_user: discord.Member):
         if await self.await_confirmation(ctx) is False:
             return
@@ -6483,7 +6495,7 @@ anarchy - 1000% of your wager.
     #####      ADMIN SERVER_BOOST
 
     @admin.group()
-    @commands.is_owner()
+    @commands.check(verification.is_admin_check)
     async def reward_all_server_boosters(self, ctx):
         # we will find the dough from a daily roll, and award some multiple of that amount
         # first get all boosters
@@ -6496,7 +6508,7 @@ anarchy - 1000% of your wager.
 
 
     @admin.group()
-    @commands.is_owner()
+    @commands.check(verification.is_admin_check)
     async def reward_single_server_booster(self, ctx, user: discord.Member, multiplier: typing.Optional[float] = 1):
         #first get user account
         user_account = self.json_interface.get_account(user, guild = ctx.guild.id)
@@ -6524,13 +6536,13 @@ anarchy - 1000% of your wager.
     
 
     @admin.group()
-    @commands.is_owner()
+    @commands.check(verification.is_admin_check)
     async def server_boost(self, ctx, user: discord.Member):
         # this will increase their dough by 5x their max daily rolls
             await self.reward_single_server_booster(ctx, user, 1)
     
     @admin.group()
-    @commands.is_owner()
+    @commands.check(verification.is_admin_check)
     async def server_boost_additional(self, ctx, user: discord.Member):
         
         await self.reward_single_server_booster(ctx, user, .5)
@@ -6543,7 +6555,7 @@ anarchy - 1000% of your wager.
         brief="shows raw values",
         help = "Usage: bread admin show [optional member]"
     )
-    @commands.is_owner()
+    @commands.check(verification.is_admin_check)
     async def show(self, ctx, user: typing.Optional[discord.Member]):
         output = ""
         if user is None:
@@ -6571,7 +6583,7 @@ anarchy - 1000% of your wager.
 
     @admin.group(
     )
-    @commands.is_owner()
+    @commands.check(verification.is_admin_check)
     async def show_custom(self, ctx, filename: str):
         output = ""
         file = self.json_interface.get_custom_file(filename, guild = ctx.guild.id)
@@ -6605,7 +6617,7 @@ anarchy - 1000% of your wager.
         brief="Allows usage of the bread machine",
         help = "Usage: bread admin allow [member]"
     )
-    @commands.is_owner()
+    @commands.check(verification.is_admin_check)
     async def allow(self, ctx, user: typing.Optional[discord.Member]):
         if user is None:
             print("Bread Allow failed to recognize user "+str(user))
@@ -6622,7 +6634,7 @@ anarchy - 1000% of your wager.
         brief="Disllows usage of the bread machine",
         help = "Usage: bread admin disallow [member]"
     )
-    @commands.is_owner()
+    @commands.check(verification.is_admin_check)
     async def disallow(self, ctx, user: typing.Optional[discord.Member]):
         if user is None:
             print("Bread Disallow failed to recognize user "+str(user))
@@ -6650,7 +6662,7 @@ anarchy - 1000% of your wager.
     #####      ADMIN DAILY_RESET
 
     @admin.group()
-    @commands.is_owner()
+    @commands.check(verification.is_admin_check)
     async def daily_reset(self, ctx):
         if await self.await_confirmation(ctx) is False:
             return
@@ -6731,7 +6743,7 @@ anarchy - 1000% of your wager.
 
     #depreciated, we're avoiding using the account cache now
     @admin.group()
-    @commands.is_owner()
+    @commands.check(verification.is_admin_check)
     async def purge_account_cache(self, ctx):
         self.json_interface.accounts.clear()
         await ctx.send("Done.")
@@ -6742,7 +6754,7 @@ anarchy - 1000% of your wager.
     # this will take one value from each account and rename it to something different.
 
     @admin.group()
-    @commands.is_owner()
+    @commands.check(verification.is_admin_check)
     async def rename(self, ctx, starting_name: str, ending_name: str):
 
         all_guilds = self.json_interface.get_list_of_all_guilds()
@@ -6784,7 +6796,7 @@ anarchy - 1000% of your wager.
     #####      ADMIN GOD_ACCOUNT
 
     @admin.group()
-    @commands.is_owner()
+    @commands.check(verification.is_admin_check)
     async def god_account(self, ctx, user: typing.Optional[discord.Member]):
 
         if await self.await_confirmation(ctx) is False:
@@ -6835,7 +6847,7 @@ anarchy - 1000% of your wager.
     #####      ADMIN SYNCHRONIZE_USERNAMES
 
     @admin.command()
-    @commands.is_owner()
+    @commands.check(verification.is_admin_check)
     async def synchronize_usernames(self, ctx, do_manually: typing.Optional[str] = None):
 
         if do_manually != "manual":
@@ -6878,7 +6890,7 @@ anarchy - 1000% of your wager.
     #####      ADMIN DO_OPERATION
     
     @admin.command()
-    @commands.is_owner()
+    @commands.check(verification.is_admin_check)
     async def do_operation(self, ctx):
 
         if await self.await_confirmation(ctx) is False:
@@ -7016,7 +7028,7 @@ anarchy - 1000% of your wager.
         await ctx.send("Done.")
     
     @admin.command()
-    @commands.is_owner()
+    @commands.check(verification.is_admin_check)
     async def run_space_tick(self, ctx):
         self.space_tick()
         await ctx.reply("Done.")
@@ -7048,7 +7060,7 @@ anarchy - 1000% of your wager.
     @admin.command(
         aliases = ["set_announce_channel"], 
     )
-    @commands.is_owner()
+    @commands.check(verification.is_admin_check)
     async def set_announcement_channel(self, ctx, channel: typing.Optional[discord.TextChannel]=None):
         if channel is None:
             channel = ctx.channel
@@ -7064,7 +7076,7 @@ anarchy - 1000% of your wager.
     #####      ADMIN STONK_FLUCTUATE
 
     @admin.command()
-    @commands.is_owner()
+    @commands.check(verification.is_admin_check)
     async def stonk_fluctuate(self, ctx):
         self.stonk_fluctuate_internal()
         await self.stonks_announce() #TODO: test this shit
@@ -7075,7 +7087,7 @@ anarchy - 1000% of your wager.
     #####      ADMIN STONK_RESET
 
     @admin.command()
-    @commands.is_owner()
+    @commands.check(verification.is_admin_check)
     async def stonk_reset(self, ctx):
         self.stonk_reset_internal(guild = ctx.guild.id)
         await ctx.invoke(self.stonks)
@@ -7084,7 +7096,7 @@ anarchy - 1000% of your wager.
     #####      ADMIN STONK_SPLIT
 
     @admin.command()
-    @commands.is_owner()
+    @commands.check(verification.is_admin_check)
     async def stonk_split(self, ctx, stonk_name: str):
         stonk_text = values.get_emote_text(stonk_name)
         self.stonk_split_internal(stonk_text, guild=ctx.guild.id)
@@ -7094,7 +7106,7 @@ anarchy - 1000% of your wager.
     #####      ADMIN ADD_CHESS_SET
 
     @admin.command()
-    @commands.is_owner()
+    @commands.check(verification.is_admin_check)
     async def add_chess_set(self, ctx, target : typing.Optional[discord.Member], count : typing.Optional[int] = 1):
         if target is None:
             target = ctx.author
@@ -7114,7 +7126,7 @@ anarchy - 1000% of your wager.
     #####      ADMIN ADD_ANARCHY_SET
 
     @admin.command()
-    @commands.is_owner()
+    @commands.check(verification.is_admin_check)
     async def add_anarchy_set(self, ctx, target : typing.Optional[discord.Member], count : typing.Optional[int] = 1):
         if target is None:
             target = ctx.author
@@ -7134,7 +7146,7 @@ anarchy - 1000% of your wager.
     #####      ADMIN INCREASE_PRESTIGE
 
     @admin.command()
-    @commands.is_owner()
+    @commands.check(verification.is_admin_check)
     async def increase_prestige(self, ctx, target : typing.Optional[discord.Member]):
         
         if await self.await_confirmation(ctx) is False:
@@ -7148,6 +7160,74 @@ anarchy - 1000% of your wager.
         self.json_interface.set_account(target, user_account, guild = ctx.guild.id)
 
         await ctx.reply(f"Done. Prestige level is now {user_account.get_prestige_level()}.")
+
+    ########################################################################################################################
+    #####      ADMIN ADD_ADMIN
+
+    @admin.command()
+    @commands.is_owner()
+    async def add_admin(self, ctx, target: typing.Optional[discord.Member]):
+        if target is None:
+            await ctx.reply("Please provide a user to add as an admin for this guild.")
+            return
+        
+        admins = self.json_interface.get_approved_admins(ctx.guild)
+
+        if str(target.id) in admins:
+            await ctx.reply("That user is already an admin in this guild.")
+            return
+        
+        print(f"{ctx.author} is adding {target} as an approved admin in {ctx.guild} ({ctx.guild.id})")
+        
+        admins.append(str(target.id))
+
+        guild_info = self.json_interface.get_guild_info(ctx.guild)
+        guild_info["approved_admins"] = admins
+        self.json_interface.set_guild_info(guild=ctx.guild.id, guild_info=guild_info)
+
+        await ctx.reply("Done.")
+
+    ########################################################################################################################
+    #####      ADMIN REMOVE_ADMIN
+
+    @admin.command()
+    @commands.is_owner()
+    async def remove_admin(self, ctx, target: typing.Optional[discord.Member]):
+        if target is None:
+            await ctx.reply("Please provide a user to remove admin permissions for this guild.")
+            return
+        
+        admins = self.json_interface.get_approved_admins(ctx.guild)
+
+        if str(target.id) not in admins:
+            await ctx.reply("That user isn't an admin.")
+            return
+        
+        print(f"{ctx.author} is removing admin permissions from {target} in {ctx.guild} ({ctx.guild.id})")
+        
+        admins.remove(str(target.id))
+
+        guild_info = self.json_interface.get_guild_info(ctx.guild)
+        guild_info["approved_admins"] = admins
+        self.json_interface.set_guild_info(guild=ctx.guild.id, guild_info=guild_info)
+
+        await ctx.reply("Done.")
+
+    ########################################################################################################################
+    #####      ADMIN ADMIN_LIST
+
+    @admin.command()
+    @commands.check(verification.is_admin_check)
+    async def admin_list(self, ctx):
+        admins = self.json_interface.get_approved_admins(ctx.guild)
+
+        if len(admins) == 0:
+            await ctx.reply("This guild has no admins currently.")
+            return
+        
+        members = [get_display_name(discord.utils.find(lambda m: str(m.id) == admin, ctx.guild.members)) for admin in admins]
+
+        await ctx.reply("Current admins:\n" + ", ".join(members))
 
     ########################################################################################################################
     #####      STRING FORMATTING
@@ -7329,15 +7409,6 @@ bot_ref = None
 
 async def setup(bot: commands.Bot):
     
-    bread_cog = Bread_cog(bot)
-    await bot.add_cog(bread_cog)
-
-    global bread_cog_ref 
-    bread_cog_ref = bread_cog
-    
-    global bot_ref
-    bot_ref = bot
-
     importlib.reload(emoji)
     importlib.reload(verification)
     importlib.reload(values)
@@ -7351,6 +7422,15 @@ async def setup(bot: commands.Bot):
     importlib.reload(space)
     importlib.reload(generation)
     importlib.reload(projects)
+
+    bread_cog = Bread_cog(bot)
+    await bot.add_cog(bread_cog)
+
+    global bread_cog_ref 
+    bread_cog_ref = bread_cog
+    
+    global bot_ref
+    bot_ref = bot
 
     try:
         #Bread_cog.internal_load(bot)

@@ -1,3 +1,4 @@
+from discord.ext import commands
 import discord
 import random
 
@@ -18,6 +19,21 @@ def from_owner(user: discord.Member) -> bool:
         return True
     else:
         return False
+
+async def is_admin_check(ctx: commands.Context) -> bool:
+    """Check that can be used as `@commands.check(verification.is_admin_check)` to check whether the person running the command is the owner or an approved admin."""
+    if await ctx.bot.is_owner(ctx.author):
+        return True
+    
+    try:    
+        json = ctx.bot.json_interface
+        admins = json.get_approved_admins(ctx.guild)
+    except AttributeError:
+        # If bot.json_interface does not exist or is not the json interface then an AttributeError will be raised.
+        return False
+
+    return str(ctx.author.id) in admins
+
 
     #if "mother of bots" in [y.name.lower() for y in ctx.message.author.roles]:
     #    #print("command comes from Mom")
