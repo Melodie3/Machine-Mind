@@ -6350,23 +6350,37 @@ anarchy - 1000% of your wager.
     ########################################################################################################################
     #####      ADMIN SET
 
-    @admin.group(
-        brief="sets a value manually",
+    @admin.command(
+        name = "set",
+        brief="Sets a value manually.",
         help = "Usage: bread admin set [optional Member] key value [optional 'force']"
     )
     @commands.check(verification.is_admin_check)
-    async def set(self, ctx, 
+    async def set_command(self, ctx,
                     user: typing.Optional[discord.Member], 
-                    key: str,
-                    value: parse_int,
+                    key: typing.Optional[str],
+                    value: typing.Optional[parse_int],
                     do_force: typing.Optional[str]):
-        if await self.await_confirmation(ctx) is False:
-            return
+        # Ensure arguments are correct.
         output = ""
-        print("Bread Admin Set: User is "+str(user)+", key is '"+str(key)+"', value is "+str(value))
         if user is None:
             output += "Applying to self\n"
             user = ctx.author
+        
+        if key is None:
+            await ctx.reply("Please provide the key to set.")
+            return
+        
+        if value is None:
+            await ctx.reply("Please provide the value to set the key to.")
+            return
+        
+        # Arguments are correct.
+        
+        if await self.await_confirmation(ctx) is False:
+            return
+        
+        print("Bread Admin Set: User is "+str(user)+", key is '"+str(key)+"', value is "+str(value))
         
         # file = self.json_interface.get_file_for_user(user)
         account = self.json_interface.get_account(user, guild = ctx.guild.id)
@@ -6399,23 +6413,35 @@ anarchy - 1000% of your wager.
     ########################################################################################################################
     #####      ADMIN INCREMEMNT
 
-    @admin.group(
-        brief="sets a value manually",
-        help = "Usage: bread admin set [optional Member] key value [optional 'force']"
+    @admin.command(
+        brief="Increments a value.",
+        help = "Usage: bread admin increment [optional Member] key value [optional 'force']"
     )
     @commands.check(verification.is_admin_check)
     async def increment(self, ctx, 
-                    user: discord.Member, 
-                    key: str,
-                    value: parse_int,
+                    user: typing.Optional[discord.Member], 
+                    key: typing.Optional[str],
+                    value: typing.Optional[parse_int],
                     do_force: typing.Optional[str]):
-        if await self.await_confirmation(ctx) is False:
-            return
+        # Ensure the arguments are correct.
         output = ""
-        print("Bread Admin Increment: User is "+str(user)+", key is '"+str(key)+"', value is "+str(value))
         if user is None:
             output += "Applying to self\n"
             user = ctx.author
+        
+        if key is None:
+            await ctx.reply("Please provide the key to increment.")
+            return
+        
+        if value is None:
+            await ctx.reply("Please provide the value to increment the key by.")
+            return
+        
+        # Arguments are correct.
+
+        if await self.await_confirmation(ctx) is False:
+            return
+        print("Bread Admin Increment: User is "+str(user)+", key is '"+str(key)+"', value is "+str(value))
         
         # file = self.json_interface.get_file_for_user(user)
         account = self.json_interface.get_account(user, guild = ctx.guild.id)
@@ -6450,9 +6476,18 @@ anarchy - 1000% of your wager.
     ########################################################################################################################
     #####      ADMIN RESET_ACCOUNT
 
-    @admin.group()
+    @admin.command(
+        brief="Resets a member's account.",
+        help = "Usage: bread admin reset_account [required member]"
+    )
     @commands.check(verification.is_admin_check)
-    async def reset_account(self, ctx, user: discord.Member):
+    async def reset_account(self, ctx,
+            user: typing.Optional[discord.Member]
+        ):
+        if user is None:
+            await ctx.reply("Please provide the member to reset the account of.")
+            return
+        
         if await self.await_confirmation(ctx) is False:
             return
         user_account = self.json_interface.get_account(user, guild = ctx.guild.id)
@@ -6468,9 +6503,23 @@ anarchy - 1000% of your wager.
     ########################################################################################################################
     #####      ADMIN COPY_ACCOUNT
 
-    @admin.group()
+    @admin.command(
+        brief="Copies one account to another.",
+        help = "Usage: bread admin copy_account [source member] [destination member]"
+    )
     @commands.check(verification.is_admin_check)
-    async def copy_account(self, ctx, origin_user: discord.Member, target_user: discord.Member):
+    async def copy_account(self, ctx,
+            origin_user: typing.Optional[discord.Member],
+            target_user: typing.Optional[discord.Member]
+        ):
+        if origin_user is None:
+            await ctx.reply("Please provide the member to copy the account of.")
+            return
+        
+        if target_user is None:
+            await ctx.reply("Please provide the member to paste the account data into.")
+            return
+        
         if await self.await_confirmation(ctx) is False:
             return
     
@@ -6494,7 +6543,10 @@ anarchy - 1000% of your wager.
     ########################################################################################################################
     #####      ADMIN SERVER_BOOST
 
-    @admin.group()
+    @admin.command(
+        brief="Rewards all server boosters.",
+        help = "Usage: bread admin reward_all_server_boosters"
+    )
     @commands.check(verification.is_admin_check)
     async def reward_all_server_boosters(self, ctx):
         # we will find the dough from a daily roll, and award some multiple of that amount
@@ -6507,9 +6559,19 @@ anarchy - 1000% of your wager.
         await ctx.send("Done.")
 
 
-    @admin.group()
+    @admin.command(
+        brief="Rewards first server boost.",
+        help = "Usage: bread admin reward_single_server_booster [member] [optional multiplier, defaults to 1]"
+    )
     @commands.check(verification.is_admin_check)
-    async def reward_single_server_booster(self, ctx, user: discord.Member, multiplier: typing.Optional[float] = 1):
+    async def reward_single_server_booster(self, ctx,
+            user: typing.Optional[discord.Member],
+            multiplier: typing.Optional[float] = 1
+        ):
+        if user is None:
+            await ctx.reply("Please provide the member to reward.")
+            return
+        
         #first get user account
         user_account = self.json_interface.get_account(user, guild = ctx.guild.id)
 
@@ -6534,16 +6596,33 @@ anarchy - 1000% of your wager.
         
 
     
-
-    @admin.group()
+    # I'm not sure why this exists, since it just runs reward_single_server_booster.
+    @admin.command(
+        brief="Rewards first server boost.",
+        help = "Usage: bread admin reward_single_server_booster [member]"
+    )
     @commands.check(verification.is_admin_check)
-    async def server_boost(self, ctx, user: discord.Member):
+    async def server_boost(self, ctx,
+            user: typing.Optional[discord.Member]
+        ):
+        if user is None:
+            await ctx.reply("Please provide the member to reward.")
+            return
+        
         # this will increase their dough by 5x their max daily rolls
-            await self.reward_single_server_booster(ctx, user, 1)
+        await self.reward_single_server_booster(ctx, user, 1)
     
-    @admin.group()
+    @admin.command(
+        brief="Rewards additional server boost.",
+        help = "Usage: bread admin server_boost_additional [member]"
+    )
     @commands.check(verification.is_admin_check)
-    async def server_boost_additional(self, ctx, user: discord.Member):
+    async def server_boost_additional(self, ctx,
+            user: typing.Optional[discord.Member]
+        ):
+        if user is None:
+            await ctx.reply("Please provide the member to reward.")
+            return
         
         await self.reward_single_server_booster(ctx, user, .5)
 
@@ -6551,12 +6630,14 @@ anarchy - 1000% of your wager.
     ########################################################################################################################
     #####      ADMIN SHOW
 
-    @admin.group(
-        brief="shows raw values",
+    @admin.command(
+        brief="Shows raw values.",
         help = "Usage: bread admin show [optional member]"
     )
     @commands.check(verification.is_admin_check)
-    async def show(self, ctx, user: typing.Optional[discord.Member]):
+    async def show(self, ctx,
+            user: typing.Optional[discord.Member]
+        ):
         output = ""
         if user is None:
             output += "Applying to self.\n"
@@ -6581,10 +6662,18 @@ anarchy - 1000% of your wager.
     ########################################################################################################################
     #####      ADMIN SHOW_CUSTOM
 
-    @admin.group(
+    @admin.command(
+        brief="Shows a custom file.",
+        help = "Usage: bread admin show_custom [file name]\n\nNote that this can reveal hidden info, like space seeds."
     )
     @commands.check(verification.is_admin_check)
-    async def show_custom(self, ctx, filename: str):
+    async def show_custom(self, ctx,
+            filename: typing.Optional[str]
+        ):
+        if filename is None:
+            await ctx.reply("Please provide the file name.")
+            return
+        
         output = ""
         file = self.json_interface.get_custom_file(filename, guild = ctx.guild.id)
         for key in file.keys():
@@ -6597,12 +6686,18 @@ anarchy - 1000% of your wager.
     ########################################################################################################################
     #####      ADMIN SET_MAX_PRESTIGE
 
-    @admin.group(
-        brief="sets the max prestige level",
+    @admin.command(
+        brief="Sets the max prestige level.",
         help = "Usage: bread admin set_max_prestige_level [value]"
     )
     @commands.is_owner()
-    async def set_max_prestige_level(self, ctx, value: parse_int):
+    async def set_max_prestige_level(self, ctx,
+            value: typing.Optional[parse_int]
+        ):
+        if value is None:
+            await ctx.reply("Please provide the new max prestige level.")
+            return
+        
         if await self.await_confirmation(ctx) is False:
             return
         prestige_file = self.json_interface.get_custom_file("prestige", guild = ctx.guild.id)
@@ -6613,12 +6708,14 @@ anarchy - 1000% of your wager.
     ########################################################################################################################
     #####      ADMIN ALLOW / DISALLOW
 
-    @admin.group(
-        brief="Allows usage of the bread machine",
+    @admin.command(
+        brief="Allows usage of the bread machine.",
         help = "Usage: bread admin allow [member]"
     )
     @commands.check(verification.is_admin_check)
-    async def allow(self, ctx, user: typing.Optional[discord.Member]):
+    async def allow(self, ctx,
+            user: typing.Optional[discord.Member]
+        ):
         if user is None:
             print("Bread Allow failed to recognize user "+str(user))
             ctx.reply("User reference not resolvable, please retry.")
@@ -6630,12 +6727,14 @@ anarchy - 1000% of your wager.
         await ctx.send("Done.")
         
 
-    @admin.group(
-        brief="Disllows usage of the bread machine",
+    @admin.command(
+        brief="Disllows usage of the bread machine.",
         help = "Usage: bread admin disallow [member]"
     )
     @commands.check(verification.is_admin_check)
-    async def disallow(self, ctx, user: typing.Optional[discord.Member]):
+    async def disallow(self, ctx,
+            user: typing.Optional[discord.Member]
+        ):
         if user is None:
             print("Bread Disallow failed to recognize user "+str(user))
             ctx.reply("User reference not resolvable, please retry.")
@@ -6651,7 +6750,10 @@ anarchy - 1000% of your wager.
     #####      ADMIN BACKUP
 
 
-    @admin.group()
+    @admin.command(
+        brief="Creates a backup of the database.",
+        help = "Usage: bread admin backup"
+    )
     @commands.is_owner()
     async def backup(self, ctx):
         print("backing up")
@@ -6661,7 +6763,10 @@ anarchy - 1000% of your wager.
     ########################################################################################################################
     #####      ADMIN DAILY_RESET
 
-    @admin.group()
+    @admin.command(
+        brief="Runs the Bread o' Clock daily reset.",
+        help = "Usage: bread admin daily_reset"
+    )
     @commands.check(verification.is_admin_check)
     async def daily_reset(self, ctx):
         if await self.await_confirmation(ctx) is False:
@@ -6742,8 +6847,11 @@ anarchy - 1000% of your wager.
     #####      ADMIN PURGE_ACCOUNT_CACHE
 
     #depreciated, we're avoiding using the account cache now
-    @admin.group()
-    @commands.check(verification.is_admin_check)
+    @admin.command(
+        brief="Clears the now unused account cache.",
+        help = "Usage: bread admin purge_account_cache"
+    )
+    @commands.is_owner()
     async def purge_account_cache(self, ctx):
         self.json_interface.accounts.clear()
         await ctx.send("Done.")
@@ -6753,9 +6861,22 @@ anarchy - 1000% of your wager.
 
     # this will take one value from each account and rename it to something different.
 
-    @admin.group()
+    @admin.command(
+        brief="Renames global key to something else.",
+        help = "Usage: bread admin rename [current key] [new key]"
+    )
     @commands.check(verification.is_admin_check)
-    async def rename(self, ctx, starting_name: str, ending_name: str):
+    async def rename(self, ctx,
+            starting_name: typing.Optional[str],
+            ending_name: typing.Optional[str]
+        ):
+        if starting_name is None:
+            await ctx.reply("Please provide the current key name.")
+            return
+        
+        if ending_name is None:
+            await ctx.reply("Please provide the new key name.")
+            return
 
         all_guilds = self.json_interface.get_list_of_all_guilds()
         for guild_id in all_guilds:
@@ -6795,9 +6916,14 @@ anarchy - 1000% of your wager.
     ########################################################################################################################
     #####      ADMIN GOD_ACCOUNT
 
-    @admin.group()
+    @admin.command(
+        brief="Sets a member's stats to harcoded values.",
+        help = "Usage: bread admin god_account [optional member]"
+    )
     @commands.check(verification.is_admin_check)
-    async def god_account(self, ctx, user: typing.Optional[discord.Member]):
+    async def god_account(self, ctx,
+            user: typing.Optional[discord.Member]
+        ):
 
         if await self.await_confirmation(ctx) is False:
             return
@@ -6846,9 +6972,14 @@ anarchy - 1000% of your wager.
     ########################################################################################################################
     #####      ADMIN SYNCHRONIZE_USERNAMES
 
-    @admin.command()
+    @admin.command(
+        brief="Re-synchronizes all usernames.",
+        help = "Usage: bread admin synchronize_usernames [optional 'manually' flag]"
+    )
     @commands.check(verification.is_admin_check)
-    async def synchronize_usernames(self, ctx, do_manually: typing.Optional[str] = None):
+    async def synchronize_usernames(self, ctx,
+            do_manually: typing.Optional[str] = None
+        ):
 
         if do_manually != "manual":
             self.synchronize_usernames_internal()
@@ -6889,7 +7020,10 @@ anarchy - 1000% of your wager.
     ########################################################################################################################
     #####      ADMIN DO_OPERATION
     
-    @admin.command()
+    @admin.command(
+        brief="Testing code/database stuff.",
+        help = "Usage: bread admin do_operation"
+    )
     @commands.check(verification.is_admin_check)
     async def do_operation(self, ctx):
 
@@ -7027,7 +7161,10 @@ anarchy - 1000% of your wager.
 
         await ctx.send("Done.")
     
-    @admin.command()
+    @admin.command(
+        brief="Runs the space tick.",
+        help = "Usage: bread admin space_tick"
+    )
     @commands.check(verification.is_admin_check)
     async def run_space_tick(self, ctx):
         self.space_tick()
@@ -7036,7 +7173,10 @@ anarchy - 1000% of your wager.
     ########################################################################################################################
     #####      ADMIN SAVE / ADMIN LOAD
     
-    @admin.command()
+    @admin.command(
+        brief="Loads the database from file.",
+        help = "Usage: bread admin load"
+    )
     @commands.is_owner()
     async def load(self, ctx):
 
@@ -7044,7 +7184,10 @@ anarchy - 1000% of your wager.
         #print("test, 1 arg")
         await ctx.send("Done.")
 
-    @admin.command()
+    @admin.command(
+        brief="Saves the database to file.",
+        help = "Usage: bread admin save"
+    )
     @commands.is_owner()
     async def save(self, ctx):
         self.json_interface.internal_save()
@@ -7058,10 +7201,14 @@ anarchy - 1000% of your wager.
     #####      ADMIN SET_ANNOUNCEMENT_CHANNEL
 
     @admin.command(
-        aliases = ["set_announce_channel"], 
+        brief="Sets the announcement channel.",
+        help = "Usage: bread admin set_announcement_channel [optional channel]",
+        aliases = ["set_announce_channel"]
     )
     @commands.check(verification.is_admin_check)
-    async def set_announcement_channel(self, ctx, channel: typing.Optional[discord.TextChannel]=None):
+    async def set_announcement_channel(self, ctx,
+            channel: typing.Optional[discord.TextChannel] = None
+        ):
         if channel is None:
             channel = ctx.channel
 
@@ -7075,7 +7222,10 @@ anarchy - 1000% of your wager.
     ########################################################################################################################
     #####      ADMIN STONK_FLUCTUATE
 
-    @admin.command()
+    @admin.command(
+        brief="Runs a stonk tick.",
+        help = "Usage: bread admin stonk_fluctuate"
+    )
     @commands.check(verification.is_admin_check)
     async def stonk_fluctuate(self, ctx):
         self.stonk_fluctuate_internal()
@@ -7086,7 +7236,10 @@ anarchy - 1000% of your wager.
     ########################################################################################################################
     #####      ADMIN STONK_RESET
 
-    @admin.command()
+    @admin.command(
+        brief="Resets stonk values to default.",
+        help = "Usage: bread admin stonk_reset"
+    )
     @commands.check(verification.is_admin_check)
     async def stonk_reset(self, ctx):
         self.stonk_reset_internal(guild = ctx.guild.id)
@@ -7095,19 +7248,37 @@ anarchy - 1000% of your wager.
     ########################################################################################################################
     #####      ADMIN STONK_SPLIT
 
-    @admin.command()
+    @admin.command(
+        brief="Splits the given stonk.",
+        help = "Usage: bread admin stonk_split [stonk name]"
+    )
     @commands.check(verification.is_admin_check)
-    async def stonk_split(self, ctx, stonk_name: str):
+    async def stonk_split(self, ctx,
+            stonk_name: typing.Optional[str]
+        ):
         stonk_text = values.get_emote_text(stonk_name)
+
+        stonks_file = self.json_interface.get_custom_file("stonks", guild = ctx.guild.id)
+
+        if stonk_text not in stonks_file:
+            await ctx.reply("I don't recognize that item.")
+            return
+        
         self.stonk_split_internal(stonk_text, guild=ctx.guild.id)
         await ctx.reply("Done.")
 
     ########################################################################################################################
     #####      ADMIN ADD_CHESS_SET
 
-    @admin.command()
+    @admin.command(
+        brief="Gives a chess set to a member.",
+        help = "Usage: bread admin add_chess_set [optional member] [optional amount]"
+    )
     @commands.check(verification.is_admin_check)
-    async def add_chess_set(self, ctx, target : typing.Optional[discord.Member], count : typing.Optional[int] = 1):
+    async def add_chess_set(self, ctx,
+            target: typing.Optional[discord.Member],
+            count: typing.Optional[int] = 1
+        ):
         if target is None:
             target = ctx.author
 
@@ -7125,9 +7296,15 @@ anarchy - 1000% of your wager.
     ########################################################################################################################
     #####      ADMIN ADD_ANARCHY_SET
 
-    @admin.command()
+    @admin.command(
+        brief="Gives an anarchy set to a member.",
+        help = "Usage: bread admin add_anarchy_set [optional member] [optional amount]"
+    )
     @commands.check(verification.is_admin_check)
-    async def add_anarchy_set(self, ctx, target : typing.Optional[discord.Member], count : typing.Optional[int] = 1):
+    async def add_anarchy_set(self, ctx,
+            target: typing.Optional[discord.Member],
+            count: typing.Optional[int] = 1
+        ):
         if target is None:
             target = ctx.author
 
@@ -7145,12 +7322,17 @@ anarchy - 1000% of your wager.
     ########################################################################################################################
     #####      ADMIN INCREASE_PRESTIGE
 
-    @admin.command()
+    @admin.command(
+        brief="Increase prestige level of member.",
+        help = "Usage: bread admin increase_prestige [optional member]"
+    )
     @commands.check(verification.is_admin_check)
-    async def increase_prestige(self, ctx, target : typing.Optional[discord.Member]):
-        
+    async def increase_prestige(self, ctx,
+            target: typing.Optional[discord.Member]
+        ):
         if await self.await_confirmation(ctx) is False:
             return
+        
         if target is None:
             target = ctx.author
 
@@ -7164,7 +7346,10 @@ anarchy - 1000% of your wager.
     ########################################################################################################################
     #####      ADMIN ADD_ADMIN
 
-    @admin.command()
+    @admin.command(
+        brief="Add approved admin.",
+        help = "Usage: bread admin add_admin [member]"
+    )
     @commands.is_owner()
     async def add_admin(self, ctx, target: typing.Optional[discord.Member]):
         if target is None:
@@ -7190,7 +7375,10 @@ anarchy - 1000% of your wager.
     ########################################################################################################################
     #####      ADMIN REMOVE_ADMIN
 
-    @admin.command()
+    @admin.command(
+        brief="Remove approved admin.",
+        help = "Usage: bread admin remove_admin [member]"
+    )
     @commands.is_owner()
     async def remove_admin(self, ctx, target: typing.Optional[discord.Member]):
         if target is None:
@@ -7216,7 +7404,10 @@ anarchy - 1000% of your wager.
     ########################################################################################################################
     #####      ADMIN ADMIN_LIST
 
-    @admin.command()
+    @admin.command(
+        brief="Approved admins list.",
+        help = "Usage: bread admin admin_list"
+    )
     @commands.check(verification.is_admin_check)
     async def admin_list(self, ctx):
         admins = self.json_interface.get_approved_admins(ctx.guild)

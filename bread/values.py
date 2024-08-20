@@ -989,6 +989,8 @@ all_emotes = [normal_bread,
 
 def get_emote(text: str) -> typing.Optional[Emote]:
     """Returns an Emote object if the given text represents that emote, or None if no emote matches."""
+    if text is None:
+        return None
     if len(text) == 0:
         return None
     # return None
