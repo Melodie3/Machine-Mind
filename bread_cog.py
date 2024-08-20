@@ -3064,13 +3064,20 @@ For example, "$bread gift Melodie all chess_pieces" would gift all your chess pi
         
         # Space gifting checks.
         if sender_account.get_space_level() != 0 or receiver_account.get_space_level() != 0:
-            gifting_allowed = space.allowed_gifting(
-                player_1 = sender_account,
-                player_2 = receiver_account,
-                json_interface = self.json_interface
+            send_check = space.gifting_check_user(
+                json_interface = self.json_interface,
+                user = sender_account
             )
-            if not gifting_allowed:
-                await ctx.reply("Sorry, you are too far away from that player to gift to them.")
+            if not send_check:
+                await ctx.reply("You aren't able to access the Trade Hub network from where you are.")
+                return
+            
+            receiver_check = space.gifting_check_user(
+                json_interface = self.json_interface,
+                user = receiver_account
+            )
+            if not receiver_check:
+                await ctx.reply("You have access to the Trade Hub network, but you can't seem to reach that person.")
                 return
         
         if arg1 is None: # If arg1 is None, then arg2 is None as well.
@@ -5676,6 +5683,28 @@ anarchy - 1000% of your wager.
             await ctx.reply("You must be on the Trade Hub to use it.")
             return
         
+        # Make sure the Trade Hub data exists.
+        discovered_trade_hub = False
+        
+        trade_hub_data = self.json_interface.get_trade_hub_data(
+            guild = ctx.guild,
+            ascension = user_account.get_prestige_level(),
+            galaxy_x = galaxy_x,
+            galaxy_y = galaxy_y,
+        )
+
+        if len(trade_hub_data) == 0: # i.e. if the trade hub is not currently in the database.
+            discovered_trade_hub = True
+            space.create_trade_hub(
+                json_interface = self.json_interface,
+                user_account = user_account,
+                galaxy_x = galaxy_x,
+                galaxy_y = galaxy_y,
+                system_x = system_x,
+                system_y = system_x
+            )
+
+        
         ##############################################################################################################
         # Can interact with the trade hub!
 
@@ -5737,6 +5766,9 @@ anarchy - 1000% of your wager.
         )
 
         message_lines = f"**# -- Trade Hub {name} --**"
+
+        if discovered_trade_hub:
+            message_lines += "\n*New Trade Hub discovered! Trading using this trade hub is now available.*\n"
 
         message_lines += f"\nLevel: {hub.trade_hub_level}"
         message_lines += f"\nMaximum trade distance: {store.trade_hub_distances[hub.trade_hub_level]}"
@@ -5939,12 +5971,13 @@ anarchy - 1000% of your wager.
 
         letters = "abcdefghijk"
 
-        pattern = "([a-{letter_end}])([1-{number_end}]{{1,{times}}})".format(
+        pattern = "([a-{letter_end}])([{number_start}-{number_end}]{{1,{times}}})".format(
             letter_end = letters[diameter - 1],
+            number_start = 1 if diameter < 10 else 0,
             number_end = min(diameter, 9),
             times = len(str(diameter))
         )
-        
+
         matched = re.match(pattern, move_location.lower())
 
         if matched is None:

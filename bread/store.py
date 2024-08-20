@@ -8,7 +8,7 @@ import numpy as np
 import bread.account as account
 import bread.values as values
 import bread.utility as utility
-import bread.space as space
+# import bread.space as space
 
 # loaf converter
 # 1 - 2/3 single loafs converted to special
@@ -33,7 +33,8 @@ moak_booster_multipliers = [1, 1.3, 1.7, 2.1, 2.8,3.7]
 # chessatron_shadow_booster_levels = [0, 5, 10, 15, 20]
 # shadow_gold_gem_luck_boost_levels = [0, 10, 20, 30, 40]
 
-trade_hub_distances = [0, 2, 8, 32, 128, 512]
+trade_hub_distances = [0, 5, 10, 25, 50, 75]
+trade_hub_squared = [n ** 2 for n in trade_hub_distances]
 
 class Store_Item:
     name = "generic_item"

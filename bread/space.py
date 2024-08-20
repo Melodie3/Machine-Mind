@@ -1750,56 +1750,56 @@ def get_move_cost_system(
         "cost": len(points) * MOVE_FUEL_SYSTEM
     }
 
+
+            
+
+        
+
+
+
+
+###################################################################################################################################
+###################################################################################################################################
+###################################################################################################################################
+
+def gifting_check_user(
+        json_interface: bread_cog.JSON_interface,
+        user: account.Bread_Account
+    ) -> bool:
+    """Determines whether the given user is within distance of a Trade Hub to trade."""
+    guild = user.get("guild_id")
+    ascension = user.get_prestige_level()
+
+    player_x, player_y = user.get_galaxy_location(json_interface)
+
+    space_data = json_interface.get_space_data(guild)
+    ascension_data = space_data.get(f"ascension_{ascension}", {})
+    trade_hub_data = ascension_data.get("trade_hubs", {})
+
+    for key in trade_hub_data:
+        try:
+            split = key.split(" ", 1)
+            hub_x = int(split[0])
+            hub_y = int(split[1])
+            level = trade_hub_data.get(key, {}).get("level", 1)
+        except:
+            continue
+            
+        max_distance = store.trade_hub_squared[level]
+        distance = (hub_x - player_x) ** 2 + (hub_y - player_y) ** 2
+
+        if distance <= max_distance:
+            return True
+    
+    return False
+
+
+
+
 def allowed_gifting(
         json_interface: bread_cog.JSON_interface,
         player_1: account.Bread_Account,
         player_2: account.Bread_Account
     ) -> bool:
     """Determines whether a gift can be sent between two players."""
-    p1_location = player_1.get_galaxy_location(json_interface=json_interface)
-    p2_location = player_2.get_galaxy_location(json_interface=json_interface)
-
-    # If the locations match, then they're in the same system and can gift to each other.
-    if p1_location == p2_location:
-        return True
-
-    # Get the distance between the players.
-    distance = len(utility.plot_line(
-        start = p1_location,
-        end = p2_location
-    ))
-
-    levels = []
-
-    # Run the code that checks the player's location for a trade hub for both players.
-    for player in [player_1, player_2]:
-        player_tile = player.get_galaxy_tile(json_interface=json_interface)
-
-        # If the tile is not a system it cannot have a trade hub.
-        if not player_tile.system:
-            continue
-
-        player_tile.smart_load(
-            json_interface = json_interface,
-            guild = player_1.get("guild_id"),
-            get_wormholes = False
-        )
-
-        # If player_tile.trade_hub is None, then there is no trade hub on this tile.
-        if player_tile.trade_hub is None:
-            continue
-
-        level = player_tile.trade_hub.trade_hub_level
-        levels.append(level)
-
-        # If the distance is less than or equal to the max distance of the trade hub, then gifting is possible.
-        if distance <= store.trade_hub_distances[level]:
-            return True
-    
-    if len(levels) >= 2:
-        if (levels[0] >= 3 and levels[1] >= 2) or \
-           (levels[1] >= 3 and levels[0] >= 2):
-            return True
-    
-    # If nothing fired, then gifting is not possible.
-    return False
+    return gifting_check_user(json_interface, player_1) and gifting_check_user(json_interface, player_2)
