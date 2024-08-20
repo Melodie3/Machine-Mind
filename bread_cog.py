@@ -6518,7 +6518,7 @@ anarchy - 1000% of your wager.
 
         added_value = user_account.add_dough_intelligent(value)
         self.json_interface.set_account(user, user_account, guild = ctx.guild.id)
-        await ctx.send(f"Thank you {user.mention} for boosting the server! {added_value} dough has been deposited into your account.")
+        await ctx.send(f"Thank you {user.mention} for boosting the server! {utility.smart_number(added_value)} dough has been deposited into your account.")
         
 
     
