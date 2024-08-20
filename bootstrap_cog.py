@@ -1,5 +1,6 @@
 from discord.ext import commands
 import typing
+import os
 
 
 
@@ -50,6 +51,23 @@ class Bootstrap_cog(commands.Cog, name="Bootstrap"):
             print("Success.")
 
     
+
+    @commands.command(
+        brief = "Updates the bot from Git",
+        hidden = True
+    )
+    @commands.is_owner()
+    async def update(self, ctx):
+        await ctx.reply("Pulling from Git.")
+
+        os.system("git pull")
+
+        await ctx.send("Done, reloading everything.")
+        
+        for extension in self.bot_ref.extensions.copy():
+            await self.bot_ref.reload_extension(extension)
+        
+        await ctx.reply("Done.")
 
     @commands.command(
         brief = "Loads new extension",

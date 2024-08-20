@@ -314,10 +314,16 @@ class SystemAsteroid(SystemTile):
             json_interface: bread_cog.JSON_interface,
             detailed: bool = False
         ) -> list[str]:
-        return [
-                "Object type: Asteroid",
-                "Further details: None"
-            ]
+        result = [
+            "Object type: Asteroid",
+        ]
+
+        if detailed:
+            result.append("Astroid Type: Boinge")
+        else:
+            result.append("Further details: None")
+        
+        return result
     
 ########################################################
 
@@ -415,14 +421,14 @@ class SystemPlanet(SystemTile):
             deviation = self.planet_deviation
 
             ranges = [
-                (float('-inf'), 0.50, "boinge"),
-                (0.50, 0.75, "Extremely Stable"),
+                (float('-inf'), 0.75, "Extremely Stable"),
                 (0.75, 0.85, "Very Stable"),
                 (0.85, 0.95, "Stable"),
                 (0.95, 1.05, "Neutral"),
                 (1.05, 1.15, "Unstable"),
                 (1.15, 1.25, "Very Unstable"),
-                (1.25, float('inf'), "Extremely Unstable")
+                (1.25, 1.5, "Extremely Unstable"),
+                (1.5, float('inf'), "boinge")
             ]
             
             result = next(
