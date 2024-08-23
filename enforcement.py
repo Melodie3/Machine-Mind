@@ -227,19 +227,78 @@ async def timeout(ctx: commands.Context, member: typing.Optional[discord.Member]
 
 brick_list = set()
 
+@commands.command()
+async def unbrick(ctx, member: typing.Optional[discord.Member]):
+    if verification.has_role(ctx.author, "moderator") or verification.has_role(ctx.author, "deputized"):
+        if member is None:
+            await ctx.reply("Please specify a user.")
+            return
+        await timeout_user(user_id=member.id, guild_id=ctx.guild.id, until=0)
+        await ctx.send(f"{member.mention} has been unbricked.")
+    else:
+        await brick(ctx, None)
+    
+
 @commands.command(
     brief="The fabled brick.",
     help="Instructions read: keep away from pipi"
 )
-async def brick(ctx, member: typing.Optional[discord.Member], duration: typing.Optional[typing.Union[str, int]]):
+# async def brick(ctx, member: typing.Optional[discord.Member], duration: typing.Optional[typing.Union[str, int]]):
+async def brick(ctx, member: typing.Optional[discord.Member], *args):
+    duration = None
+    multiplier = 1 #how many time segments to brick for
+    time_segment = 1 #usually minutes, can be hours or days or weeks
+    special_command = None
+    do_brick_animation = True
+    forever = False
+
+    if len(args) == 0:
+        duration = None
+
+    for arg in args:
+        if arg.lower() in ["reason", "reason:"]:
+            break
+        if arg.isnumeric():
+            duration = arg
+            multiplier = int(arg)
+        elif arg.lower() in ["instant", "now", "immediate"]:
+            do_brick_animation = False
+        elif arg.lower() in ["forever", "permanent", "permanently", "ban"]:
+            duration = "forever"
+            forever = True
+        elif arg.lower() in ["minutes", "minute", "m"]:
+            duration = "minute"
+            time_segment = 1
+        elif arg.lower() in ["hours", "hour", "h"]:
+            duration = "hour"
+            time_segment = 60
+        elif arg.lower() in ["days", "day", "d"]:
+            duration = "day"
+            time_segment = 60*24
+        elif arg.lower() in ["weeks", "week", "w"]:
+            duration = "week"
+            time_segment = 60*24*7
+        elif arg.lower() in ["max"]:
+            duration = 60*24*7*3 # 3 weeks
+            time_segment = 60*24*7*3
+        elif arg.lower() in ["stats", "leaderboard"]:
+            duration = arg
+            special_command = arg
+        else:
+            try:
+                duration = int(arg)
+            except:
+                pass
     
+    # possible arguments: forever etc, hour, day, week, max, stats, leaderboard, instant
+
     print (f"Brick called by {ctx.author.display_name} with target {member} and duration {duration}")
 
     duration = str(duration)
 
     target = None
     internal_duration = 1
-    forever = False
+    # forever = False
 
     
 
@@ -271,34 +330,38 @@ async def brick(ctx, member: typing.Optional[discord.Member], duration: typing.O
         if verification.has_role(ctx.author, "moderator") or verification.has_role(ctx.author, "deputized"):
             #since the sender is authorized, give correct target
             target = member
-            if duration is not None:
-                if str(duration).lower() in ["forever", "permanent", "permanently", "ban"]:
-                    #ban instead
-                    print(f"user {member} will be banned")
-                    forever = True
-                    #return
-                elif str(duration).lower() == "hour":
-                    internal_duration = 60
-                elif str(duration).lower() == "day":
-                    internal_duration = 60*24
-                elif str(duration).lower() == "week":
-                    internal_duration = 60*24*7
-                else:
-                    try:
-                        internal_duration = int(duration)
-                        print(f"duration will be {internal_duration} minutes")
-                    except:
-                        print("duration not recognized, ignoring")
-                    #if is number of minutes
+            internal_duration = time_segment * multiplier
+            # if duration is not None:
+            #     if str(duration).lower() in ["forever", "permanent", "permanently", "ban"]:
+            #         #ban instead
+            #         print(f"user {member} will be banned")
+            #         forever = True
+            #         #return
+            #     elif str(duration).lower() == "hour":
+            #         internal_duration = 60
+            #     elif str(duration).lower() == "day":
+            #         internal_duration = 60*24
+            #     elif str(duration).lower() == "week":
+            #         internal_duration = 60*24*7
+            #     else:
+            #         try:
+            #             internal_duration = int(duration)
+            #             print(f"duration will be {internal_duration} minutes")
+            #         except:
+            #             print("duration not recognized, ignoring")
+            #         #if is number of minutes
                     
-            else: #duration is None, timeout
-                pass
+            # else: #duration is None, timeout
+            #     pass
 
         elif member is ctx.author:
             # people can now brick themselves for arbitraty amounts of time
             target = ctx.author
+            forever = False # no self-banning
+            do_brick_animation = True
             try:
-                duration = int(duration)
+                # duration = int(duration)
+                duration = time_segment * multiplier
                 # no more than 1 day
                 duration = min(duration, 60*24)
                 # but at least 1 minute
@@ -310,7 +373,7 @@ async def brick(ctx, member: typing.Optional[discord.Member], duration: typing.O
         else: #not from author, brick sender
             target = ctx.author
         #we know the member. If owner, brick them based on duration
-        #if not owner, brick sender lmao
+        #if not owner, brick sender lmaos
 
     # SPECIAL CASES
 
@@ -333,7 +396,10 @@ async def brick(ctx, member: typing.Optional[discord.Member], duration: typing.O
 
         #easter egg to fast track deletion
         try:
-            message = await brick_animation(ctx, target, forever)
+            if do_brick_animation:
+                message = await brick_animation(ctx, target, forever)
+            else:
+                message = await ctx.send(f"{target.mention} will be bricked immediately.")
         except:
             print("Brick message was deleted, fast-tracking")
             #reject deletion, continue process.
@@ -381,12 +447,12 @@ async def brick(ctx, member: typing.Optional[discord.Member], duration: typing.O
     except:
         print("An error occurred during bricking, probably the message was deleted.")
 
-    if duration == "stats":
+    if special_command == "stats":
         if member is None:
             member = ctx.author
         await brick_stats(ctx, member)
 
-    if duration == "leaderboard":
+    if special_command == "leaderboard":
         if member is None:
             member = ctx.author
         await brick_leaderboard(ctx, member)
@@ -427,10 +493,12 @@ async def brick_animation(ctx, member: discord.Member, forever=False):
     #await asyncio.sleep(1)
     return message
 
+
 async def setup(bot):
     importlib.reload(verification)
     importlib.reload(utility)
     #bot.add_command(timeout)
     bot.add_command(brick)
+    bot.add_command(unbrick)
     global bot_ref
     bot_ref = bot
