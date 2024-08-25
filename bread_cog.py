@@ -242,6 +242,19 @@ def get_display_name(member: discord.Member) -> str:
 
 def parse_int(argument: str) -> int:
     """Converts an argument to an integer, will remove commas along the way."""
+    # If there's a decimal place then ignore everything after it.
+    if "." in str(argument):
+        arg = str(argument).replace(",", "")
+
+        # Attempt to convert it to a float, this will ensure that it's something that is actually a number.
+        # If this breaks then discord.py will catch it and just have the argument be None.
+        # But, if this works then we know it's an actual number we're talking about.
+        float(arg)
+
+        # If the flaot conversion worked, then try to convert to an integer, but ignore what's after the decimal place.
+        return int(arg[:arg.rfind(".")])
+    
+    # If there's no decimal place then just try to convert the argument normally.
     return int(str(argument).replace(",", ""))
 
 def is_int(argument: str) -> bool:
