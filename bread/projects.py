@@ -2548,7 +2548,7 @@ class Stolen_Bishops(Project):
         ) -> str:
         rng = random.Random(utility.hash_args(day_seed, system_tile.tile_seed()))
 
-        cost = cls.get_cost(day_seed, system_tile)[0][1]
+        cost = cls.get_price_description(day_seed, system_tile)
         reward = cls.get_reward_description(day_seed, system_tile)
 
         part_1 = [
