@@ -2249,6 +2249,128 @@ class Chess_Tournament(Project):
 
         return [(values.anarchy_black_bishop.text, amount)]
     
+class Diorama_Issue(Project):
+    """Written by Duck."""
+    internal = "diorama_issue"
+    
+    @classmethod
+    def name(
+            cls,
+            day_seed: str,
+            system_tile: space.SystemTradeHub
+        ) -> str:
+        rng = random.Random(utility.hash_args(day_seed, system_tile.tile_seed()))
+        
+        options = [
+            "Diorama Issue",
+            "Missing Prop",
+            "Diorama Problems",
+        ]
+
+        return rng.choice(options)
+
+    @classmethod
+    def description(
+            cls,
+            day_seed: str,
+            system_tile: space.SystemTradeHub
+        ) -> str:
+        rng = random.Random(utility.hash_args(day_seed, system_tile.tile_seed()))
+
+        cost = cls.get_price_description(day_seed, system_tile)
+        reward = cls.get_reward_description(day_seed, system_tile)
+
+        part_1 = [
+            "Everyone in the Trade Hub is always excited when the diorama extraordinaire Apeace Avart comes through to show off his incredible dioramas.",
+            "There is always excitement in the Trade Hub when Apeace Avart visits, showing off his incredible diorama-making abilities.",
+            "It's always incredible when Apeace Avart stops at the Trade Hub to display the amazing dioramas he makes.",
+        ]
+
+        part_2 = [
+            "Due to this, everybody was expecting some incredible scenes this time.",
+            "When it was announced that he would be making a stop in a few days, there was much anticipation.",
+            "Everybody is always very impressed by the dioramas, especially the Blåhaj spleen diorama. As you can imagine, when it was announced that he would be visiting the Trade Hub all the employees were very excited.",
+        ]
+
+        part_3 = [
+            "But before the show arrived, the Trade Hub recieved sad news.",
+            "But just a few days before Apeace Avart was scheduled to arrive some unfortunate news was sent to the Trade Hub.",
+            "But some sad news has reached the Trade Hub...",
+        ]
+
+        part_4 = [
+            "Apeace Avart's latest diorama was of a castle, but the props used to make the towers have gone missing!",
+            "The latest diorama Apeace Avart was making was of a castle, but he's unable to find the props for the towers!",
+            "Crucial props used to make the towers in a castle diorama have disappeared from Apeace Avart's studio!",
+        ]
+
+        part_5 = [
+            "The tour was supposed to start soon, but it can't start until the diorama has been finished!",
+            "The diorama tour can start until replacement tower props have been found!",
+            "Apeace Avart can't visit the Trade Hub unless new tower props have been located!",
+        ]
+
+        part_6 = [
+            f"Luckily, Apeace Avart has stated that if anybody is able to provide {cost} he would be able to paint them gray and use them!",
+            f"But, Apeace Avart said that {cost} would be sufficient replacements.",
+            f"Apeace Avart did say, however, that with {cost} he would be able to finish the legendary diorama!",
+        ]
+
+        part_7 = [
+            f"But don't worry, a reward of {reward} has been stated for whoever is able to provide the new props.",
+            f"Apiece Avart is willing to give away some unused old props, {reward}, as a reward.",
+            f"Some old props that were never used, {reward}, have been posted by Apiece Avart as a reward.",
+        ]
+
+        return " ".join([
+            rng.choice(part_1),
+            rng.choice(part_2),
+            rng.choice(part_3),
+            rng.choice(part_4),
+            rng.choice(part_5),
+            rng.choice(part_6),
+            rng.choice(part_7)
+        ])
+
+    @classmethod
+    def completion(
+            cls: typing.Type[typing.Self],
+            day_seed: str,
+            system_tile: space.SystemTradeHub
+        ) -> str:
+        rng = random.Random(utility.hash_args(day_seed, system_tile.tile_seed()))
+        reward = cls.get_reward_description(day_seed, system_tile)
+
+        options = [
+            f"Yay! The new props fit so well, the diorama turned out amazing! The reward of {reward} is on its way...",
+            f"The diorama looks great! The new props worked really well, and may have made it look better! The reward of {reward} has been given!",
+            f"Yippee! The new diorama is incredible, the new props fit in very well! Like Apiece Avart said, the reward of {reward} will be given!",
+        ]
+
+        return rng.choice(options)
+    
+    @classmethod
+    def get_cost(
+            cls,
+            day_seed: str,
+            system_tile: space.SystemTradeHub
+        ) -> list[tuple[str, int]]:
+        rng = random.Random(utility.hash_args(day_seed, system_tile.tile_seed()))
+
+        amount = rng.randint(2,6) * 256
+        return [(values.black_rook.text, amount)]
+    
+    @classmethod
+    def get_reward(
+            cls,
+            day_seed: str,
+            system_tile: space.SystemTradeHub
+        ) -> list[tuple[str, int]]:
+        rng = random.Random(utility.hash_args(day_seed, system_tile.tile_seed()))
+
+        amount = rng.randint(2, 6) * 2
+        return [(values.anarchy_black_rook.text, amount)]
+
 ##### White chess pieces.
 
 class Round_Table(Project):
@@ -3724,7 +3846,7 @@ story_projects = [Essential_Oils, Bingobango]
 
 take_special_bread_projects = [Too_Much_Stuffing, Flatbread_Shortage, Appease_The_French, Croissant_Cravings, Beach_Disappearance]
 take_rare_bread_projects = [Ecosystem_Problem, Stolen_Donuts, Waffle_Machine]
-take_black_chess_piece_projects = [Board_Game_Festival, Electrical_Issue, Chess_Tournament]
+take_black_chess_piece_projects = [Board_Game_Festival, Electrical_Issue, Chess_Tournament, Diorama_Issue]
 take_white_chess_piece_projects = [Royal_Summit, Offering_Ritual, Fortress_Building, Round_Table]
 take_gem_projects = [Gem_Salesman, Generator_Breakdown, Jewelry_Store, Gem_Mining, Emergency_Fuel]
 take_misc_item_projects = [Chessatron_Repair, Omega_Order]
