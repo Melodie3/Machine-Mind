@@ -441,8 +441,7 @@ class SystemPlanet(SystemTile):
             result = [
                 "Object type: Planet",
                 f"Planet type: {self.planet_type.text}",
-                f"Stability: {result}",
-                f"Primary Modifier: {round(planet_modifiers.get(self.planet_type), 3)}"
+                f"Stability: {result}"
             ]
 
             return result

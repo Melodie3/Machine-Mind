@@ -44,6 +44,8 @@ def bread_roll(
     lc_booster = user_account.get("LC_booster")
     if lc_booster > 0:
         lc_boost = 2 ** lc_booster
+    else:
+        lc_boost = 1
 
     corruption_chance = user_account.get_corruption_chance(json_interface=json_interface)
     

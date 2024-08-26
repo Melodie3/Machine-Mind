@@ -34,7 +34,11 @@ class Project:
                 description_use += description[250:].split(" ")[0]
             
             description_use = description_use.strip()
-            description_use += "..."
+
+            if description_use.endswith("."):
+                description_use += ".."
+            else:
+                description_use += "..."
         else:
             description_use = description
 
@@ -216,8 +220,8 @@ class Project:
             system_tile: space.SystemTradeHub,
             progress_data: dict[str, dict[str, list[tuple[str, int]]]]
         ) -> dict[str, int]:
-        """Returns a dict containing the amount of each item remaining."""
-        """
+        """Returns a dict containing the amount of each item remaining.
+        ```
         {
             "completed": False,
             "contributions": { # This dict is what's passed to the progress_data parameter.
@@ -229,7 +233,7 @@ class Project:
                     }
                 }
             }
-        }"""
+        }```"""
         remaining = dict(cls.get_cost(day_seed, system_tile))
 
         for data in progress_data.values():
@@ -331,7 +335,18 @@ class Trade_Hub(Project):
             day_seed: str,
             system_tile: space.SystemTradeHub
         ) -> str:
-        return "Nice job! This Trade Hub is now more powerful!"
+        if random.randint(1, 32) != 1:
+            return ""
+        
+        messages = [
+            "The new Trade Hub employees are a little confused by the weird 'Spleen Room' in the yellow quadrant, but they'll get used to it.",
+            "The existance of multiple Blåhaj in the green quadrant is slightly concerning, but it's probably fine."
+        ]
+
+        out = "\n"
+        out += random.choice(messages)
+        
+        return out
     
     @classmethod
     def get_cost(
@@ -655,7 +670,6 @@ class Bingobango(Project):
 ##### Special bread.
 
 class Beach_Disappearance(Project):
-
     """Concept by Duck, written by Kapola."""
     internal = "beach_disappearance"
     
@@ -2961,7 +2975,7 @@ class Gem_Mining(Project):
 
         part_4 = [
             "\nThe things were the source and also the stems",
-            "\nThey are are the heart and also the stems",
+            "\nNot only the heart but also the stems",
             "\nThey're the lifeblood, the roots, and also the stems"
         ]
 

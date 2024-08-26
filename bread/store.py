@@ -1346,6 +1346,7 @@ class Fuel_Refinement(Prestige_Store_Item):
     name = "fuel_refinement"
     display_name = "Fuel Refinement"
     listed_requirement = "Construct a tier 1 Bread Rocket in the Space Shop."
+    aliases = ["fr"]
 
     costs = [0, 1, 1, 1, 1, 2, 2, 2, 2]
 
@@ -1374,6 +1375,7 @@ class Corruption_Negation(Prestige_Store_Item):
     name = "corruption_negation"
     display_name = "Corruption Negation"
     listed_requirement = "Construct a tier 4 Bread Rocket in the Space Shop."
+    aliases = ["cn"]
 
     costs = [0, 1, 1, 2, 2, 3]
 
@@ -1637,6 +1639,21 @@ class Upgraded_Autopilot(Space_Shop_Item):
             return level <= 2
 
         return True
+    
+    @classmethod
+    def do_purchase(cls, user_account: account.Bread_Account):
+        super().do_purchase(user_account)
+
+        level = user_account.get(cls.name)
+
+        additions = [
+            "",
+            "around the galaxy.",
+            "through nebulae.",
+            "the other side of wormholes."
+        ]
+        
+        return f"You have purchased the level {level} autopilot system, you're now able to explore {additions[level]}"
     
 class Fuel_Tank(Space_Shop_Item):
     name = "fuel_tank"

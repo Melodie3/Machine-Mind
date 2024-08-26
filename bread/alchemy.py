@@ -55,7 +55,7 @@ recipes = {
             "cost": [(values.gem_red, 2)]
         }
     ],
-        "Wknight" : [
+        "Wknight": [
         {
 			"cost": [(values.black_knight, 1), (values.croissant, 50), (values.bagel, 25)]
 		},
@@ -73,7 +73,7 @@ recipes = {
 		}
     ],
 
-    "Wbishop" : [
+    "Wbishop": [
         {
 			"cost": [(values.black_bishop, 1), (values.french_bread, 50), (values.doughnut, 25)]
 		},
@@ -91,7 +91,7 @@ recipes = {
 		}
     ],
 
-    "Wqueen" : [
+    "Wqueen": [
         {
 			"cost": [(values.black_queen, 1), (values.stuffed_flatbread, 50), (values.doughnut, 25)]
 		},
@@ -109,7 +109,7 @@ recipes = {
 		}
     ],
 
-    "Wking" : [
+    "Wking": [
         {
 			"cost": [(values.black_king, 1), (values.flatbread, 50), (values.bagel, 25)]
 		},
@@ -129,7 +129,7 @@ recipes = {
 
     ######################################################################################
 
-    "Bpawn" : [
+    "Bpawn": [
         {
 			"cost": [(values.white_pawn, 1)]
 		},
@@ -138,7 +138,7 @@ recipes = {
 		}
     ],
 
-    "Brook" : [
+    "Brook": [
         {
 			"cost": [(values.white_rook, 1)]
 		},
@@ -147,7 +147,7 @@ recipes = {
 		}
     ],
 
-    "Bknight" : [
+    "Bknight": [
         {
 			"cost": [(values.white_knight, 1)]
 		},
@@ -156,7 +156,7 @@ recipes = {
 		}
     ],
 
-    "Bbishop" : [
+    "Bbishop": [
         {
 			"cost": [(values.white_bishop, 1)]
 		},
@@ -165,7 +165,7 @@ recipes = {
 		}
     ],
 
-    "Bqueen" : [
+    "Bqueen": [
         {
 			"cost": [(values.white_queen, 1)]
 		},
@@ -174,7 +174,7 @@ recipes = {
 		}
     ],
 
-    "Bking" : [
+    "Bking": [
         {
 			"cost": [(values.white_king, 1)]
 		},
@@ -186,7 +186,7 @@ recipes = {
     ######################################################################################
 
 
-    "gem_gold" : [
+    "gem_gold": [
         {
 			"cost": [(values.gem_green, 2), (values.gem_purple, 4), (values.gem_blue, 8), (values.gem_red, 16)]
 		},
@@ -202,7 +202,7 @@ recipes = {
         }
     ],
 
-    "gem_green" : [
+    "gem_green": [
         {
 			"cost": [(values.gem_purple, 2)]
 		},
@@ -212,7 +212,7 @@ recipes = {
 		}
     ],
 
-    "gem_purple" : [
+    "gem_purple": [
         {
 			"cost": [(values.gem_blue, 2)]
 		},
@@ -221,7 +221,7 @@ recipes = {
 		}
     ],
 
-    "gem_blue" : [
+    "gem_blue": [
         {
 			"cost": [(values.gem_red, 2)]
 		},
@@ -230,7 +230,7 @@ recipes = {
 		}
     ],
 
-    "gem_red" : [
+    "gem_red": [
         {
 			"cost": [(values.gem_blue, 1)]
 		}
@@ -238,7 +238,7 @@ recipes = {
 
     ######################################################################################
 
-    "omega_chessatron" : [
+    "omega_chessatron": [
         {
 			"cost": [(values.chessatron, 5), (values.anarchy_chess, 1), 
             (values.gem_gold, 1), (values.gem_green, 1), (values.gem_purple, 1), (values.gem_blue, 1), (values.gem_red, 1),
@@ -281,19 +281,19 @@ recipes = {
 
     ######################################################################################
 
-    "holy_hell" : [
+    "holy_hell": [
         {
 			"cost": [ (values.anarchy_chess, 5) ]
 		}
     ],
 
-    "anarchy" : [
+    "anarchy": [
         {
 			"cost": [(values.anarchy_chess, 5)]
 		}
     ],
 
-    "horsey" : [
+    "horsey": [
         {
 			"cost": [(values.anarchy_chess, 5)]
 		}
@@ -301,7 +301,7 @@ recipes = {
 
     ######################################################################################
 
-    "bread" : [
+    "bread": [
         {
             "cost": [(values.corrupted_bread, 10)],
             "requirement": [("space_level", 1)]
@@ -310,15 +310,15 @@ recipes = {
 
     ######################################################################################
 
-    "doughnut" : [
+    "doughnut": [
         {
 			"cost": [(values.normal_bread, 25)]
 		},
         {
-			"cost": [(values.normal_bread, 10), (values.bagel.text, 2)]
+			"cost": [(values.normal_bread, 10), (values.bagel, 2)]
 		},
         {
-			"cost": [(values.normal_bread, 10), (values.waffle.text, 2)]
+			"cost": [(values.normal_bread, 10), (values.waffle, 2)]
 		},
         {
             "cost": [(values.corrupted_bread, 75)],
@@ -326,15 +326,15 @@ recipes = {
         }
     ],
 
-    "bagel" : [
+    "bagel": [
         {
 			"cost": [(values.normal_bread, 25)]
 		},
         {
-			"cost": [(values.normal_bread, 10), (values.doughnut.text, 2)]
+			"cost": [(values.normal_bread, 10), (values.doughnut, 2)]
 		},
         {
-			"cost": [(values.normal_bread, 10), (values.waffle.text, 2)]
+			"cost": [(values.normal_bread, 10), (values.waffle, 2)]
 		},
         {
             "cost": [(values.corrupted_bread, 75)],
@@ -342,15 +342,15 @@ recipes = {
         }
     ],
 
-    "waffle" : [
+    "waffle": [
         {
 			"cost": [(values.normal_bread, 25)]
 		},
         {
-			"cost": [(values.normal_bread, 10), (values.doughnut.text, 2)]
+			"cost": [(values.normal_bread, 10), (values.doughnut, 2)]
 		},
         {
-			"cost": [(values.normal_bread, 10), (values.bagel.text, 2)]
+			"cost": [(values.normal_bread, 10), (values.bagel, 2)]
 		},
         {
             "cost": [(values.corrupted_bread, 75)],
@@ -360,21 +360,21 @@ recipes = {
 
     ######################################################################################
 
-    "flatbread" : [
+    "flatbread": [
         {
 			"cost": [(values.normal_bread, 10)]
 		},
         {
-			"cost": [(values.normal_bread, 5), (values.stuffed_flatbread.text, 2)]
+			"cost": [(values.normal_bread, 5), (values.stuffed_flatbread, 2)]
 		},
         {
-			"cost": [(values.normal_bread, 5), (values.sandwich.text, 2)]
+			"cost": [(values.normal_bread, 5), (values.sandwich, 2)]
 		},
         {
-			"cost": [(values.normal_bread, 5), (values.french_bread.text, 2)]
+			"cost": [(values.normal_bread, 5), (values.french_bread, 2)]
 		},
         {
-			"cost": [(values.normal_bread, 5), (values.croissant.text, 2)]
+			"cost": [(values.normal_bread, 5), (values.croissant, 2)]
 		},
         {
             "cost": [(values.corrupted_bread, 25)],
@@ -382,21 +382,21 @@ recipes = {
         }
     ],
 
-    "stuffed_flatbread" : [
+    "stuffed_flatbread": [
         {
 			"cost": [(values.normal_bread, 10)]
 		},
         {
-			"cost": [(values.normal_bread, 5), (values.flatbread.text, 2)]
+			"cost": [(values.normal_bread, 5), (values.flatbread, 2)]
 		},
         {
-			"cost": [(values.normal_bread, 5), (values.sandwich.text, 2)]
+			"cost": [(values.normal_bread, 5), (values.sandwich, 2)]
 		},
         {
-			"cost": [(values.normal_bread, 5), (values.french_bread.text, 2)]
+			"cost": [(values.normal_bread, 5), (values.french_bread, 2)]
 		},
         {
-			"cost": [(values.normal_bread, 5), (values.croissant.text, 2)]
+			"cost": [(values.normal_bread, 5), (values.croissant, 2)]
 		},
         {
             "cost": [(values.corrupted_bread, 25)],
@@ -404,21 +404,21 @@ recipes = {
         }
     ],
 
-    "sandwich" : [
+    "sandwich": [
         {
 			"cost": [(values.normal_bread, 10)]
 		},
         {
-			"cost": [(values.normal_bread, 5), (values.flatbread.text, 2)]
+			"cost": [(values.normal_bread, 5), (values.flatbread, 2)]
 		},
         {
-			"cost": [(values.normal_bread, 5), (values.stuffed_flatbread.text, 2)]
+			"cost": [(values.normal_bread, 5), (values.stuffed_flatbread, 2)]
 		},
         {
-			"cost": [(values.normal_bread, 5), (values.french_bread.text, 2)]
+			"cost": [(values.normal_bread, 5), (values.french_bread, 2)]
 		},
         {
-			"cost": [(values.normal_bread, 5), (values.croissant.text, 2)]
+			"cost": [(values.normal_bread, 5), (values.croissant, 2)]
 		},
         {
             "cost": [(values.corrupted_bread, 25)],
@@ -426,21 +426,21 @@ recipes = {
         }
     ],
 
-    "french_bread" : [
+    "french_bread": [
         {
 			"cost": [(values.normal_bread, 10)]
 		},
         {
-			"cost": [(values.normal_bread, 5), (values.flatbread.text, 2)]
+			"cost": [(values.normal_bread, 5), (values.flatbread, 2)]
 		},
         {
-			"cost": [(values.normal_bread, 5), (values.stuffed_flatbread.text, 2)]
+			"cost": [(values.normal_bread, 5), (values.stuffed_flatbread, 2)]
 		},
         {
-			"cost": [(values.normal_bread, 5), (values.sandwich.text, 2)]
+			"cost": [(values.normal_bread, 5), (values.sandwich, 2)]
 		},
         {
-			"cost": [(values.normal_bread, 5), (values.croissant.text, 2)]
+			"cost": [(values.normal_bread, 5), (values.croissant, 2)]
 		},
         {
             "cost": [(values.corrupted_bread, 25)],
@@ -448,21 +448,21 @@ recipes = {
         }
     ],
 
-    "croissant" : [
+    "croissant": [
         {
 			"cost": [(values.normal_bread, 10)]
 		},
         {
-			"cost": [(values.normal_bread, 5), (values.flatbread.text, 2)]
+			"cost": [(values.normal_bread, 5), (values.flatbread, 2)]
 		},
         {
-			"cost": [(values.normal_bread, 5), (values.stuffed_flatbread.text, 2)]
+			"cost": [(values.normal_bread, 5), (values.stuffed_flatbread, 2)]
 		},
         {
-			"cost": [(values.normal_bread, 5), (values.sandwich.text, 2)]
+			"cost": [(values.normal_bread, 5), (values.sandwich, 2)]
 		},
         {
-			"cost": [(values.normal_bread, 5), (values.french_bread.text, 2)]
+			"cost": [(values.normal_bread, 5), (values.french_bread, 2)]
 		},
         {
             "cost": [(values.corrupted_bread, 25)],
@@ -680,14 +680,14 @@ recipes = {
 # Old recipe storage.
 """
 recipes = {
-    "Wpawn" : [ 
+    "Wpawn": [ 
         [(values.black_pawn, 2), (values.doughnut, 10), (values.bagel, 10), (values.waffle, 10)],
         [(values.black_pawn, 2), (values.croissant, 10), (values.flatbread, 10), (values.stuffed_flatbread, 10), (values.sandwich, 10), (values.french_bread, 10)],
         [(values.black_pawn, 3)],
         [(values.gem_red, 1)],
     ],
 
-    "Wrook" : [
+    "Wrook": [
         [(values.black_rook, 1), (values.sandwich, 50), (values.waffle, 25)],
         [(values.black_rook, 2), (values.sandwich, 50)],
         [(values.black_rook, 3)],
@@ -695,7 +695,7 @@ recipes = {
         [(values.gem_red, 1)],
     ],
 
-    "Wknight" : [
+    "Wknight": [
         [(values.black_knight, 1), (values.croissant, 50), (values.bagel, 25)],
         [(values.black_knight, 2), (values.croissant, 50)],
         [(values.black_knight, 3)],
@@ -703,7 +703,7 @@ recipes = {
         [(values.gem_red, 1)],
     ],
 
-    "Wbishop" : [
+    "Wbishop": [
         [(values.black_bishop, 1), (values.french_bread, 50), (values.doughnut, 25)],
         [(values.black_bishop, 2), (values.french_bread, 50)],
         [(values.black_bishop, 3)],
@@ -711,7 +711,7 @@ recipes = {
         [(values.gem_red, 1)],
     ],
 
-    "Wqueen" : [
+    "Wqueen": [
         [(values.black_queen, 1), (values.stuffed_flatbread, 50), (values.doughnut, 25)],
         [(values.black_queen, 2), (values.stuffed_flatbread, 50)],
         [(values.black_queen, 3)],
@@ -719,7 +719,7 @@ recipes = {
         [(values.gem_red, 1)],
     ],
 
-    "Wking" : [
+    "Wking": [
         [(values.black_king, 1), (values.flatbread, 50), (values.bagel, 25)],
         [(values.black_king, 2), (values.flatbread, 50)],
         [(values.black_king, 3)],
@@ -727,38 +727,38 @@ recipes = {
         [(values.gem_red, 1)],
     ],
 
-    "Bpawn" : [
+    "Bpawn": [
         [(values.white_pawn, 1)],
         [(values.gem_red, 1)],
     ],
 
-    "Brook" : [
+    "Brook": [
         [(values.white_rook, 1)],
         [(values.gem_red, 1)],
     ],
 
-    "Bknight" : [
+    "Bknight": [
         [(values.white_knight, 1)],
         [(values.gem_red, 1)],
     ],
 
-    "Bbishop" : [
+    "Bbishop": [
         [(values.white_bishop, 1)],
         [(values.gem_red, 1)],
     ],
 
-    "Bqueen" : [
+    "Bqueen": [
         [(values.white_queen, 1)],
         [(values.gem_red, 1)],
     ],
 
-    "Bking" : [
+    "Bking": [
         [(values.white_king, 1)],
         [(values.gem_red, 1)],
     ],
 
 
-    "gem_gold" : [
+    "gem_gold": [
         [(values.gem_green, 2), (values.gem_purple, 4), (values.gem_blue, 8), (values.gem_red, 16)],
 
         [(values.normal_bread, 10000), 
@@ -766,72 +766,72 @@ recipes = {
             (values.doughnut, 500), (values.bagel, 500), (values.waffle, 500)],
     ],
 
-    "gem_green" : [
+    "gem_green": [
         [(values.gem_purple, 2)],
         [(values.gem_gold, 1)],
     ],
 
-    "gem_purple" : [
+    "gem_purple": [
         [(values.gem_blue, 2)],
         [(values.gem_green, 1)],
     ],
 
-    "gem_blue" : [
+    "gem_blue": [
         [(values.gem_red, 2)],
         [(values.gem_purple, 1)],
     ],
 
-    "gem_red" : [
+    "gem_red": [
         [(values.gem_blue, 1)]
     ],
 
-    "omega_chessatron" : [
+    "omega_chessatron": [
         [(values.chessatron, 5), (values.anarchy_chess, 1), 
             (values.gem_gold, 1), (values.gem_green, 1), (values.gem_purple, 1), (values.gem_blue, 1), (values.gem_red, 1),
         ]
     ],
 
-    "holy_hell" : [
+    "holy_hell": [
         [ (values.anarchy_chess, 5) ],
     ],
 
-    "anarchy" : [
+    "anarchy": [
         [(values.anarchy_chess, 5)],
     ],
 
-    "horsey" : [
+    "horsey": [
         [(values.anarchy_chess, 5)],
     ],
 
-    "doughnut" : [
+    "doughnut": [
         [(values.normal_bread, 25)],
     ],
 
-    "bagel" : [
+    "bagel": [
         [(values.normal_bread, 25)],
     ],
 
-    "waffle" : [
+    "waffle": [
         [(values.normal_bread, 25)],
     ],
 
-    "flatbread" : [
+    "flatbread": [
         [(values.normal_bread, 10)],
     ],
 
-    "stuffed_flatbread" : [
+    "stuffed_flatbread": [
         [(values.normal_bread, 10)],
     ],
 
-    "sandwich" : [
+    "sandwich": [
         [(values.normal_bread, 10)],
     ],
 
-    "french_bread" : [
+    "french_bread": [
         [(values.normal_bread, 10)],
     ],
 
-    "croissant" : [
+    "croissant": [
         [(values.normal_bread, 10)],
     ],
 
@@ -862,6 +862,7 @@ def describe_individual_recipe(recipe: dict) -> str:
         pair = recipe["cost"][i]
         item = pair[0]
         amount = pair[1]
+        print(recipe)
         output += f"{amount} {item.text}"
         if i < len(recipe["cost"]) - 1:
             output += ",  "

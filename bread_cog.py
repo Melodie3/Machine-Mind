@@ -1413,6 +1413,9 @@ class Bread_cog(commands.Cog, name="Bread"):
     async def export(self, ctx,
             person: typing.Optional[discord.Member] = commands.parameter(description = "Who to export the stats of."),
         ):
+        if get_channel_permission_level(ctx) < PERMISSION_LEVEL_BASIC:
+            await ctx.reply(f"You can't do that here, please do it in {self.json_interface.get_rolling_channel(ctx.guild.id)}.")
+            return
         if person is None:
             person = ctx.author
 
@@ -3193,7 +3196,15 @@ For example, "$bread gift Melodie all chess_pieces" would gift all your chess pi
             
             # Now, recursively call this function for each item.
             for item in values.all_chess_pieces:
-                await self.gift(ctx, target, item.text, item_amount * values.all_chess_pieces_biased.count(item))
+                gift_amount = item_amount * values.all_chess_pieces_biased.count(item)
+                
+                gift(
+                    sender_member = ctx.author,
+                    receiver_member = target,
+                    item = item.text,
+                    amount =gift_amount
+                )
+                await ctx.send(f"{utility.smart_number(gift_amount)} {item.text} has been gifted to {target.mention}.")
                 await asyncio.sleep(1)
                 
             await ctx.reply(f"Gifted {utility.write_count(item_amount, 'chess set')} to {receiver_account.get_display_name()}.")
@@ -5241,7 +5252,7 @@ anarchy - 1000% of your wager.
             new_data = existing
         )
 
-        send_lines = "Trade Hub levelled up!"
+        send_lines = f"Trade Hub levelled up to level {existing['level']}! This Trade Hub is now able to relay signals from the Trade Hub network up to {store.trade_hub_distances[existing['level']]} tiles away!"
         send_lines += level_project.completion(day_seed, hub)
 
         send_lines += "\n\n"
@@ -5445,7 +5456,7 @@ anarchy - 1000% of your wager.
                 amount = math.ceil(win_amount * percent_cut)
                 player_account.increment(win_item, amount)
 
-                items_added.append(f"{amount} {utility.smart_number(win_item)}")
+                items_added.append(f"{utility.smart_number(amount)} {win_item}")
 
             player_account.increment("projects_completed", 1)
 
@@ -5541,11 +5552,6 @@ anarchy - 1000% of your wager.
         if hub.trade_hub_level == max_level:
             await ctx.reply("This Trade Hub is already at the max level!")
             return
-        
-        cost = level_project.get_price_description(
-            day_seed = day_seed,
-            system_tile = hub
-        )
 
         ascension_data = self.json_interface.get_space_ascension(
             ascension_id = user_account.get_prestige_level(),
@@ -5557,15 +5563,25 @@ anarchy - 1000% of your wager.
         
         message_lines = "# -- Trade Hub Levelling --"
         message_lines += f"\nCurrent Trade Hub level: {hub.trade_hub_level}"
-        message_lines += f"\nNext level cost: {cost}"
+        message_lines += f"\nRemaining items:"
 
         level_progress = trade_hub_data.get("level_progress", dict())
+        cost = dict(level_project.get_cost(day_seed, hub))
+        remaining = level_project.get_remaining_items(day_seed, hub, level_progress)
+
+        sn = utility.smart_number
+
+        for item, amount in cost.items():
+            left = remaining.get(item, 0)
+            contributed = amount - left
+            message_lines += f"\n- {item}: {sn(contributed)}/{sn(amount)} ({round(contributed / amount * 100, 2)}%)"
+
         amount_contributed = level_project.total_items_collected(day_seed, hub, level_progress)
         amount_needed = level_project.total_items_required(day_seed, hub)
 
         message_lines += "\nCollected items: {have}/{total} ({percent}%)".format(
-            have = amount_contributed,
-            total = amount_needed,
+            have = sn(amount_contributed),
+            total = sn(amount_needed),
             percent = round(100 * level_project.get_progress_percent(day_seed, hub, level_progress), 2)
         )
 
@@ -5578,7 +5594,7 @@ anarchy - 1000% of your wager.
                 player_line = []
 
                 for item, amount in data.get("items", {}).items():
-                    player_line.append(f"{amount} {item}")
+                    player_line.append(f"{sn(amount)} {item}")
 
                 username = utility.sanitize_ping(player_account.get_display_name())
                 player_line = " ,  ".join(player_line)
@@ -5685,7 +5701,7 @@ anarchy - 1000% of your wager.
 
             cost = projects.Trade_Hub.get_price_description(day_seed, hub)
             
-            await ctx.reply(f"To create a Trade Hub here, you must have the following resources:\n{cost}\n\nOnce you have the resources, use '$bread space hub create' to create the Trade Hub.")
+            await ctx.reply(f"To create a Trade Hub around this star, you must have the following resources:\n{cost}\n\nOnce you have the resources, use '$bread space hub create' to create the Trade Hub.")
             return
         
         if action == "create":
@@ -5784,7 +5800,7 @@ anarchy - 1000% of your wager.
             message_lines += "\n*New Trade Hub discovered! Trading using this trade hub is now available.*\n"
 
         message_lines += f"\nLevel: {hub.trade_hub_level}"
-        message_lines += f"\nMaximum trade distance: {store.trade_hub_distances[hub.trade_hub_level]}"
+        message_lines += f"\nTrade Hub network range: {store.trade_hub_distances[hub.trade_hub_level]}"
         message_lines += f"\nGalaxy location: ({hub.galaxy_xpos}, {hub.galaxy_ypos})"
         message_lines += f"\nSystem location: ({hub.system_xpos}, {hub.system_ypos})"
 
@@ -5876,12 +5892,12 @@ anarchy - 1000% of your wager.
 
         if move_map == "wormhole":
             if autopilot_level < 3:
-                await ctx.reply("Autopilot error:\nWormhole travel not possible with existing autopilot system..")
+                await ctx.reply(f"Autopilot error:\nWormhole travel not possible with existing autopilot system.\nAutopilot level: {autopilot_level}, expected 3 or higher.")
                 self.currently_interacting.remove(ctx.author.id)
                 return
             
             # Wormhole travel :o
-            system_tile = user_account.get_system_tile(json_interface=self.json_interface) # type: space.SystemWormhole
+            system_tile = user_account.get_system_tile(json_interface=self.json_interface) # type: typing.Union[space.SystemWormhole, space.SystemTile]
 
             if system_tile.type != "wormhole":
                 await ctx.reply("Autopilot error:\nNo wormhole found.")
@@ -6061,7 +6077,7 @@ anarchy - 1000% of your wager.
             move_cost = int(cost_data.get("cost", 500) * user_account.get_engine_efficiency_multiplier())
         else:
             if autopilot_level < 1:
-                await ctx.reply("Autopilot error:\nGalaxy travel not possible with existing autopilot system.")
+                await ctx.reply(f"Autopilot error:\nGalaxy travel not possible with existing autopilot system.\nAutopilot level: {autopilot_level}, expected 1 or higher.")
                 self.currently_interacting.remove(ctx.author.id)
                 return
             
@@ -6079,7 +6095,7 @@ anarchy - 1000% of your wager.
             )
 
             if autopilot_level < 2 and cost_data.get("nebula", False):
-                await ctx.reply("Autopilot error:\nNebula travel not possible with existing autopilot system.")
+                await ctx.reply(f"Autopilot error:\nNebula travel not possible with existing autopilot system.\nAutopilot level: {autopilot_level}, expected 2 or higher.")
                 self.currently_interacting.remove(ctx.author.id)
                 return
 

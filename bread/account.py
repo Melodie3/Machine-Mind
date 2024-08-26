@@ -121,6 +121,8 @@ class Bread_Account:
         emotes_to_remove.extend(self.get_all_items_with_attribute("anarchy_pieces"))
         emotes_to_remove.append(values.chessatron)
         emotes_to_remove.append(values.omega_chessatron)
+        emotes_to_remove.append(values.anarchy_chessatron)
+        emotes_to_remove.append(values.anarchy_omega_chessatron)
         emotes_to_remove.append(values.normal_bread)
         emotes_to_remove.append(values.anarchy_chess)
         emotes_to_remove.append(values.fuel)
