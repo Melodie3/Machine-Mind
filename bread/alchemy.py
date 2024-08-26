@@ -862,7 +862,6 @@ def describe_individual_recipe(recipe: dict) -> str:
         pair = recipe["cost"][i]
         item = pair[0]
         amount = pair[1]
-        print(recipe)
         output += f"{amount} {item.text}"
         if i < len(recipe["cost"]) - 1:
             output += ",  "
