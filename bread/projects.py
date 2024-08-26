@@ -2520,6 +2520,131 @@ class Round_Table(Project):
 
         return [(values.anarchy_white_knight.text, amount)]
     
+class Stolen_Bishops(Project):
+    """Written by Chaotixu."""
+    internal = "stolen_bishops"
+    
+    @classmethod
+    def name(
+            cls,
+            day_seed: str,
+            system_tile: space.SystemTradeHub
+        ) -> str:
+        rng = random.Random(utility.hash_args(day_seed, system_tile.tile_seed()))
+        
+        options = [
+            "Stolen Bishops",
+            "Missing Bishops",
+            "Bishop Thief",
+        ]
+
+        return rng.choice(options)
+
+    @classmethod
+    def description(
+            cls,
+            day_seed: str,
+            system_tile: space.SystemTradeHub
+        ) -> str:
+        rng = random.Random(utility.hash_args(day_seed, system_tile.tile_seed()))
+
+        cost = cls.get_cost(day_seed, system_tile)[0][1]
+        reward = cls.get_reward_description(day_seed, system_tile)
+
+        part_1 = [
+            "Hey there, you! Could you help us?",
+            "We're in need of chess pieces, could anyone help?",
+            "Hey, you over there! Do you have any chess pieces?",
+        ]
+
+        part_2 = [
+            "We're starting a chess tournament,",
+            "A chess tournament is starting soon,",
+            "We're preparing for a chess tournament,",
+        ]
+
+        part_3 = [
+            "however someone stole all the white bishops.",
+            "but it seems like someone stole our white bishops.",
+            "but we don't have any white bishops due to a nasty bishop thief.",
+        ]
+
+        part_4 = [
+            "If you'd be able to help us,",
+            "If you could give us some of these,",
+            "If you wanted to help us out,",
+        ]
+
+        part_5 = [
+            "we'd happily give you a generous reward!",
+            "we would give you a reward in exchange!",
+            "you'd recieve a great reward!",
+        ]
+
+        part_6 = [
+            f"We need exactly {cost},",
+            f"We just want {cost} from you,",
+            f"We need you to give us {cost},",
+        ]
+
+        part_7 = [
+            f"and you will recieve {reward} as a reward!",
+            f"and the reward is {reward}!",
+            f"and we will happily give you {reward}!",
+        ]
+
+        return " ".join([
+            rng.choice(part_1),
+            rng.choice(part_2),
+            rng.choice(part_3),
+            rng.choice(part_4),
+            rng.choice(part_5),
+            rng.choice(part_6),
+            rng.choice(part_7)
+        ])
+
+    @classmethod
+    def completion(
+            cls: typing.Type[typing.Self],
+            day_seed: str,
+            system_tile: space.SystemTradeHub
+        ) -> str:
+        rng = random.Random(utility.hash_args(day_seed, system_tile.tile_seed()))
+
+        reward = cls.get_reward_description(day_seed, system_tile)
+
+        options = [
+            f"Thank you so much! Here's your {reward}!",
+            "You saved us last minute! Thank you!",
+            f"You came in clutch! Your {reward} will be here in a few seconds!",
+        ]
+
+        return rng.choice(options)
+    
+    @classmethod
+    def get_cost(
+            cls,
+            day_seed: str,
+            system_tile: space.SystemTradeHub
+        ) -> list[tuple[str, int]]:
+        rng = random.Random(utility.hash_args(day_seed, system_tile.tile_seed()))
+
+        amount = rng.randint(2,6) * 256
+
+        return [(values.white_bishop.text, amount)]
+    
+    @classmethod
+    def get_reward(
+            cls,
+            day_seed: str,
+            system_tile: space.SystemTradeHub
+        ) -> list[tuple[str, int]]:
+        rng = random.Random(utility.hash_args(day_seed, system_tile.tile_seed()))
+
+        amount = rng.randint(2, 6) * 2
+
+        return [(values.anarchy_white_bishop.text, amount)]
+    
 class Fortress_Building(Project):
     """Written by Kapola."""
     internal = "fortress_building"
