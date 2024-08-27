@@ -2371,7 +2371,446 @@ class Diorama_Issue(Project):
         amount = rng.randint(2, 6) * 2
         return [(values.anarchy_black_rook.text, amount)]
 
+class Offering_Ritual_Duplicate(Project):
+    """Written by Kapola.
+    
+    This is a duplicate project, it is identical to the white queen Offering Ritual project.
+    When a better black queen project has been written this should be replaced with that."""
+    internal = "offering_ritual_black"
+    
+    @classmethod
+    def name(
+            cls,
+            day_seed: str,
+            system_tile: space.SystemTradeHub
+        ) -> str:
+        rng = random.Random(utility.hash_args(day_seed, system_tile.tile_seed()))
+        
+        options = [
+            "Offering Ritual",
+            "Chess Piece Offering",
+            "Chess Offering Ritual"
+        ]
+
+        return rng.choice(options)
+
+    @classmethod
+    def description(
+            cls,
+            day_seed: str,
+            system_tile: space.SystemTradeHub
+        ) -> str:
+        rng = random.Random(utility.hash_args(day_seed, system_tile.tile_seed()))
+
+        cost = cls.get_price_description(day_seed, system_tile)
+        reward = cls.get_reward_description(day_seed, system_tile)
+
+        part_1 = [
+            "Attention attention!",
+            "Announcement to all Trade Hub customers!",
+            "Important announcement!"
+        ]
+
+        part_2 = [
+            "As you may already know,",
+            "You may already be aware of this, but",
+            "As you should know by now,"
+        ]
+
+        part_3 = [
+            "this Trade Hub holds a daily offering ritual to appease our gods.",
+            "this Trade Hub has a long-standing tradition of holding daily offerings burned by fire.",
+            "here there are daily rituals that we believe are required to keep the Trade Hub running."
+        ]
+
+        part_4 = [
+            "The sacrifice varies each day,",
+            "What it is that we offer depends on a complicated calendar,",
+            "The offered item is chosen by a complex process to make our overlords happy,"
+        ]
+        
+        part_5 = [
+            "and this day, the item chosen is a chess piece,",
+            "and today, our calendars dictate a chess piece should be offered,",
+            "and our system specifies that today it is a chess piece that is needed for sacrifice,"
+        ]
+        
+        part_6 = [
+            "more specifically a black queen used for standard tournament play!",
+            "particularly a type of black queen piece!",
+            "specifically a standard black queen chess piece!"
+        ]
+        
+        part_7 = [
+            "However, it appears the Trade Hub is all out of stock!",
+            "Unfortunately, the Trade Hub sold all the stock it had left a few days ago!",
+            "Sadly, all these have been sold out, and the shipment that was supposed to arrive 2 days ago is still stuck in Albuquerque."
+        ]
+        
+        part_8 = [
+            "We will therefore need to source our offerings from the populace!",
+            "Our only option is then to find the missing pieces from the people!",
+            "This is why we must ask you, dear customers, to provide us with our needs!"
+        ]
+        
+        part_9 = [
+            f"There is a {reward} reward put up to anyone who can provide {cost} to help our cause!",
+            f"There are still a whopping {cost} needed for the offering; the Trade Hub offers {reward} to anyone who can provide this!",
+            f"Anyone who can provide the missing {cost} will be rewarded with {reward}!"
+        ]
+
+        return " ".join([
+            rng.choice(part_1),
+            rng.choice(part_2),
+            rng.choice(part_3),
+            rng.choice(part_4),
+            rng.choice(part_5),
+            rng.choice(part_6),
+            rng.choice(part_7),
+            rng.choice(part_8),
+            rng.choice(part_9)
+        ])
+
+    @classmethod
+    def completion(
+            cls: typing.Type[typing.Self],
+            day_seed: str,
+            system_tile: space.SystemTradeHub
+        ) -> str:
+        rng = random.Random(utility.hash_args(day_seed, system_tile.tile_seed()))
+        reward = cls.get_reward_description(day_seed, system_tile)
+
+        options = [
+            f"{reward} are now yours! And don't question what we did to those pieces.",
+            f"The whole thing went absolutely perfectly, and the offering was successfully sent to the endless flames of hell and despair! Here are your totally legally obtained {reward}.",
+            f"YES, THANKS TO YOU WE WERE ABLE TO CONTINUE OUR CHESS PIECE TRAFFICKI- uh I mean, yes, the ritual went very well! Just take these {reward}!"
+        ]
+
+        return rng.choice(options)
+    
+    @classmethod
+    def get_cost(
+            cls,
+            day_seed: str,
+            system_tile: space.SystemTradeHub
+        ) -> list[tuple[str, int]]:
+        rng = random.Random(utility.hash_args(day_seed, system_tile.tile_seed()))
+
+        amount = rng.randint(2,6) * 128
+        return [(values.black_queen.text, amount)]
+    
+    @classmethod
+    def get_reward(
+            cls,
+            day_seed: str,
+            system_tile: space.SystemTradeHub
+        ) -> list[tuple[str, int]]:
+        rng = random.Random(utility.hash_args(day_seed, system_tile.tile_seed()))
+
+        amount = rng.randint(2, 6)
+        return [(values.anarchy_black_queen.text, amount)]
+
+class Royal_Summit_Duplicate(Project):
+    """Concept by Emily, written by ChatGPT.
+    
+    This is a duplicate project, it is identical to the white king Royal Summit project.
+    When a better black king project has been written this should be replaced with that."""
+    internal = "royal_summit_black"
+    
+    @classmethod
+    def name(
+            cls,
+            day_seed: str,
+            system_tile: space.SystemTradeHub
+        ) -> str:
+        rng = random.Random(utility.hash_args(day_seed, system_tile.tile_seed()))
+        
+        options = [
+            "Royal Summit",
+            "Diplomatic Assembly",
+            "Regal Conference"
+        ]
+
+        return rng.choice(options)
+
+    @classmethod
+    def description(
+            cls,
+            day_seed: str,
+            system_tile: space.SystemTradeHub
+        ) -> str:
+        rng = random.Random(utility.hash_args(day_seed, system_tile.tile_seed()))
+
+        cost = cls.get_price_description(day_seed, system_tile)
+        reward = cls.get_reward_description(day_seed, system_tile)
+
+        part_1 = [
+            "Hail, esteemed denizens!",
+            "Greetings, noble attendants!",
+            "Salutations, honored guests!"
+        ]
+
+        part_2 = [
+            "The esteemed visitors from a distant land have made a request.",
+            "Royalty from afar seeks counsel from the Trade Hub's finest minds.",
+            "A diplomatic entourage has arrived."
+        ]
+
+        part_3 = [
+            "Their arrival brings both opportunity and challenge.",
+            "The presence of visiting dignitaries prompts reflection on our shared responsibilities.",
+            "With the arrival of distinguished guests, the Trade Hub faces a momentous occasion."
+        ]
+
+        part_4 = [
+            "This occasion demands careful consideration.",
+            "The Trade Hub must rise to the occasion.",
+            "We are presented with a unique challenge."
+        ]
+        
+        part_5 = [
+            "The council is called upon to convene promptly.",
+            "A meeting of minds is essential to address the needs of our honored guests.",
+            "Swift action is required to accommodate the visiting royalty's request."
+        ]
+        
+        part_6 = [
+            "In the halls of deliberation,",
+            "Amidst the discussions,",
+            "During the council's session,"
+        ]
+        
+        part_7 = [
+            "strategies for diplomacy will be devised.",
+            "plans for hospitality will be formulated.",
+            "decisions regarding protocol will be made."
+        ]
+        
+        part_8 = [
+            f"With the resources of {cost},",
+            f"For the provision of {cost},",
+            f"Should someone supply {cost},"
+        ]
+        
+        part_9 = [
+            "the Trade Hub can offer a display of hospitality befitting royalty.",
+            "we can extend a warm welcome to our distinguished guests.",
+            "our esteemed visitors will be honored with the utmost respect and care."
+        ]
+        
+        part_10 = [
+            "And fear not, for generosity shall be duly rewarded!",
+            "Rest assured, there shall be recompense for acts of kindness!",
+            "Those who assist shall not go unrecognized!"
+        ]
+        
+        part_11 = [
+            f"The reward for extending hospitality is {reward}!",
+            f"Those who contribute shall receive a token of appreciation in the form of {reward}!",
+            f"A gesture of gratitude awaits those who lend their aid, in the form of {reward}!"
+        ]
+
+        return " ".join([
+            rng.choice(part_1),
+            rng.choice(part_2),
+            rng.choice(part_3),
+            rng.choice(part_4),
+            rng.choice(part_5),
+            rng.choice(part_6),
+            rng.choice(part_7),
+            rng.choice(part_8),
+            rng.choice(part_9),
+            rng.choice(part_10),
+            rng.choice(part_11)
+        ])
+
+    @classmethod
+    def completion(
+            cls: typing.Type[typing.Self],
+            day_seed: str,
+            system_tile: space.SystemTradeHub
+        ) -> str:
+        rng = random.Random(utility.hash_args(day_seed, system_tile.tile_seed()))
+
+        options = [
+            "Bravo! The Trade Hub's council has successfully orchestrated a grand reception for the visiting royalty! Through your collective efforts, the diplomatic mission has flourished, and bonds of friendship have been strengthened between distant realms!",
+            "Splendid work! The Trade Hub's hospitality has left a lasting impression on the visiting royalty! Your contributions have ensured that the diplomatic exchange has been a resounding success, fostering goodwill and understanding across borders!",
+            "Magnificent! The Trade Hub's council has navigated the complexities of diplomacy with finesse, earning accolades from the visiting dignitaries! Thanks to your dedication, the bonds of camaraderie between nations have been reaffirmed, promising a brighter future of cooperation and harmony!"
+        ]
+
+        return rng.choice(options)
+    
+    @classmethod
+    def get_cost(
+            cls,
+            day_seed: str,
+            system_tile: space.SystemTradeHub
+        ) -> list[tuple[str, int]]:
+        rng = random.Random(utility.hash_args(day_seed, system_tile.tile_seed()))
+
+        amount = rng.randint(1, 4) * 100
+        return [(values.black_king.text, amount)]
+    
+    @classmethod
+    def get_reward(
+            cls,
+            day_seed: str,
+            system_tile: space.SystemTradeHub
+        ) -> list[tuple[str, int]]:
+        rng = random.Random(utility.hash_args(day_seed, system_tile.tile_seed()))
+
+        amount = rng.randint(1, 4)
+        return [(values.anarchy_black_king.text, amount)]
+
 ##### White chess pieces.
+
+class Board_Game_Festival_Duplicate(Project):
+    """Written by Kapola.
+    
+    This is a duplicate project, it is identical to the black pawn Board Game Festival project.
+    When a better white pawn project has been written this should be replaced with that."""
+    internal = "board_game_festival_white"
+    
+    @classmethod
+    def name(
+            cls,
+            day_seed: str,
+            system_tile: space.SystemTradeHub
+        ) -> str:
+        rng = random.Random(utility.hash_args(day_seed, system_tile.tile_seed()))
+        
+        options = [
+            "Board Game Festival",
+            "GameFest",
+            "Missing Pawns"
+        ]
+
+        return rng.choice(options)
+
+    @classmethod
+    def description(
+            cls,
+            day_seed: str,
+            system_tile: space.SystemTradeHub
+        ) -> str:
+        rng = random.Random(utility.hash_args(day_seed, system_tile.tile_seed()))
+
+        cost = cls.get_cost(day_seed, system_tile)[0][1]
+        reward = cls.get_reward_description(day_seed, system_tile)
+
+        part_1 = [
+            "Okay, so you see, this Hub here holds an annual board game festival.",
+            "It is an annual occurence in this Trade Hub to hold a board game festival.",
+            "The GameFest is an annual board game festival that takes place in this Trade Hub and many others."
+        ]
+
+        part_2 = [
+            "In the festival there are lots of board games;",
+            "Many games are available at the festival;",
+            "There are a large amount of games to play at the festival;"
+        ]
+
+        part_3 = [
+            "checkers, The Minion, Katan, Capitalism Game, Crabble, and of course, Chess, are only some of the games you can play.",
+            "Detective, Le Monopole, The Minion, COVID-19 But There's 4 Of Them, and obviously, Chess, among many others."
+        ]
+
+        part_4 = [
+            "Now, you see, many of these games require some kind of playing pawns,",
+            "Many of those games require pawns to play,",
+            "A lot of board games among those are played with some sort of pawns,"
+        ]
+
+        part_5 = [
+            "however, every year, the same tragedy strikes: the Pawn Thief!",
+            "unfortunately, there is always one slight hiccup with that, every single year: the Pawn Thief!",
+            "however, in every instance of the festival, there was one issue with this: the Pawn Thief!"
+        ]
+
+        part_6 = [
+            "Every year, they come and steal all our pawns,",
+            "Every festival, all our pawns are stolen by this mysterious individual,",
+            "There is not a single time where the pawns were not taken by this masked figure,"
+        ]
+
+        part_7 = [
+            "and despite our best protection efforts, this year was no exception!",
+            "and well, even though we tried to prevent it, we again didn't succeed!",
+            "and unfortunately, they were again successful!"
+        ]
+
+        part_8 = [
+            "So as with every year, we are left asking our customers for help!",
+            "That means you will have to provide us with pawns if you wish for this event to happen!",
+            "Our only option is therefore to source our pawns from the future players!"
+        ]
+
+        part_9 = [
+            f"As with every year, we have a {reward} reward prepared in advance for exactly this event,",
+            f"Just like usual, we have a reward ({reward}) prepared specifically for this occasion,",
+            f"We have {reward} prepared for precisely this eventuality,"
+        ]
+
+        part_10 = [
+            f"that we will give to anyone who can provide us {cost} for the festival!",
+            f"and it will be given to any generous soul who can provide us {cost} for the festival!",
+            f"and anyone who can provide {cost} will find themself winner of this reward for saving the festival!"
+        ]
+
+        return " ".join([
+            rng.choice(part_1),
+            rng.choice(part_2),
+            rng.choice(part_3),
+            rng.choice(part_4),
+            rng.choice(part_5),
+            rng.choice(part_6),
+            rng.choice(part_7),
+            rng.choice(part_8),
+            rng.choice(part_9),
+            rng.choice(part_10)
+        ])
+
+    @classmethod
+    def completion(
+            cls: typing.Type[typing.Self],
+            day_seed: str,
+            system_tile: space.SystemTradeHub
+        ) -> str:
+        rng = random.Random(utility.hash_args(day_seed, system_tile.tile_seed()))
+
+        reward = cls.get_reward_description(day_seed, system_tile)
+
+        options = [
+            f"Well, that was enough! You earned yourself... a free spot in the next chess tournament! What, you were promised a *reward*? {reward}? Ugh, they weren't fooled again! Ah, just take it already! ",
+            f"Woo! The Festival is saved! Exactly like every other year! Here's your {reward}!",
+            f"You did it! Congratulations! The Board Game festival is up and running! Here's your {reward} as promised!"
+        ]
+
+        return rng.choice(options)
+    
+    @classmethod
+    def get_cost(
+            cls,
+            day_seed: str,
+            system_tile: space.SystemTradeHub
+        ) -> list[tuple[str, int]]:
+        rng = random.Random(utility.hash_args(day_seed, system_tile.tile_seed()))
+
+        amount = rng.randint(2, 6) * 1024
+
+        return [(values.white_pawn.text, amount)]
+    
+    @classmethod
+    def get_reward(
+            cls,
+            day_seed: str,
+            system_tile: space.SystemTradeHub
+        ) -> list[tuple[str, int]]:
+        rng = random.Random(utility.hash_args(day_seed, system_tile.tile_seed()))
+
+        amount = rng.randint(2, 6) * 8
+
+        return [(values.anarchy_white_pawn.text, amount)]
 
 class Round_Table(Project):
     """Concept by Emily, written by ChatGPT."""
@@ -3971,8 +4410,8 @@ story_projects = [Essential_Oils, Bingobango]
 
 take_special_bread_projects = [Too_Much_Stuffing, Flatbread_Shortage, Appease_The_French, Croissant_Cravings, Beach_Disappearance]
 take_rare_bread_projects = [Ecosystem_Problem, Stolen_Donuts, Waffle_Machine]
-take_black_chess_piece_projects = [Board_Game_Festival, Electrical_Issue, Chess_Tournament, Diorama_Issue]
-take_white_chess_piece_projects = [Royal_Summit, Offering_Ritual, Fortress_Building, Round_Table]
+take_black_chess_piece_projects = [Board_Game_Festival, Electrical_Issue, Chess_Tournament, Diorama_Issue, Offering_Ritual_Duplicate, Royal_Summit_Duplicate]
+take_white_chess_piece_projects = [Board_Game_Festival_Duplicate, Royal_Summit, Offering_Ritual, Fortress_Building, Round_Table]
 take_gem_projects = [Gem_Salesman, Generator_Breakdown, Jewelry_Store, Gem_Mining, Emergency_Fuel]
 take_misc_item_projects = [Chessatron_Repair, Omega_Order]
 
