@@ -1,4 +1,7 @@
 """
+HOW TO UNRESTRICT SPACE TO a9:
+- Go to Bread_cog.space_shop and remove the if that's "if user_account.get_prestige_level() < 9:"
+
 Patch Notes: 
 - Added space.
   - Currently only available on a9, when a9 finishes it will be available from a2 and above.
@@ -4909,8 +4912,14 @@ anarchy - 1000% of your wager.
         # we get the account of the user who called it
         user_account = self.json_interface.get_account(ctx.author, guild = ctx.guild.id)
 
+        # Make sure the player is on the right ascension.
         if user_account.get_prestige_level() < 1:
             await ctx.reply("The entrance to this shop is nowhere to be found, perhaps you need to ascend.")
+            return
+        
+        # Temporarily lock all of space to a9 or higher. When a9 ends this should be removed.
+        if user_account.get_prestige_level() < 9:
+            await ctx.reply("Currently the Space Shop is only available on the 9th ascension. When that ascension ends it will be available from the first ascension onwards.")
             return
 
         # now we get the list of items
@@ -5008,7 +5017,7 @@ anarchy - 1000% of your wager.
         user_account = self.json_interface.get_account(ctx.author, guild = ctx.guild.id)
 
         if user_account.get_space_level() < 1:
-            await ctx.reply("You do not yet have a rocket that can help you analyze the many planets in space.\nYou can purchase the required rocket from the Space Shop.")
+            await ctx.reply("You do not yet have a rocket that can help you analyze the many celestial objects in space.\nYou can purchase the required rocket from the Space Shop.")
             return
         
         ##########################################################
