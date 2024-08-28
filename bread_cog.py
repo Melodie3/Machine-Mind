@@ -1,14 +1,21 @@
 """
+HOW TO UNRESTRICT SPACE TO a9:
+- Go to Bread_cog.space_shop and remove the if that's "if user_account.get_prestige_level() < 9:"
+
 Patch Notes: 
-You can now do the closest thing to "$bread gamble all" - enter in a large number and it will gamble all the dough you have.
-(All further patch notes submitted by the community)
-- When you buy a random chess piece, it will no longer always say it is a bking. Thanks to Duck for this patch.
-- New $verify responses, thanks to citron
-- Alchemy now uses smart replies, thanks Duck.
-- You can now gift to all the server's bots on higher ascensions. Thanks to Duck for this patch.
-- Double brick exploit is fixed (1984) - thanks to Duck for this patch.
-- Fixed another ping exploit (Thanks Duck!)
-- Minor additional internal bug fix related to emoji parsing, fixed by Duck
+- Added space.
+  - Currently only available on a9, when a9 finishes it will be available from a2 and above.
+  - Added a Space Shop accessible via "$bread space shop"
+  - In order to access space you need to purchase a Bread Rocket in the Space Shop.
+  - The anarchy piece set can be found when bread rolling in space.
+- Special and rare bread can now be alchemized out of :bread: and other specials of the same rarity.
+- You can now use fractions in gifting to specify a custom amount.
+- Modified Chessatron dough equation to buff Chessatron Contraption.
+- Decreased Chessatron Contraption max level to 10.
+- Changed the Random Chess Piece price scheme to be the chessatron value divided by 6, rounded up to the nearest 50.
+- You can now buy up to 2,500 Random Chess Pieces and 5,000,000 Special Bread Packs per day.
+- You can now ascend to the highest ascension from any ascension if you have the ascension requirements on your current ascension.
+
 
 (todo) test reply ping
 
@@ -52,6 +59,7 @@ V portfolio command now shows how your portfolio changed in the last tick
 V multirollers now require compound rollers at higher levels
 
 """
+from __future__ import annotations
 
 import asyncio
 from datetime import datetime
@@ -61,8 +69,11 @@ import typing
 import os
 import importlib
 import math
+import traceback
+import re
 import time
 import io
+import copy
 
 from os import getenv
 from dotenv import load_dotenv
@@ -83,6 +94,9 @@ import bread.store as store
 import bread.utility as utility
 import bread.alchemy as alchemy
 import bread.stonks as stonks
+import bread.space as space
+import bread.generation as generation
+import bread.projects as projects
 
 # roles
 # average bread enjoyer
@@ -169,7 +183,9 @@ all_stonks = main_stonks + shadow_stonks
 ############   ASSIST FUNCTIONS  ###################
 ####################################################
 
-def get_channel_permission_level(ctx):
+def get_channel_permission_level(ctx: commands.Context):
+    """Returns the permission level for the channel the context was invoked in.
+    This will handle threads as well."""
     # print (f"getting channel permission level for {ctx.channel.name}")
     # first, can only roll in channels and not in threads
     if isinstance(ctx.channel, discord.threads.Thread):
@@ -185,40 +201,113 @@ def get_channel_permission_level(ctx):
     return permission_level
 
 def get_id_from_guild(guild: typing.Union[discord.Guild, int, str]) -> str:
-    if type(guild) is int:
-        guild_id = str(guild)
-    elif type(guild) is discord.Guild:
-        guild_id = str(guild.id)
-    elif type(guild) is str:
-        guild_id = guild
-    return guild_id
+    """Takes in a guild, integer or string and returns the guild id as a string."""
+    if isinstance(guild, int):
+        return str(guild)
+    elif isinstance(guild, discord.Guild):
+        return str(guild.id)
+    elif isinstance(guild, str):
+        return guild
+    else:
+        # If nothing fires, raise a TypeError.
+        raise TypeError(f"Incorrect guild type passed. Was expecting discord.Guild, int, or str, not {type(guild)}")
 
 def get_guild_from_id(guild_id: typing.Union[discord.Guild, int, str]) -> discord.Guild:
+    """Gets a discord.Guild object for the given guild id."""
     guild_id = get_id_from_guild(guild_id)
     return bot_ref.get_guild(int(guild_id))
 
 def get_name_from_guild(guild: typing.Union[discord.Guild, int, str]) -> str:
-    guild_id = get_id_from_guild(guild)
-    return bot_ref.get_guild(int(guild_id)).name
+    """Gets the a guild's name from a discord.Guild, int, or str object."""
+    guild_object = get_guild_from_id(guild)
 
-def get_display_name(member):
+    # If the bot doesn't have access to this guild (like if it got kicked), then guild will be None.
+    if guild_object is None:
+        return f"<Unknown guild {guild}>"
+    
+    return guild_object.name
+
+def get_id_from_user(user: typing.Union[discord.Member, int, str]) -> str:
+    """Takes in a member, integer or string and returns the member id as a string."""
+    if isinstance(user, int):
+        return str(user)
+    elif isinstance(user, discord.Member):
+        return str(user.id)
+    elif isinstance(user, str):
+        return user
+    else:
+        # If nothing fires, raise a TypeError.
+        raise TypeError(f"Incorrect user type passed. Was expecting discord.Member, int, or str, not {type(user)}")
+
+def get_display_name(member: discord.Member) -> str:
+    """Gets the display name of a discord.Member object."""
     return (member.global_name if (member.global_name is not None and member.name == member.display_name) else member.display_name)
 
-def parse_int(argument) -> int:
+def parse_int(argument: str) -> int:
     """Converts an argument to an integer, will remove commas along the way."""
-    return int(float(str(argument).replace(",", "")))
+    # If there's a decimal place then ignore everything after it.
+    if "." in str(argument):
+        arg = str(argument).replace(",", "")
 
-def is_digit(string) -> bool:
+        # Attempt to convert it to a float, this will ensure that it's something that is actually a number.
+        # If this breaks then discord.py will catch it and just have the argument be None.
+        # But, if this works then we know it's an actual number we're talking about.
+        float(arg)
+
+        # If the flaot conversion worked, then try to convert to an integer, but ignore what's after the decimal place.
+        return int(arg[:arg.rfind(".")])
+    
+    # If there's no decimal place then just try to convert the argument normally.
+    return int(str(argument).replace(",", ""))
+
+def is_int(argument: str) -> bool:
+    """Checks if an argument is an integer."""
+    try:
+        parse_int(argument)
+        return True
+    except ValueError:
+        return False
+
+def is_digit(string: str) -> bool:
     """Same as str.isdigit(), but will remove commas first."""
     return str(string).replace(",", "").isdigit()
 
-def is_numeric(string) -> bool:
+def is_numeric(string: str) -> bool:
     """Same as str.isnumeric(), but will remove commas first."""
     return str(string).replace(",", "").isnumeric()
 
-def is_decimal(string) -> bool:
+def is_decimal(string: str) -> bool:
     """Same as str.isdecimal(), but will remove commas first."""
     return str(string).replace(",", "").isdecimal()
+
+def parse_fraction(argument: str) -> tuple[int, int]:
+    """Attempts to parse an argument as a fraction.
+    This will raise an exception if it's unable to, which should be caught via `try` and `except`."""
+
+    # Each `([\d,]+)` matches a number (including commas.)
+    # This means the pattern matches a number followed by a slash followed by another number.
+    # So something like `5/8` will match it, but `w/o` is without a match.
+    match = re.match("^([\d,]+)\/([\d,]+)$", str(argument))
+
+    # If the match did not find anything.
+    if match is None:
+        raise commands.BadArgument
+    
+    argument = argument.replace(",", "") # Remove any commas that are in the numbers.
+    parts = argument.split("/")
+
+    numerator = int(parts[0])
+    denominator = int(parts[1])
+
+    return numerator, denominator
+
+def is_fraction(argument: str) -> bool:
+    """Returns a boolean for whether the given argument is a fraction."""
+    match = re.match("^([\d,]+)\/([\d,]+)$", str(argument))
+
+    return match is not None
+
+
 
 ####################################################
 ##############   JSON INTERFACE   ##################
@@ -266,7 +355,8 @@ class JSON_interface:
     ####################################
     #####      FILE STUFF
 
-    def internal_load(self):
+    def internal_load(self: typing.Self) -> None:
+        """Loads the Bread Game data from the JSON cog into the interface storage."""
         print("Bread JSON internal_load called")
 
 
@@ -293,7 +383,11 @@ class JSON_interface:
         print("Load process complete.")
 
     
-    def internal_save(self, JSON_cog = None):
+    def internal_save(
+            self: typing.Self,
+            JSON_cog = None
+        ) -> None:
+        """Saves the data in the interface storage to file via the JSON cog."""
         print("saving bread data")
         if JSON_cog is None:
             JSON_cog = bot_ref.get_cog("JSON")
@@ -307,7 +401,9 @@ class JSON_interface:
         
         
 
-    def create_backup(self):
+    def create_backup(self: typing.Self) -> None:
+        """Creates a backup of the interface storage.
+        The JSON cog's create_backup function is preferred over this, as this will only save the bread data."""
         #first, make sure there's a backup folder (relative path)
         folder_path = "backup/"
         if not os.path.exists(folder_path):
@@ -327,18 +423,17 @@ class JSON_interface:
     ####################################
     #####      INTERFACE
 
-    def get_account(self, user:typing.Union[discord.Member, int, str], guild: typing.Union[discord.Guild, int, str]) -> account.Bread_Account:
+    def get_account(
+            self: typing.Self,
+            user: typing.Union[discord.Member, int, str],
+            guild: typing.Union[discord.Guild, int, str]
+        ) -> account.Bread_Account:
+        """Returns an account.Bread_Account object representing the given user's account in the bread data."""
         if guild is None:
-            raise ValueError("Guild cannot be None")        
+            raise TypeError("Guild cannot be None")        
         
+        index = get_id_from_user(user)
         guild_id = get_id_from_guild(guild)
-
-        if type(user) is int:
-            index = str(user)
-        elif type(user) is discord.Member:
-            index = str(user.id)
-        else:
-            index = str(user)
 
         # if index in self.accounts:
         #     return self.accounts[index]
@@ -347,28 +442,36 @@ class JSON_interface:
         return account_raw
         
 
-    def set_account(self, user:typing.Union[discord.Member, int, str], user_account: account.Bread_Account, guild: typing.Union[discord.Guild, int, str]):
+    def set_account(
+            self: typing.Self,
+            user: typing.Union[discord.Member, int, str],
+            user_account: account.Bread_Account,
+            guild: typing.Union[discord.Guild, int, str]
+        ) -> None:
+        """Updates the bread data for a player based on an account.Bread_Account object."""
         if guild is None:   
-            raise ValueError("Guild cannot be None")
+            raise TypeError("Guild cannot be None")
         
-        if type(user) is int:
-            index = str(user)
-        elif type(user) is discord.Member:
-            index = str(user.id)
-        else:
-            index = str(user)
-
+        index = get_id_from_user(user)
         guild_id = get_id_from_guild(guild)
 
         # self.accounts[index] = user_account
         self.data[guild_id][index] = user_account.to_dict()
 
-    def has_account(self, user:discord.Member) -> bool:
+    def has_account(
+            self: typing.Self,
+            user: discord.Member
+        ) -> bool:
+        """Returns a boolean for whether the given member object has an account in the bread data."""
         index = str(user.id)
         guild = str(user.guild.id)
         return index in self.data[guild]
 
-    def get_all_user_accounts(self, guild: typing.Union[discord.Guild, int, str]) -> list:
+    def get_all_user_accounts(
+            self: typing.Self,
+            guild: typing.Union[discord.Guild, int, str]
+        ) -> list[account.Bread_Account]:
+        """Returns a list containing all user accounts."""
         guild_id = get_id_from_guild(guild)
         
         #return [account.Bread_Account.from_dict(index, self.data["bread"][index]) for index in self.data["bread"]]
@@ -379,13 +482,197 @@ class JSON_interface:
             # yield account.Bread_Account.from_dict(index, self.data["bread"][index])
         return output
 
-    def get_list_of_all_guilds(self) -> list:
+    def get_list_of_all_guilds(self: typing.Self) -> list[str]:
+        """Returns a list of all the guilds in the bread data."""
         return list(self.all_guilds)
+    
+    ####################################
+    #####      BREAD SPACE
+
+    def get_space_data(
+            self: typing.Self,
+            guild: typing.Union[discord.Guild, int, str]
+        ) -> dict:
+        """Returns the `space` custom file."""
+        return self.get_custom_file("space", guild=guild)
+    
+    def get_space_ascension(
+            self: typing.Self,
+            ascension_id: typing.Union[int, str],
+            guild: typing.Union[discord.Guild, int, str],
+            default: typing.Any = dict()
+        ) -> dict:
+        """Returns the space data for the given ascension."""
+        space_data = self.get_space_data(guild=guild)
+
+        return space_data.get(f"ascension_{ascension_id}", default)
+
+    def get_ascension_seed(
+            self: typing.Self,
+            ascension_id: typing.Union[int, str],
+            guild: typing.Union[discord.Guild, int, str]
+        ) -> str:
+        """Returns an ascension's seed, while creating one if it does not exist yet."""
+        ascension_data = self.get_space_ascension(ascension_id, guild)
+
+        if "seed" in ascension_data.keys():
+            return ascension_data["seed"]
+        
+        # If this ascension doesn't yet have a seed, create one
+
+        space_data = self.get_space_data(guild=guild)
+
+        new_seed = space.generate_galaxy_seed()
+
+        # The chance of this being needed is incredibly low, but just in case...
+        if self.ascension_from_seed(guild, new_seed) is not None:
+            while self.ascension_from_seed(guild, new_seed) is not None:
+                new_seed = space.generate_galaxy_seed()
+        
+        ascension_data["seed"] = new_seed
+        space_data[f"ascension_{ascension_id}"] = ascension_data
+
+        self.set_custom_file("space", file_data=space_data, guild=guild)
+
+        return new_seed
+    
+    def ascension_from_seed(
+            self: typing.Self,
+            guild: typing.Union[discord.Guild, int, str],
+            galaxy_seed: str
+        ) -> typing.Union[int, None]:
+        """Returns an integer (or None if nothing is found) for the ascension id that matches the given seed."""
+        space_data = self.get_space_data(guild=guild)
+
+        for key, value in space_data.items():
+            try:
+                if value.get("seed", None) == galaxy_seed:
+                    return int(key.replace("ascension_", ""))
+            except AttributeError:
+                continue
+        
+        return None
+
+    def get_day_seed(
+            self: typing.Self,
+            guild: typing.Union[discord.Guild, int, str]
+        ) -> str:
+        """Returns the day seed for the given guild in Bread Space."""
+        space_data = self.get_space_data(guild=guild)
+
+        return space_data.get("day_seed", "31004150_will_rule_the_world")
+
+    def get_tick_seed(
+            self: typing.Self,
+            guild: typing.Union[discord.Guild, int, str]
+        ) -> str:
+        """Returns the tick seed for the given guild in Bread Space."""
+        space_data = self.get_space_data(guild=guild)
+
+        return space_data.get("tick_seed", "the_game_:3")
+    
+    def get_trade_hub_data(
+            self: typing.Self,
+            guild: typing.Union[discord.Guild, int, str],
+            ascension: int,
+            galaxy_x: int,
+            galaxy_y: int
+        ) -> dict:
+        """Fetches a trade hub's data from the database. An empty dict will be returned if the trade hub is not found."""
+        space_data = self.get_space_data(guild)
+
+        ascension_data = space_data.get(f"ascension_{ascension}", {})
+
+        trade_hub_data = ascension_data.get("trade_hubs", {})
+
+        return trade_hub_data.get(f"{galaxy_x} {galaxy_y}", {})
+    
+    def update_trade_hub_data(
+            self: typing.Self,
+            guild: typing.Union[discord.Guild, int, str],
+            ascension: int,
+            galaxy_x: int,
+            galaxy_y: int,
+            new_data: dict
+        ) -> None:
+        """Sets the data for a trade hub to the given dictionary."""
+        space_data = self.get_space_data(guild)
+
+        ascension_data = space_data.get(f"ascension_{ascension}", {})
+
+        trade_hub_data = ascension_data.get("trade_hubs", {})
+
+        trade_hub_data[f"{galaxy_x} {galaxy_y}"] = new_data
+        ascension_data["trade_hubs"] = trade_hub_data
+        space_data[f"ascension_{ascension}"] = ascension_data
+
+        self.set_custom_file("space", space_data, guild=guild)
+    
+    def update_trade_hub_levelling_data(
+            self: typing.Self,
+            guild: typing.Union[discord.Guild, int, str],
+            ascension: int,
+            galaxy_x: int,
+            galaxy_y: int,
+            new_data: dict
+        ) -> None:
+        """Updates the progress of a trade hub's levelling to the given dictionary."""
+        existing = self.get_trade_hub_data(guild, ascension, galaxy_x, galaxy_y)
+
+        existing["level_progress"] = new_data
+
+        self.update_trade_hub_data(
+            guild = guild,
+            ascension = ascension,
+            galaxy_x = galaxy_x,
+            galaxy_y = galaxy_y,
+            new_data = existing
+        )
+
+    
+    def update_project_data(
+            self: typing.Self,
+            guild: typing.Union[discord.Guild, int, str],
+            ascension: int,
+            galaxy_x: int,
+            galaxy_y: int,
+            project_id: int, # Should be between 1 and 3.
+            new_data: dict
+        ) -> None:
+        """Updates the data regarding a project's progress to the given dictionary."""
+        space_data = self.get_space_data(guild)
+
+        ascension_data = space_data.get(f"ascension_{ascension}", {})
+
+        trade_hub_data = ascension_data.get("trade_hubs", {})
+
+        tile_data = trade_hub_data.get(f"{galaxy_x} {galaxy_y}", {})
+
+        project_progress = tile_data.get("project_progress", {})
+
+        project_progress[f"project_{project_id}"] = new_data
+
+        tile_data["project_progress"] = project_progress
+        trade_hub_data[f"{galaxy_x} {galaxy_y}"] = tile_data
+        ascension_data["trade_hubs"] = trade_hub_data
+        space_data[f"ascension_{ascension}"] = ascension_data
+
+        self.set_custom_file("space", space_data, guild=guild)
+        
+        
+            
+        
+
 
     ####################################
     #####      INTERFACE NICHE
 
-    def get_custom_file(self, label:str, guild: typing.Union[discord.Guild, int, str]):
+    def get_custom_file(
+            self: typing.Self,
+            label: str,
+            guild: typing.Union[discord.Guild, int, str]
+        ) -> dict:
+        """Returns the specific data for the given custom file."""
         guild_id = get_id_from_guild(guild)
 
         if label in self.data[guild_id]:
@@ -393,30 +680,58 @@ class JSON_interface:
         else:
             return dict()
 
-    def set_custom_file(self, label:str, file_data:dict, guild: typing.Union[discord.Guild, int, str]):
+    def set_custom_file(
+            self: typing.Self,
+            label: str,
+            file_data: dict,
+            guild: typing.Union[discord.Guild, int, str]
+        ) -> None:
+        """Sets a custom file to the given dictionary."""
         guild_id = get_id_from_guild(guild)
 
         self.data[guild_id][label] = file_data
 
-    def get_guild_info(self, guild: typing.Union[discord.Guild, int, str]) -> dict:
+    def get_guild_info(
+            self: typing.Self,
+            guild: typing.Union[discord.Guild, int, str]
+        ) -> dict:
+        """Returns the data for a specific guild."""
         guild_id = get_id_from_guild(guild)
         if "guild_info" not in self.data[guild_id].keys():
             self.data[guild_id]["guild_info"] = dict()
-            guild = bot_ref.get_guild(int(guild_id))
-            self.data[guild_id]["guild_info"]["name"] = guild.name
+
+            guild_name = get_name_from_guild(guild_id)
+            self.data[guild_id]["guild_info"]["name"] = guild_name
 
 
         return self.data[guild_id]["guild_info"]
 
-    def set_guild_info(self, guild_info: dict, guild: typing.Union[discord.Guild, int, str]):
+    def set_guild_info(
+            self: typing.Self,
+            guild_info: dict,
+            guild: typing.Union[discord.Guild, int, str]
+        ) -> None:
+        """Sets a guild's data to the given dictionary."""
         guild_id = get_id_from_guild(guild)
         self.data[guild_id]["guild_info"] = guild_info
 
-    def get_rolling_channel(self, guild: typing.Union[discord.Guild, int, str]) -> str:
+    def get_rolling_channel(
+            self: typing.Self,
+            guild: typing.Union[discord.Guild, int, str]
+        ) -> str:
+        """Gets the id of the rolling channel for the given guild."""
         guild_info = self.get_guild_info(guild)
         if "rolling_channel" not in guild_info.keys():
             return "<#967544442468843560>" # bread roll channel link in default guild
         return guild_info["rolling_channel"]
+    
+    def get_approved_admins(
+            self: typing.Self,
+            guild: typing.Union[discord.Guild, int, str]
+        ) -> list[str]:
+        """Gives a list of user ids for the approved admins in the given guild."""
+        guild_data = self.get_guild_info(guild)
+        return guild_data.get("approved_admins", [])
 
 
     ####################################
@@ -424,18 +739,17 @@ class JSON_interface:
 
     
 
-    def get_file_for_user(self, user: typing.Union[discord.Member, int, str], guild: typing.Union[discord.Guild, int, str]) -> dict: 
+    def get_file_for_user(
+            self: typing.Self,
+            user: typing.Union[discord.Member, int, str],
+            guild: typing.Union[discord.Guild, int, str]
+        ) -> dict: 
+        """Gets the dictionary of the given member's stats."""
         guild_id = get_id_from_guild(guild)
         if guild_id not in self.data.keys():
             self.data[guild_id] = dict()
 
-
-        if type(user) is int:
-            key = str(user)
-        elif type(user) is discord.Member:
-            key = str(user.id)
-        else:
-            key = str(user)
+        key = get_id_from_user(user)
         #print("Searching database for file for "+user.display_name)
         if key in self.data[guild_id]:
             #print("Found")
@@ -471,14 +785,45 @@ class Bread_cog(commands.Cog, name="Bread"):
     json_interface = JSON_interface()
     currently_interacting = list()
 
-    def __init__(self, bot):
-        #print("bread __init__ called")
+    def __init__(
+            self: typing.Self,
+            bot: commands.Bot
+        ) -> None:
         self.bot = bot
         self.daily_task.start()
 
-    def cog_unload(self):
+        bot.json_interface = self.json_interface
+
+    def cog_unload(self: typing.Self):
         self.daily_task.cancel()
         pass
+
+    def scramble_random_seed(self: typing.Self) -> None:
+        """Scrambles the random seed to make it harder to predict."""
+        try:
+            system_random = random.SystemRandom()
+            
+            all_guilds = self.json_interface.all_guilds
+
+            # Get the stonk data to use the shadow stonk values of a randomly selected guild.
+            stonks_file = self.json_interface.get_custom_file("stonks", guild = system_random.choice(all_guilds))
+
+            stonk_values = []
+            for stonk in shadow_stonks:
+                stonk_values.append(stonks_file.get(stonk, system_random.randint(25, 1000)))
+            
+            system_random.shuffle(stonk_values)
+
+            base = int.from_bytes(os.urandom(16))
+            mod = int.from_bytes(os.urandom(1024))
+            sum_mult_1 = stonk_values[0] * stonk_values[1]
+            sum_mult_2 = stonk_values[2] * stonk_values[3]
+
+            seed = int(base * (sum_mult_1 / sum_mult_2)) * mod
+
+            random.seed(seed)
+        except:
+            random.seed(os.urandom(1024))
 
     ########################################################################################################################
     #####      TASKS
@@ -486,10 +831,14 @@ class Bread_cog(commands.Cog, name="Bread"):
     reset_time = None
 
     @tasks.loop(minutes=60)
-    async def daily_task(self):
+    async def daily_task(self: typing.Self):
         # NOTE: THIS LOOP CANNOT BE ALTERED ONCE STARTED, EVEN BY RELOADING. MUST BE STOPPED MANUALLY
         time = datetime.now()
         print (time.strftime("Hourly bread loop running at %H:%M:%S"))
+        
+        # Scramble the random seed.
+        # The seed doesn't really need to be scrambled every hour, but it doesn't hurt.
+        self.scramble_random_seed()
 
         self.synchronize_usernames_internal()
         self.json_interface.internal_save() # Save every hour
@@ -506,13 +855,27 @@ class Bread_cog(commands.Cog, name="Bread"):
         # print (f"Hour +15 %6 is {(time.hour + 15) % 6}")
         # print (f"Hour -15 %6 is {(time.hour - 15) % 6}")
         if (time.hour - 12) % 6 == 0:
+            self.space_tick()
+
             print("stonk fluctuate called")
 
             self.stonk_fluctuate_internal()
             await self.stonks_announce()
     
+    def space_tick(self: typing.Self) -> None:
+        """Bread Space related tasks that run at stonk ticks."""
+
+        all_guild_ids = self.json_interface.get_list_of_all_guilds()
+        for guild_id in all_guild_ids:
+            space_data = self.json_interface.get_space_data(guild=guild_id)
+
+            # Set a new tick seed.
+            space_data["tick_seed"] = space.generate_galaxy_seed()
+
+            self.json_interface.set_custom_file("space", file_data=space_data, guild=guild_id)
+    
     @daily_task.before_loop
-    async def before_daily(self):
+    async def before_daily(self: typing.Self):
         # This just waits until it's time for the first iteration.
         print("Starting Bread cog hourly loop, current time is {}.".format(datetime.now()))
 
@@ -532,7 +895,14 @@ class Bread_cog(commands.Cog, name="Bread"):
 
     previous_messages = dict()
 
-    async def announce(self, key, message: str):
+    async def announce(
+            self: typing.Self,
+            key: str,
+            content: str
+        ) -> None:
+        """Announces the given content to all guilds.
+        
+        The key argument is used to generate the save key, which is used to store previous messages and delete them when the next one is sent."""
 
         print("announce called")
         # load_dotenv()
@@ -560,7 +930,7 @@ class Bread_cog(commands.Cog, name="Bread"):
                 print(f"message deletion failed for {save_key}")
                 pass
             try:
-                message = await channel.send(message)
+                message = await channel.send(content)
                 self.previous_messages[save_key] = message
             except:
                 print(f"message sending failed for {save_key}")
@@ -589,13 +959,19 @@ class Bread_cog(commands.Cog, name="Bread"):
     ########################################################################################################################
     #####      SYNCHRONIZE_USERNAMES
 
-    def synchronize_usernames_internal(self):
+    def synchronize_usernames_internal(self: typing.Self) -> None:
+        """Syncronizes the internally stored usernames with the actual usernames of members."""
         # we get the guild and then all the members in it
         # guild = default_guild
 
         for guild_id in self.json_interface.get_list_of_all_guilds():
             # guild = self.bot.get_guild(default_guild)
             guild = self.bot.get_guild(int(guild_id))
+
+            # If the bot doesn't have access to the guild. For example, if the bot was kicked.
+            if guild is None:
+                continue
+
             all_members = guild.members
             
             print(f"synchronizing usernames for guild {get_name_from_guild(guild)}")
@@ -747,7 +1123,7 @@ class Bread_cog(commands.Cog, name="Bread"):
             pass
         
         #make chess board
-        board = Bread_cog.format_chess_pieces(file)
+        board = self.format_chess_pieces(file)
         if board != "":
             output += "\n" + board + "\n"
         
@@ -779,7 +1155,7 @@ class Bread_cog(commands.Cog, name="Bread"):
     )
     async def stats(self, ctx,
             user: typing.Optional[discord.Member] = commands.parameter(description = "The user to get the stats of."),
-            modifier: typing.Optional[str] = commands.parameter(description = "The modifier for the stats. Like 'chess' or 'gambit'.")
+            modifier: typing.Optional[str] = commands.parameter(description = "The modifier for the stats. Like 'chess', 'gambit', or 'space'.")
             ):
         #print("stats called for user "+str(user))
 
@@ -792,7 +1168,8 @@ class Bread_cog(commands.Cog, name="Bread"):
         archive_keywords = ["archive", "archived"]
         chess_keywords = ["chess", "chess pieces", "pieces"]
         gambit_keywords = ["gambit", "strategy", "gambit shop", "strategy shop"]
-        all_keywords = archive_keywords + chess_keywords + gambit_keywords
+        space_keywords = ["space"]
+        all_keywords = archive_keywords + chess_keywords + gambit_keywords + space_keywords
 
         if user is not None and modifier is None:
             names = [user.name, user.nick, user.global_name, user.display_name]
@@ -818,20 +1195,32 @@ class Bread_cog(commands.Cog, name="Bread"):
         print(f"stats called for user {user.display_name} by {ctx.author.display_name}")
 
         # get account
-        account = self.json_interface.get_account(user, ctx.guild.id)
+        user_account = self.json_interface.get_account(user, ctx.guild.id) # type: account.Bread_Account
+
+        # bread stats space
+        if (modifier is not None) and modifier.lower() in space_keywords:
+            await self.space_stats(ctx, user)
+            return
 
         # bread stats chess
         if modifier is not None and modifier.lower() in chess_keywords:
-            output = f"Chess pieces of {account.get_display_name()}:\n\n"
+            output = f"Chess pieces of {user_account.get_display_name()}:\n\n"
             for chess_piece in values.all_chess_pieces:
-                output += f"{chess_piece.text} - {account.get(chess_piece.text)}\n"
+                output += f"{chess_piece.text} - {user_account.get(chess_piece.text)}\n"
+            
+            if any(user_account.has(piece.text) for piece in values.all_anarchy_pieces):
+                output += "\n"
+                for anarchy_piece in values.all_anarchy_pieces:
+                    output += f"{anarchy_piece.text} - {user_account.get(anarchy_piece.text)}\n"
+
+
             await ctx.send(output)
             return
 
         # bread stats gambit
         if modifier is not None and modifier.lower() in gambit_keywords:
-            output = f"Gambit shop bonuses for {account.get_display_name()}:\n\n"
-            boosts = account.values.get("dough_boosts", {})
+            output = f"Gambit shop bonuses for {user_account.get_display_name()}:\n\n"
+            boosts = user_account.values.get("dough_boosts", {})
             for item in boosts.keys():
                 output += f"{item} - {boosts[item]}\n"
             if len(boosts) == 0:
@@ -841,84 +1230,88 @@ class Bread_cog(commands.Cog, name="Bread"):
 
         sn = utility.smart_number
 
-        output += f"Stats for: {account.get_display_name()}:\n\n"
-        output += f"You have **{sn(account.get_dough())} dough.**\n\n"
-        if account.has("earned_dough"):
-            output += f"You've found {sn(account.get('earned_dough'))} dough through all your rolls and {sn(self.get_portfolio_combined_value(user.id, guild=ctx.guild.id))} dough through stonks.\n"
-        if account.has("total_rolls"): 
-            output += f"You've bread rolled {account.write_number_of_times('total_rolls')} overall.\n"
+        output += f"Stats for: {user_account.get_display_name()}:\n\n"
+        output += f"You have **{sn(user_account.get_dough())} dough.**\n\n"
+        if user_account.has("earned_dough"):
+            output += f"You've found {sn(user_account.get('earned_dough'))} dough through all your rolls and {sn(self.get_portfolio_combined_value(user.id, guild=ctx.guild.id))} dough through stonks.\n"
+        if user_account.has("total_rolls"): 
+            output += f"You've bread rolled {user_account.write_number_of_times('total_rolls')} overall.\n"
         
-        if account.has("lifetime_gambles"):
-            output += f"You've gambled your dough {account.write_number_of_times('lifetime_gambles')}.\n"
-        if account.has("max_daily_rolls"):
-            if account.get('daily_rolls') < 0:
-                output += f"You have {sn(-account.get('daily_rolls'))} stored rolls, plus a maximum of {sn(account.get('max_daily_rolls'))} daily rolls.\n"
+        if user_account.has("lifetime_gambles"):
+            output += f"You've gambled your dough {user_account.write_number_of_times('lifetime_gambles')}.\n"
+        if user_account.has("max_daily_rolls"):
+            if user_account.get('daily_rolls') < 0:
+                output += f"You have {sn(-user_account.get('daily_rolls'))} stored rolls, plus a maximum of {sn(user_account.get('max_daily_rolls'))} daily rolls.\n"
             else:
-                output += f"You've rolled {sn(account.get('daily_rolls'))} of {account.write_number_of_times('max_daily_rolls')} today.\n"
-        if account.get('max_days_of_stored_rolls') > 1:
-            output += f"You can store rolls for up to {account.get('max_days_of_stored_rolls')} days.\n"
-        if account.has("loaf_converter"):
-            output += f"You have {account.write_count('loaf_converter', 'Loaf Converter')}"  
-            if account.has("LC_booster"):
-                LC_booster_level = account.get("LC_booster")
+                output += f"You've rolled {sn(user_account.get('daily_rolls'))} of {user_account.write_number_of_times('max_daily_rolls')} today.\n"
+        if user_account.get('max_days_of_stored_rolls') > 1:
+            output += f"You can store rolls for up to {user_account.get('max_days_of_stored_rolls')} days.\n"
+        if user_account.has("loaf_converter"):
+            output += f"You have {user_account.write_count('loaf_converter', 'Loaf Converter')}"  
+            if user_account.has("LC_booster"):
+                LC_booster_level = user_account.get("LC_booster")
                 multiplier = 1
                 if LC_booster_level >= 1:
                     multiplier = 2 ** LC_booster_level 
-                boosted_amount = account.get("loaf_converter") * multiplier
+                boosted_amount = user_account.get("loaf_converter") * multiplier
                 output += f", which, with Recipe Refinement level {LC_booster_level}, makes you {boosted_amount} times more likely to find special items.\n"
             else:
                 output += ".\n"
-        if account.has(values.omega_chessatron.text):
-            output += f"With your {account.write_count(values.omega_chessatron.text, 'Omega Chessatron')}, each new chessatron is worth {sn(account.get_chessatron_dough_amount(True))} dough.\n"
-        if account.has("multiroller"):
-            output += f"With your {account.write_count('multiroller', 'Multiroller')}, you roll {utility.write_number_of_times(2 ** account.get('multiroller'))} with each command. "
-        if account.has("compound_roller"):
-            output += f"You also get {utility.write_count(2 ** account.get('compound_roller'), 'roll')} per message with your {account.write_count('compound_roller', 'Compound Roller')}.\n"
+        if user_account.has(values.omega_chessatron.text):
+            output += f"With your {user_account.write_count(values.omega_chessatron.text, 'Omega Chessatron')}, each new chessatron is worth {sn(user_account.get_chessatron_dough_amount(True))} dough.\n"
+        if user_account.has("multiroller"):
+            output += f"With your {user_account.write_count('multiroller', 'Multiroller')}, you roll {utility.write_number_of_times(2 ** user_account.get('multiroller'))} with each command. "
+        if user_account.has("compound_roller"):
+            output += f"You also get {utility.write_count(2 ** user_account.get('compound_roller'), 'roll')} per message with your {user_account.write_count('compound_roller', 'Compound Roller')}.\n"
         else:
             output += "\n"
 
         # ascension/prestige shop items
-        if account.has("prestige_level", 1):
+        if user_account.has("prestige_level", 1):
             output += "\n"
-            if account.has("gamble_level"):
-                output += f"You have level {account.get('gamble_level')} of the High Roller Table.\n"
-            if account.has("max_daily_rolls_discount"):
-                output += f"You have {utility.write_count(account.get('max_daily_rolls_discount'), 'Daily Discount Card')}.\n"
-            if account.has("loaf_converter_discount"):
-                output += f"You have {utility.write_count(account.get('loaf_converter_discount'), 'Self Converting Yeast level')}.\n"
-            if account.has ("chess_piece_equalizer"):
-                output += f"With level {account.get('chess_piece_equalizer')} of the Chess Piece Equalizer, you get {store.chess_piece_distribution_levels[account.get('chess_piece_equalizer')]}% white pieces.\n"
-            if account.has("moak_booster"):
-                output += f"With level {account.get('moak_booster')} of the Moak Booster, you get {round((store.moak_booster_multipliers[account.get('moak_booster')]-1)*100)}% more Moaks.\n"
-            if account.has("chessatron_shadow_boost"):
-                output += f"With level {account.get('chessatron_shadow_boost')} of the Chessatron Contraption, you get {account.get_shadowmega_boost_amount()} more dough per Chessatron.\n"
-            if account.has("shadow_gold_gem_luck_boost"):
-                output += f"With level {account.get('shadow_gold_gem_luck_boost')} of Ethereal Shine, you get {utility.write_count(account.get_shadow_gold_gem_boost_count(), 'more LC')} worth of gem luck.\n"
-            if account.has("first_catch_level"):
-                output += f"With First Catch of the Day, your first {utility.write_count(account.get('first_catch_level'), 'special item')} each day will be worth 4x more.\n"
+            if user_account.has("gamble_level"):
+                output += f"You have level {user_account.get('gamble_level')} of the High Roller Table.\n"
+            if user_account.has("max_daily_rolls_discount"):
+                output += f"You have {utility.write_count(user_account.get('max_daily_rolls_discount'), 'Daily Discount Card')}.\n"
+            if user_account.has("loaf_converter_discount"):
+                output += f"You have {utility.write_count(user_account.get('loaf_converter_discount'), 'Self Converting Yeast level')}.\n"
+            if user_account.has ("chess_piece_equalizer"):
+                output += f"With level {user_account.get('chess_piece_equalizer')} of the Chess Piece Equalizer, you get {store.chess_piece_distribution_levels[user_account.get('chess_piece_equalizer')]}% white pieces.\n"
+            if user_account.has("moak_booster"):
+                output += f"With level {user_account.get('moak_booster')} of the Moak Booster, you get {round((store.moak_booster_multipliers[user_account.get('moak_booster')]-1)*100)}% more Moaks.\n"
+            if user_account.has("chessatron_shadow_boost"):
+                output += f"With level {user_account.get('chessatron_shadow_boost')} of the Chessatron Contraption, your Omega Chessatrons are {round(user_account.get_shadowmega_boost_amount() * 100 - 100)}% more powerful than normal.\n"
+            if user_account.has("shadow_gold_gem_luck_boost"):
+                output += f"With level {user_account.get('shadow_gold_gem_luck_boost')} of Ethereal Shine, you get {utility.write_count(user_account.get_shadow_gold_gem_boost_count(), 'more LC')} worth of gem luck.\n"
+            if user_account.has("first_catch_level"):
+                output += f"With First Catch of the Day, your first {utility.write_count(user_account.get('first_catch_level'), 'special item')} each day will be worth 4x more.\n"
+            if user_account.has("fuel_refinement"):
+                output += f"You get {round(user_account.get_fuel_refinement_boost() * 100 - 100)}% more fuel with {user_account.write_count('fuel_refinement', 'level')} of Fuel Refinement.\n"
+            if user_account.has("corruption_negation"):
+                output += f"You have a {round(abs(user_account.get_corruption_negation_multiplier() * 100 - 100))}% lower chance of a loaf becoming corrupted with {user_account.write_count('corruption_negation', 'level')} of Corruption Negation.\n"
 
         output_2 = ""
 
         output_2 += "\nIndividual stats:\n"
-        if account.has(":bread:"):
-            output_2 += f":bread: - {sn(account.get(':bread:'))}\n"
+        if user_account.has(":bread:"):
+            output_2 += f":bread: - {sn(user_account.get(':bread:'))}\n"
 
         # list all special breads
-        # special_breads = account.get_all_items_with_attribute("special_bread")
+        # special_breads = user_account.get_all_items_with_attribute("special_bread")
         # selected_special_breads = list()
         # for i in range(len(special_breads)):
         #     # skip the ones that are also rare
         #     if "rare_bread" in special_breads[i].attributes:
         #         continue
             
-        #     if account.has(special_breads[i].text):
+        #     if user_account.has(special_breads[i].text):
         #         selected_special_breads.append(special_breads[i])
 
         # for i in range(len(selected_special_breads)):
 
         #     text = selected_special_breads[i].text
 
-        #     output_2 += f"{account.get(text)} {text} "
+        #     output_2 += f"{user_account.get(text)} {text} "
         #     if i != len(selected_special_breads) - 1:
         #         output_2 += ", "
         #     else:
@@ -929,21 +1322,21 @@ class Bread_cog(commands.Cog, name="Bread"):
         #iterate through all the display list and print them
         for item_name in display_list:
 
-            display_items = account.get_all_items_with_attribute(item_name)
+            display_items = user_account.get_all_items_with_attribute(item_name)
 
             cleaned_items = []
             for display_item in display_items:
 
-                if account.has(display_item.text, 1):
+                if user_account.has(display_item.text, 1):
                     cleaned_items.append(display_item)
                     # remove the item from the list if it's quantity zero           
 
             for i in range(len(cleaned_items)):
 
                 text = cleaned_items[i].text
-                # if account.get(text) == 0:
+                # if user_account.get(text) == 0:
                 #     continue #skip empty values
-                output_2 += f"{sn(account.get(text))} {text} "
+                output_2 += f"{sn(user_account.get(text))} {text} "
                 if i != len(cleaned_items) - 1:
                     output_2 += ", "
                 else:
@@ -952,48 +1345,48 @@ class Bread_cog(commands.Cog, name="Bread"):
         output_3 = ""
 
         #make chess board
-        board = Bread_cog.format_chess_pieces(account.values)
+        board = self.format_chess_pieces(user_account.values)
         if board != "":
             output_3 += "\n" + board + "\n"
 
         # list highest roll stats
 
-        if account.has("highest_roll", 11):
-            output_3 += f"Your highest roll was {account.get('highest_roll')}.\n"
+        if user_account.has("highest_roll", 11):
+            output_3 += f"Your highest roll was {user_account.get('highest_roll')}.\n"
             comma = False
-            if account.has("eleven_breads"):
-                output_3 += f"11 - {account.write_number_of_times('eleven_breads')}"
+            if user_account.has("eleven_breads"):
+                output_3 += f"11 - {user_account.write_number_of_times('eleven_breads')}"
                 comma = True
-            if account.has("twelve_breads"):
+            if user_account.has("twelve_breads"):
                 if comma:
                     output_3 += ", "
-                output_3 += f"12 - {account.write_number_of_times('twelve_breads')}"
+                output_3 += f"12 - {user_account.write_number_of_times('twelve_breads')}"
                 comma = True
-            if account.has("thirteen_breads"):
+            if user_account.has("thirteen_breads"):
                 if comma:
                     output_3 += ", "
-                output_3 += f"13 - {account.write_number_of_times('thirteen_breads')}"
+                output_3 += f"13 - {user_account.write_number_of_times('thirteen_breads')}"
                 comma = True
-            if account.has("fourteen_or_higher"):
+            if user_account.has("fourteen_or_higher"):
                 if comma:
                     output_3 += ", "
-                output_3 += f"14+ - {account.write_number_of_times('fourteen_or_higher')}"
+                output_3 += f"14+ - {user_account.write_number_of_times('fourteen_or_higher')}"
                 comma = True
             if comma:
                 output_3 += "."
             output_3 += "\n"
 
         # list 10 and 1 roll stats
-        output_3 += f"You've found a single solitary loaf {account.write_number_of_times('natural_1')}, and the full ten loaves {account.write_number_of_times('ten_breads')}.\n"
+        output_3 += f"You've found a single solitary loaf {user_account.write_number_of_times('natural_1')}, and the full ten loaves {user_account.write_number_of_times('ten_breads')}.\n"
 
         # list the rest of the stats
 
-        if account.has("lottery_win"):
-            output_3 += f"You've won the lottery {account.write_number_of_times('lottery_win')}!\n"
-        if account.has("chess_pieces"):
-            output_3 += f"You have {account.write_count('chess_pieces', 'Chess Piece')}.\n"
-        if account.has("special_bread"):
-            output_3 += f"You have {account.write_count('special_bread', 'Special Bread')}.\n"
+        if user_account.has("lottery_win"):
+            output_3 += f"You've won the lottery {user_account.write_number_of_times('lottery_win')}!\n"
+        if user_account.has("chess_pieces"):
+            output_3 += f"You have {user_account.write_count('chess_pieces', 'Chess Piece')}.\n"
+        if user_account.has("special_bread"):
+            output_3 += f"You have {user_account.write_count('special_bread', 'Special Bread')}.\n"
         
         if len(output) + len(output_2) + len(output_3) < 1900:
             await ctx.reply( output + output_2 + output_3 )
@@ -1023,6 +1416,9 @@ class Bread_cog(commands.Cog, name="Bread"):
     async def export(self, ctx,
             person: typing.Optional[discord.Member] = commands.parameter(description = "Who to export the stats of."),
         ):
+        if get_channel_permission_level(ctx) < PERMISSION_LEVEL_BASIC:
+            await ctx.reply(f"You can't do that here, please do it in {self.json_interface.get_rolling_channel(ctx.guild.id)}.")
+            return
         if person is None:
             person = ctx.author
 
@@ -1384,6 +1780,65 @@ loaf_converter""",
         
         # set the account
         self.json_interface.set_account(ctx.author, user_account, ctx.guild.id)
+
+
+    ########################################################################################################################
+    #####      BREAD MUTLIROLLER
+
+    @bread.command(
+        name = "multiroller",
+        brief = "Modify your Multiroller Terminal settings.",
+        description = "Modify your Multiroller Terminal settings.",
+        aliases = ["multiroller_terminal"]
+    )
+    async def multiroller(self, ctx,
+            setting: typing.Optional[str] = commands.parameter(description = "The number of multirollers to set as active, or 'off'.")
+        ):
+        user_account = self.json_interface.get_account(ctx.author.id, ctx.guild.id)
+
+        if user_account.get("multiroller_terminal") == 0:
+            await ctx.reply("You do not yet possess the Multiroller Terminal.")
+            return
+
+        if get_channel_permission_level(ctx) < PERMISSION_LEVEL_ACTIVITIES:
+            await ctx.reply(f"Thank you for trying to use the Multiroller Terminal, please move to {self.json_interface.get_rolling_channel(ctx.guild.id)} for configuring the terminal.")
+            return
+        
+        if setting is None:
+            await ctx.reply("Please provide a Multiroller Terminal setting.\nEither a number of active Multirollers to set or 'off' to shutdown the terminal and use the maximum possible.")
+            return
+        
+        if setting == "off":
+            user_account.set("active_multirollers", -1)
+
+            self.json_interface.set_account(ctx.author.id, user_account, ctx.guild.id)
+
+            await ctx.reply("The Multiroller Terminal has been turned off.")
+            return
+        
+        try:
+            setting = parse_int(setting)
+        except:
+            await ctx.reply("I do not recognize that setting, the Multiroller Terminal settings have not been changed.")
+            return
+        
+        if setting < 0:
+            await ctx.reply("You cannot set a negative number of Multirollers to be active.")
+            return
+        
+        if setting > user_account.get("multiroller"):
+            await ctx.reply("You cannot have a number of active Multirollers that is greater than the number of Multirollers you have.")
+            return
+        
+        user_account.set("active_multirollers", setting)
+
+        self.json_interface.set_account(ctx.author.id, user_account, ctx.guild.id)
+
+        await ctx.reply(f"You have set the number of active Multirollers to {setting}.")
+        return
+        
+
+
         
 
 
@@ -1420,7 +1875,8 @@ loaf_converter""",
         rolls_remaining = user_account.get("max_daily_rolls") - user_account.get("daily_rolls")
         #if ctx.channel.name in earnable_channels:
         if get_channel_permission_level(ctx) == PERMISSION_LEVEL_MAX:
-            user_multiroll = 2 ** (user_account.get("multiroller")) # 2 to power of multiroller
+            multirollers = user_account.get_active_multirollers()
+            user_multiroll = 2 ** (multirollers) # 2 to power of multiroller
             user_multiroll = min(user_multiroll, rolls_remaining) 
             # kick user out if they're out of rolls
             if rolls_remaining == 0:
@@ -1440,9 +1896,12 @@ loaf_converter""",
         ######
         ############################################################
 
-        result = rolls.bread_roll(roll_luck= user_luck, 
-                                    roll_count= user_multiroll,
-                                    user_account=user_account)
+        result = rolls.bread_roll(
+            roll_luck= user_luck, 
+            roll_count= user_multiroll,
+            user_account=user_account,
+            json_interface=self.json_interface
+        )
 
         ############################################################
         ######
@@ -1466,7 +1925,7 @@ loaf_converter""",
         
         #can be rolled but not recorded
         elif get_channel_permission_level(ctx) < PERMISSION_LEVEL_MAX:
-            if user_account.get("daily_rolls") == 0:
+            if user_account.get("daily_rolls") <= 0:
                 allowed_commentary = f"Thank you for rolling. Remember, any new rolls will only be saved in {self.json_interface.get_rolling_channel(ctx.guild.id)}."
                 record = True
             else:
@@ -1654,6 +2113,7 @@ loaf_converter""",
             pass
 
         await self.do_chessboard_completion(ctx)
+        await self.anarchy_chessatron_completion(ctx)
 
         # self.json_interface.set_account(ctx.author, user_account, ctx.guild.id)
 
@@ -1663,7 +2123,19 @@ loaf_converter""",
     ########################################################################################################################
     #####      do CHESSBOARD COMPLETION
 
-    async def do_chessboard_completion(self, ctx, force: bool = False, amount = None):
+    async def do_chessboard_completion(
+            self: typing.Self,
+            ctx: commands.Context,
+            force: bool = False,
+            amount: int = None
+        ) -> None:
+        """Runs the chessatron creation animation, as well as making the chessatrons themselves.
+
+        Args:
+            ctx (commands.Context): The context the chessatron creation was invoked in.
+            force (bool, optional): Whether to override `auto_chessatron`. Defaults to False.
+            amount (int, optional): The amount of chessatrons to make. Will make as many as possible if None is provided. Defaults to None.
+        """
 
         user_account = self.json_interface.get_account(ctx.author, guild=ctx.guild.id)
 
@@ -1690,7 +2162,7 @@ loaf_converter""",
 
         # print(f"valid trons: {valid_trons}, amount: {amount}")
 
-        board = Bread_cog.format_chess_pieces(user_account.values)
+        board = self.format_chess_pieces(user_account.values)
         chessatron_value = user_account.get_chessatron_dough_amount(include_prestige_boost=False) 
         trons_to_make = min(valid_trons, amount)
 
@@ -1767,7 +2239,6 @@ loaf_converter""",
         help="Toggle auto chessatron on or off. If no argument is given, it will create as many chessatrons for you as it can.",
         usage="on/off",
         brief="Toggle auto chessatron on or off."
-
     )
     async def chessatron(self, ctx,
             arg: typing.Optional[str] = commands.parameter(description = "Turn Auto Chessatron 'on' or 'off', or a number to make that many trons.")
@@ -1874,20 +2345,20 @@ loaf_converter""",
         
 
         if number_of_chessatrons is None:
-            number_of_chessatrons = total_gem_count // 32
+            number_of_chessatrons = total_gem_count // 64
         else:
-            number_of_chessatrons = min(total_gem_count // 32, number_of_chessatrons)
+            number_of_chessatrons = min(total_gem_count // 64, number_of_chessatrons)
 
         
         
 
         # gem_count = user_account.get(values.gem_red.text)
 
-        if total_gem_count < 32 or number_of_chessatrons == 0:
-            await utility.smart_reply(ctx, f"You need at least 32 gems to create a chessatron.")
+        if total_gem_count < 64 or number_of_chessatrons == 0:
+            await utility.smart_reply(ctx, f"You need at least 64 gems to create a chessatron.")
             return
 
-        gems_needed = number_of_chessatrons * 32
+        gems_needed = number_of_chessatrons * 64
 
         if gems_needed > red_gems: # if not enough red gems to make all trons
             gems_needed -= red_gems # then use all red gems in our count
@@ -1950,15 +2421,15 @@ loaf_converter""",
 
         # if arg is None:
         #     arg = None
-        #     number_of_chessatrons = gem_count // 32 # integer division
+        #     number_of_chessatrons = gem_count // 64 # integer division
         # elif is_numeric(arg):
         #     arg = parse_int(arg)
-        #     number_of_chessatrons = min(gem_count // 32,arg) # integer division
+        #     number_of_chessatrons = min(gem_count // 64,arg) # integer division
         # else:
         #     arg = None
-        #     number_of_chessatrons = gem_count // 32 # integer division
+        #     number_of_chessatrons = gem_count // 64 # integer division
 
-        # user_account.increment(values.gem_red.text, -32*number_of_chessatrons)
+        # user_account.increment(values.gem_red.text, -64*number_of_chessatrons)
 
         user_account.increment(values.black_pawn.text, 8*number_of_chessatrons)
         user_account.increment(values.black_rook.text, 2*number_of_chessatrons)
@@ -2097,7 +2568,7 @@ loaf_converter""",
         else:
             description += "\n**You can ascend!**\n\n"
 
-        description += """If you would like to ascend, please type "I would like to ascend". Remember that this is a permanent action that cannot be undone."""
+        description += """If you would like to ascend, please type "I would like to ascend".\nIf you would like to ascend to the highest available ascension, please type "Take me to the latest ascension".\nRemember that this is a permanent action that cannot be undone."""
 
         await utility.smart_reply(ctx, description)
 
@@ -2110,19 +2581,31 @@ loaf_converter""",
             return 
         
         response = msg.content
-        if "i would like to ascend" in response.lower():
-            pass
+        next_ascension_msg = "i would like to ascend" in response.lower()
+        latest_ascension_msg = "take me to the latest ascension" in response.lower()
+
+        if next_ascension_msg and latest_ascension_msg:
+            await utility.smart_reply(ctx, "Contradictory messages, I see. Please come back when you are feeling more decisive.")
+            return
+        elif next_ascension_msg:
+            # now we can ascend
+            #user_account.increment(values.gem_gold.text, -1) # first remove the golden gem
+            user_account.increase_prestige_level()
+
+            description = f"Congratulations! You have ascended to a higher plane of existence. You are now at level {user_account.get_prestige_level()} of ascension. I wish you the best of luck on your journey!\n\n"
+            description += f"You have also recieved **1 {values.ascension_token.text}**. You will recieve more as you get more daily rolls. You can spend it at the hidden bakery to buy special upgrades. Find it with \"$bread hidden_bakery\"."
+            await utility.smart_reply(ctx, description)
+        elif latest_ascension_msg:
+            pre_ascension_tokens = user_account.get(values.ascension_token.text)
+            user_account.increase_prestige_to_goal(max_prestige_level)
+            post_ascension_tokens = user_account.get(values.ascension_token.text)
+
+            description = f"Congratulations! You have ascended to the highest plane of existence. You are now at level {user_account.get_prestige_level()} of ascension. I wish you the best of luck on your journey!\n\n"
+            description += f"You have also recieved **{post_ascension_tokens - pre_ascension_tokens} {values.ascension_token.text}**. You will recieve more as you get more daily rolls. You can spend it at the hidden bakery to buy special upgrades. Find it with \"$bread hidden_bakery\"."
+            await utility.smart_reply(ctx, description)
         else:
             await utility.smart_reply(ctx, "If you are not ready yet, that is okay.")
             return 
-
-        # now we can ascend
-        #user_account.increment(values.gem_gold.text, -1) # first remove the golden gem
-        user_account.increase_prestige_level()
-
-        description = f"Congratulations! You have ascended to a higher plane of existence. You are now at level {user_account.get_prestige_level()} of ascension. I wish you the best of luck on your journey!\n\n"
-        description += f"You have also recieved **1 {values.ascension_token.text}**. You will recieve more as you get more daily rolls. You can spend it at the hidden bakery to buy special upgrades. Find it with \"$bread hidden_bakery\"."
-        await utility.smart_reply(ctx, description)
 
         # and save the account
         self.json_interface.set_account(ctx.author, user_account, guild = ctx.guild.id)
@@ -2199,6 +2682,19 @@ loaf_converter""",
             output += f"Welcome to the hidden bakery! All upgrades in this shop are permanent, and persist through ascensions. You have **{user_account.get(values.ascension_token.text)} {values.ascension_token.text}**.\n\*Prices subject to change.\nHere are the items available for purchase:\n\n"
             for item in items:
                 output += f"\t**{item.display_name}** - {item.get_price_description(user_account)}\n{item.description(user_account)}\n\n"
+
+            # Add lines for non-purchasable items that have a requirement if the item isn't at the max level.
+            purchasable_set = set(items)
+            item_set = set(store.prestige_store_items)
+            non_purchasable_items = item_set - purchasable_set # type: set[store.Prestige_Store_Item]
+            for item in list(non_purchasable_items):
+                if user_account.get(item.name) >= item.max_level(user_account):
+                    continue
+
+                if item.listed_requirement is None:
+                    continue
+
+                output += f"*{item.display_name}: {item.listed_requirement}*\n\n"
             
             if len(items) == 0:
                 output += "**It looks like you've bought everything here. Well done.**"
@@ -2214,6 +2710,8 @@ loaf_converter""",
     # this is the gambit shop, which can be accessed at any point
     @bread.command(
         aliases = ["strategy_store", "strategy_shop", "gambit", "strategy"],
+        brief = "Fine tune your strategies.",
+        description = "Fine tune your strategies."
     )
     async def gambit_shop(self, ctx):
         
@@ -2365,6 +2863,15 @@ loaf_converter""",
                 # removed item is None check, as item will never be None. see above.
                 await ctx.reply("Sorry, but you've already purchased as many of that as you can.")
                 return
+            
+            try:
+                if item.find_max_purchasable_count(user_account) <= 0:
+                    await ctx.reply("Sorry, but you've already purchased as many of that as you can.")
+                    return
+            except AttributeError:
+                # If an AttributeError was thrown the shop item probably doesn't have find_max_purchasable_count and we can ignore it.
+                pass
+
 
             # now we check if the user has enough dough
             if not item.is_affordable_for(user_account):
@@ -2487,13 +2994,19 @@ loaf_converter""",
             return
         self.currently_interacting.append(ctx.author.id)
         await self.do_chessboard_completion(ctx)
+        await self.anarchy_chessatron_completion(ctx)
         self.currently_interacting.remove(ctx.author.id)
 
         return
 
 
     # this function finds all the items the user is allowed to purchase
-    def get_buyable_items(self, user_account: account.Bread_Account, item_list: "list[store.Store_Item]") -> "list[store.Store_Item]":
+    def get_buyable_items(
+            self: typing.Self,
+            user_account: account.Bread_Account,
+            item_list: list[store.Store_Item]
+        ) -> list[store.Store_Item]:
+        """Returns a list of every item in item_list that passes the can_be_purchased store item method."""
         # user_account = self.json_interface.get_account(ctx.author)
         output = []
         #for item in store.all_store_items:
@@ -2567,49 +3080,104 @@ For example, "$bread gift Melodie all chess_pieces" would gift all your chess pi
         if sender_account.get("gifts_disabled") == True:
             await ctx.reply("Sorry, you can't gift right now. Please reenable gifting with \"$bread disable_gifts off\".")
             return
-
-        #shitty way of converting to int
-        try:
-            arg1 = parse_int(arg1)
-        except:
-            pass
-        try:
-            arg2 = parse_int(arg2)
-        except:
-            pass
+        
+        # Space gifting checks.
+        if sender_account.get_space_level() != 0 or receiver_account.get_space_level() != 0:
+            send_check = space.gifting_check_user(
+                json_interface = self.json_interface,
+                user = sender_account
+            )
+            if not send_check:
+                await ctx.reply("You aren't able to access the Trade Hub network from where you are.")
+                return
+            
+            receiver_check = space.gifting_check_user(
+                json_interface = self.json_interface,
+                user = receiver_account
+            )
+            if not receiver_check:
+                await ctx.reply("You have access to the Trade Hub network, but you can't seem to reach that person.")
+                return
+        
+        if arg1 is None: # If arg1 is None, then arg2 is None as well.
+            await ctx.reply("Needs an amount and what to gift.")
+            return
         
         do_fraction = False
         amount = 0
         do_category_gift = False
 
-        # print(f"arg1 type was {type(arg1)} and arg2 type was {type(arg2)}")
-        if type(arg1) is int and type(arg2) is str:
-            amount = arg1
-            emoji = arg2
-        elif type(arg1) is str and type(arg2) is int:
-            amount = arg2
+        if arg2 is None:
+            amount = 1
             emoji = arg1
-
-        # check if there's just a string, AKA gifting just one    
-        elif (type(arg1) is str and arg2 is None):
+        
+        elif is_int(arg1):
+            amount = int(arg1)
+            emoji = arg2
+        elif is_int(arg2):
+            amount = int(arg2)
             emoji = arg1
             amount = 1
+        elif is_fraction(arg1):
+            do_fraction = True
+            amount = 1
+            fraction_numerator, fraction_denominator = parse_fraction(arg1)
+            emoji = arg2
         elif (type(arg1) is int and arg2 is None):
             emoji = "dough"
             amount = arg1
+        
+        elif str(arg1).lower() in ["all", "half", "third", "quarter"] or \
+            str(arg2).lower() in ["all", "half", "third", "quarter"]:
+            do_fraction = True
+            amount = 1
 
-        # check if there's a fraction of the item we're supposed to gift
-        elif (type(arg1) is str and type(arg2) is str and arg1.lower() in ["all", "half", "quarter", "third"]):
-            emoji = arg2     
-            fraction_amount = arg1.lower() 
-            do_fraction = True
-        elif (type(arg1) is str and type(arg2) is str and arg2.lower() in ["all", "half", "quarter", "third"]):
-            emoji = arg1
-            fraction_amount = arg2.lower()
-            do_fraction = True
+            if str(arg1).lower() in ["all", "half", "third", "quarter"]:
+                parse = str(arg1).lower()
+                emoji = arg2
+            else:
+                parse = str(arg2).lower()
+                emoji = arg1
+
+            if parse == "all":
+                fraction_numerator = 1
+                fraction_denominator = 1
+            elif parse == "half":
+                fraction_numerator = 1
+                fraction_denominator = 2
+            elif parse == "quarter":
+                fraction_numerator = 1
+                fraction_denominator = 4
+            else:
+                fraction_numerator = 1
+                fraction_denominator = 3
         else:
             await ctx.reply("Needs an amount and what to gift.")
             return
+        
+        if do_fraction:
+            if fraction_numerator > fraction_denominator:
+                await ctx.reply("You can't gift more than what you have.")
+                return
+            elif fraction_numerator == 0:
+                await ctx.reply("That's not much of a gift.")
+                return
+
+        def gift(
+                sender_member: discord.Member,
+                receiver_member: discord.Member,
+                item: values.Emote,
+                amount: int
+            ):
+            sender = self.json_interface.get_account(sender_member, sender_member.guild)
+            receiver = self.json_interface.get_account(receiver_member, receiver_member.guild)
+
+            sender.increment(item, -amount)
+            receiver.increment(item, amount)
+            
+            # Save the accounts after gifting to ensure nothing is overwritten.
+            self.json_interface.set_account(sender_member, sender, guild = ctx.guild.id)
+            self.json_interface.set_account(target, receiver, guild = ctx.guild.id)
 
         # Gifting entire chess sets.
         if emoji == "chess_set":
@@ -2627,69 +3195,52 @@ For example, "$bread gift Melodie all chess_pieces" would gift all your chess pi
             item_amount = min(maximum_possible, amount)
 
             if do_fraction:
-                if fraction_amount == "all":
-                    item_amount = maximum_possible
-                elif fraction_amount == "half":
-                    item_amount = maximum_possible // 2
-                elif fraction_amount == "third":
-                    item_amount = maximum_possible // 3
-                elif fraction_amount == "quarter": 
-                    item_amount = maximum_possible // 4
+                item_amount = maximum_possible * fraction_numerator // fraction_denominator
             
             # Now, recursively call this function for each item.
             for item in values.all_chess_pieces:
-                await self.gift(ctx, target, item.text, item_amount * values.all_chess_pieces_biased.count(item))
+                gift_amount = item_amount * values.all_chess_pieces_biased.count(item)
+                
+                gift(
+                    sender_member = ctx.author,
+                    receiver_member = target,
+                    item = item.text,
+                    amount =gift_amount
+                )
+                await ctx.send(f"{utility.smart_number(gift_amount)} {item.text} has been gifted to {target.mention}.")
                 await asyncio.sleep(1)
                 
             await ctx.reply(f"Gifted {utility.write_count(item_amount, 'chess set')} to {receiver_account.get_display_name()}.")
             return
 
-            
         if sender_account.has_category(emoji):
             do_category_gift = True
             print(f"category gift of {emoji} detected")
 
         if do_category_gift is True:
             gifted_count = 0
-
-            if do_fraction is True:
-                # we recursively call gift for each item in the category, after calculating the amount
-                for item in sender_account.get_category(emoji):
-                    item_amount = 0
-                    if fraction_amount == "all":
-                        item_amount = sender_account.get(item.text)
-                    elif fraction_amount == "half":
-                        item_amount = sender_account.get(item.text) // 2
-                    elif fraction_amount == "quarter":
-                        item_amount = sender_account.get(item.text) // 4
-                    elif fraction_amount == "third":
-                        item_amount = sender_account.get(item.text) // 3
-                    
-                    if item_amount > 0:
-                        gifted_count += item_amount
-                        await self.gift(ctx, target, item.text, item_amount)
-                        await asyncio.sleep(1)
-            else:
-                # we recursively call gift for each item in the category
-                # and then return
-                for item in sender_account.get_category(emoji):
-                    # we want to guarantee a successful gifting so we will gift less than "amount" if necessary
+            
+            # we recursively call gift for each item in the category
+            # and then return
+            for item in sender_account.get_category(emoji):
+                if do_fraction:
+                    item_amount = sender_account.get(item.text) * fraction_numerator // fraction_denominator
+                else:
                     item_amount = min(amount, sender_account.get(item.text))
+                
+                if item_amount > 0:
+                    gifted_count += item_amount
+                    gift(ctx.author, target, item.text, item_amount)
 
-                    if item_amount > 0:
-                        gifted_count += item_amount
-                        await self.gift(ctx, target, item.text, item_amount)
-                        await asyncio.sleep(1)
+                    await ctx.send(f"{utility.smart_number(item_amount)} {item.text} has been gifted to {target.mention}.")
+                    await asyncio.sleep(1)
                 
             if gifted_count > 0:
-                await ctx.reply(f"Gifted {utility.smart_number(gifted_count)} {emoji} to {receiver_account.get_display_name()}.")
+                await utility.smart_reply(ctx, f"Gifted {utility.smart_number(gifted_count)} {emoji} to {receiver_account.get_display_name()}.")
             else:
-                await ctx.reply(f"Sorry, you don't have any {emoji} to gift.")
+                await utility.smart_reply(ctx, f"Sorry, you don't have any {emoji} to gift.")
 
-            # now that we've acted recursively, we return to avoid triggering the rest of the function
-            return
-
-        
+            return        
 
         emote = None
 
@@ -2718,15 +3269,7 @@ For example, "$bread gift Melodie all chess_pieces" would gift all your chess pi
             else:
                 base_amount = sender_account.get(item)
 
-            
-            if fraction_amount == "all":
-                amount = base_amount
-            elif fraction_amount == "half":
-                amount = base_amount // 2
-            elif fraction_amount == "quarter":
-                amount = base_amount // 4
-            elif fraction_amount == "third":
-                amount = base_amount // 3
+            amount = base_amount * fraction_numerator // fraction_denominator
 
         if ctx.author.id == target.id:
             await ctx.reply("You can't gift bread to yourself, silly.")
@@ -2745,7 +3288,6 @@ For example, "$bread gift Melodie all chess_pieces" would gift all your chess pi
             await ctx.reply("That's not much of a gift.")
             return
 
-        
 
         # enforce maxumum gift amount to players of lower prestige level
         if receiver_account.get_prestige_level() < sender_account.get_prestige_level() and \
@@ -2779,16 +3321,16 @@ For example, "$bread gift Melodie all chess_pieces" would gift all your chess pi
         #if emote[]
         if emote is None:
             if sender_account.has(item, amount):
-                sender_account.increment(item, -amount)
-                receiver_account.increment(item, amount)
+                gift(ctx.author, target, "total_dough", amount)
+                
                 print(f"{amount} dough has been gifted to {target.display_name} by {ctx.author.display_name}.")
                 await ctx.send(f"{utility.smart_number(amount)} dough has been gifted to {target.mention}.")
             else:
                 await ctx.reply("You don't have enough dough to gift that much.")
         else:
             if sender_account.has(item, amount):
-                sender_account.increment(item, -amount)
-                receiver_account.increment(item, amount)
+                gift(ctx.author, target, item, amount)
+                
                 print(f"{amount} {item} has been gifted to {target.display_name} by {ctx.author.display_name}.")
                 await ctx.send(f"{utility.smart_number(amount)} {item} has been gifted to {target.mention}.")
             else:
@@ -2799,8 +3341,8 @@ For example, "$bread gift Melodie all chess_pieces" would gift all your chess pi
             #         sender_account.increment(atrribute, -amount)
             #         receiver_account.increment(atrribute, amount)
         
-        self.json_interface.set_account(ctx.author, sender_account, guild = ctx.guild.id)
-        self.json_interface.set_account(target, receiver_account, guild = ctx.guild.id)
+        # self.json_interface.set_account(ctx.author, sender_account, guild = ctx.guild.id)
+        # self.json_interface.set_account(target, receiver_account, guild = ctx.guild.id)
 
         # elif type(arg1) is None or type(arg2) is None:
         #     await ctx.reply("Needs an amount and what to gift.")
@@ -2995,7 +3537,7 @@ anarchy - 1000% of your wager.
                     # grid[i][k] = random.choice(gamble.reward_values).text
         try:  #sometimes we'll get a timeout error and the function will crash, this should allow
               # the user to be removed from the currently_interacting list
-            message = await utility.smart_reply(ctx, Bread_cog.show_grid(grid))
+            message = await utility.smart_reply(ctx, self.show_grid(grid))
             await asyncio.sleep(2)
 
 
@@ -3015,7 +3557,7 @@ anarchy - 1000% of your wager.
                     for y in range(grid_size):
                         grid[x][y] = None
                 
-                await message.edit(content= Bread_cog.show_grid(grid))
+                await message.edit(content = self.show_grid(grid))
                 await asyncio.sleep(1.5)
 
                 
@@ -3070,7 +3612,11 @@ anarchy - 1000% of your wager.
         # await ctx.send(output)
 
 
-    def show_grid(grid):
+    def show_grid(
+            self: typing.Self,
+            grid: list[list[str]]
+        ) -> str:
+        """Renders a grid from a list of lists of strings."""
         output = ""
         for i in range(len(grid)):
             for k in range(len(grid[i])):
@@ -3125,7 +3671,8 @@ anarchy - 1000% of your wager.
 
     previous_messages = list()
 
-    async def stonks_announce(self):
+    async def stonks_announce(self: typing.Self) -> None:
+        """Announces the new values of the stonks."""
         
         
         load_dotenv()
@@ -3717,25 +4264,24 @@ anarchy - 1000% of your wager.
     #####      Stonk internal stuff
 
     
-    def stonk_fluctuate_internal(self):
-        # Auto splitting stonks.
+    def stonk_fluctuate_internal(self: typing.Self) -> None:
+        """Fluctuates the stonk values for each guild in the JSON interface."""
+
+        stonk_starting_values = {
+            ":cookie:": 25,
+            ":pretzel:": 100,
+            ":fortune_cookie:": 500,
+            ":pancakes:": 2_500,
+            ":cake:": 21_000,
+            ":pizza:": 168_000,
+            ":pie:": 1_512_000,
+            ":cupcake:": 15_120_000
+        }
 
         all_guild_ids = self.json_interface.get_list_of_all_guilds()
         for guild_id in all_guild_ids:
             print(f"stonk fluctuate: checking guild {get_name_from_guild(guild_id)}")
             stonks_file = self.json_interface.get_custom_file("stonks", guild = guild_id)
-
-
-            stonk_starting_values = {
-                ":cookie:": 25,
-                ":pretzel:": 100,
-                ":fortune_cookie:": 500,
-                ":pancakes:": 2_500,
-                ":cake:": 21_000,
-                ":pizza:": 168_000,
-                ":pie:": 1_512_000,
-                ":cupcake:": 15_120_000
-            }
 
             # initialize stonks if they're not already
             for stonk in all_stonks:
@@ -3783,17 +4329,36 @@ anarchy - 1000% of your wager.
         
     
 
-    def stonk_reset_internal(self, guild):
+    def stonk_reset_internal(
+            self: typing.Self,
+            guild: typing.Union[discord.Guild, int, str]
+        ) -> None:
+        """Resets the stonks to their original values."""
+
         stonks_file = self.json_interface.get_custom_file("stonks", guild = guild)
 
-        #set default values
+        # Set default values
+
+        # Main stonks:
         stonks_file[values.pretzel.text] = 100
         stonks_file[values.cookie.text] = 25
         stonks_file[values.fortune_cookie.text] = 500
+        stonks_file[values.pancakes.text] = 2500
+        
+        # Shadow stonks:
+        stonks_file[values.cake.text] = 21000
+        stonks_file[values.pizza.text] = 168000
+        stonks_file[values.pie.text] = 1512000
+        stonks_file[values.cupcake.text] = 15120000
 
         self.json_interface.set_custom_file("stonks", stonks_file, guild=guild)
 
-    def stonk_split_internal(self, stonk_text: str, guild: typing.Union[discord.Guild, int, str]):
+    def stonk_split_internal(
+            self: typing.Self,
+            stonk_text: str,
+            guild: typing.Union[discord.Guild, int, str]
+        ) -> None:
+        """Splits a stonk in half, while compensating those who had invested."""
 
         guild_id = get_id_from_guild(guild)
 
@@ -3837,7 +4402,12 @@ anarchy - 1000% of your wager.
         print(f"{stonk_text} has been split into two stonks")
 
 
-    def get_portfolio_value(self, user_id: int, guild):
+    def get_portfolio_value(
+            self: typing.Self,
+            user_id: int,
+            guild: typing.Union[discord.Guild, int, str]
+        ) -> int:
+        """Returns the portfolio value of the given user id."""
         guild_id = get_id_from_guild(guild)
         stonks_file = self.json_interface.get_custom_file("stonks", guild_id)
         user_file = self.json_interface.get_account(user_id, guild_id)
@@ -3852,7 +4422,12 @@ anarchy - 1000% of your wager.
         return total_value
 
 
-    def get_portfolio_combined_value(self, user_id: int, guild):
+    def get_portfolio_combined_value(
+            self: typing.Self,
+            user_id: int,
+            guild: typing.Union[discord.Guild, int, str]
+        ) -> int:
+        """Takes the user's portfolio value and adds it to their investment_profit stat."""
         user_file = self.json_interface.get_account(user_id, guild)
         portfolio_value = self.get_portfolio_value(user_id, guild)
         return portfolio_value + user_file.get("investment_profit")
@@ -3875,7 +4450,7 @@ anarchy - 1000% of your wager.
             target_item: typing.Optional[str] = commands.parameter(description = "The item to create."),
             recipe_num: typing.Optional[parse_int] = commands.parameter(description = "The recipe number to use."),
             confirm: typing.Optional[str] = commands.parameter(description = "Whether to confirm automatically.")
-            ):
+        ):
         
         if count is None:
             count = 1
@@ -4091,6 +4666,13 @@ anarchy - 1000% of your wager.
                     self.currently_interacting.remove(ctx.author.id)
                     return
             
+            ##### If the person is making fuel, ensure if it's fuel the person has enough fuel in their fuel tank.
+            
+            output_amount = item_multiplier
+            
+            if target_emote.text == values.fuel.text:
+                output_amount = int(output_amount * user_account.get_fuel_refinement_boost())
+            
             value = 0
 
             override_dough = False
@@ -4104,7 +4686,7 @@ anarchy - 1000% of your wager.
 
                 # then we add the item
                 
-                user_account.add_item_attributes(target_emote, item_multiplier)
+                user_account.add_item_attributes(target_emote, output_amount)
                 if target_emote.gives_alchemy_award() and not override_dough:
                     value += user_account.add_dough_intelligent((target_emote.get_alchemy_value() + user_account.get_dough_boost_for_item(target_emote)) * item_multiplier)
 
@@ -4112,15 +4694,17 @@ anarchy - 1000% of your wager.
             # finally, we save the account
             self.json_interface.set_account(ctx.author, user_account, guild = ctx.guild.id)
 
-            output = f"Well done. You have created {count * item_multiplier} {target_emote.text}. You now have {user_account.get(target_emote.text)} of them."
+            output = f"Well done. You have created {count * output_amount} {target_emote.text}. You now have {user_account.get(target_emote.text)} of them."
             if target_emote.gives_alchemy_award() and not override_dough:
                 output += f"\nYou have also been awarded **{value} dough** for your efforts."
 
             await utility.smart_reply(ctx, output)
 
             await self.do_chessboard_completion(ctx)
+            await self.anarchy_chessatron_completion(ctx)
 
         except:
+            print(traceback.format_exc())
             pass
 
         self.currently_interacting.remove(ctx.author.id)
@@ -4128,14 +4712,1661 @@ anarchy - 1000% of your wager.
     ########################################################################################################################
     #####      BREAD DOUGH
 
-    # get the user's amount of dough and display it
+    # get someone's amount of dough and display it
     @bread.command(
         aliases = ["liquid_dough"],
         brief = "Shows how much dough you have.",
     )
-    async def dough(self, ctx):
+    async def dough(self, ctx,
+            target: typing.Optional[discord.Member] = commands.parameter(description="The player to get the dough of.")
+        ):
+        if target is None:
+            target = ctx.author
+
+        user_account = self.json_interface.get_account(target, guild = ctx.guild.id)
+
+        if target == ctx.author:
+            name = "You have"
+        else:
+            name = user_account.get_display_name() + " has"
+        
+        await ctx.reply(f"{name} **{utility.smart_number(user_account.get_dough())} dough**.")
+
+
+
+
+
+
+
+
+        
+    ########################################################################################################################
+    #####      BREAD SPACE
+
+    @bread.group(
+        brief = "Space travel in the Bread Game.",
+    )
+    async def space(self, ctx):
+        # Ensure no subcommands have been run.
+        if ctx.invoked_subcommand is not None:
+            return
+        
+        if get_channel_permission_level(ctx) < PERMISSION_LEVEL_ACTIVITIES:
+            await ctx.reply(f"Thank you for your interest in space travel! The nearest launch site is over in {self.json_interface.get_rolling_channel(ctx.guild.id)}.")
+            return
+
+        
+        account = self.json_interface.get_account(ctx.author, guild = ctx.guild.id)
+
+        if account.get_space_level() < 1:
+            await ctx.reply("You do not yet have a rocket.\nYou can purchase one from the Space Shop, which is viewable via '$bread space shop'.")
+            return
+        
+        # Player has a rocket!
+
+        message = "Nice job getting a rocket!\n\nHere's a handy list of things you can do:\n"
+
+        # Generate a list of the bread space subcommands and their help text.
+        for cmd in self.space.commands:
+            message += f"\t'$bread space {cmd.name}': {cmd.brief}\n"
+        
+        await ctx.reply(message)
+        
+        
+        
+    ########################################################################################################################
+    #####      BREAD SPACE STATS
+
+    @bread.command(
+        name = "space_stats",
+        brief = "The Space Shop.",
+        description = "Shortcut to '$bread space shop'.",
+        hidden = True
+    )
+    async def space_stats_shortcut(self, ctx,
+            user: typing.Optional[discord.Member] = commands.parameter(description = "The user to get the stats of.")
+        ):
+        await self.space_stats(ctx, user)
+
+    @space.command(
+        name = "stats",
+        brief = "See your space stats."
+    )
+    async def space_stats(self, ctx,
+            user: typing.Optional[discord.Member] = commands.parameter(description = "The user to get the stats of.")
+        ):
+        # Ensure you can actually get your stats here.
+        if get_channel_permission_level(ctx) < PERMISSION_LEVEL_BASIC:
+            await ctx.send("Sorry, you can't do that here.")
+            return
+        
+        if user is None:
+            user = ctx.author
+        
+        account = self.json_interface.get_account(user, guild = ctx.guild.id)
+
+        if account.get_space_level() < 1:
+            await ctx.reply("You do not yet have any space stats.")
+            return
+        
+        sn = utility.smart_number
+
+        output = []
+
+        # The items in the output list get joined with a new line in the middle, so only a single \n is required here.
+        output.append(f"Space stats for: {account.get_display_name()}:\n")
+
+        output.append(f"You have a tier {sn(account.get_space_level())} Bread Rocket.")
+
+        daily_fuel_cap = account.get_daily_fuel_cap()
+        output.append(f"Out of your {sn(daily_fuel_cap)} daily fuel you have {sn(account.get('daily_fuel'))} remaining.")
+        output.append("")
+
+        if account.has(store.Upgraded_Autopilot.name):
+            autopilot_level = account.get(store.Upgraded_Autopilot.name)
+
+            messages = [
+                "",
+                "explore the galaxy",
+                "adventure through nebulae",
+                "travel through wormholes"
+            ]
+
+            message = ""
+            for i in range(1, autopilot_level + 1):
+                if i != 1:
+                    message += ", "
+
+                if i == autopilot_level:
+                    message += "and "
+
+                message += messages[i]
+
+            output.append(f"With a level {sn(autopilot_level)} autopilot you can {message}.")
+
+        if account.has("fuel_tank"):
+            level = account.get('fuel_tank')
+            output.append(f"Your daily fuel cap is increased by {sn(level * store.Fuel_Tank.multiplier)} with {utility.write_count(level, 'Fuel Tank level')}.")
+
+        if account.has("fuel_research"):
+            output.append(f"By having {account.write_count('fuel_research', 'level')} of fuel research, you can use {store.Fuel_Research.highest_gem[account.get('fuel_research')]} or any lower gem for making fuel.")
+
+        if account.has("telescope_level"):
+            output.append(f"With {account.write_count('telescope_level', 'telescope level')}, you can see in a {sn(account.get('telescope_level') + 2)} tile radius area.")
+
+        if account.has("advanced_exploration"):
+            rr = account.get_recipe_refinement_multiplier()
+            lcs = account.get(store.Loaf_Converter.name)
+            amount = account.get_anarchy_piece_luck((lcs + 1) * rr) - 1
+            output.append(f"With {account.write_count('advanced_exploration', 'level')} of Advanced Exploration, {int(amount)} of your Loaf Converters are used to find anarchy chess pieces.")
+
+        if account.has("engine_efficiency"):
+            level = account.get('advanced_exploration')
+            output.append(f"You use {round((1 - store.Engine_Efficiency.consumption_multipliers[level]) * 100)}% less fuel with {account.write_count('engine_efficiency', 'level')} of Engine Efficiency.")
+        
+        output.append("")
+        output.append(f"Throughout your time in space you've created {utility.write_count(account.get('trade_hubs_created'), 'Trade Hub')} and helped contribute to {utility.write_count(account.get('projects_completed'), 'completed project')}.")
+
+
+
+        # Anarchy pieces.
+
+        output.append("") # Add a blank item to add an extra new line.
+        output.append(self.format_anarchy_pieces(account.values).strip(" \n"))
+
+        await utility.smart_reply(ctx, "\n".join(output))
+
+
+
+
+
+
+        
+        
+        
+    ########################################################################################################################
+    #####      BREAD SPACE SHOP
+
+    @bread.command(
+        name = "space_shop",
+        brief = "The Space Shop.",
+        description = "Shortcut to '$bread space shop'.",
+        aliases = ["space_store"],
+        hidden = True
+    )
+    async def space_shop_shortcut(self, ctx):
+        await ctx.invoke(self.space_shop)
+
+    @space.command(
+        name = "shop",
+        brief = "The Space Shop.",
+        aliases = ["store"]
+    )
+    async def space_shop(self, ctx):
+
+        # first we make sure this is a valid channel
+        if get_channel_permission_level(ctx) < PERMISSION_LEVEL_ACTIVITIES:
+            await ctx.reply(f"Hello! Thanks for flying to the Space Shop. The nearest Space Shop Port is in {self.json_interface.get_rolling_channel(ctx.guild.id)}.")
+            return
+        
+        # we get the account of the user who called it
         user_account = self.json_interface.get_account(ctx.author, guild = ctx.guild.id)
-        await ctx.reply(f"You have **{utility.smart_number(user_account.get_dough())} dough**.")
+
+        # Make sure the player is on the right ascension.
+        if user_account.get_prestige_level() < 1:
+            await ctx.reply("The entrance to this shop is nowhere to be found, perhaps you need to ascend.")
+            return
+        
+        # Temporarily lock all of space to a9 or higher. When a9 ends this should be removed.
+        if user_account.get_prestige_level() < 9:
+            await ctx.reply("Currently the Space Shop is only available on the 9th ascension. When that ascension ends it will be available from the first ascension onwards.")
+            return
+
+        # now we get the list of items
+        items = self.get_buyable_items(user_account, store.space_shop_items)
+
+        output = ""
+        output += f"Welcome to the Space Shop!\nHere are the items available for purchase:\n\n"
+        for item in items:
+            output += f"\t**{item.display_name}** - {item.get_price_description(user_account)}\n{item.description(user_account)}\n\n"
+        
+        if len(items) == 0:
+            output += "Sorry, but you can't buy anything right now. Please try again later."
+        else:
+            output += 'To buy an item, just type "$bread buy [item name]".'
+
+        await ctx.reply(output)
+        
+    ########################################################################################################################
+    #####      BREAD SPACE MAP
+    
+    @space.command(
+        name = "map",
+        aliases = ["view"],
+        brief = "View the space map.",
+        description = "View the space map.\nYou can use the 'galaxy' mode to view the galaxy map."
+    )
+    async def space_map(self, ctx,
+            mode: typing.Optional[str] = commands.parameter(description="The map mode to use.")
+        ):
+        if get_channel_permission_level(ctx) < PERMISSION_LEVEL_ACTIVITIES:
+            await ctx.reply(f"I appreciate your interest in the space map! You can find the telescopes in {self.json_interface.get_rolling_channel(ctx.guild.id)}.")
+            return
+        
+        user_account = self.json_interface.get_account(ctx.author, guild = ctx.guild.id)
+
+        if user_account.get_space_level() < 1:
+            await ctx.reply("You do not yet have a rocket that can help you map the vast reaches of space.\nYou can purchase the required rocket from the Space Shop.")
+            return
+        
+        ###############################
+
+        map_data = space.space_map(
+            account=user_account,
+            json_interface = self.json_interface,
+            mode=mode
+        )
+
+        ###############################
+
+        corruption_chance = round(user_account.get_corruption_chance(json_interface=self.json_interface) * 100, 2)
+
+        if mode == "galaxy":
+            prefix = "Galaxy map:"
+            middle = f"Your current galaxy location: {user_account.get_galaxy_location(json_interface=self.json_interface)}.\nCorruption chance: {corruption_chance}%."
+            suffix = "You can use '$bread space map' to view the map for the system you're in.\n\nUse '$bread space move galaxy' to move around on this map."
+        else:
+            prefix = "System map:"
+            middle = f"Your current galaxy location: {user_account.get_galaxy_location(json_interface=self.json_interface)}.\nYour current system location: {user_account.get_system_location()}.\nCorruption chance: {corruption_chance}%."
+            suffix = "You can use '$bread space map galaxy' to view the galaxy map.\n\nUse '$bread space move system' to move around on this map.\nUse '$bread space analyze' to get more information about somewhere."
+
+        send_file = discord.File(map_data, filename="space_map.png")
+        file_path = "attachment://space_map.png"
+
+        unfortunate_embed = discord.Embed( # It's unfortunate that we have to use one.
+            title = prefix,
+            description = middle + "\n\n" + suffix,
+            color=8884479,
+        )
+        unfortunate_embed.set_image(url=file_path)
+
+        try:
+            # We need to copy send_file here because if we don't and this message is unable to send
+            # when it sends it below it won't have the image. I'm not sure why this happens, but it does.
+            await ctx.reply(embed=unfortunate_embed, file=copy.deepcopy(send_file))
+        except discord.HTTPException:
+            await ctx.send(ctx.author.mention, embed=unfortunate_embed, file=send_file)
+        
+    ########################################################################################################################
+    #####      BREAD SPACE ANALYZE
+    
+    @space.command(
+        name = "analyze",
+        aliases = ["analyse", "analysis"],
+        brief = "Analyze and get information about planets.",
+        description = "Analyze and get information about planets.\n\nTo get a guide for the point parameter, look at the system map."
+    )
+    async def space_analyze(self, ctx,
+            point: typing.Optional[str] = commands.parameter(description="The point around you to analyze."),
+            modifier: typing.Optional[str] = commands.parameter(description="Optional modifier.")
+        ):
+        if get_channel_permission_level(ctx) < PERMISSION_LEVEL_ACTIVITIES:
+            await ctx.reply(f"Thank you for trying to analyze a system! The nearest science center is in {self.json_interface.get_rolling_channel(ctx.guild.id)}.")
+            return
+        
+        user_account = self.json_interface.get_account(ctx.author, guild = ctx.guild.id)
+
+        if user_account.get_space_level() < 1:
+            await ctx.reply("You do not yet have a rocket that can help you analyze the many celestial objects in space.\nYou can purchase the required rocket from the Space Shop.")
+            return
+        
+        ##########################################################
+        ##### Ensuring the arguments are properly passed.
+        
+        HELP_MSG = "You must provide the point to analyze in the form of '<letter><number>'.\nYou can find a guide in the system map."
+        
+        if point is None:
+            await ctx.reply(HELP_MSG)
+            return
+        
+        if len(point) != 2:
+            await ctx.reply(HELP_MSG)
+            return
+
+        telescope_level = user_account.get("telescope_level")
+        radius = telescope_level + 2
+        diameter = radius * 2 + 1
+
+        letters = "abcdefghijk"
+
+        pattern = "([a-{letter_end}])([1-{number_end}]{{1,{times}}})".format(
+            letter_end = letters[diameter - 1],
+            number_end = min(diameter, 9),
+            times = len(str(diameter))
+        )
+        
+        matched = re.match(pattern, point.lower())
+
+        if matched is None:
+            await ctx.reply(HELP_MSG)
+            return
+        
+        x_modifier = "abcdefghijk".index(matched.group(1)) # group 1 is the letter.
+        y_modifier = int(matched.group(2)) - 1 # group 2 is the number.
+
+        if round(math.hypot(abs(x_modifier - radius), abs(y_modifier - radius))) > radius:
+            await ctx.reply("You cannot see that point.")
+            return
+        
+        ##########################################################
+        ##### Generating the map.
+
+        map_path = space.space_map(
+            account = user_account,
+            json_interface = self.json_interface,
+            mode = "system",
+            analyze_position = point
+        )
+
+        ##########################################################
+        ##### Getting the analysis data.
+        
+        detailed = modifier == "detailed"
+
+        galaxy_x, galaxy_y = user_account.get_galaxy_location(json_interface=self.json_interface)
+
+        system_data = space.get_galaxy_coordinate(
+            json_interface = self.json_interface,
+            guild = ctx.guild.id,
+            galaxy_seed = self.json_interface.get_ascension_seed(user_account.get_prestige_level(), guild=user_account.get("guild_id")),
+            ascension = user_account.get_prestige_level(),
+            xpos = galaxy_x,
+            ypos = galaxy_y,
+            load_data = False
+        )
+
+        player_x, player_y = user_account.get_system_location()
+
+        if system_data.system:
+            tile_x = x_modifier - radius + player_x
+            tile_y = y_modifier - radius + player_y
+
+            if detailed:
+                if tile_x != player_x or tile_y != player_y:
+                    await ctx.reply("Your scientific sensors are unable to get a detailed report of celestial bodies you're not on top of.")
+                    return
+
+            tile_analyze = system_data.get_system_tile(
+                json_interface = self.json_interface,
+                system_x = tile_x,
+                system_y = tile_y
+            )
+
+            analysis_lines = tile_analyze.get_analysis(
+                guild = ctx.guild.id,
+                json_interface = self.json_interface,
+                detailed = detailed
+            )
+        else:
+            analysis_lines = ["There is nothing here."]
+
+        line_emoji = ":arrow_forward:"
+
+        for index, item in enumerate(analysis_lines):
+            analysis_lines[index] = f"{line_emoji} {item}"
+        
+        analysis_lines.append(line_emoji)
+        analysis_lines.append(f"{line_emoji} Analysis footer:")
+        analysis_lines.append(f"{line_emoji} Move command:")
+        analysis_lines.append(f"{line_emoji} $bread space move system {point} y")
+        if not detailed:
+            analysis_lines.append(line_emoji)
+            analysis_lines.append(f"{line_emoji} Attempt a detailed analysis:")
+            analysis_lines.append(f"{line_emoji} $bread space analyze {point} detailed")
+
+        ##########################################################        
+        ##### Sending the message.
+
+        send_file = discord.File(map_path, filename="space_map.png")
+        file_path = "attachment://space_map.png"
+
+        embed_send = discord.Embed(
+            title = "Tile Analysis",
+            description = "\n".join(analysis_lines),
+            color=8884479,
+        )
+        embed_send.set_image(url=file_path)
+        
+        try:
+            # We need to copy send_file here because if we don't and this message is unable to send
+            # when it sends it below it won't have the image. I'm not sure why this happens, but it does.
+            await ctx.reply(embed=embed_send, file=copy.deepcopy(send_file))
+        except discord.HTTPException:
+            await ctx.send(ctx.author.mention, embed=embed_send, file=send_file)
+
+
+
+
+
+
+
+        
+    ########################################################################################################################
+    #####      BREAD SPACE HUB
+    
+    async def trade_hub_contribute_level(
+            self: typing.Self,
+            ctx: commands.Context,
+            user_account: account.Bread_Account,
+            day_seed: str,
+            hub_projects: list[dict],
+            hub: space.SystemTradeHub,
+            actions: tuple[str],
+
+            galaxy_x: int,
+            galaxy_y: int,
+
+            item: values.Emote,
+            amount: int
+        ) -> None:
+        """Contributes items to a trade hub level."""
+        level_project = projects.Trade_Hub
+        max_level = len(level_project.all_costs())
+
+        if hub.trade_hub_level == max_level:
+            await ctx.reply("This Trade Hub is already at the max level!")
+            return
+
+        ascension_data = self.json_interface.get_space_ascension(
+            ascension_id = user_account.get_prestige_level(),
+            guild = ctx.guild.id
+        )
+
+        all_trade_hubs = ascension_data.get("trade_hubs", dict())
+        trade_hub_data = all_trade_hubs.get(f"{galaxy_x} {galaxy_y}", dict())
+
+        level_progress = trade_hub_data.get("level_progress", dict())
+
+        remaining = level_project.get_remaining_items(
+            day_seed = day_seed,
+            system_tile = hub,
+            progress_data = level_progress
+        )
+    
+        if item.text not in remaining:
+            await ctx.reply("We don't need any more of that to level up the Trade Hub.")
+            return
+    
+        amount_contribute = min(remaining[item.text], amount)
+
+        player_data = level_progress.get(str(ctx.author.id), {"items": {}})
+        
+        user_account.increment(item.text, -amount_contribute)
+
+        if item.text in player_data["items"]:
+            player_data["items"][item.text] += amount_contribute
+        else:
+            player_data["items"][item.text] = amount_contribute
+        
+        level_progress[str(ctx.author.id)] = player_data
+
+        self.json_interface.set_account(ctx.author, user_account, guild = ctx.guild.id)
+
+        self.json_interface.update_trade_hub_levelling_data(
+            guild = ctx.guild.id,
+            ascension = user_account.get_prestige_level(),
+            galaxy_x = galaxy_x,
+            galaxy_y = galaxy_y,
+            new_data = level_progress
+        )
+
+        amount_left = user_account.get(item.text)
+        
+        await ctx.reply(f"You have contributed {utility.smart_number(amount_contribute)} {item.text} to levelling up the Trade Hub!\nYou now have {utility.smart_number(amount_left)} {item.text} remaining.")
+
+        # Check for completion.
+
+        remaining = level_project.get_remaining_items(
+            day_seed = day_seed,
+            system_tile = hub,
+            progress_data = level_progress
+        )
+
+        if len(remaining) != 0:
+            # No completion :(
+            return
+
+        existing = self.json_interface.get_trade_hub_data(
+            guild = ctx.guild.id,
+            ascension = user_account.get_prestige_level(),
+            galaxy_x = galaxy_x,
+            galaxy_y = galaxy_y
+        )
+
+        if "level" in existing:
+            existing["level"] += 1
+        else:
+            # If the key doesn't exist, then we know it's a natural one.
+            # All natural trade hubs have a level of 1, so update it to 2.
+            existing["level"] = 2
+
+        # Reset the progress dict.
+        existing["level_progress"] = {}
+        
+        self.json_interface.update_trade_hub_data(
+            guild = ctx.guild.id,
+            ascension = user_account.get_prestige_level(),
+            galaxy_x = galaxy_x,
+            galaxy_y = galaxy_y,
+            new_data = existing
+        )
+
+        send_lines = f"Trade Hub levelled up to level {existing['level']}! This Trade Hub is now able to relay signals from the Trade Hub network up to {store.trade_hub_distances[existing['level']]} tiles away!"
+        send_lines += level_project.completion(day_seed, hub)
+
+        send_lines += "\n\n"
+        for player_id in level_progress.keys():
+            send_lines += f"<@{player_id}> "
+            
+        await asyncio.sleep(1)
+
+        await ctx.send(send_lines)
+        return
+        
+
+
+
+
+
+
+
+    ##############################################################################################################
+        
+    async def trade_hub_contribute(
+            self: typing.Self,
+            ctx: commands.Context,
+            user_account: account.Bread_Account,
+            day_seed: str,
+            hub_projects: list[dict],
+            hub: space.SystemTradeHub,
+            actions: tuple[str]
+        ) -> None:
+        """Contributes items to a trade hub project, or the trade hub level."""
+        galaxy_x, galaxy_y = user_account.get_galaxy_location(json_interface=self.json_interface)
+
+        actions += [" ", " ", " "]
+
+        try:
+            if actions[1] == "level":
+                project_number = "level"
+            else:
+                project_number = parse_int(actions[1])
+
+            amount = parse_int(actions[2])
+            item = values.get_emote(actions[3])
+        except ValueError:
+            if project_number == "level":
+                await ctx.reply("To help level up the Trade Hub, use this format:\n'$bread space hub contribute level [amount] [item]'")
+            else:
+                await ctx.reply("To contribute to a project, use this format:\n'$bread space hub contribute [project number] [amount] [item]'")
+            return
+
+        if item is None:
+            if project_number == "level":
+                await ctx.reply("To help level up the Trade Hub, use this format:\n'$bread space hub contribute level [amount] [item]'")
+            else:
+                await ctx.reply("To contribute to a project, use this format:\n'$bread space hub contribute [project number] [amount] [item]'")
+            return
+        
+        if amount < 0:
+            await ctx.reply("Trying to steal resources? Mum won't be very happy about that.")
+            await ctx.invoke(self.bot.get_command('brick'), member=ctx.author, duration="1")
+            return
+        
+        if amount == 0:
+            await ctx.reply("That's not much of a contribution.")
+            return
+        
+        if amount > user_account.get(item.text):
+            await ctx.reply("You don't have enough of that to contribute.")
+            return
+        
+        if project_number == "level":
+            await self.trade_hub_contribute_level(
+                ctx = ctx,
+                user_account = user_account,
+                day_seed = day_seed,
+                hub_projects = hub_projects,
+                hub = hub,
+                actions = actions,
+                galaxy_x = galaxy_x,
+                galaxy_y = galaxy_y,
+                item = item,
+                amount = amount
+            )
+            return
+
+        if not (1 <= project_number <= 3):
+            await ctx.reply("That is an unrecognized project number.")
+            return
+        
+        project_data = hub_projects[project_number - 1]
+
+        if project_data.get("completed", False):
+            await ctx.reply("This project has already been completed.")
+            return
+        
+        project = project_data.get("project")
+
+        remaining = project.get_remaining_items(
+            day_seed = day_seed,
+            system_tile = hub,
+            progress_data = project_data.get("contributions", {})
+        )
+
+        if len(remaining) == 0:
+            out_data = {
+                "completed": True,
+                "contributions": project_data.get("contributions")
+            }
+            
+            self.json_interface.update_project_data(
+                guild = ctx.guild.id,
+                ascension = user_account.get_prestige_level(),
+                galaxy_x = galaxy_x,
+                galaxy_y = galaxy_y,
+                project_id = project_number,
+                new_data = out_data
+            )
+
+            await ctx.reply("This project has already been completed.")
+            return
+        
+        if item.text not in remaining:
+            await ctx.reply("The project doesn't need any more of that item.")
+            return
+        
+        amount_contribute = min(remaining[item.text], amount)
+
+        contribution_data = project_data.get("contributions", [])
+
+        player_data = contribution_data.get(str(ctx.author.id), {"items": {}})
+        
+        user_account.increment(item.text, -amount_contribute)
+
+        if item.text in player_data["items"]:
+            player_data["items"][item.text] += amount_contribute
+        else:
+            player_data["items"][item.text] = amount_contribute
+        
+        contribution_data[str(ctx.author.id)] = player_data
+
+        out_data = {
+            "completed": False,
+            "contributions": contribution_data
+        }
+
+        self.json_interface.set_account(ctx.author, user_account, guild = ctx.guild.id)
+        self.json_interface.update_project_data(
+            guild = ctx.guild.id,
+            ascension = user_account.get_prestige_level(),
+            galaxy_x = galaxy_x,
+            galaxy_y = galaxy_y,
+            project_id = project_number,
+            new_data = out_data
+        )
+
+        amount_left = user_account.get(item.text)
+        
+        await ctx.reply(f"You have contributed {utility.smart_number(amount_contribute)} {item.text} to the {project.name(day_seed, hub)} project.\nYou now have {utility.smart_number(amount_left)} {item.text} remaining.")
+
+        updated_required = project.get_remaining_items(
+            day_seed = day_seed,
+            system_tile = hub,
+            progress_data = out_data.get("contributions", {})
+        )
+        if len(updated_required) != 0:
+            # It hasn't been completed. :(
+            return
+        
+        ########################################
+        # It's been completed! :o
+
+        out_data["completed"] = True
+
+        self.json_interface.update_project_data(
+            guild = ctx.guild.id,
+            ascension = user_account.get_prestige_level(),
+            galaxy_x = galaxy_x,
+            galaxy_y = galaxy_y,
+            project_id = project_number,
+            new_data = out_data
+        )
+
+        send_lines = "Project completed!\n\n"
+        send_lines += project.completion(day_seed, hub)
+        send_lines += "\n\nIndividual earnings:"
+
+        total_items = project.total_items_required(day_seed, hub)
+        reward = project.get_reward(day_seed, hub)
+
+        for player_id, contributions in out_data.get("contributions", {}).items():
+            items = contributions.get("items", {})
+
+            items_contributed = sum(items.values())
+
+            percent_cut = items_contributed / total_items
+
+            player_account = self.json_interface.get_account(player_id, guild=ctx.guild.id)
+
+            items_added = []
+
+            for win_item, win_amount in reward:
+                amount = math.ceil(win_amount * percent_cut)
+                player_account.increment(win_item, amount)
+
+                items_added.append(f"{utility.smart_number(amount)} {win_item}")
+
+            player_account.increment("projects_completed", 1)
+
+            self.json_interface.set_account(player_id, player_account, guild = ctx.guild.id)
+            
+            send_lines += f"\n- <@{player_id}>: {' ,  '.join(items_added)}"
+        
+        await asyncio.sleep(1)
+
+        await ctx.send(send_lines)
+        return
+
+    ##############################################################################################################
+        
+    async def trade_hub_info(
+            self: typing.Self,
+            ctx: commands.Context,
+            user_account: account.Bread_Account,
+            day_seed: str,
+            hub_projects: list[dict],
+            hub: space.SystemTradeHub,
+            actions: tuple[str]
+        ) -> None:
+        """Gets information about a project and sends it."""
+        actions.append(" ")
+
+        try:
+            project_number = parse_int(actions[1])
+        except ValueError:
+            await ctx.reply("To get information about a project, use '$bread space hub info [project number]'")
+            return
+        
+        if not (1 <= project_number <= 3):
+            await ctx.reply("That is an unrecognized project number.")
+            return
+        
+        project_data = hub_projects[project_number - 1]
+        project = project_data.get("project")
+
+        contributions = project_data.get('contributions')
+        amount_contributed = project.total_items_collected(day_seed, hub, contributions)
+        amount_needed = project.total_items_required(day_seed, hub)
+
+        message_lines = f"# -- Project {project.name(day_seed, hub)}: --"
+        message_lines += f"\n{project.description(day_seed, hub)}"
+        message_lines += f"\n\nCompleted: {':white_check_mark:' if project_data.get('completed', False) else ':x:'}"
+        message_lines += "\nCollected items: {have}/{total} ({percent}%)".format(
+            have = utility.smart_number(amount_contributed),
+            total = utility.smart_number(amount_needed),
+            percent = round(100 * project.get_progress_percent(day_seed, hub, contributions), 2)
+        )
+        if amount_contributed != amount_needed:
+            message_lines += f"\nRemaining items:\n{project.get_remaining_description(day_seed, hub, contributions)}"
+
+        if amount_contributed > 0:
+            message_lines += f"\nIndividual contributions:"
+
+            for player_id, data in project_data.get("contributions", {}).items():
+                player_account = self.json_interface.get_account(player_id, guild=ctx.guild.id)
+
+                player_line = []
+
+                for item, amount in data.get("items", {}).items():
+                    player_line.append(f"{amount} {item}")
+
+                username = utility.sanitize_ping(player_account.get_display_name())
+                player_line = " ,  ".join(player_line)
+                
+                message_lines += f"\n- {username}: {player_line}"
+        
+        if amount_contributed != amount_needed:
+            message_lines += f"\n\nTo contribute to this project, use '$bread space hub contribute {project_number} [amount] [item]'."
+
+
+        await ctx.reply(message_lines)
+
+    ##############################################################################################################
+    
+    async def trade_hub_level(
+            self: typing.Self,
+            ctx: commands.Context,
+            user_account: account.Bread_Account,
+            day_seed: str,
+            hub_projects: list[dict],
+            hub: space.SystemTradeHub,
+            actions: tuple[str]
+        ) -> None:
+        """Gets information about the trade hub levelling and sends it."""
+        galaxy_x, galaxy_y = user_account.get_galaxy_location(json_interface=self.json_interface)
+        level_project = projects.Trade_Hub
+        max_level = len(level_project.all_costs())
+
+        if hub.trade_hub_level == max_level:
+            await ctx.reply("This Trade Hub is already at the max level!")
+            return
+
+        ascension_data = self.json_interface.get_space_ascension(
+            ascension_id = user_account.get_prestige_level(),
+            guild = ctx.guild.id
+        )
+
+        all_trade_hubs = ascension_data.get("trade_hubs", dict())
+        trade_hub_data = all_trade_hubs.get(f"{galaxy_x} {galaxy_y}", dict())
+        
+        message_lines = "# -- Trade Hub Levelling --"
+        message_lines += f"\nCurrent Trade Hub level: {hub.trade_hub_level}"
+        message_lines += f"\nRemaining items:"
+
+        level_progress = trade_hub_data.get("level_progress", dict())
+        cost = dict(level_project.get_cost(day_seed, hub))
+        remaining = level_project.get_remaining_items(day_seed, hub, level_progress)
+
+        sn = utility.smart_number
+
+        for item, amount in cost.items():
+            left = remaining.get(item, 0)
+            contributed = amount - left
+            message_lines += f"\n- {item}: {sn(contributed)}/{sn(amount)} ({round(contributed / amount * 100, 2)}%)"
+
+        amount_contributed = level_project.total_items_collected(day_seed, hub, level_progress)
+        amount_needed = level_project.total_items_required(day_seed, hub)
+
+        message_lines += "\nCollected items: {have}/{total} ({percent}%)".format(
+            have = sn(amount_contributed),
+            total = sn(amount_needed),
+            percent = round(100 * level_project.get_progress_percent(day_seed, hub, level_progress), 2)
+        )
+
+        if amount_contributed > 0:
+            message_lines += f"\nIndividual contributions:"
+
+            for player_id, data in level_progress.items():
+                player_account = self.json_interface.get_account(player_id, guild=ctx.guild.id)
+
+                player_line = []
+
+                for item, amount in data.get("items", {}).items():
+                    player_line.append(f"{sn(amount)} {item}")
+
+                username = utility.sanitize_ping(player_account.get_display_name())
+                player_line = " ,  ".join(player_line)
+                
+                message_lines += f"\n- {username}: {player_line}"
+        
+        if amount_contributed != amount_needed:
+            message_lines += f"\n\nTo help level up this Trade Hub, use '$bread space hub contribute level [amount] [item]'."
+
+        await ctx.reply(message_lines)
+        return
+        
+    ########################################################################################################################
+    #####      BREAD SPACE HUB
+    
+    @space.command(
+        name = "hub",
+        brief = "Interact with Trade Hubs.",
+        description = "Interact with Trade Hubs."
+    )
+    async def space_hub(self, ctx,
+            *, action: typing.Optional[str] = commands.parameter(description = "The action to perform at the Trade Hub.")
+        ):
+        if get_channel_permission_level(ctx) < PERMISSION_LEVEL_ACTIVITIES:
+            await ctx.reply(f"I appreciate your interest in Trade Hubs, the nearest access point is in {self.json_interface.get_rolling_channel(ctx.guild.id)}.")
+            return
+        
+        user_account = self.json_interface.get_account(ctx.author, guild = ctx.guild.id)
+
+        if user_account.get_space_level() < 1:
+            await ctx.reply("You do not yet have a rocket that can access Trade Hubs. You can purchase a Bread Rocket from the Space Shop.")
+            return
+        
+        galaxy_x, galaxy_y = user_account.get_galaxy_location(json_interface=self.json_interface)
+
+        
+        system = space.get_galaxy_coordinate(
+            json_interface = self.json_interface,
+            guild = ctx.guild.id,
+            galaxy_seed = self.json_interface.get_ascension_seed(user_account.get_prestige_level(), guild=user_account.get("guild_id")),
+            ascension = user_account.get_prestige_level(),
+            xpos = galaxy_x,
+            ypos = galaxy_y,
+            load_data = False
+        )
+
+        if not system.system:
+            await ctx.reply("There is no Trade Hub here, and you are not close enough to a star to create a Trade Hub.")
+            return
+        
+        system_x, system_y = user_account.get_system_location()
+        
+        system.load_system_data(json_interface=self.json_interface, guild=ctx.guild.id, get_wormholes=False)
+
+        if not (abs(system_x) <= 1 and abs(system_y) <= 1):
+            await ctx.reply("You are not close enough to a star to create a Trade Hub.")
+            return
+        
+        if action is not None:
+            actions = action.split(" ")
+            action = actions[0]
+            
+        day_seed = self.json_interface.get_day_seed(guild=ctx.guild.id)
+
+        hub = system.trade_hub
+        
+        if system.trade_hub is None:
+            if system_x == 0 and system_y == 0:
+                await ctx.reply("You cannot create a Trade Hub on a star.")
+                return
+            
+            if action == "create":
+                if not projects.Trade_Hub.is_affordable_for(
+                        day_seed = day_seed,
+                        system_tile = hub,
+                        user_account=user_account
+                    ):
+                    await ctx.reply("Sorry, you don't have the resources to create a Trade Hub.")
+                    return
+                
+                print(f"User {ctx.author} creating trade hub in system ({galaxy_x}, {galaxy_y})")
+                
+                projects.Trade_Hub.do_purchase(
+                    day_seed = day_seed,
+                    system_tile = hub,
+                    user_account = user_account
+                )
+
+                user_account.increment("trade_hubs_created", 1)
+
+                self.json_interface.set_account(ctx.author, user_account, guild = ctx.guild.id)
+
+                space.create_trade_hub(
+                    json_interface = self.json_interface,
+                    user_account = user_account,
+                    galaxy_x = galaxy_x,
+                    galaxy_y = galaxy_y,
+                    system_x = system_x,
+                    system_y = system_y
+                )
+
+                await ctx.reply("Well done, you have created a Trade Hub!")
+                return
+
+            cost = projects.Trade_Hub.get_price_description(day_seed, hub)
+            
+            await ctx.reply(f"To create a Trade Hub around this star, you must have the following resources:\n{cost}\n\nOnce you have the resources, use '$bread space hub create' to create the Trade Hub.")
+            return
+        
+        if action == "create":
+            await ctx.reply("There is already a Trade Hub in this system.")
+            return
+        
+        if not (system_x == system.trade_hub.system_xpos and system_y == system.trade_hub.system_ypos):
+            await ctx.reply("You must be on the Trade Hub to use it.")
+            return
+        
+        # Make sure the Trade Hub data exists.
+        discovered_trade_hub = False
+        
+        trade_hub_data = self.json_interface.get_trade_hub_data(
+            guild = ctx.guild,
+            ascension = user_account.get_prestige_level(),
+            galaxy_x = galaxy_x,
+            galaxy_y = galaxy_y,
+        )
+
+        if len(trade_hub_data) == 0: # i.e. if the trade hub is not currently in the database.
+            discovered_trade_hub = True
+            space.create_trade_hub(
+                json_interface = self.json_interface,
+                user_account = user_account,
+                galaxy_x = galaxy_x,
+                galaxy_y = galaxy_y,
+                system_x = system_x,
+                system_y = system_x
+            )
+
+        
+        ##############################################################################################################
+        # Can interact with the trade hub!
+
+        hub_projects = space.get_trade_hub_projects(
+            json_interface = self.json_interface,
+            user_account = user_account,
+            galaxy_x = galaxy_x,
+            galaxy_y = galaxy_y
+        )
+        
+        ##############################################################################################################
+
+        if action == "contribute":
+            await self.trade_hub_contribute(
+                ctx = ctx,
+                user_account = user_account,
+                day_seed = day_seed,
+                hub_projects = hub_projects,
+                hub = hub,
+                actions = actions
+            )
+            return
+
+        ##############################################################################################################
+
+        if action == "info":
+            await self.trade_hub_info(
+                ctx = ctx,
+                user_account = user_account,
+                day_seed = day_seed,
+                hub_projects = hub_projects,
+                hub = hub,
+                actions = actions
+            )
+            return
+        
+        ##############################################################################################################
+
+        if action == "level":
+            await self.trade_hub_level(
+                ctx = ctx,
+                user_account = user_account,
+                day_seed = day_seed,
+                hub_projects = hub_projects,
+                hub = hub,
+                actions = actions
+            )
+            return
+
+        ##############################################################################################################
+
+        level_project = projects.Trade_Hub
+        max_level = len(level_project.all_costs())
+
+        name = generation.get_trade_hub_name(
+            galaxy_seed = self.json_interface.get_ascension_seed(user_account.get_prestige_level(), guild=user_account.get("guild_id")),
+            galaxy_x = galaxy_x,
+            galaxy_y = galaxy_y
+        )
+
+        message_lines = f"**# -- Trade Hub {name} --**"
+
+        if discovered_trade_hub:
+            message_lines += "\n*New Trade Hub discovered! Trading using this trade hub is now available.*\n"
+
+        message_lines += f"\nLevel: {hub.trade_hub_level}"
+        message_lines += f"\nTrade Hub network range: {store.trade_hub_distances[hub.trade_hub_level]}"
+        message_lines += f"\nGalaxy location: ({hub.galaxy_xpos}, {hub.galaxy_ypos})"
+        message_lines += f"\nSystem location: ({hub.system_xpos}, {hub.system_ypos})"
+
+        if hub.trade_hub_level != max_level:
+            message_lines += f"\n\nUse '$bread space hub level' to view the progress to level {hub.trade_hub_level + 1}"
+        
+        ### Projects.
+        
+        message_lines += "\n\n**# -- Projects --**"
+
+        for project_id, data in enumerate(hub_projects):
+            message_lines += f"#{project_id + 1}: "
+            message_lines += data.get("project").display_info(
+                day_seed = day_seed,
+                system_tile = hub,
+                compress_description = True,
+                completed = data.get("completed", False)
+            )
+            message_lines += "\n\n"
+        
+        message_lines += "To contribute to a project, use '$bread space hub contribute [project number] [amount] [item]'\nYou can get more information about a project with '$bread space hub info [project number]'"
+
+        await ctx.reply(message_lines)
+
+
+
+
+
+
+
+        
+    ########################################################################################################################
+    #####      BREAD SPACE MOVE
+    
+    @space.command(
+        name = "move",
+        brief = "Move around in space.",
+        description = "Move around in space by commanding the autopilot."
+    )
+    async def space_move(self, ctx,
+            move_map: typing.Optional[str] = commands.parameter(description = "Which map to move on."),
+            move_location: typing.Optional[str] = commands.parameter(description = "The location to move to."),
+            confirm: typing.Optional[str] = commands.parameter(description = "Whether to confirm automatically.")
+        ):
+        # Check if the player is in the interacting list.
+        if ctx.author.id in self.currently_interacting:
+            return
+        
+        # Add the player to the interacting list.
+        self.currently_interacting.append(ctx.author.id)
+
+
+        if get_channel_permission_level(ctx) < PERMISSION_LEVEL_ACTIVITIES:
+            await ctx.reply(f"Thank you for trying to use the autopilot! The closest autopilot terminal is in {self.json_interface.get_rolling_channel(ctx.guild.id)}.")
+
+            self.currently_interacting.remove(ctx.author.id)
+            return
+        
+        user_account = self.json_interface.get_account(ctx.author, guild = ctx.guild.id)
+
+        if user_account.get_space_level() < 1:
+            await ctx.reply("You do not have access to any rockets with autopilot systems.\nYou can purchase the required rocket from the Space Shop.")
+
+            self.currently_interacting.remove(ctx.author.id)
+            return
+        
+        #########################################################
+
+        acceptable_maps = [
+            "system",
+            "galaxy",
+            "wormhole"
+        ]
+        if move_map not in acceptable_maps:
+            move_map = None
+        
+        if move_map is None:
+            await ctx.reply("Autopilot error:\nFailure to specify the 'galaxy' or 'system' map.")
+
+            self.currently_interacting.remove(ctx.author.id)
+            return
+
+        confirm_text = ["yes", "y", "confirm"]
+        cancel_text = ["no", "n", "cancel"]
+            
+        ###################################
+
+        autopilot_level = user_account.get(store.Upgraded_Autopilot.name)
+
+        if move_map == "wormhole":
+            if autopilot_level < 3:
+                await ctx.reply(f"Autopilot error:\nWormhole travel not possible with existing autopilot system.\nAutopilot level: {autopilot_level}, expected 3 or higher.")
+                self.currently_interacting.remove(ctx.author.id)
+                return
+            
+            # Wormhole travel :o
+            system_tile = user_account.get_system_tile(json_interface=self.json_interface) # type: typing.Union[space.SystemWormhole, space.SystemTile]
+
+            if system_tile.type != "wormhole":
+                await ctx.reply("Autopilot error:\nNo wormhole found.")
+
+                self.currently_interacting.remove(ctx.author.id)
+                return
+            
+            move_cost = int(space.MOVE_FUEL_WORMHOLE * user_account.get_engine_efficiency_multiplier())
+            
+            if move_location not in confirm_text:
+                current_fuel = user_account.get(values.fuel.text)
+                daily_fuel = user_account.get("daily_fuel")
+                
+                await utility.smart_reply(ctx, f"You are trying to travel through the wormhole.\nThis will require **{utility.smart_number(move_cost)}** {values.fuel.text}.\nYou have {utility.smart_number(current_fuel)} {values.fuel.text} and {utility.smart_number(daily_fuel)} daily fuel.\nAre you sure you want to move? Yes or No.")
+            
+                def check(m: discord.Message):
+                    return m.author.id == ctx.author.id and m.channel.id == ctx.channel.id 
+
+                try:
+                    msg = await self.bot.wait_for('message', check = check, timeout = 60.0)
+                except asyncio.TimeoutError: 
+                    await utility.smart_reply(ctx, f"Autopilot error:\nConfirmation timeout, aborting.")
+                    self.currently_interacting.remove(ctx.author.id)
+                    return
+                
+                if msg.content.lower() in cancel_text:
+                    await utility.smart_reply(ctx, "Autopilot error:\nCancelled.")
+
+                    self.currently_interacting.remove(ctx.author.id)
+                    return
+                elif msg.content.lower() not in confirm_text:
+                    await utility.smart_reply(ctx, "Autopilot error:\nUnrecognized confirmation response, aborting.")
+
+                    self.currently_interacting.remove(ctx.author.id)
+                    return
+        
+            fuel_item = user_account.get(values.fuel.text)
+            daily_fuel = user_account.get("daily_fuel")
+            player_fuel = fuel_item + daily_fuel
+
+            if player_fuel < move_cost:
+                await utility.smart_reply(ctx, "Autopilot error:\nLacking required fuel, aborting.")
+
+                self.currently_interacting.remove(ctx.author.id)
+                return
+            
+            end_galaxy_location = system_tile.wormhole_link_location
+
+            pair_tile = system_tile.get_pair()
+
+            end_system_location = (pair_tile.system_xpos, pair_tile.system_ypos)
+
+            # Remove the fuel.
+            # Daily fuel is prioritized over regular fuel.
+            if move_cost > daily_fuel:
+                user_account.set("daily_fuel", 0)
+                user_account.increment(values.fuel.text, -(move_cost - daily_fuel))
+            else:
+                user_account.increment("daily_fuel", -move_cost)
+
+
+            # Update the player's galaxy location.
+            user_account.set("galaxy_xpos", end_galaxy_location[0])
+            user_account.set("galaxy_ypos", end_galaxy_location[1])
+
+            # Update the player's system location.
+            user_account.set("system_xpos", end_system_location[0])
+            user_account.set("system_ypos", end_system_location[1])
+
+            # Save the player account.
+            self.json_interface.set_account(ctx.author.id, user_account, guild = ctx.guild.id)
+
+            item_left = user_account.get(values.fuel.text)
+            daily_fuel = user_account.get("daily_fuel")
+
+            await utility.smart_reply(ctx, f"Autopilot success:\nSucessfully travelled through the wormhole..\n\nYou have **{utility.smart_number(item_left)} {values.fuel.text}** and **{utility.smart_number(daily_fuel)} daily fuel** remaining.")
+
+            self.currently_interacting.remove(ctx.author.id)
+            return
+            
+        ###################################
+        
+        HELP_MSG = "Autopilot error:\nUnrecoginized location. Locations should be in the format of '[letter][number]'. A guide can be found on the system and galaxy maps."
+        
+        if move_location is None:
+            await ctx.reply(HELP_MSG)
+
+            self.currently_interacting.remove(ctx.author.id)
+            return
+        
+        if len(move_location) > 3:
+            await ctx.reply(HELP_MSG)
+
+            self.currently_interacting.remove(ctx.author.id)
+            return
+
+        telescope_level = user_account.get("telescope_level")
+        radius = telescope_level + 2
+        diameter = radius * 2 + 1
+
+        letters = "abcdefghijk"
+
+        pattern = "([a-{letter_end}])([{number_start}-{number_end}]{{1,{times}}})".format(
+            letter_end = letters[diameter - 1],
+            number_start = 1 if diameter < 10 else 0,
+            number_end = min(diameter, 9),
+            times = len(str(diameter))
+        )
+
+        matched = re.match(pattern, move_location.lower())
+
+        if matched is None:
+            await ctx.reply(HELP_MSG)
+
+            self.currently_interacting.remove(ctx.author.id)
+            return
+        
+        x_modifier = "abcdefghijk".index(matched.group(1)) # group 1 is the letter.
+        y_modifier = int(matched.group(2)) - 1 # group 2 is the number.
+
+        if round(math.hypot(abs(x_modifier - radius), abs(y_modifier - radius))) > radius:
+            await ctx.reply("Autopilot error:\nUnrecognized location.")
+
+            self.currently_interacting.remove(ctx.author.id)
+            return
+        
+        #########################################################
+        
+        galaxy_seed = self.json_interface.get_ascension_seed(
+            ascension_id = user_account.get_prestige_level(),
+            guild = ctx.guild.id
+        )
+
+        if move_map == "system":
+            start_location = user_account.get_system_location()
+
+            # Check if the galaxy tile the player is on is actually a system.
+            # If it is, great! If it isn't, the player shouldn't be moving on the system map.
+            galaxy_location = user_account.get_galaxy_location(json_interface=self.json_interface)
+
+            current_data = generation.galaxy_single(
+                galaxy_seed = galaxy_seed,
+                x = galaxy_location[0],
+                y = galaxy_location[1]
+            )
+
+            if not current_data.get("system", False):
+                await ctx.reply("Autopilot error:\nNo matter found in current system location, cannot move.")
+
+                self.currently_interacting.remove(ctx.author.id)
+                return
+
+            # Ensure the location the player is moving to is a part of this system.   
+            system_data = generation.generate_system(
+                galaxy_seed = galaxy_seed,
+                galaxy_xpos = galaxy_location[0],
+                galaxy_ypos = galaxy_location[1]
+            )
+        
+            end_location = (
+                start_location[0] + x_modifier - radius,
+                start_location[1] + y_modifier - radius
+            )
+
+            if math.hypot(*end_location) >= system_data.get("radius") + 2:
+                await ctx.reply("Autopilot error:\nProvided location outside of system bounds.")
+
+                self.currently_interacting.remove(ctx.author.id)
+                return
+            
+            # In the end, determine how much fuel it'll cost to make the move.
+            cost_data = space.get_move_cost_system(
+                start_position = start_location,
+                end_position = end_location
+            )
+
+            move_cost = int(cost_data.get("cost", 500) * user_account.get_engine_efficiency_multiplier())
+        else:
+            if autopilot_level < 1:
+                await ctx.reply(f"Autopilot error:\nGalaxy travel not possible with existing autopilot system.\nAutopilot level: {autopilot_level}, expected 1 or higher.")
+                self.currently_interacting.remove(ctx.author.id)
+                return
+            
+            start_location = user_account.get_galaxy_location(json_interface=self.json_interface)
+        
+            end_location = (
+                start_location[0] + x_modifier - radius,
+                start_location[1] + y_modifier - radius
+            )
+
+            cost_data = space.get_move_cost_galaxy(
+                galaxy_seed = galaxy_seed,
+                start_position = start_location,
+                end_position = end_location
+            )
+
+            if autopilot_level < 2 and cost_data.get("nebula", False):
+                await ctx.reply(f"Autopilot error:\nNebula travel not possible with existing autopilot system.\nAutopilot level: {autopilot_level}, expected 2 or higher.")
+                self.currently_interacting.remove(ctx.author.id)
+                return
+
+            move_cost = int(cost_data.get("cost", 500) * user_account.get_engine_efficiency_multiplier())
+
+        if confirm not in confirm_text:
+            current_fuel = user_account.get(values.fuel.text)
+            daily_fuel = user_account.get("daily_fuel")
+
+            await utility.smart_reply(ctx, f"You are trying to move from {start_location} to {end_location}.\nThis will require **{utility.smart_number(move_cost)}** {values.fuel.text}.\nYou have {utility.smart_number(current_fuel)} {values.fuel.text} and {utility.smart_number(daily_fuel)} daily fuel.\nAre you sure you want to move? Yes or No.")
+            
+            def check(m: discord.Message):
+                return m.author.id == ctx.author.id and m.channel.id == ctx.channel.id 
+        
+
+            try:
+                msg = await self.bot.wait_for('message', check = check, timeout = 60.0)
+            except asyncio.TimeoutError: 
+                await utility.smart_reply(ctx, f"Autopilot error:\nConfirmation timeout, aborting.")
+                self.currently_interacting.remove(ctx.author.id)
+                return
+            
+            if msg.content.lower() in cancel_text:
+                await utility.smart_reply(ctx, "Autopilot error:\nCancelled.")
+
+                self.currently_interacting.remove(ctx.author.id)
+                return
+            elif msg.content.lower() not in confirm_text:
+                await utility.smart_reply(ctx, "Autopilot error:\nUnrecognized confirmation response, aborting.")
+
+                self.currently_interacting.remove(ctx.author.id)
+                return
+        
+        fuel_item = user_account.get(values.fuel.text)
+        daily_fuel = user_account.get("daily_fuel")
+        player_fuel = fuel_item + daily_fuel
+
+        if player_fuel < move_cost:
+            await utility.smart_reply(ctx, "Autopilot error:\nLacking required fuel, aborting.")
+
+            self.currently_interacting.remove(ctx.author.id)
+            return
+        
+        # Remove the fuel.
+        # Daily fuel is prioritized over regular fuel.
+        if move_cost > daily_fuel:
+            user_account.set("daily_fuel", 0)
+            user_account.increment(values.fuel.text, -(move_cost - daily_fuel))
+        else:
+            user_account.increment("daily_fuel", -move_cost)
+
+        if move_map == "system":
+            x_key = "system_xpos"
+            y_key = "system_ypos"
+        else:
+            x_key = "galaxy_xpos"
+            y_key = "galaxy_ypos"
+
+            # Increment galaxy_move_count so get_galaxy_location knows to use galaxy_xpos and galaxy_ypos instead of the spawn location.
+            user_account.increment("galaxy_move_count", 1)
+
+            # Time to figure out what to set the system position to.
+            # This is based on the angle the player is moving at.
+            # However, if the target location isn't a system then we can just set it to (0, 0)
+            end_data = generation.galaxy_single(
+                galaxy_seed = galaxy_seed,
+                x = end_location[0],
+                y = end_location[1]
+            )
+
+            if not end_data.get("system", False):
+                # If the end location is not a system, then set the system x and y to 0.
+                user_account.set("system_xpos", 0)
+                user_account.set("system_ypos", 0)
+            else:
+                # If the location is a system, then determine the size of the system and the angle of attack.
+                x_diff = end_location[0] - start_location[0]
+                y_diff = end_location[1] - start_location[1]
+
+                if x_diff == 0:
+                    if y_diff < 0:
+                        angle = math.pi / -2
+                    else:
+                        angle = math.pi
+                else:
+                    angle = math.atan(y_diff / x_diff)
+
+                    if x_diff > 0:
+                        angle -= math.pi
+                
+                system_data = generation.generate_system(
+                    galaxy_seed = galaxy_seed,
+                    galaxy_xpos = end_location[0],
+                    galaxy_ypos = end_location[1]
+                )
+
+                system_radius = system_data.get("radius")
+
+                out_x = int(math.cos(angle) * system_radius)
+                out_y = int(math.sin(angle) * system_radius)
+
+                user_account.set("system_xpos", out_x)
+                user_account.set("system_ypos", out_y)
+
+
+
+        # Update the player's location.
+        user_account.set(x_key, end_location[0])
+        user_account.set(y_key, end_location[1])
+
+        # Save the player account.
+        self.json_interface.set_account(ctx.author.id, user_account, guild = ctx.guild.id)
+
+        item_left = user_account.get(values.fuel.text)
+        daily_fuel = user_account.get("daily_fuel")
+
+        await utility.smart_reply(ctx, f"Autopilot success:\nSuccessfully moved to {end_location} on the {move_map} map, using {utility.smart_number(move_cost)} {values.fuel.text}.\n\nYou have **{utility.smart_number(item_left)} {values.fuel.text}** and **{utility.smart_number(daily_fuel)} daily fuel** remaining.")
+
+        self.currently_interacting.remove(ctx.author.id)
+
+
+
+
+        
+
+    
+        
+    ########################################################################################################################
+    #####      BREAD ANARCHY CHESSATRON    
+
+    @bread.command(
+        name="anarchy_chessatron", 
+        aliases=["anarchy_tron"],
+        help="Create Anarchy Chessatrons.\n\nAnarchy Chessatrons are affected by auto chessatron, which can be toggled with '$bread chessatron [on/off]'.",
+        brief="Create Anarchy Chessatrons."
+    )
+    async def anarchy_chessatron(self, ctx,
+            amount: typing.Optional[parse_int] = commands.parameter(description = "The amount of Anarchy Chessatrons to create.")
+        ):
+        if get_channel_permission_level(ctx) < PERMISSION_LEVEL_ACTIVITIES:
+            await utility.smart_reply(ctx, f"Thank you for your interest in creating anarchy chessatrons! You can do so over in {self.json_interface.get_rolling_channel(ctx.guild.id)}.")
+            return
+        
+        if amount is not None:
+            await self.anarchy_chessatron_completion(
+                ctx = ctx,
+                force = True,
+                amount = amount
+            )
+        else:
+            await self.anarchy_chessatron_completion(
+                ctx = ctx,
+                force = True
+            )
+
+        
+    ########################################################################################################################
+    #####      ANARCHY CHESSATRON COMPLETION
+    
+    async def anarchy_chessatron_completion(
+            self: typing.Self,
+            ctx: commands.Context,
+            force: bool = False,
+            amount = None
+        ) -> None:
+        """Runs the anarchy chessatron creation animation, as well as making the anarchy chessatrons themselves.
+
+        Args:
+            ctx (commands.Context): The context the anarchy chessatron creation was invoked in.
+            force (bool, optional): Whether to override `auto_chessatron`. Defaults to False.
+            amount (int, optional): The amount of anarchy chessatrons to make. Will make as many as possible if None is provided. Defaults to None.
+        """
+        user_account = self.json_interface.get_account(ctx.author, guild=ctx.guild.id)
+
+        if user_account.get("auto_chessatron") is False and force is False:
+            return
+        
+        full_chess_set = values.anarchy_pieces_black_biased + values.anarchy_pieces_white_biased
+
+        # pointwise integer division between the full chess set and the set of the user's pieces.
+        valid_trons = min([user_account.get(x.text) // full_chess_set.count(x) for x in values.all_anarchy_pieces])
+
+        # iteration ends at the minimum value, make sure amount is never the minimum. 'amount is None' should mean no max ...
+        # ... has been specified, so make as many trons as possible.
+        if amount is None: 
+            amount = valid_trons + 1
+
+        trons_to_make = min(valid_trons, amount)
+
+        # Nothing to do if we're not making any anarchy trons.
+        if trons_to_make == 0:
+            return
+        
+        chessatron_value = user_account.get_anarchy_chessatron_dough_amount(include_prestige_boost=False)
+        board = board = self.format_anarchy_pieces(user_account.values)
+
+        # Remove the anarchy pieces from the account.
+        for anarchy_piece in full_chess_set:
+            user_account.increment(anarchy_piece, -trons_to_make)
+
+        
+
+        # first we add the dough and attributes
+        total_dough_value = user_account.add_dough_intelligent(chessatron_value * trons_to_make)
+        user_account.add_item_attributes(values.anarchy_chessatron, trons_to_make)
+
+        # we save the account
+        self.json_interface.set_account(ctx.author, user_account, ctx.guild.id)
+
+        # then we send the tron messages
+        if trons_to_make < 3:
+            print(board)
+            for _ in range(trons_to_make):
+                await utility.smart_reply(ctx, f"You've collected all the anarchy pieces! Congratulations!")
+                await asyncio.sleep(1)
+
+                await utility.smart_reply(ctx, board)
+                await asyncio.sleep(1)
+
+                await utility.smart_reply(ctx, f"For an incredible feat like this, you have been awared the Anarchy Chessatron!")
+                await asyncio.sleep(1)
+
+                await utility.smart_reply(ctx, values.anarchy_chessatron.text)
+                await asyncio.sleep(1)
+
+                await utility.smart_reply(ctx, f"Amazing work! You have also been awarded **{utility.smart_number(total_dough_value//trons_to_make)} dough!**")
+                await asyncio.sleep(1)
+
+        elif trons_to_make < 20:
+            for _ in range(trons_to_make):
+                await utility.smart_reply(ctx, f"Very well done! You have collected all the anarchy pieces!\n\n{board}")
+                await asyncio.sleep(1)
+
+                await utility.smart_reply(ctx, f"Not only have you been awarded the prestigious {values.anarchy_chessatron.text}, but you also have been awarded **{utility.smart_number(total_dough_value//trons_to_make)} dough**!")
+                await asyncio.sleep(1)
+
+        elif trons_to_make < 5000:
+            await utility.smart_reply(ctx, f"You've collected all the anarchy pieces again! Great job! You have enough pieces to make {utility.smart_number(trons_to_make)} Anarchy Chessatrons! Here's your reward of **{utility.smart_number(total_dough_value)} dough**!")
+            await asyncio.sleep(1)
+
+            max_per = 1800 // len(values.anarchy_chessatron.text)
+            
+            full_messages = trons_to_make // max_per
+            extra = trons_to_make % max_per
+            
+            if full_messages >= 1:
+                send = values.anarchy_chessatron.text * max_per
+                for _ in range(full_messages):
+                    await utility.smart_reply(ctx, send)
+                    await asyncio.sleep(1)
+            
+            if extra >= 1:
+                await utility.smart_reply(ctx, values.anarchy_chessatron.text * extra)
+                await asyncio.sleep(1)
+
+
+        else:
+            await utility.smart_reply(ctx, f"Wow! You have so many anarchy pieces! In fact, you have enough to make a shocking {utility.smart_number(trons_to_make)} Anarchy Chessatrons!")
+            await asyncio.sleep(1)
+
+            await utility.smart_reply(ctx, f"Here are your new Anarchy Chessatrons:\n{values.anarchy_chessatron.text} x {utility.smart_number(trons_to_make)}\n\nAnd here is your **{utility.smart_number(total_dough_value)} dough**!")
+            await asyncio.sleep(1)
 
     #############################################################################################################################
     ##########      ADMIN   #################
@@ -4146,13 +6377,22 @@ anarchy - 1000% of your wager.
         brief="[Restricted]",
     )
     async def admin(self, ctx):
-        if not verification.from_owner(ctx.author):
+        if not (await verification.is_admin_check(ctx)):
             await ctx.reply(verification.get_rejection_reason())
+            return
+        
         if ctx.invoked_subcommand is None:
             print("admin called on nothing")
             return
 
-    async def await_confirmation(self, ctx, force = False, message = "Are you sure you would like to proceed?"):
+    async def await_confirmation(
+            self: typing.Self,
+            ctx: commands.Context,
+            force: bool = False,
+            message: str = "Are you sure you would like to proceed?"
+        ) -> bool:
+        """Waits for confirmation, and returns a boolean based on the result."""
+
         load_dotenv()
         IS_PRODUCTION = getenv('IS_PRODUCTION')
         if force or IS_PRODUCTION == 'True':
@@ -4181,23 +6421,37 @@ anarchy - 1000% of your wager.
     ########################################################################################################################
     #####      ADMIN SET
 
-    @admin.group(
-        brief="sets a value manually",
+    @admin.command(
+        name = "set",
+        brief="Sets a value manually.",
         help = "Usage: bread admin set [optional Member] key value [optional 'force']"
     )
-    @commands.is_owner()
-    async def set(self, ctx, 
+    @commands.check(verification.is_admin_check)
+    async def set_command(self, ctx,
                     user: typing.Optional[discord.Member], 
-                    key: str,
-                    value: parse_int,
+                    key: typing.Optional[str],
+                    value: typing.Optional[parse_int],
                     do_force: typing.Optional[str]):
-        if await self.await_confirmation(ctx) is False:
-            return
+        # Ensure arguments are correct.
         output = ""
-        print("Bread Admin Set: User is "+str(user)+", key is '"+str(key)+"', value is "+str(value))
         if user is None:
             output += "Applying to self\n"
             user = ctx.author
+        
+        if key is None:
+            await ctx.reply("Please provide the key to set.")
+            return
+        
+        if value is None:
+            await ctx.reply("Please provide the value to set the key to.")
+            return
+        
+        # Arguments are correct.
+        
+        if await self.await_confirmation(ctx) is False:
+            return
+        
+        print("Bread Admin Set: User is "+str(user)+", key is '"+str(key)+"', value is "+str(value))
         
         # file = self.json_interface.get_file_for_user(user)
         account = self.json_interface.get_account(user, guild = ctx.guild.id)
@@ -4230,23 +6484,35 @@ anarchy - 1000% of your wager.
     ########################################################################################################################
     #####      ADMIN INCREMEMNT
 
-    @admin.group(
-        brief="sets a value manually",
-        help = "Usage: bread admin set [optional Member] key value [optional 'force']"
+    @admin.command(
+        brief="Increments a value.",
+        help = "Usage: bread admin increment [optional Member] key value [optional 'force']"
     )
-    @commands.is_owner()
+    @commands.check(verification.is_admin_check)
     async def increment(self, ctx, 
-                    user: discord.Member, 
-                    key: str,
-                    value: parse_int,
+                    user: typing.Optional[discord.Member], 
+                    key: typing.Optional[str],
+                    value: typing.Optional[parse_int],
                     do_force: typing.Optional[str]):
-        if await self.await_confirmation(ctx) is False:
-            return
+        # Ensure the arguments are correct.
         output = ""
-        print("Bread Admin Increment: User is "+str(user)+", key is '"+str(key)+"', value is "+str(value))
         if user is None:
             output += "Applying to self\n"
             user = ctx.author
+        
+        if key is None:
+            await ctx.reply("Please provide the key to increment.")
+            return
+        
+        if value is None:
+            await ctx.reply("Please provide the value to increment the key by.")
+            return
+        
+        # Arguments are correct.
+
+        if await self.await_confirmation(ctx) is False:
+            return
+        print("Bread Admin Increment: User is "+str(user)+", key is '"+str(key)+"', value is "+str(value))
         
         # file = self.json_interface.get_file_for_user(user)
         account = self.json_interface.get_account(user, guild = ctx.guild.id)
@@ -4281,9 +6547,18 @@ anarchy - 1000% of your wager.
     ########################################################################################################################
     #####      ADMIN RESET_ACCOUNT
 
-    @admin.group()
-    @commands.is_owner()
-    async def reset_account(self, ctx, user: discord.Member):
+    @admin.command(
+        brief="Resets a member's account.",
+        help = "Usage: bread admin reset_account [required member]"
+    )
+    @commands.check(verification.is_admin_check)
+    async def reset_account(self, ctx,
+            user: typing.Optional[discord.Member]
+        ):
+        if user is None:
+            await ctx.reply("Please provide the member to reset the account of.")
+            return
+        
         if await self.await_confirmation(ctx) is False:
             return
         user_account = self.json_interface.get_account(user, guild = ctx.guild.id)
@@ -4299,9 +6574,23 @@ anarchy - 1000% of your wager.
     ########################################################################################################################
     #####      ADMIN COPY_ACCOUNT
 
-    @admin.group()
-    @commands.is_owner()
-    async def copy_account(self, ctx, origin_user: discord.Member, target_user: discord.Member):
+    @admin.command(
+        brief="Copies one account to another.",
+        help = "Usage: bread admin copy_account [source member] [destination member]"
+    )
+    @commands.check(verification.is_admin_check)
+    async def copy_account(self, ctx,
+            origin_user: typing.Optional[discord.Member],
+            target_user: typing.Optional[discord.Member]
+        ):
+        if origin_user is None:
+            await ctx.reply("Please provide the member to copy the account of.")
+            return
+        
+        if target_user is None:
+            await ctx.reply("Please provide the member to paste the account data into.")
+            return
+        
         if await self.await_confirmation(ctx) is False:
             return
     
@@ -4325,8 +6614,11 @@ anarchy - 1000% of your wager.
     ########################################################################################################################
     #####      ADMIN SERVER_BOOST
 
-    @admin.group()
-    @commands.is_owner()
+    @admin.command(
+        brief="Rewards all server boosters.",
+        help = "Usage: bread admin reward_all_server_boosters"
+    )
+    @commands.check(verification.is_admin_check)
     async def reward_all_server_boosters(self, ctx):
         # we will find the dough from a daily roll, and award some multiple of that amount
         # first get all boosters
@@ -4338,15 +6630,28 @@ anarchy - 1000% of your wager.
         await ctx.send("Done.")
 
 
-    @admin.group()
-    @commands.is_owner()
-    async def reward_single_server_booster(self, ctx, user: discord.Member, multiplier: typing.Optional[float] = 1):
+    @admin.command(
+        brief="Rewards first server boost.",
+        help = "Usage: bread admin reward_single_server_booster [member] [optional multiplier, defaults to 1]"
+    )
+    @commands.check(verification.is_admin_check)
+    async def reward_single_server_booster(self, ctx,
+            user: typing.Optional[discord.Member],
+            multiplier: typing.Optional[float] = 1
+        ):
+        if user is None:
+            await ctx.reply("Please provide the member to reward.")
+            return
+        
         #first get user account
         user_account = self.json_interface.get_account(user, guild = ctx.guild.id)
 
-        result = rolls.bread_roll(roll_luck= user_account.get("loaf_converter")+1, 
-                                    roll_count= user_account.get("max_daily_rolls"),
-                                    user_account=user_account)
+        result = rolls.bread_roll(
+            roll_luck= user_account.get("loaf_converter")+1, 
+            roll_count= user_account.get("max_daily_rolls"),
+            user_account=user_account,
+            json_interface=self.json_interface
+        )
 
         value = result.get("value")
 
@@ -4358,20 +6663,37 @@ anarchy - 1000% of your wager.
 
         added_value = user_account.add_dough_intelligent(value)
         self.json_interface.set_account(user, user_account, guild = ctx.guild.id)
-        await ctx.send(f"Thank you {user.mention} for boosting the server! {added_value} dough has been deposited into your account.")
+        await ctx.send(f"Thank you {user.mention} for boosting the server! {utility.smart_number(added_value)} dough has been deposited into your account.")
         
 
     
-
-    @admin.group()
-    @commands.is_owner()
-    async def server_boost(self, ctx, user: discord.Member):
+    # I'm not sure why this exists, since it just runs reward_single_server_booster.
+    @admin.command(
+        brief="Rewards first server boost.",
+        help = "Usage: bread admin reward_single_server_booster [member]"
+    )
+    @commands.check(verification.is_admin_check)
+    async def server_boost(self, ctx,
+            user: typing.Optional[discord.Member]
+        ):
+        if user is None:
+            await ctx.reply("Please provide the member to reward.")
+            return
+        
         # this will increase their dough by 5x their max daily rolls
-            await self.reward_single_server_booster(ctx, user, 1)
+        await self.reward_single_server_booster(ctx, user, 1)
     
-    @admin.group()
-    @commands.is_owner()
-    async def server_boost_additional(self, ctx, user: discord.Member):
+    @admin.command(
+        brief="Rewards additional server boost.",
+        help = "Usage: bread admin server_boost_additional [member]"
+    )
+    @commands.check(verification.is_admin_check)
+    async def server_boost_additional(self, ctx,
+            user: typing.Optional[discord.Member]
+        ):
+        if user is None:
+            await ctx.reply("Please provide the member to reward.")
+            return
         
         await self.reward_single_server_booster(ctx, user, .5)
 
@@ -4379,12 +6701,14 @@ anarchy - 1000% of your wager.
     ########################################################################################################################
     #####      ADMIN SHOW
 
-    @admin.group(
-        brief="shows raw values",
+    @admin.command(
+        brief="Shows raw values.",
         help = "Usage: bread admin show [optional member]"
     )
-    @commands.is_owner()
-    async def show(self, ctx, user: typing.Optional[discord.Member]):
+    @commands.check(verification.is_admin_check)
+    async def show(self, ctx,
+            user: typing.Optional[discord.Member]
+        ):
         output = ""
         if user is None:
             output += "Applying to self.\n"
@@ -4409,10 +6733,18 @@ anarchy - 1000% of your wager.
     ########################################################################################################################
     #####      ADMIN SHOW_CUSTOM
 
-    @admin.group(
+    @admin.command(
+        brief="Shows a custom file.",
+        help = "Usage: bread admin show_custom [file name]\n\nNote that this can reveal hidden info, like space seeds."
     )
-    @commands.is_owner()
-    async def show_custom(self, ctx, filename: str):
+    @commands.check(verification.is_admin_check)
+    async def show_custom(self, ctx,
+            filename: typing.Optional[str]
+        ):
+        if filename is None:
+            await ctx.reply("Please provide the file name.")
+            return
+        
         output = ""
         file = self.json_interface.get_custom_file(filename, guild = ctx.guild.id)
         for key in file.keys():
@@ -4425,12 +6757,18 @@ anarchy - 1000% of your wager.
     ########################################################################################################################
     #####      ADMIN SET_MAX_PRESTIGE
 
-    @admin.group(
-        brief="sets the max prestige level",
+    @admin.command(
+        brief="Sets the max prestige level.",
         help = "Usage: bread admin set_max_prestige_level [value]"
     )
     @commands.is_owner()
-    async def set_max_prestige_level(self, ctx, value: parse_int):
+    async def set_max_prestige_level(self, ctx,
+            value: typing.Optional[parse_int]
+        ):
+        if value is None:
+            await ctx.reply("Please provide the new max prestige level.")
+            return
+        
         if await self.await_confirmation(ctx) is False:
             return
         prestige_file = self.json_interface.get_custom_file("prestige", guild = ctx.guild.id)
@@ -4441,12 +6779,14 @@ anarchy - 1000% of your wager.
     ########################################################################################################################
     #####      ADMIN ALLOW / DISALLOW
 
-    @admin.group(
-        brief="Allows usage of the bread machine",
+    @admin.command(
+        brief="Allows usage of the bread machine.",
         help = "Usage: bread admin allow [member]"
     )
-    @commands.is_owner()
-    async def allow(self, ctx, user: typing.Optional[discord.Member]):
+    @commands.check(verification.is_admin_check)
+    async def allow(self, ctx,
+            user: typing.Optional[discord.Member]
+        ):
         if user is None:
             print("Bread Allow failed to recognize user "+str(user))
             ctx.reply("User reference not resolvable, please retry.")
@@ -4458,12 +6798,14 @@ anarchy - 1000% of your wager.
         await ctx.send("Done.")
         
 
-    @admin.group(
-        brief="Disllows usage of the bread machine",
+    @admin.command(
+        brief="Disllows usage of the bread machine.",
         help = "Usage: bread admin disallow [member]"
     )
-    @commands.is_owner()
-    async def disallow(self, ctx, user: typing.Optional[discord.Member]):
+    @commands.check(verification.is_admin_check)
+    async def disallow(self, ctx,
+            user: typing.Optional[discord.Member]
+        ):
         if user is None:
             print("Bread Disallow failed to recognize user "+str(user))
             ctx.reply("User reference not resolvable, please retry.")
@@ -4479,7 +6821,10 @@ anarchy - 1000% of your wager.
     #####      ADMIN BACKUP
 
 
-    @admin.group()
+    @admin.command(
+        brief="Creates a backup of the database.",
+        help = "Usage: bread admin backup"
+    )
     @commands.is_owner()
     async def backup(self, ctx):
         print("backing up")
@@ -4489,25 +6834,66 @@ anarchy - 1000% of your wager.
     ########################################################################################################################
     #####      ADMIN DAILY_RESET
 
-    @admin.group()
-    @commands.is_owner()
+    @admin.command(
+        brief="Runs the Bread o' Clock daily reset.",
+        help = "Usage: bread admin daily_reset"
+    )
+    @commands.check(verification.is_admin_check)
     async def daily_reset(self, ctx):
         if await self.await_confirmation(ctx) is False:
             return
-        self.reset_internal(ctx.guild.id)
+        # self.reset_internal(ctx.guild.id)
+        self.reset_internal()
         await ctx.send("Done.")
 
-    def reset_internal(self, guild: typing.Optional[typing.Union[discord.Guild,str,int]] = None):
+    def reset_space(
+            self: typing.Self,
+            guild: typing.Union[discord.Guild,str,int]
+        ) -> None:
+        """Daily reset for Bread Space."""
+
+        # Set a new day seed.
+        space_data = self.json_interface.get_space_data(guild=guild)
+
+        space_data["day_seed"] = space.generate_galaxy_seed()
+
+        # Reset project contributions.
+        blank_projects = {
+            "project_1": {},
+            "project_2": {},
+            "project_3": {}
+        }
+        for ascension_key, ascension_data in space_data.copy().items():
+            if not ascension_key.startswith("ascension"):
+                continue
+
+            for trade_hub_key in ascension_data.get("trade_hubs", {}):
+                ascension_data["trade_hubs"][trade_hub_key]["project_progress"] = blank_projects
+            
+            space_data[ascension_key] = ascension_data
+
+        self.json_interface.set_custom_file("space", file_data=space_data, guild=guild)
+
+    def reset_internal(
+            self: typing.Self,
+            guild: typing.Optional[typing.Union[discord.Guild,str,int]] = None
+        ) -> None:
+        """Runs the daily reset."""
+
         print("Internal daily reset called")
         self.currently_interacting.clear()
 
         if guild is not None:
             guild_id = get_id_from_guild(guild)
+
+            self.reset_space(guild_id)
             for account in self.json_interface.get_all_user_accounts(guild_id):
                 account.daily_reset()
                 self.json_interface.set_account(account.get("id"), account, guild_id)
         else: #call for all accounts
             for guild_id in self.json_interface.get_list_of_all_guilds():
+                self.reset_space(guild_id)
+
                 for account in self.json_interface.get_all_user_accounts(guild_id):
                     account.daily_reset()
                     self.json_interface.set_account(account.get("id"), account, guild_id)
@@ -4532,7 +6918,10 @@ anarchy - 1000% of your wager.
     #####      ADMIN PURGE_ACCOUNT_CACHE
 
     #depreciated, we're avoiding using the account cache now
-    @admin.group()
+    @admin.command(
+        brief="Clears the now unused account cache.",
+        help = "Usage: bread admin purge_account_cache"
+    )
     @commands.is_owner()
     async def purge_account_cache(self, ctx):
         self.json_interface.accounts.clear()
@@ -4543,14 +6932,27 @@ anarchy - 1000% of your wager.
 
     # this will take one value from each account and rename it to something different.
 
-    @admin.group()
-    @commands.is_owner()
-    async def rename(self, ctx, starting_name: str, ending_name: str):
+    @admin.command(
+        brief="Renames global key to something else.",
+        help = "Usage: bread admin rename [current key] [new key]"
+    )
+    @commands.check(verification.is_admin_check)
+    async def rename(self, ctx,
+            starting_name: typing.Optional[str],
+            ending_name: typing.Optional[str]
+        ):
+        if starting_name is None:
+            await ctx.reply("Please provide the current key name.")
+            return
+        
+        if ending_name is None:
+            await ctx.reply("Please provide the new key name.")
+            return
 
         all_guilds = self.json_interface.get_list_of_all_guilds()
         for guild_id in all_guilds:
             for account in self.json_interface.get_all_user_accounts(guild_id):
-                if starting_name in account.keys():
+                if starting_name in account.values.keys():
                     account.set(ending_name, account.get(starting_name))
                     del account.values[starting_name]
                     self.json_interface.set_account(account.get("id"), account, guild_id)
@@ -4585,9 +6987,14 @@ anarchy - 1000% of your wager.
     ########################################################################################################################
     #####      ADMIN GOD_ACCOUNT
 
-    @admin.group()
-    @commands.is_owner()
-    async def god_account(self, ctx, user: typing.Optional[discord.Member]):
+    @admin.command(
+        brief="Sets a member's stats to harcoded values.",
+        help = "Usage: bread admin god_account [optional member]"
+    )
+    @commands.check(verification.is_admin_check)
+    async def god_account(self, ctx,
+            user: typing.Optional[discord.Member]
+        ):
 
         if await self.await_confirmation(ctx) is False:
             return
@@ -4601,23 +7008,34 @@ anarchy - 1000% of your wager.
 
         account.set("total_dough", 10000000000000000000000000000)
         account.set("loaf_converter", 128)
-        account.set("max_daily_rolls", 1000)
+        account.set("max_daily_rolls", 1200)
+        account.set("auto_chessatron", False)
 
-        account.set("multiroller", 7)
-        account.set("compound_roller", 5)
+        account.set("space_level", 1)
+        account.set("spellcheck", True)
         account.set("roll_summarizer", 1)
 
-        account.set("prestige_level", 0)
-        account.set(values.ascension_token.text, 50)
-        account.set(values.chessatron.text, 250)
+        account.set("prestige_level", 2)
 
-        for word in [values.gem_red.text, values.gem_blue.text, values.gem_purple.text, values.gem_green.text, values.gem_gold.text]:
-            account.set(word, 50)
+        items = values.all_shinies
+        
+        items.extend(values.all_chess_pieces)
+        items.extend(values.all_anarchy_pieces)
+        items.extend(values.all_special_breads)
+        items.extend(values.all_rare_breads)
+        items.extend(values.shadow_emotes)
 
-        account.set(values.anarchy_chess.text, 5)
+        items.append(values.ascension_token)
+        items.append(values.normal_bread)
+        items.append(values.anarchy_chess)
+        items.append(values.chessatron)
+        items.append(values.anarchy_chessatron)
+        items.append(values.omega_chessatron)
+        items.append(values.anarchy_omega_chessatron)
+        items.append(values.fuel)
 
-        for word in [":doughnut:", ":bagel:", ":waffle:", ":croissant:", ":flatbread:", ":stuffed_flatbread:", ":sandwich:", ":french_bread:"]:
-            account.set(word, 5000)
+        for emote in items:
+            account.set(emote.text, 50000000000)
 
         self.json_interface.set_account(user, account, guild = ctx.guild.id)
         await ctx.send("Done.")
@@ -4625,9 +7043,14 @@ anarchy - 1000% of your wager.
     ########################################################################################################################
     #####      ADMIN SYNCHRONIZE_USERNAMES
 
-    @admin.command()
-    @commands.is_owner()
-    async def synchronize_usernames(self, ctx, do_manually: typing.Optional[str] = None):
+    @admin.command(
+        brief="Re-synchronizes all usernames.",
+        help = "Usage: bread admin synchronize_usernames [optional 'manually' flag]"
+    )
+    @commands.check(verification.is_admin_check)
+    async def synchronize_usernames(self, ctx,
+            do_manually: typing.Optional[str] = None
+        ):
 
         if do_manually != "manual":
             self.synchronize_usernames_internal()
@@ -4668,8 +7091,11 @@ anarchy - 1000% of your wager.
     ########################################################################################################################
     #####      ADMIN DO_OPERATION
     
-    @admin.command()
-    @commands.is_owner()
+    @admin.command(
+        brief="Testing code/database stuff.",
+        help = "Usage: bread admin do_operation"
+    )
+    @commands.check(verification.is_admin_check)
     async def do_operation(self, ctx):
 
         if await self.await_confirmation(ctx) is False:
@@ -4805,11 +7231,23 @@ anarchy - 1000% of your wager.
         # JSON_cog.set_filing_cabinet("archived_bread_count", old_data)
 
         await ctx.send("Done.")
+    
+    @admin.command(
+        brief="Runs the space tick.",
+        help = "Usage: bread admin space_tick"
+    )
+    @commands.check(verification.is_admin_check)
+    async def run_space_tick(self, ctx):
+        self.space_tick()
+        await ctx.reply("Done.")
 
     ########################################################################################################################
     #####      ADMIN SAVE / ADMIN LOAD
     
-    @admin.command()
+    @admin.command(
+        brief="Loads the database from file.",
+        help = "Usage: bread admin load"
+    )
     @commands.is_owner()
     async def load(self, ctx):
 
@@ -4817,7 +7255,10 @@ anarchy - 1000% of your wager.
         #print("test, 1 arg")
         await ctx.send("Done.")
 
-    @admin.command()
+    @admin.command(
+        brief="Saves the database to file.",
+        help = "Usage: bread admin save"
+    )
     @commands.is_owner()
     async def save(self, ctx):
         self.json_interface.internal_save()
@@ -4831,10 +7272,14 @@ anarchy - 1000% of your wager.
     #####      ADMIN SET_ANNOUNCEMENT_CHANNEL
 
     @admin.command(
-        aliases = ["set_announce_channel"], 
+        brief="Sets the announcement channel.",
+        help = "Usage: bread admin set_announcement_channel [optional channel]",
+        aliases = ["set_announce_channel"]
     )
-    @commands.is_owner()
-    async def set_announcement_channel(self, ctx, channel: typing.Optional[discord.TextChannel]=None):
+    @commands.check(verification.is_admin_check)
+    async def set_announcement_channel(self, ctx,
+            channel: typing.Optional[discord.TextChannel] = None
+        ):
         if channel is None:
             channel = ctx.channel
 
@@ -4848,8 +7293,11 @@ anarchy - 1000% of your wager.
     ########################################################################################################################
     #####      ADMIN STONK_FLUCTUATE
 
-    @admin.command()
-    @commands.is_owner()
+    @admin.command(
+        brief="Runs a stonk tick.",
+        help = "Usage: bread admin stonk_fluctuate"
+    )
+    @commands.check(verification.is_admin_check)
     async def stonk_fluctuate(self, ctx):
         self.stonk_fluctuate_internal()
         await self.stonks_announce() #TODO: test this shit
@@ -4859,8 +7307,11 @@ anarchy - 1000% of your wager.
     ########################################################################################################################
     #####      ADMIN STONK_RESET
 
-    @admin.command()
-    @commands.is_owner()
+    @admin.command(
+        brief="Resets stonk values to default.",
+        help = "Usage: bread admin stonk_reset"
+    )
+    @commands.check(verification.is_admin_check)
     async def stonk_reset(self, ctx):
         self.stonk_reset_internal(guild = ctx.guild.id)
         await ctx.invoke(self.stonks)
@@ -4868,19 +7319,37 @@ anarchy - 1000% of your wager.
     ########################################################################################################################
     #####      ADMIN STONK_SPLIT
 
-    @admin.command()
-    @commands.is_owner()
-    async def stonk_split(self, ctx, stonk_name: str):
+    @admin.command(
+        brief="Splits the given stonk.",
+        help = "Usage: bread admin stonk_split [stonk name]"
+    )
+    @commands.check(verification.is_admin_check)
+    async def stonk_split(self, ctx,
+            stonk_name: typing.Optional[str]
+        ):
         stonk_text = values.get_emote_text(stonk_name)
+
+        stonks_file = self.json_interface.get_custom_file("stonks", guild = ctx.guild.id)
+
+        if stonk_text not in stonks_file:
+            await ctx.reply("I don't recognize that item.")
+            return
+        
         self.stonk_split_internal(stonk_text, guild=ctx.guild.id)
         await ctx.reply("Done.")
 
     ########################################################################################################################
     #####      ADMIN ADD_CHESS_SET
 
-    @admin.command()
-    @commands.is_owner()
-    async def add_chess_set(self, ctx, target : typing.Optional[discord.Member], count : typing.Optional[int] = 1):
+    @admin.command(
+        brief="Gives a chess set to a member.",
+        help = "Usage: bread admin add_chess_set [optional member] [optional amount]"
+    )
+    @commands.check(verification.is_admin_check)
+    async def add_chess_set(self, ctx,
+            target: typing.Optional[discord.Member],
+            count: typing.Optional[int] = 1
+        ):
         if target is None:
             target = ctx.author
 
@@ -4896,14 +7365,45 @@ anarchy - 1000% of your wager.
         await ctx.reply("Done.")
 
     ########################################################################################################################
+    #####      ADMIN ADD_ANARCHY_SET
+
+    @admin.command(
+        brief="Gives an anarchy set to a member.",
+        help = "Usage: bread admin add_anarchy_set [optional member] [optional amount]"
+    )
+    @commands.check(verification.is_admin_check)
+    async def add_anarchy_set(self, ctx,
+            target: typing.Optional[discord.Member],
+            count: typing.Optional[int] = 1
+        ):
+        if target is None:
+            target = ctx.author
+
+        user_account = self.json_interface.get_account(target, guild = ctx.guild.id)
+        full_chess_set = values.anarchy_pieces_black_biased + values.anarchy_pieces_white_biased
+
+        # add all pieces to the account
+        for emote in full_chess_set:
+            user_account.increment(emote.text, count)
+
+        self.json_interface.set_account(target, user_account, guild = ctx.guild.id)
+
+        await ctx.reply("Done.")
+
+    ########################################################################################################################
     #####      ADMIN INCREASE_PRESTIGE
 
-    @admin.command()
-    @commands.is_owner()
-    async def increase_prestige(self, ctx, target : typing.Optional[discord.Member]):
-        
+    @admin.command(
+        brief="Increase prestige level of member.",
+        help = "Usage: bread admin increase_prestige [optional member]"
+    )
+    @commands.check(verification.is_admin_check)
+    async def increase_prestige(self, ctx,
+            target: typing.Optional[discord.Member]
+        ):
         if await self.await_confirmation(ctx) is False:
             return
+        
         if target is None:
             target = ctx.author
 
@@ -4915,10 +7415,90 @@ anarchy - 1000% of your wager.
         await ctx.reply(f"Done. Prestige level is now {user_account.get_prestige_level()}.")
 
     ########################################################################################################################
+    #####      ADMIN ADD_ADMIN
+
+    @admin.command(
+        brief="Add approved admin.",
+        help = "Usage: bread admin add_admin [member]"
+    )
+    @commands.is_owner()
+    async def add_admin(self, ctx, target: typing.Optional[discord.Member]):
+        if target is None:
+            await ctx.reply("Please provide a user to add as an admin for this guild.")
+            return
+        
+        admins = self.json_interface.get_approved_admins(ctx.guild)
+
+        if str(target.id) in admins:
+            await ctx.reply("That user is already an admin in this guild.")
+            return
+        
+        print(f"{ctx.author} is adding {target} as an approved admin in {ctx.guild} ({ctx.guild.id})")
+        
+        admins.append(str(target.id))
+
+        guild_info = self.json_interface.get_guild_info(ctx.guild)
+        guild_info["approved_admins"] = admins
+        self.json_interface.set_guild_info(guild=ctx.guild.id, guild_info=guild_info)
+
+        await ctx.reply("Done.")
+
+    ########################################################################################################################
+    #####      ADMIN REMOVE_ADMIN
+
+    @admin.command(
+        brief="Remove approved admin.",
+        help = "Usage: bread admin remove_admin [member]"
+    )
+    @commands.is_owner()
+    async def remove_admin(self, ctx, target: typing.Optional[discord.Member]):
+        if target is None:
+            await ctx.reply("Please provide a user to remove admin permissions for this guild.")
+            return
+        
+        admins = self.json_interface.get_approved_admins(ctx.guild)
+
+        if str(target.id) not in admins:
+            await ctx.reply("That user isn't an admin.")
+            return
+        
+        print(f"{ctx.author} is removing admin permissions from {target} in {ctx.guild} ({ctx.guild.id})")
+        
+        admins.remove(str(target.id))
+
+        guild_info = self.json_interface.get_guild_info(ctx.guild)
+        guild_info["approved_admins"] = admins
+        self.json_interface.set_guild_info(guild=ctx.guild.id, guild_info=guild_info)
+
+        await ctx.reply("Done.")
+
+    ########################################################################################################################
+    #####      ADMIN ADMIN_LIST
+
+    @admin.command(
+        brief="Approved admins list.",
+        help = "Usage: bread admin admin_list"
+    )
+    @commands.check(verification.is_admin_check)
+    async def admin_list(self, ctx):
+        admins = self.json_interface.get_approved_admins(ctx.guild)
+
+        if len(admins) == 0:
+            await ctx.reply("This guild has no admins currently.")
+            return
+        
+        members = [get_display_name(discord.utils.find(lambda m: str(m.id) == admin, ctx.guild.members)) for admin in admins]
+
+        await ctx.reply("Current admins:\n" + ", ".join(members))
+
+    ########################################################################################################################
     #####      STRING FORMATTING
 
     
-    def write_number_of_times(number):
+    def write_number_of_times(number: int) -> str:
+        """Write the amount of times, for a number.
+        
+        For example, `0` will return `zero times`, `1` will return `once`, and something like `10` will return `10 times`."""
         number = parse_int(number)
         if number == 0:
             return "zero times"
@@ -4929,7 +7509,11 @@ anarchy - 1000% of your wager.
         else:
             return str(number) + " times"
 
-    def format_chess_pieces(file):
+    def format_chess_pieces(
+            self: typing.Self,
+            file: dict
+        ) -> str:
+        """Returns a string of the formatted version of the given file's chess pieces."""
         output = ""
 
         ###############################################################
@@ -5041,23 +7625,52 @@ anarchy - 1000% of your wager.
             output += "\n"
         
         return output
+    
+    def format_anarchy_pieces(
+            self: typing.Self,
+            account_values: dict
+        ) -> str:
+        """Returns a string for the formatted anarchy chess pieces of the given account data."""
+        lines = []
+        
+        components = [["" for _ in range(8)] for _ in range(2)]
+
+        white_minor_pieces = [values.anarchy_white_rook, values.anarchy_white_knight, values.anarchy_white_bishop]
+        black_minor_pieces = [values.anarchy_black_rook, values.anarchy_black_knight, values.anarchy_black_bishop]
+
+        for index, piece in enumerate(white_minor_pieces + black_minor_pieces):
+            amount = account_values.get(piece.text, 0)
+            if amount >= 1:
+                components[index // 3][index % 3] = piece.text
+            if amount >= 2:
+                components[index // 3][7 - (index % 3)] = piece.text
+
+        for index, piece in enumerate([values.anarchy_white_queen, values.anarchy_white_king, values.anarchy_black_queen, values.anarchy_black_king]):
+            amount = account_values.get(piece.text, 0)
+            if amount >= 1:
+                components[index // 2][(index % 2) + 3] = piece.text
+        
+        lines.append(" ".join(components[0]))
+
+        pawn = min(account_values.get(values.anarchy_white_pawn.text, 0), 8)
+        lines.append(pawn * (values.anarchy_white_pawn.text + " "))
+
+        pawn = min(account_values.get(values.anarchy_black_pawn.text, 0), 8)
+        lines.append(pawn * (values.anarchy_black_pawn.text + " "))
+        
+        lines.append(" ".join(components[1]))
+
+        return "\n".join(lines)
+        
+
 
     
 
 bread_cog_ref = None
 bot_ref = None
 
-async def setup(bot):
+async def setup(bot: commands.Bot):
     
-    bread_cog = Bread_cog(bot)
-    await bot.add_cog(bread_cog)
-
-    global bread_cog_ref 
-    bread_cog_ref = bread_cog
-    
-    global bot_ref
-    bot_ref = bot
-
     importlib.reload(emoji)
     importlib.reload(verification)
     importlib.reload(values)
@@ -5068,16 +7681,30 @@ async def setup(bot):
     importlib.reload(utility)
     importlib.reload(alchemy)
     importlib.reload(stonks)
+    importlib.reload(space)
+    importlib.reload(generation)
+    importlib.reload(projects)
+
+    bread_cog = Bread_cog(bot)
+    await bot.add_cog(bread_cog)
+
+    global bread_cog_ref 
+    bread_cog_ref = bread_cog
+    
+    global bot_ref
+    bot_ref = bot
 
     try:
         #Bread_cog.internal_load(bot)
         bread_cog.json_interface.internal_load()
     except BaseException as err:
         print(err)
+    
+    bread_cog.scramble_random_seed()
     #bot.add_cog(Chess_game(bot)) #do we want to actually have this be a *cog*, or just a helper class?
 
 #seems mostly useless since we can't call anything async
-def teardown(bot):
+def teardown(bot: commands.Bot):
     print('bread cog is being unloaded.')
     #print("bot is "+str(bot))
     
@@ -5088,7 +7715,7 @@ def teardown(bot):
         print("Done.")
     except BaseException as err:
         print("An error occurred saving bread data.")
-        print(err)
+        print(traceback.format_exc())
 
     #Bread_cog.internal_save(bot)
     #await bot.graceful_shutdown()

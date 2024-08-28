@@ -1,12 +1,22 @@
+from __future__ import annotations
+
 import random
 import bread.values as values
 import bread.account as account
 import bread.utility as utility
 import bread.store as store
+import bread.space as space
+import bread_cog
 
 
 
-def bread_roll(roll_luck = 1, roll_count = 1, user_account: account.Bread_Account = None):
+def bread_roll(
+        roll_luck = 1,
+        roll_count = 1,
+        user_account: account.Bread_Account = None,
+        json_interface: bread_cog.JSON_interface = None
+    ) -> dict:
+    """Calculates an entire set of bread rolls."""
 
     output = dict()
 
@@ -24,6 +34,68 @@ def bread_roll(roll_luck = 1, roll_count = 1, user_account: account.Bread_Accoun
     gambit_shop_bonus = 0
 
     output["individual_values"] = list()
+
+    ##### Static values.
+    # These are values that are static across all rolls in a multiroll.
+
+    moak_rarity_multiplier = round(user_account.get("max_daily_rolls") / 10)
+    gem_boost = user_account.get_shadow_gold_gem_boost_count()
+
+    lc_booster = user_account.get("LC_booster")
+    if lc_booster > 0:
+        lc_boost = 2 ** lc_booster
+    else:
+        lc_boost = 1
+
+    corruption_chance = user_account.get_corruption_chance(json_interface=json_interface)
+    
+    # If the user has access to space.
+    if user_account.get_space_level() >= 1:
+        # If the user has been to space, then check their current location and adjust the chance multipliers accordingly.
+
+        anarchy_piece_luck = user_account.get_anarchy_piece_luck(roll_luck * lc_boost)
+
+        #### Planet-based roll modifiers.
+
+        system_tile = user_account.get_system_tile(json_interface)
+        day_seed = json_interface.get_day_seed(guild=user_account.get("guild_id"))
+
+        rarity_modifiers = space.get_planet_modifiers(
+            json_interface = json_interface,
+            ascension = user_account.get_prestige_level(),
+            guild = user_account.get("guild_id"),
+            day_seed = day_seed,
+            tile = system_tile
+        )
+
+        moak_multiplier = rarity_modifiers.get(values.anarchy_chess)
+        gem_gold_multiplier = rarity_modifiers.get(values.gem_gold)
+        gem_green_multiplier = rarity_modifiers.get(values.gem_green)
+        gem_purple_multiplier = rarity_modifiers.get(values.gem_purple)
+        gem_blue_multiplier = rarity_modifiers.get(values.gem_blue)
+        gem_red_multiplier = rarity_modifiers.get(values.gem_red)
+        anarchy_piece_multiplier = rarity_modifiers.get(values.anarchy_black_pawn)
+        chess_piece_multiplier = rarity_modifiers.get(values.black_pawn)
+        rare_bread_multiplier = rarity_modifiers.get(values.waffle)
+        special_bread_multiplier = rarity_modifiers.get(values.croissant)
+    else:
+        # If the user has not been to space, set all the multipliers to 1 to not adjust the rarities at all.
+        # In addition, set the anarchy piece luck to -1 to make it impossible to roll.
+
+        anarchy_piece_luck = -1 # With a negative number it's impossible to roll.
+
+        moak_multiplier = 1
+        gem_gold_multiplier = 1
+        gem_green_multiplier = 1
+        gem_purple_multiplier = 1
+        gem_blue_multiplier = 1
+        gem_red_multiplier = 1
+        anarchy_piece_multiplier = 1
+        chess_piece_multiplier = 1
+        rare_bread_multiplier = 1
+        special_bread_multiplier = 1
+
+
 
     # what we'll do, is we'll have one commentary message, and a bunch of roll messages
     # each roll message will have up to 20 emotes in it
@@ -115,14 +187,45 @@ def bread_roll(roll_luck = 1, roll_count = 1, user_account: account.Bread_Accoun
 
         emote_output = ""
 
+        ### Roll-only values:
+        # These are values that are the same for each loaf in this roll, but may change on a different roll.        
+
+        moak_luck = round(out_luck * store.moak_booster_multipliers[ user_account.get("moak_booster")])
+        gem_luck = out_luck + gem_boost
+
+        if lc_booster > 0:
+            out_luck = (out_luck - 1) * lc_boost + 1 
+            gem_luck = (gem_luck - 1) * lc_boost + 1
+
         for i in range(1,loaf_count+1):
 
 
             ######
             ############################################################
 
-            roll = loaf_roll(luck=out_luck, 
-                            user_account=user_account)
+            roll = loaf_roll(
+                luck = out_luck,
+                user_account = user_account,
+
+                moak_rarity_multiplier = moak_rarity_multiplier,
+                moak_luck = moak_luck,
+
+                gem_luck = gem_luck,
+
+                corruption_chance = corruption_chance,
+                anarchy_piece_luck = anarchy_piece_luck,
+
+                moak_multiplier = moak_multiplier,
+                gem_gold_multiplier = gem_gold_multiplier,
+                gem_green_multiplier = gem_green_multiplier,
+                gem_purple_multiplier = gem_purple_multiplier,
+                gem_blue_multiplier = gem_blue_multiplier,
+                gem_red_multiplier = gem_red_multiplier,
+                anarchy_piece_multiplier = anarchy_piece_multiplier,
+                chess_piece_multiplier = chess_piece_multiplier,
+                rare_bread_multiplier = rare_bread_multiplier,
+                special_bread_multiplier = special_bread_multiplier
+            )
 
             ############################################################
             ######
@@ -237,31 +340,53 @@ def bread_roll(roll_luck = 1, roll_count = 1, user_account: account.Bread_Accoun
 
     return output
 
-def loaf_roll(luck = 1, user_account: account.Bread_Account = None):
-    #output what it's getting called with
-    #print (f"loaf roll called with luck: {luck}, include_moaks: {include_moaks}, max_daily_rolls: {max_daily_rolls}")
-    # odds_mult = 4
-    moak_rarity_mult = round(user_account.get("max_daily_rolls") / 10)
-    gem_boost = user_account.get_shadow_gold_gem_boost_count()
+def loaf_roll(
+        luck: int = 1,
+        user_account: account.Bread_Account = None,
+
+        moak_rarity_multiplier: int = 1,
+        moak_luck: int = 32768,
+
+        gem_luck: int = 0,
+
+        corruption_chance: float = 0.0,
+        anarchy_piece_luck: int = 0,
+
+        moak_multiplier: float = 1,
+        gem_gold_multiplier: float = 1,
+        gem_green_multiplier: float = 1,
+        gem_purple_multiplier: float = 1,
+        gem_blue_multiplier: float = 1,
+        gem_red_multiplier: float = 1,
+        anarchy_piece_multiplier: float = 1,
+        chess_piece_multiplier: float = 1,
+        rare_bread_multiplier: float = 1,
+        special_bread_multiplier: float = 1
+    ) -> dict:
+    """Calculates a single loaf in a bread roll."""
 
     output = {}
     output["extra_profit"] = 0
+
+    if random.randint(1, 2**14) <= (anarchy_piece_luck * anarchy_piece_multiplier):
+        # anarchy piece
+        white_piece_chances = store.chess_piece_distribution_levels[user_account.get("chess_piece_equalizer")]
+
+        if random.randint(1, 100) <= white_piece_chances:
+            # White anarchy piece
+            output["emote"] = random.choice(values.anarchy_pieces_white_biased)
+            output["commentary"] = "Your Karma has been increased by 20 points."
+        else:
+            # Black anarchy piece
+            output["emote"] = random.choice(values.anarchy_pieces_black_biased)
+            output["commentary"] = "Your Karma has been increased by 10 points."
     
-
-    moak_luck = round( luck * store.moak_booster_multipliers[ user_account.get("moak_booster") ])
-    gem_luck = luck + gem_boost
-
-    lc_booster = user_account.get("LC_booster")
-    if lc_booster > 0:
-        lc_boost = 2 ** lc_booster
-        # luck = (luck - 1) * 4 + 1 # base luck of 1, with 8x multiplier for LCs
-        # gem_luck = (gem_luck - 1) * 4 + 1 # base luck of 1, with 8x multiplier for LCs
-        luck = (luck - 1) * lc_boost + 1 
-        gem_luck = (gem_luck - 1) * lc_boost + 1
-
+    elif random.random() < corruption_chance: # Corrupted bread :|
+        output["commentary"] = ""
+        output["emote"] = values.corrupted_bread
 
     # MoaKs
-    if random.randint(1, moak_rarity_mult * 2**15) <= moak_luck:
+    elif random.randint(1, moak_rarity_multiplier * 2**15) <= (moak_luck * moak_multiplier):
         # one-of-a-kind
         # output["emote"] = random.choice([
         #                                     #values.holy_hell, 
@@ -273,40 +398,40 @@ def loaf_roll(luck = 1, user_account: account.Bread_Account = None):
         output["commentary"] = "That sure is pretty rare!"
         output["extra_profit"] = user_account.get("max_daily_rolls") * 10 # between 10 and 10,000 extra
 
-    elif random.randint(1, 2**22) <= gem_luck:
+    elif random.randint(1, 2**22) <= (gem_luck * gem_gold_multiplier):
         # gold gem
         output["emote"] = values.gem_gold
         output["commentary"] = "The fabled gold gem!"
 
     # 32768 -> green gem worth 2000
-    elif random.randint(1, 2**19) <= gem_luck:
+    elif random.randint(1, 2**19) <= (gem_luck * gem_green_multiplier):
         # green gem
         output["emote"] = values.gem_green
         output["commentary"] = "Incredibly shiny!"
 
     # 16384 -> purple gem worth 1000
-    elif random.randint(1, 2**18) <= gem_luck:
+    elif random.randint(1, 2**18) <= (gem_luck * gem_purple_multiplier):
         # purple gem
         output["emote"] = values.gem_purple
         output["commentary"] = "So very shiny."
 
     # 8192 -> blue gem worth 500
-    elif random.randint(1, 2**17) <= gem_luck:
+    elif random.randint(1, 2**17) <= (gem_luck * gem_blue_multiplier):
         # blue gem
         output["emote"] = values.gem_blue
         output["commentary"] = "Very shiny."
 
     # 4096 -> red gem, worth 250
-    elif random.randint(1, 2**16) <= gem_luck:
+    elif random.randint(1, 2**16) <= (gem_luck * gem_red_multiplier):
         # red gem
         output["emote"] = values.gem_red
         output["commentary"] = "Shiny."
 
-    elif random.randint(1, 2**11) <= luck:
+    elif random.randint(1, 2**11) <= (luck * chess_piece_multiplier):
         #chess piece
         # user_chess_pieces = user_account.get_all_items_with_attribute_unrolled("chess_pieces")
 
-        white_piece_chances = store.chess_piece_distribution_levels[ user_account.get("chess_piece_equalizer") ]
+        white_piece_chances = store.chess_piece_distribution_levels[user_account.get("chess_piece_equalizer")]
 
         if random.randint(1,100) <= white_piece_chances: # white pieces
             # unfound_white_pieces = utility.array_subtract(values.chess_pieces_white_biased, user_chess_pieces)
@@ -331,12 +456,12 @@ def loaf_roll(luck = 1, user_account: account.Bread_Account = None):
             output["emote"] = random.choice(values.chess_pieces_black_biased)
             output["commentary"] = "Your Elo has been increased by 10 points."
         
-    elif random.randint(1, 2**9) <= luck:
+    elif random.randint(1, 2**9) <= (luck * rare_bread_multiplier):
         #rare bread
         output["emote"]= random.choice(values.all_rare_breads)
         output["commentary"] = "Tasty!"
         
-    elif random.randint(1, 2**7) <= luck:
+    elif random.randint(1, 2**7) <= (luck * special_bread_multiplier):
         #special bread
         output["emote"] = random.choice(values.all_special_breads)
         output["commentary"] = "Tasty."
@@ -417,6 +542,10 @@ def summarize_roll(
         output += f"Ten breads: {utility.smart_number(result['ten_breads'])}\n"
         removals.append("ten_breads")
 
+    if values.corrupted_bread.text in result:
+        output += f"\t{values.corrupted_bread.text}: {utility.smart_number(result[values.corrupted_bread.text])}"
+        removals.append(values.corrupted_bread.text)
+
     if ":bread:" in result:
         output += f"\t:bread:: {utility.smart_number(result[':bread:'])}\n"
         removals.append(":bread:")
@@ -449,9 +578,19 @@ def summarize_roll(
         output += f"\nChess pieces: {utility.smart_number(result['chess_pieces'])}\n"
         removals.append("chess_pieces")
 
+    if "anarchy_pieces" in result.keys():
+        output += f"\nAnarchy pieces: {utility.smart_number(result['anarchy_pieces'])}\n"
+        removals.append("anarchy_pieces")
+
     for key in result.keys():
         emote = values.get_emote(key)
         if emote is not None and ("chess_pieces" in emote.attributes):
+            output += f"\t{key}: {utility.smart_number(result[key])}"
+            removals.append(key)
+
+    for key in result.keys():
+        emote = values.get_emote(key)
+        if emote is not None and ("anarchy_pieces" in emote.attributes):
             output += f"\t{key}: {utility.smart_number(result[key])}"
             removals.append(key)
 

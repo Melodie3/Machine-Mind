@@ -12,7 +12,31 @@ class Emote:
     attributes = []
     name = None
 
-    def __init__(self, text, value=0, name=None, emoji=None, attributes=[], awards_value=False, alchemy_value=None, giftable=True, alternate_names=[]):
+    def __init__(
+            self: typing.Self,
+            text: str,
+            value: int = 0,
+            name: str = None,
+            emoji: str = None,
+            attributes: list[str] = [],
+            awards_value: bool = False,
+            alchemy_value: typing.Optional[int] = None,
+            giftable: bool = True,
+            alternate_names: list[str] = [],
+        ) -> None:
+        """Object that represents an Emote.
+
+        Args:
+            text (str): The emoji text. Something like ":bread:" or "<:anarchy_chess:960772054746005534>".
+            value (int, optional): The dough value of this when rolled. Defaults to 0.
+            name (str, optional): The name of this emote. Defaults to None.
+            emoji (str, optional): The emoji character of this, if it has one. Defaults to None.
+            attributes (list[str], optional): A list of attributes for this emote. Defaults to [].
+            awards_value (bool, optional): Whether this emote awards its value when alchemized. Defaults to False.
+            alchemy_value (typing.Optional[int], optional): The value of this emote in alchemy. Defaults to None.
+            giftable (bool, optional): Whether this emote can be gifted. Defaults to True.
+            alternate_names (list[str], optional): A list of alternate names for this emote. Defaults to [].
+        """
         self.text = text
         self.value = value
         self.name = name
@@ -24,7 +48,7 @@ class Emote:
             self.alchemy_value = value
         self.alternate_names = alternate_names
 
-    def __str__(self):
+    def __str__(self: typing.Self) -> str:
         if self.name is not None:
             return f"<Emote: {self.name}>"
         elif self.text is not None:
@@ -32,16 +56,18 @@ class Emote:
         else:
             return "<Emote object>"
     
-    def __repr__(self):
+    def __repr__(self: typing.Self) -> str:
         return self.__str__()
 
-    def gives_alchemy_award(self):
-        if hasattr (self, "awards_value"):
+    def gives_alchemy_award(self: typing.Self) -> bool:
+        """Whether this emote awards its value when alchemized."""
+        if hasattr(self, "awards_value"):
             return self.awards_value
         else:
             return False
 
-    def get_alchemy_value(self):
+    def get_alchemy_value(self: typing.Self) -> int:
+        """The value of this item when alchemized."""
         if self.gives_alchemy_award():
             if hasattr (self, "alchemy_value"):
                 return self.alchemy_value
@@ -50,13 +76,18 @@ class Emote:
         else:
             return 0
 
-    def get_representation(self, guild_id):
+    def get_representation(
+            self: typing.Self,
+            guild_id: int
+        ) -> str:
+        """The representation of this emote."""
         if self.emoji is not None:
             return self.emoji
         else:
             return self.text
 
-    def can_be_gifted(self):
+    def can_be_gifted(self: typing.Self) -> bool:
+        """Whether this item can be gifted."""
         if hasattr(self, "giftable"):
             return self.giftable
         else:
@@ -75,6 +106,14 @@ normal_bread =  Emote(
     emoji= "🍞",
 )
 
+############ corrupted bread
+
+corrupted_bread = Emote(
+    text = "<:corrupted_bread:1129289000843235378>",
+    value = 1,
+    name = "corrupted_bread",
+)
+
 ############ speacial breads
 
 # flatbread = { "value" : 5,
@@ -87,7 +126,7 @@ flatbread =  Emote(
     value=5,
     name="flatbread",
     emoji= "🫓",
-    attributes=["special_bread"]
+    attributes=["special_bread"],
 )
 
 # stuffed_flatbread = {
@@ -102,7 +141,7 @@ stuffed_flatbread = Emote(
     value=5,
     name="stuffed_flatbread",
     emoji= "🥙",
-    attributes=["special_bread"]
+    attributes=["special_bread"],
 )
 
 # french_bread = { "value" : 5,
@@ -115,7 +154,7 @@ french_bread = Emote(
     value=5,
     name="french_bread",
     emoji= "🥖",
-    attributes=["special_bread"]
+    attributes=["special_bread"],
 )
 
 # croissant = { "value" : 5,
@@ -128,7 +167,7 @@ croissant = Emote(
     value=5,
     name="croissant",
     emoji= "🥐",
-    attributes=["special_bread"]
+    attributes=["special_bread"],
 )
 
 # sandwich = { "value" : 5,
@@ -141,7 +180,7 @@ sandwich = Emote(
     value=5,
     name="sandwich",
     emoji= "🥪",
-    attributes=["special_bread"]
+    attributes=["special_bread"],
 )
 
 all_special_breads = [sandwich, croissant, french_bread, stuffed_flatbread, flatbread]
@@ -171,7 +210,7 @@ doughnut = Emote(
     value=10,
     name="doughnut",
     emoji= "🍩",
-    attributes=["rare_bread"]
+    attributes=["rare_bread"],
 )
 
 # bagel = {
@@ -186,7 +225,7 @@ bagel = Emote(
     value=10,
     name="bagel",
     emoji= "🥯",
-    attributes=["rare_bread"]
+    attributes=["rare_bread"],
 )
 
 # waffle = {
@@ -201,7 +240,7 @@ waffle = Emote(
     value=10,
     name="waffle",
     emoji= "🧇",
-    attributes=["rare_bread"]
+    attributes=["rare_bread"],
 )
 
 all_rare_breads = [doughnut, bagel, waffle]
@@ -280,7 +319,6 @@ chessatron = Emote(
     name="chessatron",
     attributes=["unique", "full_chess_set"],
     awards_value = True
-
 )
 
 omega_chessatron = Emote(
@@ -293,18 +331,50 @@ omega_chessatron = Emote(
     alternate_names = ["omega"]
 )
 
+anarchy_chessatron = Emote(
+    text="<:anarchy_chessatron:1271191972627087370>",
+    value=100_000,
+    name="anarchy_chessatron",
+    attributes=["unique", "full_anarchy_set"],
+    awards_value = True
+)
+
+anarchy_omega_chessatron = Emote(
+    text="<:anarchy_omega_chessatron:1271191852330123274>",
+    value=250_000,
+    name="anarchy_omega_chessatron",
+    attributes=["unique"],
+    awards_value = True,
+    alternate_names = ["anarchy_omega"],
+    giftable=False
+)
+
 # "<:anarchy_chess:960772054746005534>",
 # "<:horsey:960727531592511578>", 
 # "<:holy_hell:961184782253948938>"]     
 # "<:anarchy:960771114819264533>"
 
 all_one_of_a_kind = [anarchy, anarchy_chess, horsey, holy_hell]
-all_uniques =       [anarchy, anarchy_chess, horsey, holy_hell, chessatron, omega_chessatron]
+all_uniques =       [anarchy, anarchy_chess, horsey, holy_hell, chessatron, omega_chessatron, anarchy_chessatron, anarchy_omega_chessatron]
 
 ##################### CHESS
 
 class Chess_Emote(Emote):
-    def __init__(self, name, text, isWhite, alternate_names=[]):
+    def __init__(
+            self: typing.Self,
+            name: str,
+            text: str,
+            isWhite: bool,
+            alternate_names: list[str] = [],
+        ) -> None:
+        """An object that represents a chess piece.
+
+        Args:
+            name (str): The name of this emote.
+            text (str): The text representation.
+            isWhite (bool): Whether this piece is a white chess piece.
+            alternate_names (list[str], optional): A list of alternate names for this emote. Defaults to [].
+        """
         self.text = text
         self.name = name
         if isWhite:
@@ -323,7 +393,7 @@ class Chess_Emote(Emote):
 white_pawn = Chess_Emote(
     name="Wpawn",
     text = "<:Wpawn:961815364319207516>",
-    isWhite=True 
+    isWhite=True
 )
 
 # white_rook = { "text" : "<:Wrook:961815364482793492>",
@@ -333,7 +403,7 @@ white_pawn = Chess_Emote(
 white_rook = Chess_Emote(
     name="Wrook",
     text = "<:Wrook:961815364482793492>",
-    isWhite=True 
+    isWhite=True
 )
 
 # white_bishop = { "text" : "<:Wbishop:961815364428263435>",
@@ -343,7 +413,7 @@ white_rook = Chess_Emote(
 white_bishop = Chess_Emote(
     name="Wbishop",
     text = "<:Wbishop:961815364428263435>",
-    isWhite=True 
+    isWhite=True
 )
 
 # white_knight = { "text" : "<:Wknight:958746544436310057>",
@@ -353,7 +423,7 @@ white_bishop = Chess_Emote(
 white_knight = Chess_Emote(
     name="Wknight",
     text = "<:Wknight:958746544436310057>",
-    isWhite=True 
+    isWhite=True
 )
 
 # white_queen = { "text" : "<:Wqueen:961815364461809774>",
@@ -363,7 +433,7 @@ white_knight = Chess_Emote(
 white_queen = Chess_Emote(
     name="Wqueen",
     text = "<:Wqueen:961815364461809774>",
-    isWhite=True 
+    isWhite=True
 )
 
 # white_king = { "text" : "<:Wking:961815364411478016>",
@@ -373,7 +443,7 @@ white_queen = Chess_Emote(
 white_king = Chess_Emote(
     name="Wking",
     text = "<:Wking:961815364411478016>",
-    isWhite=True 
+    isWhite=True
 )
 
 
@@ -384,7 +454,7 @@ white_king = Chess_Emote(
 black_pawn = Chess_Emote(
     name="Bpawn",
     text = "<:Bpawn:961815364436635718>",
-    isWhite=False 
+    isWhite=False
 )
 
 # black_rook = { "text" : "<:Brook:961815364377919518>",
@@ -394,7 +464,7 @@ black_pawn = Chess_Emote(
 black_rook = Chess_Emote(
     name="Brook",
     text = "<:Brook:961815364377919518>",
-    isWhite=False 
+    isWhite=False
 )
 
 # black_bishop = { "text" : "<:Bbishop:961815364306608228>",
@@ -404,7 +474,7 @@ black_rook = Chess_Emote(
 black_bishop = Chess_Emote(
     name="Bbishop",
     text = "<:Bbishop:961815364306608228>",
-    isWhite=False 
+    isWhite=False
 )
 
 # black_knight = { "text" : "<:Bknight:961815364424048650>",
@@ -414,7 +484,7 @@ black_bishop = Chess_Emote(
 black_knight = Chess_Emote(
     name="Bknight",
     text =  "<:Bknight:961815364424048650>",
-    isWhite=False 
+    isWhite=False
 )
 
 # black_queen = { "text" : "<:Bqueen:961815364470202428>",
@@ -424,7 +494,7 @@ black_knight = Chess_Emote(
 black_queen = Chess_Emote(
     name="Bqueen",
     text =  "<:Bqueen:961815364470202428>",
-    isWhite=False 
+    isWhite=False
 )
 
 # black_king = { "text" : "<:Bking:961815364327600178>",
@@ -434,30 +504,190 @@ black_queen = Chess_Emote(
 black_king = Chess_Emote(
     name="Bking",
     text =  "<:Bking:961815364327600178>",
-    isWhite=False 
+    isWhite=False
 )
 
 all_chess_pieces = [black_king, black_queen, black_knight, black_bishop, black_rook, black_pawn, white_pawn, white_rook, white_bishop, white_knight, white_queen, white_king]
-chess_pieces_black_biased = [black_pawn,black_pawn,black_pawn,black_pawn,black_pawn,black_pawn,black_pawn,black_pawn,
-                             black_rook, black_rook,
-                             black_bishop, black_bishop,
-                             black_knight, black_knight,
-                             black_queen, 
-                             black_king]
-chess_pieces_white_biased = [white_pawn,white_pawn,white_pawn,white_pawn,white_pawn,white_pawn,white_pawn,white_pawn,
-                             white_rook, white_rook,
-                             white_bishop, white_bishop,
-                             white_knight, white_knight,
-                             white_queen,
-                             white_king]
+chess_pieces_black_biased = [
+    black_pawn,black_pawn,black_pawn,black_pawn,black_pawn,black_pawn,black_pawn,black_pawn,
+    black_rook, black_rook,
+    black_bishop, black_bishop,
+    black_knight, black_knight,
+    black_queen, 
+    black_king
+]
+chess_pieces_white_biased = [
+    white_pawn,white_pawn,white_pawn,white_pawn,white_pawn,white_pawn,white_pawn,white_pawn,
+    white_rook, white_rook,
+    white_bishop, white_bishop,
+    white_knight, white_knight,
+    white_queen,
+    white_king
+]
+chess_pieces_black = [black_pawn, black_rook, black_bishop, black_knight, black_queen, black_king]
+chess_pieces_white = [white_pawn, white_rook, white_bishop, white_knight, white_queen, white_king]
 all_chess_pieces_biased = chess_pieces_black_biased + chess_pieces_white_biased
 
 ##################### CHESS END
 
+##################### ANARCHY PIECES
+
+class Anarchy_Piece_Emote(Emote):
+    def __init__(
+            self: typing.Self,
+            name: str,
+            text: str,
+            isWhite: bool,
+            alternate_names: list[str] = [],
+        ) -> None:
+        """An object that represents an anarchy piece.
+
+        Args:
+            name (str): The name of this emote.
+            text (str): The text representation.
+            isWhite (bool): Whether this piece is a white anarchy piece.
+            alternate_names (list[str], optional): A list of alternate names for this emote. Defaults to [].
+        """
+        self.text = text
+        self.name = name
+        if isWhite:
+            self.value = 3600
+        else:
+            self.value = 1800
+        self.attributes = ["anarchy_pieces"]
+        self.awards_value = False
+        self.alchemy_value = self.value
+        self.alternate_names = alternate_names
+
+anarchy_white_pawn = Anarchy_Piece_Emote(
+    name="Wpawnanarchy",
+    text = "<:Wpawnanarchy:971046978349858936>",
+    isWhite=True
+)
+
+anarchy_white_rook = Anarchy_Piece_Emote(
+    name="Wrookanarchy",
+    text = "<:Wrookanarchy:971047003402403862>",
+    isWhite=True
+)
+
+anarchy_white_bishop = Anarchy_Piece_Emote(
+    name="Wbishopanarchy",
+    text = "<:Wbishopanarchy:971046928395665448>",
+    isWhite=True
+)
+
+anarchy_white_knight = Anarchy_Piece_Emote(
+    name="Wknightanarchy",
+    text = "<:Wknightanarchy:971046961811714158>",
+    isWhite=True
+)
+
+anarchy_white_queen = Anarchy_Piece_Emote(
+    name="Wqueenanarchy",
+    text = "<:Wqueenanarchy:971046990312013844>",
+    isWhite=True
+)
+
+anarchy_white_king = Anarchy_Piece_Emote(
+    name="Wkinganarchy",
+    text = "<:Wkinganarchy:971046942144602172>",
+    isWhite=True
+)
+
+anarchy_black_pawn = Anarchy_Piece_Emote(
+    name="Bpawnanarchy",
+    text = "<:Bpawnanarchy:971046900038004736>",
+    isWhite=False
+)
+
+anarchy_black_rook = Anarchy_Piece_Emote(
+    name="Brookanarchy",
+    text = "<:Brookanarchy:971046920166457364>",
+    isWhite=False
+)
+
+anarchy_black_bishop = Anarchy_Piece_Emote(
+    name="Bbishopanarchy",
+    text = "<:Bbishopanarchy:971046862134050887>",
+    isWhite=False
+)
+
+anarchy_black_knight = Anarchy_Piece_Emote(
+    name="Bknightanarchy",
+    text =  "<:Bknightanarchy:971046888486891642>",
+    isWhite=False
+)
+
+anarchy_black_queen = Anarchy_Piece_Emote(
+    name="Bqueenanarchy",
+    text =  "<:Bqueenanarchy:971046911551356948>",
+    isWhite=False
+)
+
+anarchy_black_king = Anarchy_Piece_Emote(
+    name="Bkinganarchy",
+    text =  "<:Bkinganarchy:971046879540445275>",
+    isWhite=False
+)
+
+all_anarchy_pieces = [
+    anarchy_black_king,
+    anarchy_black_queen,
+    anarchy_black_knight,
+    anarchy_black_bishop,
+    anarchy_black_rook,
+    anarchy_black_pawn,
+    anarchy_white_pawn,
+    anarchy_white_rook,
+    anarchy_white_bishop,
+    anarchy_white_knight,
+    anarchy_white_queen,
+    anarchy_white_king
+]
+
+anarchy_pieces_black_biased = [
+    anarchy_black_pawn,anarchy_black_pawn,anarchy_black_pawn,anarchy_black_pawn,anarchy_black_pawn,anarchy_black_pawn,anarchy_black_pawn,anarchy_black_pawn,
+    anarchy_black_rook, anarchy_black_rook,
+    anarchy_black_bishop, anarchy_black_bishop,
+    anarchy_black_knight, anarchy_black_knight,
+    anarchy_black_queen, 
+    anarchy_black_king
+]
+
+anarchy_pieces_white_biased = [
+    anarchy_white_pawn,anarchy_white_pawn,anarchy_white_pawn,anarchy_white_pawn,anarchy_white_pawn,anarchy_white_pawn,anarchy_white_pawn,anarchy_white_pawn,
+    anarchy_white_rook, anarchy_white_rook,
+    anarchy_white_bishop, anarchy_white_bishop,
+    anarchy_white_knight, anarchy_white_knight,
+    anarchy_white_queen, 
+    anarchy_white_king
+]
+anarchy_pieces_black = [anarchy_black_pawn, anarchy_black_rook, anarchy_black_bishop, anarchy_black_knight, anarchy_black_queen, anarchy_black_king]
+anarchy_pieces_white = [anarchy_white_pawn, anarchy_white_rook, anarchy_white_bishop, anarchy_white_knight, anarchy_white_queen, anarchy_white_king]
+
 ##################### SHINIES
 
 class Shiny_Emote(Emote):
-    def __init__(self, name, text, value, awards_value=False, alchemy_value=None, alternate_names=[]):
+    def __init__(
+            self: typing.Self,
+            name: str,
+            text: str,
+            value: int,
+            awards_value: bool = False,
+            alchemy_value: int = None,
+            alternate_names: list[str] = []
+        ) -> None:
+        """An object representing a shiny emote (a gem)
+
+        Args:
+            name (str): The name of this emote.
+            text (str): The text representation of this emote.
+            value (int): The value of this emote in rolling and alchemy.
+            awards_value (bool, optional): Whether this emote awards its value when alchemized. Defaults to False.
+            alchemy_value (int, optional): Specific value to award when alchemized. Defaults to None.
+            alternate_names (list[str], optional): A list of alternate names for this emote. Defaults to [].
+        """
         self.text = text
         self.name = name
         self.attributes = ["shiny"]
@@ -476,21 +706,21 @@ gem_red = Shiny_Emote(
     name="gem_red",
     text = "<:gem_red:1006498544892526612>",
     value = 150,
-    alternate_names = ["red_gem"]
+    alternate_names = ["red_gem"],
 )
 
 gem_blue = Shiny_Emote(
     name="gem_blue",
     text = "<:gem_blue:1006498655508889671>",
     value = 250,
-    alternate_names = ["blue_gem"]
+    alternate_names = ["blue_gem"],
 )
 
 gem_purple = Shiny_Emote(
     name="gem_purple",
     text = "<:gem_purple:1006498607861604392>",
     value = 500,
-    alternate_names = ["purple_gem"]
+    alternate_names = ["purple_gem"],
 )
 
 gem_gold = Shiny_Emote(
@@ -498,14 +728,14 @@ gem_gold = Shiny_Emote(
     text = "<:gem_gold:1006498746718244944>",
     value = 5000,
     awards_value = True,
-    alternate_names = ["gold_gem"]
+    alternate_names = ["gold_gem"],
 )
 
 gem_green = Shiny_Emote(
     name="gem_green",
     text = "<:gem_green:1006498803295211520>",
     value = 750,
-    alternate_names = ["green_gem"]
+    alternate_names = ["green_gem"],
 )
 
 all_shinies = [gem_red, gem_blue, gem_purple, gem_gold, gem_green]
@@ -599,6 +829,13 @@ hotdog = Emote(
     attributes=["misc_bread"]
 )
 
+bacon = Emote(
+    text=":bacon:",
+    name="bacon",
+    emoji="🥓",
+    attributes=["misc_bread"]
+)
+
 taco = Emote(
     text=":taco:",
     name="taco",
@@ -622,7 +859,7 @@ cupcake = Emote(
 
 
 
-misc_bread_emotes = [pretzel, birthday, cake, pancakes, hamburger, pizza, dumpling, fortune_cookie, pie, hotdog, taco, burrito, cupcake, cookie]
+misc_bread_emotes = [pretzel, birthday, cake, pancakes, hamburger, pizza, dumpling, fortune_cookie, pie, hotdog, taco, burrito, cupcake, cookie, bacon]
 
 ##################### SHADOW
 
@@ -729,9 +966,18 @@ ascension_token = Emote(
     giftable = False
 )
 
+fuel = Emote(
+    text = ":oil:",
+    name = "fuel",
+    emoji= "🛢️",
+    alternate_names = ["oil"],
+    attributes = ["misc"],
+    giftable = False,
+)
+
 all_bricks = [brick, brick_gold, fide_brick, brick_fide]
 all_bricks_weighted = [brick] * 10 + [brick_gold] * 1 + [fide_brick] * 5 + [brick_fide] * 5
-misc_emotes = [ascension_token, middle_finger, cherry, brick, brick_gold, fide_brick, brick_fide, lemon, grapes, rigged, bcapy, wcapy]
+misc_emotes = [ascension_token, middle_finger, cherry, brick, brick_gold, fide_brick, brick_fide, lemon, grapes, rigged, bcapy, wcapy, corrupted_bread, fuel]
 
 ##################### CODE
 
@@ -739,9 +985,12 @@ all_emotes = [normal_bread,
     flatbread, stuffed_flatbread, french_bread, croissant, sandwich, 
     doughnut, bagel, waffle, 
     lottery_win,
-    ] + all_chess_pieces + misc_emotes + misc_bread_emotes + all_uniques + all_shinies + shadow_emotes
+    ] + all_chess_pieces + all_anarchy_pieces + misc_emotes + misc_bread_emotes + all_uniques + all_shinies + shadow_emotes
 
 def get_emote(text: str) -> typing.Optional[Emote]:
+    """Returns an Emote object if the given text represents that emote, or None if no emote matches."""
+    if text is None:
+        return None
     if len(text) == 0:
         return None
     # return None
@@ -773,7 +1022,8 @@ def get_emote(text: str) -> typing.Optional[Emote]:
     return None
 
 
-def get_emote_text(text: str):
+def get_emote_text(text: str) -> str:
+    """Returns the emote text of an emote that is represented by the given string."""
     emote = get_emote(text)
     if emote is not None:
         return emote.text
@@ -781,6 +1031,7 @@ def get_emote_text(text: str):
         return None
 
 def extract_emote_from_text(text: str) -> typing.Optional[Emote]:
+    """Extracts a single emote from a piece of text."""
     text = text.lower()
     for emote in all_emotes:
         if (emote.emoji is not None):

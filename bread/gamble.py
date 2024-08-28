@@ -37,7 +37,8 @@ reward_values = [values.brick,
 
 
 
-def gamble(brick_troll = False):
+def gamble(brick_troll = False) -> dict:
+    """Generates a single item for a gamble board, including that item's reward."""
 
     # filler = filler_values.copy()
     # rewards = reward_values.copy()
@@ -126,7 +127,8 @@ def gamble(brick_troll = False):
     return output
         
 
-def randomize(array: dict):
+def randomize(array: list) -> list:
+    """Shuffles a list. `random.shuffle()` is likely faster than this."""
     input = array.copy()
     output = []
     while len(input) != 0:
@@ -134,7 +136,8 @@ def randomize(array: dict):
         output.append(input.pop(index))
     return output
 
-def gamble_test(iterations):
+def gamble_test(iterations: int) -> None:
+    """Manual gamble test via running a set number of iterations."""
     bricks = 0
     total_spent = 0
     total_earned = 0

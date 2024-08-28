@@ -61,7 +61,7 @@ async def on_ready():
     print("All extensions loaded.")
 
 
-@bot.command( hidden = True )
+@bot.command(hidden = True)
 @commands.is_owner()
 async def bootstrap(ctx):
     importlib.reload(verification)

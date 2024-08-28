@@ -15,12 +15,15 @@ import json
 class Test_cog(commands.Cog, name="Test"):
     pass
     
-    def __init__(self, bot):
+    def __init__(
+            self: typing.Self,
+            bot: commands.Bot
+        ) -> None:
         print("test __init__ called")
         self.bot = bot
         #self.loop_task.start()
 
-    def cog_unload(self):
+    def cog_unload(self: typing.Self):
         self.loop_task.cancel()
         pass
 
@@ -184,7 +187,7 @@ class Test_cog(commands.Cog, name="Test"):
     ######### LOOP TEST
 
     @tasks.loop(seconds=5.0)
-    async def loop_task(self):
+    async def loop_task(self: typing.Self):
         second = datetime.now().second
         print ("Test loop running at second "+str(second))
         #if datetime.now().hour == 15:
@@ -196,7 +199,7 @@ class Test_cog(commands.Cog, name="Test"):
     async def after_loop_task(self):
         print('loop task ended')
 
-def setup(bot):
+def setup(bot: commands.Bot):
     importlib.reload(verification)
 
     bot.add_cog(Test_cog(bot))
@@ -207,7 +210,7 @@ def setup(bot):
     #bot.add_cog(Chess_game(bot)) #do we want to actually have this be a *cog*, or just a helper class?
 
 #seems mostly useless since we can't call anything async
-def teardown(bot):
+def teardown(bot: commands.Bot):
     print('test bot is being unloaded.')
     Test_cog.internal_save(bot)
     #await bot.graceful_shutdown()

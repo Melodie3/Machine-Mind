@@ -532,7 +532,7 @@ async def verify(ctx, user: typing.Optional[discord.Member]):
         
         await ctx.send(output + random.choice(descriptors))
 
-async def setup(bot):
+async def setup(bot: commands.Bot):
     importlib.reload(verification)
     importlib.reload(emoji)
     importlib.reload(utility)

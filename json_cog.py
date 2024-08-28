@@ -92,7 +92,8 @@ class JSON_cog(commands.Cog, name="JSON"):
 
     
     
-    def capture_and_save_data(self):
+    def capture_and_save_data(self: typing.Self) -> None:
+        """Captures the bread and chess data from their respective cogs and saves them to file."""
 
         # save chess data
         try:
@@ -166,10 +167,12 @@ class JSON_cog(commands.Cog, name="JSON"):
     ####################################
     #####      FILE STUFF
 
-    def load_all_data(self):
+    def load_all_data(self: typing.Self) -> None:
+        """Loads all the data, this just runs `self.internal_load()`."""
         self.internal_load()
 
-    def internal_load(self):
+    def internal_load(self: typing.Self) -> None:
+        """Loads the data from the database file."""
         print("JSON internal_load called")
         try:
             with open(self.file_path) as json_file:
@@ -186,7 +189,8 @@ class JSON_cog(commands.Cog, name="JSON"):
 
         self.transfer_data_if_nonexistent()
 
-    def transfer_data_if_nonexistent(self):
+    def transfer_data_if_nonexistent(self: typing.Self) -> None:
+        """Transfers data from the old format to the new one."""
         # originallly the format was to have everything stored in a flat heirarchy, but now we have guilds and vaults
         # and we want to transfer the old data into the new format, at least once
         # first we check if we have already done it
@@ -212,10 +216,12 @@ class JSON_cog(commands.Cog, name="JSON"):
         print("Done.")
 
         
-    def save_all_data(self):
+    def save_all_data(self: typing.Self) -> None:
+        """Saves all the data to file, this just runs `self.internal_save()`."""
         self.internal_save()
     
-    def internal_save(self):
+    def internal_save(self: typing.Self) -> None:
+        """Saves all the data to file."""
         print("saving JSON data")
         #json_string = json.dumps(self.data, indent=2)
 
@@ -223,7 +229,8 @@ class JSON_cog(commands.Cog, name="JSON"):
         with open(self.file_path, 'w') as outfile:
             json.dump(self.data, outfile, indent=2)
 
-    def create_backup(self):
+    def create_backup(self: typing.Self) -> None:
+        """Creates a backup file and saves the current database to it."""
 
         #first, make sure there's a backup folder (relative path)
         folder_path = "backup/"
@@ -231,7 +238,7 @@ class JSON_cog(commands.Cog, name="JSON"):
             os.makedirs(folder_path)
         
         #then, we make the file
-        file_name = datetime.now().strftime('database_backup_%Y:%m:%d_%X.json')
+        file_name = datetime.now().strftime('database_backup_%Y:%m:%d_%X.json').replace(":", "-") # Switch colons to hyphens to avoid filename restrictions.
         with open(folder_path+file_name, 'w') as outfile:
             print('created ', file_name)
             #json_string = json.dumps(self.data, indent=2)
@@ -244,7 +251,11 @@ class JSON_cog(commands.Cog, name="JSON"):
     #####      INTERFACE NEW
 
     # every server has a vault. In each vault there is a "bread" and a "chess" among other things
-    def get_vault(self, guild: typing.Union[discord.Guild, int, str]):
+    def get_vault(
+            self: typing.Self,
+            guild: typing.Union[discord.Guild, int, str]
+        ) -> dict:
+        """Returns a guild's vault, which is that server's section of the data."""
         
         if guild is None:
             # print ("No guild was passed, using default vault")
@@ -266,7 +277,12 @@ class JSON_cog(commands.Cog, name="JSON"):
 
         return vault
 
-    def set_vault(self, guild: typing.Union[discord.Guild, int, str], vault: dict):
+    def set_vault(
+            self: typing.Self,
+            guild: typing.Union[discord.Guild, int, str],
+            vault: dict
+        ) -> None:
+        """Sets a guild's vault to the given data."""
         if isinstance(guild, discord.Guild):
             self.data[str(guild.id)] = vault
         elif isinstance(guild, int):
@@ -277,7 +293,13 @@ class JSON_cog(commands.Cog, name="JSON"):
             self.data[self.default_guild] = vault
             
     
-    def get_filing_cabinet(self, name: str, guild: typing.Union[discord.Guild, int, str] = None, create_if_nonexistent=False):
+    def get_filing_cabinet(
+            self: typing.Self,
+            name: str,
+            guild: typing.Union[discord.Guild, int, str] = None,
+            create_if_nonexistent = False
+        ) -> typing.Union[dict, None]:
+        """Returns a filing cabinet within a guild's vault."""
         vault = self.get_vault(guild)
 
         if name in vault.keys():
@@ -289,23 +311,43 @@ class JSON_cog(commands.Cog, name="JSON"):
         else:
             return None
         
-    def set_filing_cabinet(self, name: str, cabinet: dict, guild: typing.Union[discord.Guild, int, str] = None):
+    def set_filing_cabinet(
+            self: typing.Self,
+            name: str,
+            cabinet: dict,
+            guild: typing.Union[discord.Guild, int, str] = None
+        ) -> None:
+        """Sets a filing cabinet within a guild's vault to the given data."""
         vault = self.get_vault(guild)
         vault[name] = cabinet
         self.set_vault(guild, vault)
     
-    def set_file_in_filing_cabinet(self, cabinet_name: str, file_name: str, file: dict, guild: typing.Union[discord.Guild, int, str] = None):
+    def set_file_in_filing_cabinet(
+            self: typing.Self,
+            cabinet_name: str,
+            file_name: str,
+            file: dict,
+            guild: typing.Union[discord.Guild, int, str] = None
+        ) -> None:
+        """Sets a file within a filing cabinet within a guild's vault."""
         cabinet = self.get_filing_cabinet(cabinet_name, guild, create_if_nonexistent=True)
         cabinet[file_name] = file
         self.set_filing_cabinet(cabinet_name, cabinet, guild)
     
-    def delete_file_in_filing_cabinet(self, cabinet_name: str, file_name: str, guild: typing.Union[discord.Guild, int, str] = None):
+    def delete_file_in_filing_cabinet(
+            self: typing.Self,
+            cabinet_name: str,
+            file_name: str,
+            guild: typing.Union[discord.Guild, int, str] = None
+        ) -> None:
+        """Deletes a file within a filing cabinet within a guild's vault."""
         cabinet = self.get_filing_cabinet(cabinet_name, guild, create_if_nonexistent=True)
         if file_name in cabinet.keys():
             del cabinet[file_name]
         self.set_filing_cabinet(cabinet_name, cabinet, guild)
 
-    def get_list_of_all_guilds(self):
+    def get_list_of_all_guilds(self: typing.Self) -> list[str]:
+        """Returns a list of every guild id in the database, each in the form of a string."""
         output = []
         for key in self.data.keys():
             if key == 'load_count':
