@@ -753,6 +753,10 @@ class JSON_interface:
         #print("Searching database for file for "+user.display_name)
         if key in self.data[guild_id]:
             #print("Found")
+            # set the guild_id if it's not already set
+            if "guild_id" not in self.data[guild_id][key].keys():
+                self.data[guild_id][key]["guild_id"] = guild_id
+
             return self.data[guild_id][key]
         else:
             print("Creating new data for "+str(user))
