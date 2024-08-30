@@ -1224,7 +1224,7 @@ class Self_Converting_Yeast(Prestige_Store_Item):
 class Chess_Piece_Equalizer(Prestige_Store_Item):
     name = "chess_piece_equalizer"
     display_name = "Chess Piece Equalizer"
-    aliases = "cpe"
+    aliases = ["cpe"]
 
     costs = [0, 1, 2, 3]
     
@@ -2128,6 +2128,10 @@ class Gambit_Shop_Black_Rook(Gambit_shop_Item):
 class Gambit_Shop_Black_Queen(Gambit_shop_Item):
     name = "gambit_shop_black_queen"
     display_name = "Queen's Gambit Declined"
+    aliases = [
+        "Queens Gambit Declined", # No apostrophe.
+        "Queen Gambit Declined" # iOS apostrophe.
+    ]
     level_required = 2
     boost_item = values.black_queen
     boost_amount = 20
@@ -2136,6 +2140,10 @@ class Gambit_Shop_Black_Queen(Gambit_shop_Item):
 class Gambit_Shop_Black_King(Gambit_shop_Item):
     name = "gambit_shop_black_king"
     display_name = "King's Gambit Declined"
+    aliases = [
+        "Kings Gambit Declined", # No apostrophe.
+        "King’s Gambit Declined" # iOS apostrophe.
+    ]
     level_required = 2
     boost_item = values.black_king
     boost_amount = 20
@@ -2162,6 +2170,10 @@ class Gambit_Shop_White_Knight(Gambit_shop_Item):
 class Gambit_Shop_White_Bishop(Gambit_shop_Item):
     name = "gambit_shop_white_bishop"
     display_name = "King's Fianchetto Opening"
+    aliases = [
+        "Kings Fianchetto Opening", # No apostrophe.
+        "King’s Fianchetto Opening" # iOS apostrophe.
+    ]
     level_required = 3
     boost_item = values.white_bishop
     boost_amount = 40
@@ -2178,6 +2190,10 @@ class Gambit_Shop_White_Rook(Gambit_shop_Item):
 class Gambit_Shop_White_Queen(Gambit_shop_Item):
     name = "gambit_shop_white_queen"
     display_name = "Queen's Gambit Accepted"
+    aliases = [
+        "Queens Gambit Accepted", # No apostrophe.
+        "Queen’s Gambit Accepted" # iOS apostrophe.
+    ]
     level_required = 3
     boost_item = values.white_queen
     boost_amount = 40
@@ -2186,6 +2202,10 @@ class Gambit_Shop_White_Queen(Gambit_shop_Item):
 class Gambit_Shop_White_King(Gambit_shop_Item):
     name = "gambit_shop_white_king"
     display_name = "King's Gambit Accepted"
+    aliases = [
+        "Kings Gambit Accepted", # No apostrophe.
+        "King’s Gambit Accepted" # iOS apostrophe.
+    ]
     level_required = 3
     boost_item = values.white_king
     boost_amount = 40
