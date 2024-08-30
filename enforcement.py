@@ -270,6 +270,10 @@ async def brick(ctx, member: typing.Optional[discord.Member], *args):
     special_command = None
     do_brick_animation = True
     forever = False
+    authorized_user = False
+
+    if verification.has_role(ctx.author, "moderator") or verification.has_role(ctx.author, "deputized") or verification.is_owner(ctx.author):
+        authorized_user = True
 
     if len(args) == 0:
         duration = None
@@ -280,9 +284,9 @@ async def brick(ctx, member: typing.Optional[discord.Member], *args):
         if arg.isnumeric():
             duration = arg
             multiplier = int(arg)
-        elif arg.lower() in ["instant", "now", "immediate"]:
+        elif arg.lower() in ["instant", "now", "immediate"] and authorized_user:
             do_brick_animation = False
-        elif arg.lower() in ["forever", "permanent", "permanently", "ban"]:
+        elif arg.lower() in ["forever", "permanent", "permanently", "ban"] and authorized_user:
             duration = "forever"
             forever = True
         elif arg.lower() in ["minutes", "minute", "m"]:
@@ -341,37 +345,17 @@ async def brick(ctx, member: typing.Optional[discord.Member], *args):
             return
         else:
             #not from owner
-            target = ctx.author          
+            target = ctx.author  
+
 
         #if *not* owner, full brickage (done in subcommand)
         pass
     else:
-        if verification.has_role(ctx.author, "moderator") or verification.has_role(ctx.author, "deputized"):
+        if authorized_user:
             #since the sender is authorized, give correct target
             target = member
             internal_duration = time_segment * multiplier
-            # if duration is not None:
-            #     if str(duration).lower() in ["forever", "permanent", "permanently", "ban"]:
-            #         #ban instead
-            #         print(f"user {member} will be banned")
-            #         forever = True
-            #         #return
-            #     elif str(duration).lower() == "hour":
-            #         internal_duration = 60
-            #     elif str(duration).lower() == "day":
-            #         internal_duration = 60*24
-            #     elif str(duration).lower() == "week":
-            #         internal_duration = 60*24*7
-            #     else:
-            #         try:
-            #             internal_duration = int(duration)
-            #             print(f"duration will be {internal_duration} minutes")
-            #         except:
-            #             print("duration not recognized, ignoring")
-            #         #if is number of minutes
-                    
-            # else: #duration is None, timeout
-            #     pass
+            
 
         elif member is ctx.author:
             # people can now brick themselves for arbitraty amounts of time

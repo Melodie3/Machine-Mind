@@ -753,6 +753,10 @@ class JSON_interface:
         #print("Searching database for file for "+user.display_name)
         if key in self.data[guild_id]:
             #print("Found")
+            # set the guild_id if it's not already set
+            if "guild_id" not in self.data[guild_id][key].keys():
+                self.data[guild_id][key]["guild_id"] = guild_id
+
             return self.data[guild_id][key]
         else:
             print("Creating new data for "+str(user))
@@ -3281,7 +3285,7 @@ For example, "$bread gift Melodie all chess_pieces" would gift all your chess pi
         if (amount < 0):
             print(f"Rejecting steal request from {ctx.author.display_name}")
             await ctx.reply("Trying to steal bread? Mum won't be very happy about that.")
-            await ctx.invoke(self.bot.get_command('brick'), member=ctx.author, duration="1")
+            await ctx.invoke(self.bot.get_command('brick'), member=ctx.author)
             return
         
         if (amount == 0):
@@ -3576,7 +3580,7 @@ anarchy - 1000% of your wager.
                     await asyncio.sleep(2)
                 except:
                     pass 
-                await ctx.invoke(self.bot.get_command('brick'), member=ctx.author, duration=None)
+                await ctx.invoke(self.bot.get_command('brick'), member=ctx.author)
             else:
                 await utility.smart_reply(ctx, f"With a {winning_text}, you won {utility.smart_number(winnings)} dough.")
         
