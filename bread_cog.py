@@ -3107,6 +3107,7 @@ For example, "$bread gift Melodie all chess_pieces" would gift all your chess pi
         amount = 0
         do_category_gift = False
 
+
         if (type(arg1) is int and arg2 is None):
             emoji = "dough"
             amount = arg1
@@ -3125,6 +3126,7 @@ For example, "$bread gift Melodie all chess_pieces" would gift all your chess pi
             amount = 1
             fraction_numerator, fraction_denominator = parse_fraction(arg1)
             emoji = arg2
+        
         
         elif str(arg1).lower() in ["all", "half", "third", "quarter"] or \
             str(arg2).lower() in ["all", "half", "third", "quarter"]:
