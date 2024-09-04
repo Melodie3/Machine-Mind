@@ -4701,7 +4701,7 @@ anarchy - 1000% of your wager.
 
             output = f"Well done. You have created {count * output_amount} {target_emote.text}. You now have {user_account.get(target_emote.text)} of them."
             if target_emote.gives_alchemy_award() and not override_dough:
-                output += f"\nYou have also been awarded **{value} dough** for your efforts."
+                output += f"\nYou have also been awarded **{utility.smart_number(value)} dough** for your efforts."
 
             await utility.smart_reply(ctx, output)
 
