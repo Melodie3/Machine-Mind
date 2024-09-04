@@ -1219,7 +1219,7 @@ class Self_Converting_Yeast(Prestige_Store_Item):
     @classmethod
     def do_purchase(cls, user_account: account.Bread_Account):
         super().do_purchase(user_account)
-        return f"You have purchased some self converting yeast, from a nice capybara in a trench coat and sunglasses."
+        return f"You have purchased some self converting yeast, from a nice capybara in a trench coat and sunglasses.\nYou are now at level {user_account.get(cls.name)}."
 
 class Chess_Piece_Equalizer(Prestige_Store_Item):
     name = "chess_piece_equalizer"
