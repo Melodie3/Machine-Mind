@@ -428,7 +428,7 @@ class Bread_Account:
         ) -> float:
         """Returns the luck of anarchy pieces. `roll_luck` is assumed to be `(loaf_converter + 1) * recipe_refinement_multiplier`"""
         return min(
-            1 + (store.Advanced_Exploration.per_level * self.get(store.Advanced_Exploration.name)) * (roll_luck - self.get_recipe_refinement_multiplier()),
+            round(1 + (store.Advanced_Exploration.per_level * self.get(store.Advanced_Exploration.name)) * (roll_luck - self.get_recipe_refinement_multiplier()), 5),
             128 # 128 is the cap.
         )
     
