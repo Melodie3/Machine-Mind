@@ -4822,6 +4822,7 @@ anarchy - 1000% of your wager.
         output.append(f"Space stats for: {account.get_display_name()}:\n")
 
         output.append(f"You have a tier {sn(account.get_space_level())} Bread Rocket.")
+        output.append(f"Your location in the galaxy is currently {account.get_galaxy_location(self.json_interface)}.")
 
         daily_fuel_cap = account.get_daily_fuel_cap()
         output.append(f"Out of your {sn(daily_fuel_cap)} daily fuel you have {sn(account.get('daily_fuel'))} remaining.")
