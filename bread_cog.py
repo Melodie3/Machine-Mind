@@ -1995,7 +1995,7 @@ loaf_converter""",
                     user_account.increment(key,result[key])
 
                     #first catch boost
-                    if first_catch_remaining > 0 and key != ":bread:":
+                    if first_catch_remaining > 0 and key != values.normal_bread.text and key != values.corrupted_bread.text:
                         emote = values.get_emote(key)
                         if emote is not None:
                             new_value = (emote.value + user_account.get_dough_boost_for_item(emote)) * 3
