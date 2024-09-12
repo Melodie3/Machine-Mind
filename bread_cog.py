@@ -4867,7 +4867,7 @@ anarchy - 1000% of your wager.
             output.append(f"With {account.write_count('advanced_exploration', 'level')} of Advanced Exploration, {int(amount)} of your Loaf Converters are used to find anarchy chess pieces.")
 
         if account.has("engine_efficiency"):
-            level = account.get('advanced_exploration')
+            level = account.get('engine_efficiency')
             output.append(f"You use {round((1 - store.Engine_Efficiency.consumption_multipliers[level]) * 100)}% less fuel with {account.write_count('engine_efficiency', 'level')} of Engine Efficiency.")
         
         output.append("")
