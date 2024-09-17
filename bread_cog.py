@@ -1995,7 +1995,7 @@ loaf_converter""",
                     user_account.increment(key,result[key])
 
                     #first catch boost
-                    if first_catch_remaining > 0 and key != ":bread:":
+                    if first_catch_remaining > 0 and key != values.normal_bread.text and key != values.corrupted_bread.text:
                         emote = values.get_emote(key)
                         if emote is not None:
                             new_value = (emote.value + user_account.get_dough_boost_for_item(emote)) * 3
@@ -2189,7 +2189,7 @@ loaf_converter""",
         # then we send the tron messages
         if trons_to_make == 0:
             return
-        elif trons_to_make < 3:
+        elif user_account.get("full_chess_set") <= 5:
             messages_to_send = trons_to_make
             while messages_to_send > 0:
                 await utility.smart_reply(ctx, f"You have collected all the chess pieces! Congratulations!\n\nWhat a beautiful collection!")
@@ -2203,18 +2203,18 @@ loaf_converter""",
 
                 await utility.smart_reply(ctx, f"{values.chessatron.text}")
                 await asyncio.sleep(1)
-                await utility.smart_reply(ctx, f"May it serve you well. You also have been awarded **{total_dough_value//trons_to_make} dough** for your efforts.")
+                await utility.smart_reply(ctx, f"May it serve you well. You also have been awarded **{utility.smart_number(total_dough_value//trons_to_make)} dough** for your efforts.")
                 messages_to_send -= 1
         elif trons_to_make < 10:
             messages_to_send = trons_to_make
             while messages_to_send > 0:
                 await asyncio.sleep(1)
-                await utility.smart_reply(ctx, f"Congratulations! You've collected all the chess pieces! This will be chessatron **#{user_account.get(values.chessatron.text)+1-messages_to_send}** for you.\n\n{board}\nHere is your award of **{total_dough_value//trons_to_make} dough**, and here's your new chessatron!")
+                await utility.smart_reply(ctx, f"Congratulations! You've collected all the chess pieces! This will be chessatron **#{utility.smart_number(user_account.get('full_chess_set')+1-messages_to_send)}** for you.\n\n{board}\nHere is your award of **{utility.smart_number(total_dough_value//trons_to_make)} dough**, and here's your new chessatron!")
                 await asyncio.sleep(1)
                 await utility.smart_reply(ctx, f"{values.chessatron.text}")
                 messages_to_send -= 1
         elif trons_to_make < 5000:
-            output = f"Congratulations! More chessatrons! You've made {trons_to_make} of them. Here's your reward of **{utility.smart_number(total_dough_value)} dough**."
+            output = f"Congratulations! More chessatrons! You've made {utility.smart_number(user_account.get('full_chess_set'))} of them in total and {utility.smart_number(trons_to_make)} right now! Here's your reward of **{utility.smart_number(total_dough_value)} dough**."
             await utility.smart_reply(ctx, output)
             await asyncio.sleep(1)
             
@@ -4701,7 +4701,7 @@ anarchy - 1000% of your wager.
 
             output = f"Well done. You have created {count * output_amount} {target_emote.text}. You now have {user_account.get(target_emote.text)} of them."
             if target_emote.gives_alchemy_award() and not override_dough:
-                output += f"\nYou have also been awarded **{value} dough** for your efforts."
+                output += f"\nYou have also been awarded **{utility.smart_number(value)} dough** for your efforts."
 
             await utility.smart_reply(ctx, output)
 
@@ -4822,6 +4822,7 @@ anarchy - 1000% of your wager.
         output.append(f"Space stats for: {account.get_display_name()}:\n")
 
         output.append(f"You have a tier {sn(account.get_space_level())} Bread Rocket.")
+        output.append(f"Your location in the galaxy is currently {account.get_galaxy_location(self.json_interface)}.")
 
         daily_fuel_cap = account.get_daily_fuel_cap()
         output.append(f"Out of your {sn(daily_fuel_cap)} daily fuel you have {sn(account.get('daily_fuel'))} remaining.")
@@ -4866,7 +4867,7 @@ anarchy - 1000% of your wager.
             output.append(f"With {account.write_count('advanced_exploration', 'level')} of Advanced Exploration, {int(amount)} of your Loaf Converters are used to find anarchy chess pieces.")
 
         if account.has("engine_efficiency"):
-            level = account.get('advanced_exploration')
+            level = account.get('engine_efficiency')
             output.append(f"You use {round((1 - store.Engine_Efficiency.consumption_multipliers[level]) * 100)}% less fuel with {account.write_count('engine_efficiency', 'level')} of Engine Efficiency.")
         
         output.append("")
@@ -4930,10 +4931,33 @@ anarchy - 1000% of your wager.
         # now we get the list of items
         items = self.get_buyable_items(user_account, store.space_shop_items)
 
+        # Get list of non-purchasable items.
+        purchasable_set = set(items)
+        item_list = store.space_shop_items
+        non_purchasable_items = set(item_list) - purchasable_set # type: set[store.Space_Shop_Item]
+
         output = ""
         output += f"Welcome to the Space Shop!\nHere are the items available for purchase:\n\n"
-        for item in items:
-            output += f"\t**{item.display_name}** - {item.get_price_description(user_account)}\n{item.description(user_account)}\n\n"
+        for item in item_list:
+            requirement_given = False
+
+            if item in non_purchasable_items:
+                if user_account.get(item.name) >= item.max_level(user_account):
+                    continue
+
+                if item.listed_requirement is None:
+                    continue    
+
+                requirement_given = True
+                
+
+            if item in purchasable_set or requirement_given:
+                output += f"\t**{item.display_name}** - {item.get_price_description(user_account)}\n{item.description(user_account)}\n"
+
+                if requirement_given:
+                    output += f"*Not purchasable right now. {item.listed_requirement}*\n"
+                    
+                output += "\n"
         
         if len(items) == 0:
             output += "Sorry, but you can't buy anything right now. Please try again later."
@@ -7105,6 +7129,15 @@ anarchy - 1000% of your wager.
 
         if await self.await_confirmation(ctx) is False:
             return
+        
+        # Go through all accounts in the database and set any instance of bling = 6 to 7.
+        # This is done because when chessatron bling is added it will be between gold gems
+        # and MoaKs. As a result MoaK bling, which was 6 prior to this, is now 7.
+        for guild in self.json_interface.all_guilds:
+            for account in self.json_interface.get_all_user_accounts(guild):
+                if account.get("bling") == 6:
+                    account.set("bling", 7)
+                    self.json_interface.set_account(account.get("id"), account, guild)
         
         # go through all accounts and do the operation
         

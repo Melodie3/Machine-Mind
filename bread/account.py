@@ -341,13 +341,18 @@ class Bread_Account:
 
     def get_display_name(self: typing.Self) -> str:
         """Returns this player's display name, including upgrades like bling and the ascension indicator."""
-        bling_emotes = ["",
-                    values.gem_red.text,
-                    values.gem_blue.text,
-                    values.gem_purple.text,
-                    values.gem_green.text,
-                    values.gem_gold.text,
-                    values.anarchy_chess.text,]
+        bling_emotes = [
+            "",
+            values.gem_red.text,
+            values.gem_blue.text,
+            values.gem_purple.text,
+            values.gem_green.text,
+            values.gem_gold.text,
+            values.chessatron.text,
+            values.anarchy_chess.text,
+            values.anarchy_chessatron.text,
+            values.anarchy_omega_chessatron.text
+        ]
 
         bling_level = self.get("bling")
         bling = bling_emotes[bling_level]
@@ -428,7 +433,7 @@ class Bread_Account:
         ) -> float:
         """Returns the luck of anarchy pieces. `roll_luck` is assumed to be `(loaf_converter + 1) * recipe_refinement_multiplier`"""
         return min(
-            1 + (store.Advanced_Exploration.per_level * self.get(store.Advanced_Exploration.name)) * (roll_luck - self.get_recipe_refinement_multiplier()),
+            round(1 + (store.Advanced_Exploration.per_level * self.get(store.Advanced_Exploration.name)) * (roll_luck - self.get_recipe_refinement_multiplier()), 5),
             128 # 128 is the cap.
         )
     
@@ -471,6 +476,10 @@ class Bread_Account:
     def get_maximum_stored_rolls(self: typing.Self) -> int:
         """Calculates the maximum amount of daily rolls this player can store, equal to max_daily_rolls multiplied by max_days_of_stored_rolls."""
         return self.get("max_daily_rolls") * self.get("max_days_of_stored_rolls")
+    
+    def get_maximum_daily_rolls(self: typing.Self) -> int:
+        """Calculates the maximum amount of daily rolls this player can have, equal to 1000 + prestige_level * 100."""
+        return 1000 + self.get_prestige_level() * 100
 
     def get_dough_boost_for_item(
             self: typing.Self,

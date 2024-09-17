@@ -40,6 +40,7 @@ class Store_Item:
     name = "generic_item"
     display_name = "Generic Item" # did you just say "generic excuse"??
     aliases = []
+    listed_requirement = None
 
     @classmethod
     def cost(
@@ -929,13 +930,18 @@ class Bling(Custom_price_item):
     name = "bling"
     display_name = "Bling"
 
-    costs = [(),
-             (values.gem_red.text, 3),
-             (values.gem_blue.text, 3),
-             (values.gem_purple.text, 3),
-             (values.gem_green.text, 3),
-             (values.gem_gold.text, 3),
-             (values.anarchy_chess.text, 3)]
+    costs = [
+        (),
+        (values.gem_red.text, 3),
+        (values.gem_blue.text, 3),
+        (values.gem_purple.text, 3),
+        (values.gem_green.text, 3),
+        (values.gem_gold.text, 3),
+        (values.chessatron.text, 3),
+        (values.anarchy_chess.text, 3),
+        (values.anarchy_chessatron.text, 3),
+        (values.anarchy_omega_chessatron.text, 3)
+    ]
 
     @classmethod
     def get_costs(cls):
@@ -946,12 +952,21 @@ class Bling(Custom_price_item):
                 [(values.gem_purple.text, 3)],
                 [(values.gem_green.text, 3)],
                 [(values.gem_gold.text, 3)],
-                [(values.anarchy_chess.text, 3)]]
+                [(values.chessatron.text, 3)],
+                [(values.anarchy_chess.text, 3)],
+                [(values.anarchy_chessatron.text, 3)],
+                [(values.anarchy_omega_chessatron.text, 3)],
+    ]
 
     @classmethod
     def description(cls, user_account: account.Bread_Account) -> str:
         level = user_account.get("bling") + 1
-        return f"A decorative {cls.costs[level][0]} for your stats and leaderboard pages. Purely cosmetic."
+        description = f"A decorative {cls.costs[level][0]} for your stats and leaderboard pages. Purely cosmetic."
+
+        if level >= 8:
+            description += "\nWhy would you buy this..."
+
+        return description
 
     # @classmethod
     # def get_price_description(cls, user_account: account.Bread_Account) -> str:
@@ -969,15 +984,17 @@ class Bling(Custom_price_item):
 
     @classmethod
     def can_be_purchased(cls, user_account: account.Bread_Account) -> bool:
+        if not super().can_be_purchased(user_account):
+            return False
+        
         level = user_account.get(cls.name) + 1
-        shiny_level = user_account.get("shiny")
-        if shiny_level <= 0:
-            return False # we only show it if you have a chance of affording it
-        else:
-            if level > cls.max_level(user_account):
+
+        # Space related bling items.
+        if level >= 8:
+            if user_account.get_space_level() < 1:
                 return False
-            else:
-                return True
+        
+        return True
             
     # @classmethod
     # def max_level(cls, user_account: account.Bread_Account = None) -> typing.Optional[int]:
@@ -1084,7 +1101,6 @@ normal_store_items = [Welcome_Packet, Daily_rolls, Loaf_Converter, Multiroller, 
 class Prestige_Store_Item(Store_Item):
     name = "prestige_store_item"
     display_name = "Prestige Store Item"
-    listed_requirement = None
 
     #required
     @classmethod
@@ -1219,12 +1235,12 @@ class Self_Converting_Yeast(Prestige_Store_Item):
     @classmethod
     def do_purchase(cls, user_account: account.Bread_Account):
         super().do_purchase(user_account)
-        return f"You have purchased some self converting yeast, from a nice capybara in a trench coat and sunglasses."
+        return f"You have purchased some self converting yeast, from a nice capybara in a trench coat and sunglasses.\nYou are now at level {user_account.get(cls.name)}."
 
 class Chess_Piece_Equalizer(Prestige_Store_Item):
     name = "chess_piece_equalizer"
     display_name = "Chess Piece Equalizer"
-    aliases = "cpe"
+    aliases = ["cpe"]
 
     costs = [0, 1, 2, 3]
     
@@ -1505,23 +1521,65 @@ class Space_Shop_Item(Custom_price_item):
 class Bread_Rocket(Space_Shop_Item):
     name = "space_level"
     display_name = "Bread Rocket"
+    listed_requirement = "Reach max daily rolls."
 
     @classmethod
     def get_costs(cls):
-        base = [(values.croissant.text, 5000), (values.flatbread.text, 5000), (values.stuffed_flatbread.text, 5000), (values.sandwich.text, 5000), (values.french_bread.text, 5000), \
-             (values.doughnut.text, 1000), (values.bagel.text, 1000), (values.waffle.text, 1000), \
-             (values.chessatron.text, 75), (values.gem_gold.text, 15)]
-        
-        out = [[]]
-        for level in range(8):
-            out.append(
-                [
-                    (item, int(amount * 1.5 ** level))
-                    for item, amount in base
-                ]
-            )
 
-        return out
+        ############################################################################################
+        # Tier 	Specials	Rares	Chessatrons	Gold gems	MoaKs	Anarchy trons	Anarchy omegas #
+        # 1     2500	    1000	75	        15			                                       #
+        # 2	    3750	    1500	112	        22			                                       #
+        # 3		            2250	168	        33	        5		                               #
+        # 4		            3375	253	        50	        7		                               #
+        # 5		    	            379	        75	        11	    1	                           #
+        # 6			                569	        113	        16	    2	                           #
+        # 7			                854	        170	        25	    3	            1              #
+        # 8			                1281	    256	        37	    4	            3              #
+        ############################################################################################
+
+        return [
+            # Tier 0.
+            [],
+            # Tier 1.
+            [
+                (values.croissant.text, 2500), (values.flatbread.text, 2500), (values.stuffed_flatbread.text, 2500), (values.sandwich.text, 2500), (values.french_bread.text, 2500),
+                (values.doughnut.text, 1000), (values.bagel.text, 1000), (values.waffle.text, 1000),
+                (values.chessatron.text, 75), (values.gem_gold.text, 15)
+            ],
+            # Tier 2.
+            [
+                (values.croissant.text, 3750), (values.flatbread.text, 3750), (values.stuffed_flatbread.text, 3750), (values.sandwich.text, 3750), (values.french_bread.text, 3750),
+                (values.doughnut.text, 1500), (values.bagel.text, 1500), (values.waffle.text, 1500),
+                (values.chessatron.text, 112), (values.gem_gold.text, 22)
+            ],
+            # Tier 3.
+            [
+                (values.doughnut.text, 2250), (values.bagel.text, 2250), (values.waffle.text, 2250),
+                (values.chessatron.text, 168), (values.gem_gold.text, 33), (values.anarchy_chess.text, 5)
+            ],
+            # Tier 4.
+            [
+                (values.doughnut.text, 3375), (values.bagel.text, 3375), (values.waffle.text, 3375),
+                (values.chessatron.text, 253), (values.gem_gold.text, 50), (values.anarchy_chess.text, 7)
+            ],
+            # Tier 5.
+            [
+                (values.chessatron.text, 379), (values.gem_gold.text, 75), (values.anarchy_chess.text, 11), (values.anarchy_chessatron.text, 1)
+            ],
+            # Tier 6.
+            [
+                (values.chessatron.text, 569), (values.gem_gold.text, 113), (values.anarchy_chess.text, 16), (values.anarchy_chessatron.text, 2)
+            ],
+            # Tier 7.
+            [
+                (values.chessatron.text, 854), (values.gem_gold.text, 170), (values.anarchy_chess.text, 25), (values.anarchy_chessatron.text, 3), (values.anarchy_omega_chessatron.text, 1)
+            ],
+            # Tier 8.
+            [
+                (values.chessatron.text, 1281), (values.gem_gold.text, 256), (values.anarchy_chess.text, 37), (values.anarchy_chessatron.text, 4), (values.anarchy_omega_chessatron.text, 3)
+            ],
+        ]
     
     @classmethod
     def description(cls, user_account: account.Bread_Account) -> str:
@@ -1552,6 +1610,9 @@ class Bread_Rocket(Space_Shop_Item):
     
     @classmethod
     def can_be_purchased(cls, user_account: account.Bread_Account) -> bool:
+        if user_account.get("max_daily_rolls") < user_account.get_maximum_daily_rolls():
+            return False
+        
         level = user_account.get(cls.name) + 1
 
         if level > cls.max_level(user_account):
@@ -2128,6 +2189,10 @@ class Gambit_Shop_Black_Rook(Gambit_shop_Item):
 class Gambit_Shop_Black_Queen(Gambit_shop_Item):
     name = "gambit_shop_black_queen"
     display_name = "Queen's Gambit Declined"
+    aliases = [
+        "Queens Gambit Declined", # No apostrophe.
+        "Queen Gambit Declined" # iOS apostrophe.
+    ]
     level_required = 2
     boost_item = values.black_queen
     boost_amount = 20
@@ -2136,6 +2201,10 @@ class Gambit_Shop_Black_Queen(Gambit_shop_Item):
 class Gambit_Shop_Black_King(Gambit_shop_Item):
     name = "gambit_shop_black_king"
     display_name = "King's Gambit Declined"
+    aliases = [
+        "Kings Gambit Declined", # No apostrophe.
+        "King’s Gambit Declined" # iOS apostrophe.
+    ]
     level_required = 2
     boost_item = values.black_king
     boost_amount = 20
@@ -2162,6 +2231,10 @@ class Gambit_Shop_White_Knight(Gambit_shop_Item):
 class Gambit_Shop_White_Bishop(Gambit_shop_Item):
     name = "gambit_shop_white_bishop"
     display_name = "King's Fianchetto Opening"
+    aliases = [
+        "Kings Fianchetto Opening", # No apostrophe.
+        "King’s Fianchetto Opening" # iOS apostrophe.
+    ]
     level_required = 3
     boost_item = values.white_bishop
     boost_amount = 40
@@ -2178,6 +2251,10 @@ class Gambit_Shop_White_Rook(Gambit_shop_Item):
 class Gambit_Shop_White_Queen(Gambit_shop_Item):
     name = "gambit_shop_white_queen"
     display_name = "Queen's Gambit Accepted"
+    aliases = [
+        "Queens Gambit Accepted", # No apostrophe.
+        "Queen’s Gambit Accepted" # iOS apostrophe.
+    ]
     level_required = 3
     boost_item = values.white_queen
     boost_amount = 40
@@ -2186,6 +2263,10 @@ class Gambit_Shop_White_Queen(Gambit_shop_Item):
 class Gambit_Shop_White_King(Gambit_shop_Item):
     name = "gambit_shop_white_king"
     display_name = "King's Gambit Accepted"
+    aliases = [
+        "Kings Gambit Accepted", # No apostrophe.
+        "King’s Gambit Accepted" # iOS apostrophe.
+    ]
     level_required = 3
     boost_item = values.white_king
     boost_amount = 40

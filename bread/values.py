@@ -112,6 +112,7 @@ corrupted_bread = Emote(
     text = "<:corrupted_bread:1129289000843235378>",
     value = 1,
     name = "corrupted_bread",
+    attributes = ["misc"]
 )
 
 ############ speacial breads
