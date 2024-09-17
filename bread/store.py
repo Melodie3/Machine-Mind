@@ -1524,20 +1524,61 @@ class Bread_Rocket(Space_Shop_Item):
 
     @classmethod
     def get_costs(cls):
-        base = [(values.croissant.text, 5000), (values.flatbread.text, 5000), (values.stuffed_flatbread.text, 5000), (values.sandwich.text, 5000), (values.french_bread.text, 5000), \
-             (values.doughnut.text, 1000), (values.bagel.text, 1000), (values.waffle.text, 1000), \
-             (values.chessatron.text, 75), (values.gem_gold.text, 15)]
-        
-        out = [[]]
-        for level in range(8):
-            out.append(
-                [
-                    (item, int(amount * 1.5 ** level))
-                    for item, amount in base
-                ]
-            )
 
-        return out
+        ############################################################################################
+        # Tier 	Specials	Rares	Chessatrons	Gold gems	MoaKs	Anarchy trons	Anarchy omegas #
+        # 1     2500	    1000	75	        15			                                       #
+        # 2	    3750	    1500	112	        22			                                       #
+        # 3		            2250	168	        33	        5		                               #
+        # 4		            3375	253	        50	        7		                               #
+        # 5		    	            379	        75	        11	    1	                           #
+        # 6			                569	        113	        16	    2	                           #
+        # 7			                854	        170	        25	    3	            1              #
+        # 8			                1281	    256	        37	    4	            3              #
+        ############################################################################################
+
+        return [
+            # Tier 0.
+            [],
+            # Tier 1.
+            [
+                (values.croissant.text, 2500), (values.flatbread.text, 2500), (values.stuffed_flatbread.text, 2500), (values.sandwich.text, 2500), (values.french_bread.text, 2500),
+                (values.doughnut.text, 1000), (values.bagel.text, 1000), (values.waffle.text, 1000),
+                (values.chessatron.text, 75), (values.gem_gold.text, 15)
+            ],
+            # Tier 2.
+            [
+                (values.croissant.text, 3750), (values.flatbread.text, 3750), (values.stuffed_flatbread.text, 3750), (values.sandwich.text, 3750), (values.french_bread.text, 3750),
+                (values.doughnut.text, 1500), (values.bagel.text, 1500), (values.waffle.text, 1500),
+                (values.chessatron.text, 112), (values.gem_gold.text, 22)
+            ],
+            # Tier 3.
+            [
+                (values.doughnut.text, 2250), (values.bagel.text, 2250), (values.waffle.text, 2250),
+                (values.chessatron.text, 168), (values.gem_gold.text, 33), (values.anarchy_chess.text, 5)
+            ],
+            # Tier 4.
+            [
+                (values.doughnut.text, 3375), (values.bagel.text, 3375), (values.waffle.text, 3375),
+                (values.chessatron.text, 253), (values.gem_gold.text, 50), (values.anarchy_chess.text, 7)
+            ],
+            # Tier 5.
+            [
+                (values.chessatron.text, 379), (values.gem_gold.text, 75), (values.anarchy_chess.text, 11), (values.anarchy_chessatron.text, 1)
+            ],
+            # Tier 6.
+            [
+                (values.chessatron.text, 569), (values.gem_gold.text, 113), (values.anarchy_chess.text, 16), (values.anarchy_chessatron.text, 2)
+            ],
+            # Tier 7.
+            [
+                (values.chessatron.text, 854), (values.gem_gold.text, 170), (values.anarchy_chess.text, 25), (values.anarchy_chessatron.text, 3), (values.anarchy_omega_chessatron.text, 1)
+            ],
+            # Tier 8.
+            [
+                (values.chessatron.text, 1281), (values.gem_gold.text, 256), (values.anarchy_chess.text, 37), (values.anarchy_chessatron.text, 4), (values.anarchy_omega_chessatron.text, 3)
+            ],
+        ]
     
     @classmethod
     def description(cls, user_account: account.Bread_Account) -> str:
