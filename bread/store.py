@@ -40,6 +40,7 @@ class Store_Item:
     name = "generic_item"
     display_name = "Generic Item" # did you just say "generic excuse"??
     aliases = []
+    listed_requirement = None
 
     @classmethod
     def cost(
@@ -1100,7 +1101,6 @@ normal_store_items = [Welcome_Packet, Daily_rolls, Loaf_Converter, Multiroller, 
 class Prestige_Store_Item(Store_Item):
     name = "prestige_store_item"
     display_name = "Prestige Store Item"
-    listed_requirement = None
 
     #required
     @classmethod
@@ -1521,6 +1521,7 @@ class Space_Shop_Item(Custom_price_item):
 class Bread_Rocket(Space_Shop_Item):
     name = "space_level"
     display_name = "Bread Rocket"
+    listed_requirement = "Reach max daily rolls."
 
     @classmethod
     def get_costs(cls):
@@ -1609,6 +1610,9 @@ class Bread_Rocket(Space_Shop_Item):
     
     @classmethod
     def can_be_purchased(cls, user_account: account.Bread_Account) -> bool:
+        if user_account.get("max_daily_rolls") < user_account.get_maximum_daily_rolls():
+            return False
+        
         level = user_account.get(cls.name) + 1
 
         if level > cls.max_level(user_account):

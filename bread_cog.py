@@ -4931,10 +4931,33 @@ anarchy - 1000% of your wager.
         # now we get the list of items
         items = self.get_buyable_items(user_account, store.space_shop_items)
 
+        # Get list of non-purchasable items.
+        purchasable_set = set(items)
+        item_list = store.space_shop_items
+        non_purchasable_items = set(item_list) - purchasable_set # type: set[store.Space_Shop_Item]
+
         output = ""
         output += f"Welcome to the Space Shop!\nHere are the items available for purchase:\n\n"
-        for item in items:
-            output += f"\t**{item.display_name}** - {item.get_price_description(user_account)}\n{item.description(user_account)}\n\n"
+        for item in item_list:
+            requirement_given = False
+
+            if item in non_purchasable_items:
+                if user_account.get(item.name) >= item.max_level(user_account):
+                    continue
+
+                if item.listed_requirement is None:
+                    continue    
+
+                requirement_given = True
+                
+
+            if item in purchasable_set or requirement_given:
+                output += f"\t**{item.display_name}** - {item.get_price_description(user_account)}\n{item.description(user_account)}\n"
+
+                if requirement_given:
+                    output += f"*Not purchasable right now. {item.listed_requirement}*\n"
+                    
+                output += "\n"
         
         if len(items) == 0:
             output += "Sorry, but you can't buy anything right now. Please try again later."

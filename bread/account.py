@@ -476,6 +476,10 @@ class Bread_Account:
     def get_maximum_stored_rolls(self: typing.Self) -> int:
         """Calculates the maximum amount of daily rolls this player can store, equal to max_daily_rolls multiplied by max_days_of_stored_rolls."""
         return self.get("max_daily_rolls") * self.get("max_days_of_stored_rolls")
+    
+    def get_maximum_daily_rolls(self: typing.Self) -> int:
+        """Calculates the maximum amount of daily rolls this player can have, equal to 1000 + prestige_level * 100."""
+        return 1000 + self.get_prestige_level() * 100
 
     def get_dough_boost_for_item(
             self: typing.Self,
