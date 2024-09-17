@@ -929,13 +929,18 @@ class Bling(Custom_price_item):
     name = "bling"
     display_name = "Bling"
 
-    costs = [(),
-             (values.gem_red.text, 3),
-             (values.gem_blue.text, 3),
-             (values.gem_purple.text, 3),
-             (values.gem_green.text, 3),
-             (values.gem_gold.text, 3),
-             (values.anarchy_chess.text, 3)]
+    costs = [
+        (),
+        (values.gem_red.text, 3),
+        (values.gem_blue.text, 3),
+        (values.gem_purple.text, 3),
+        (values.gem_green.text, 3),
+        (values.gem_gold.text, 3),
+        (values.chessatron.text, 3),
+        (values.anarchy_chess.text, 3),
+        (values.anarchy_chessatron.text, 3),
+        (values.anarchy_omega_chessatron.text, 3)
+    ]
 
     @classmethod
     def get_costs(cls):
@@ -946,12 +951,21 @@ class Bling(Custom_price_item):
                 [(values.gem_purple.text, 3)],
                 [(values.gem_green.text, 3)],
                 [(values.gem_gold.text, 3)],
-                [(values.anarchy_chess.text, 3)]]
+                [(values.chessatron.text, 3)],
+                [(values.anarchy_chess.text, 3)],
+                [(values.anarchy_chessatron.text, 3)],
+                [(values.anarchy_omega_chessatron.text, 3)],
+    ]
 
     @classmethod
     def description(cls, user_account: account.Bread_Account) -> str:
         level = user_account.get("bling") + 1
-        return f"A decorative {cls.costs[level][0]} for your stats and leaderboard pages. Purely cosmetic."
+        description = f"A decorative {cls.costs[level][0]} for your stats and leaderboard pages. Purely cosmetic."
+
+        if level >= 8:
+            description += "\nWhy would you buy this..."
+
+        return description
 
     # @classmethod
     # def get_price_description(cls, user_account: account.Bread_Account) -> str:
@@ -969,15 +983,17 @@ class Bling(Custom_price_item):
 
     @classmethod
     def can_be_purchased(cls, user_account: account.Bread_Account) -> bool:
+        if not super().can_be_purchased(user_account):
+            return False
+        
         level = user_account.get(cls.name) + 1
-        shiny_level = user_account.get("shiny")
-        if shiny_level <= 0:
-            return False # we only show it if you have a chance of affording it
-        else:
-            if level > cls.max_level(user_account):
+
+        # Space related bling items.
+        if level >= 8:
+            if user_account.get_space_level() < 1:
                 return False
-            else:
-                return True
+        
+        return True
             
     # @classmethod
     # def max_level(cls, user_account: account.Bread_Account = None) -> typing.Optional[int]:

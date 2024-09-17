@@ -7107,6 +7107,15 @@ anarchy - 1000% of your wager.
         if await self.await_confirmation(ctx) is False:
             return
         
+        # Go through all accounts in the database and set any instance of bling = 6 to 7.
+        # This is done because when chessatron bling is added it will be between gold gems
+        # and MoaKs. As a result MoaK bling, which was 6 prior to this, is now 7.
+        for guild in self.json_interface.all_guilds:
+            for account in self.json_interface.get_all_user_accounts(guild):
+                if account.get("bling") == 6:
+                    account.set("bling", 7)
+                    self.json_interface.set_account(account.get("id"), account, guild)
+        
         # go through all accounts and do the operation
         
         # for index in self.json_interface.data["bread"].keys():

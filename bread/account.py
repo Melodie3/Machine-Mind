@@ -341,13 +341,18 @@ class Bread_Account:
 
     def get_display_name(self: typing.Self) -> str:
         """Returns this player's display name, including upgrades like bling and the ascension indicator."""
-        bling_emotes = ["",
-                    values.gem_red.text,
-                    values.gem_blue.text,
-                    values.gem_purple.text,
-                    values.gem_green.text,
-                    values.gem_gold.text,
-                    values.anarchy_chess.text,]
+        bling_emotes = [
+            "",
+            values.gem_red.text,
+            values.gem_blue.text,
+            values.gem_purple.text,
+            values.gem_green.text,
+            values.gem_gold.text,
+            values.chessatron.text,
+            values.anarchy_chess.text,
+            values.anarchy_chessatron.text,
+            values.anarchy_omega_chessatron.text
+        ]
 
         bling_level = self.get("bling")
         bling = bling_emotes[bling_level]
