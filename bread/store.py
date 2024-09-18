@@ -939,6 +939,7 @@ class Bling(Custom_price_item):
         (values.gem_gold.text, 3),
         (values.chessatron.text, 3),
         (values.anarchy_chess.text, 3),
+        (values.omega_chessatron.text, 3),
         (values.anarchy_chessatron.text, 3),
         (values.anarchy_omega_chessatron.text, 3)
     ]
@@ -954,6 +955,7 @@ class Bling(Custom_price_item):
                 [(values.gem_gold.text, 3)],
                 [(values.chessatron.text, 3)],
                 [(values.anarchy_chess.text, 3)],
+                [(values.omega_chessatron.text, 3)],
                 [(values.anarchy_chessatron.text, 3)],
                 [(values.anarchy_omega_chessatron.text, 3)],
     ]
@@ -990,7 +992,7 @@ class Bling(Custom_price_item):
         level = user_account.get(cls.name) + 1
 
         # Space related bling items.
-        if level >= 8:
+        if level >= 9:
             if user_account.get_space_level() < 1:
                 return False
         

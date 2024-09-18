@@ -350,6 +350,7 @@ class Bread_Account:
             values.gem_gold.text,
             values.chessatron.text,
             values.anarchy_chess.text,
+            values.omega_chessatron.text,
             values.anarchy_chessatron.text,
             values.anarchy_omega_chessatron.text
         ]
