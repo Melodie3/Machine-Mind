@@ -2639,7 +2639,7 @@ loaf_converter""",
         items = self.get_buyable_items(user_account, store.normal_store_items)
 
         output = ""
-        output += f"Welcome to the store! You have **{user_account.get('total_dough')} dough**.\n\*Prices subject to change.\nHere are the items available for purchase:\n\n"
+        output += f"Welcome to the store! You have **{utility.smart_number(user_account.get('total_dough'))} dough**.\n\*Prices subject to change.\nHere are the items available for purchase:\n\n"
         for item in items:
             output += f"\t**{item.display_name}** - {item.get_price_description(user_account)}\n{item.description(user_account)}\n\n"
         
@@ -2683,7 +2683,7 @@ loaf_converter""",
             items = self.get_buyable_items(user_account, store.prestige_store_items)
     
             output = ""
-            output += f"Welcome to the hidden bakery! All upgrades in this shop are permanent, and persist through ascensions. You have **{user_account.get(values.ascension_token.text)} {values.ascension_token.text}**.\n\*Prices subject to change.\nHere are the items available for purchase:\n\n"
+            output += f"Welcome to the hidden bakery! All upgrades in this shop are permanent, and persist through ascensions. You have **{utility.smart_number(user_account.get(values.ascension_token.text))} {values.ascension_token.text}**.\n\*Prices subject to change.\nHere are the items available for purchase:\n\n"
             for item in items:
                 output += f"\t**{item.display_name}** - {item.get_price_description(user_account)}\n{item.description(user_account)}\n\n"
 
