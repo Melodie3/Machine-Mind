@@ -40,7 +40,6 @@ class Store_Item:
     name = "generic_item"
     display_name = "Generic Item" # did you just say "generic excuse"??
     aliases = []
-    listed_requirement = None
 
     @classmethod
     def cost(
@@ -125,6 +124,16 @@ class Store_Item:
         ) -> list[str]:
         """Returns a list of all the unique items in this store item's cost."""
         return ["total_dough"]
+    
+    @classmethod
+    def get_requirement(
+            cls,
+            user_account: account.Bread_Account
+        ) -> str | None:
+        """Returns a requirement to list if `can_be_purchased` is `False`. If a requirement is given and the item cannot be purchased it will be shown in the shop with the listed requirement.
+        If no requirement is given the item will not be shown. No requirement can be given by returning `None.`"""
+        return None
+
         
 class Custom_price_item(Store_Item):
     name = "custom_price_item"
@@ -1363,7 +1372,6 @@ class First_Catch(Prestige_Store_Item):
 class Fuel_Refinement(Prestige_Store_Item):
     name = "fuel_refinement"
     display_name = "Fuel Refinement"
-    listed_requirement = "Construct a tier 1 Bread Rocket in the Space Shop."
     aliases = ["fr"]
 
     costs = [0, 1, 1, 1, 1, 2, 2, 2, 2]
@@ -1389,10 +1397,16 @@ class Fuel_Refinement(Prestige_Store_Item):
         
         return super().can_be_purchased(user_account)
 
+    @classmethod
+    def get_requirement(
+            cls,
+            user_account: account.Bread_Account
+        ) -> str | None:
+        return "Construct a tier 1 Bread Rocket in the Space Shop."
+
 class Corruption_Negation(Prestige_Store_Item):
     name = "corruption_negation"
     display_name = "Corruption Negation"
-    listed_requirement = "Construct a tier 4 Bread Rocket in the Space Shop."
     aliases = ["cn"]
 
     costs = [0, 1, 1, 2, 2, 3]
@@ -1423,6 +1437,13 @@ class Corruption_Negation(Prestige_Store_Item):
     def do_purchase(cls, user_account: account.Bread_Account):
         super().do_purchase(user_account)
         return f"You have bought a level of Corruption Negation, be careful out there."
+
+    @classmethod
+    def get_requirement(
+            cls,
+            user_account: account.Bread_Account
+        ) -> str | None:
+        return "Construct a tier 4 Bread Rocket in the Space Shop."
 
 prestige_store_items = [Daily_Discount_Card, Self_Converting_Yeast, MoaK_Booster, Chess_Piece_Equalizer, High_Roller_Table, Chessatron_Contraption, Ethereal_Shine, First_Catch, Fuel_Refinement, Corruption_Negation]
 
@@ -1523,7 +1544,6 @@ class Space_Shop_Item(Custom_price_item):
 class Bread_Rocket(Space_Shop_Item):
     name = "space_level"
     display_name = "Bread Rocket"
-    listed_requirement = "Reach max daily rolls."
 
     @classmethod
     def get_costs(cls):
@@ -1659,6 +1679,19 @@ class Bread_Rocket(Space_Shop_Item):
         message += unlocks[level]
 
         return message
+
+    @classmethod
+    def get_requirement(
+            cls,
+            user_account: account.Bread_Account
+        ) -> str | None:
+        # If the user hasn't reached max rolls say they need to.
+        if user_account.get("max_daily_rolls") < user_account.get_maximum_daily_rolls():
+            return "Reach max daily rolls."
+        
+        # If the user has reached max rolls and the item still isn't purchasable
+        # assume the reason is ascension or something else, so don't list the item anymore.
+        return None
     
 class Upgraded_Autopilot(Space_Shop_Item):
     name = "autopilot_level"

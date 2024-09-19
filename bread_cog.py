@@ -2695,10 +2695,12 @@ loaf_converter""",
                 if user_account.get(item.name) >= item.max_level(user_account):
                     continue
 
-                if item.listed_requirement is None:
+                requirement = item.get_requirement(user_account)
+
+                if requirement is None:
                     continue
 
-                output += f"*{item.display_name}: {item.listed_requirement}*\n\n"
+                output += f"*{item.display_name}: {requirement}*\n\n"
             
             if len(items) == 0:
                 output += "**It looks like you've bought everything here. Well done.**"
@@ -4940,12 +4942,15 @@ anarchy - 1000% of your wager.
         output += f"Welcome to the Space Shop!\nHere are the items available for purchase:\n\n"
         for item in item_list:
             requirement_given = False
+            requirement = None
 
             if item in non_purchasable_items:
                 if user_account.get(item.name) >= item.max_level(user_account):
                     continue
 
-                if item.listed_requirement is None:
+                requirement = item.get_requirement(user_account)
+
+                if requirement is None:
                     continue    
 
                 requirement_given = True
@@ -4955,7 +4960,7 @@ anarchy - 1000% of your wager.
                 output += f"\t**{item.display_name}** - {item.get_price_description(user_account)}\n{item.description(user_account)}\n"
 
                 if requirement_given:
-                    output += f"*Not purchasable right now. {item.listed_requirement}*\n"
+                    output += f"*Not purchasable right now. {requirement}*\n"
                     
                 output += "\n"
         
