@@ -976,6 +976,13 @@ fuel = Emote(
     giftable = False,
 )
 
+# Not an obtainable item, so it's not in any item list.
+# This is used to have the emoji text in one place for things to use.
+daily_fuel = Emote(
+    text = "<:daily_fuel:1286548571725889588>",
+    name = "daily_fuel"
+)
+
 all_bricks = [brick, brick_gold, fide_brick, brick_fide]
 all_bricks_weighted = [brick] * 10 + [brick_gold] * 1 + [fide_brick] * 5 + [brick_fide] * 5
 misc_emotes = [ascension_token, middle_finger, cherry, brick, brick_gold, fide_brick, brick_fide, lemon, grapes, rigged, bcapy, wcapy, corrupted_bread, fuel]
