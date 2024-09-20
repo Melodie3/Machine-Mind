@@ -137,7 +137,7 @@ channel_permission_levels = {
 default_guild = 958392331671830579
 testing_guild = 949092523035480134
 
-
+error_channel = 960884493663756317 # machine-configure
 
 announcement_channel_ids = [958705808860921906] # bread on AC
 test_announcement_channel_ids = [960871600415178783]  # test on the castle
@@ -893,6 +893,48 @@ class Bread_cog(commands.Cog, name="Bread"):
         await asyncio.sleep(wait_time)
         
         print("Finished Bread cog hourly loop waiting at {}.".format(datetime.now()))
+    
+    @commands.Cog.listener()
+    async def on_command_error(
+            self: typing.Self,
+            ctx: commands.Context,
+            error: typing.Type[Exception]
+        ):
+        # If a check failed like the is_owner check or the approved admin check.
+        if isinstance(error, commands.errors.CheckFailure):
+            return
+        
+        # If someone tried to run a command that doesn't exist.
+        if isinstance(error, commands.errors.CommandNotFound):
+            return
+        
+        # If something went wrong with discord.py's argument parsing.
+        # Something like `$brick the "j` will trigger this due to the lack of a closing double quotation mark.
+        if isinstance(error, commands.errors.ArgumentParsingError):
+            return
+        
+        output = "\n".join(traceback.format_exception(error))
+
+        # Print the error to the terminal so it can be seen.
+        print(output)
+
+        try:
+            # Attempt to fetch the error log channel, if the bot doesn't have access then discord.errors.Forbidden will be raised.
+            channel = await self.bot.fetch_channel(error_channel)
+        except discord.errors.Forbidden:
+            # If this happened that means it doesn't have access to the error channel, so don't make another error by trying to send the log anyway.
+            return
+
+        # Format the error in an embed to supress pings and make it a little nicer to see while panicking.
+        embed = discord.Embed(
+            title = "Machine-Mind error",
+            description = f"```{output}```",
+            color=8884479,
+        )
+        
+        # Send the actual message with the generated embed.
+        await channel.send(embed=embed)
+
     
     ########################################################################################################################
     #####      ANNOUNCE
