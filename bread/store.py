@@ -1774,7 +1774,7 @@ class Fuel_Tank(Space_Shop_Item):
     @classmethod
     def description(cls, user_account: account.Bread_Account) -> str:
         level = user_account.get(cls.name) + 1
-        return f"An upgraded fuel tank that increases your daily fuel to {500 + cls.multiplier * level} {values.fuel.text}."
+        return f"An upgraded fuel tank that increases your {values.daily_fuel.text} to {500 + cls.multiplier * level} {values.fuel.text}."
 
     @classmethod
     def get_cost_types(cls, user_account: account.Bread_Account, level: int = None) -> list[str | values.Emote]:
@@ -1787,7 +1787,7 @@ class Fuel_Tank(Space_Shop_Item):
     @classmethod
     def do_purchase(cls, user_account: account.Bread_Account):
         super().do_purchase(user_account)
-        return f"You have purchased the level {user_account.get(cls.name)} Fuel Tank, your daily fuel will be available tomorrow.\nThe fuel tank comes with a note, it reads \"NO RETURNS, NO WARRANTY, NO SPLEEN.\""
+        return f"You have purchased the level {user_account.get(cls.name)} Fuel Tank, your {values.daily_fuel.text} will be available tomorrow.\nThe fuel tank comes with a note, it reads \"NO RETURNS, NO WARRANTY, NO SPLEEN.\""
 
 class Fuel_Research(Space_Shop_Item):
     name = "fuel_research"
