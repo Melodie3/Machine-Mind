@@ -1774,7 +1774,7 @@ class Fuel_Tank(Space_Shop_Item):
     @classmethod
     def description(cls, user_account: account.Bread_Account) -> str:
         level = user_account.get(cls.name) + 1
-        return f"An upgraded fuel tank that increases your {values.daily_fuel.text} to {500 + cls.multiplier * level} {values.fuel.text}."
+        return f"An upgraded fuel tank that increases your {values.daily_fuel.text} to {100 + cls.multiplier * level} {values.fuel.text}."
 
     @classmethod
     def get_cost_types(cls, user_account: account.Bread_Account, level: int = None) -> list[str | values.Emote]:
