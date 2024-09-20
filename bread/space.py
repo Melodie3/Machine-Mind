@@ -441,7 +441,9 @@ class SystemPlanet(SystemTile):
             result = [
                 "Object type: Planet",
                 f"Planet type: {self.planet_type.text}",
-                f"Stability: {result}"
+                f"Stability: {result}",
+                "",
+                "Distance too far to determine more information."
             ]
 
             return result
@@ -1241,7 +1243,7 @@ def system_map(
     
     if analyze_position is not None:
         xpos = "abcdefghijk".index(analyze_position[0])
-        ypos = int(analyze_position[1]) - 1
+        ypos = int(analyze_position[1:]) - 1
         
         width = 50
 
