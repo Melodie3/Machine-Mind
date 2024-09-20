@@ -5083,8 +5083,7 @@ anarchy - 1000% of your wager.
         description = "Analyze and get information about planets.\n\nTo get a guide for the point parameter, look at the system map."
     )
     async def space_analyze(self, ctx,
-            point: typing.Optional[str] = commands.parameter(description="The point around you to analyze."),
-            modifier: typing.Optional[str] = commands.parameter(description="Optional modifier.")
+            point: typing.Optional[str] = commands.parameter(description="The point around you to analyze.")
         ):
         if get_channel_permission_level(ctx) < PERMISSION_LEVEL_ACTIVITIES:
             await ctx.reply(f"Thank you for trying to analyze a system! The nearest science center is in {self.json_interface.get_rolling_channel(ctx.guild.id)}.")
@@ -5100,23 +5099,33 @@ anarchy - 1000% of your wager.
         ##### Ensuring the arguments are properly passed.
         
         HELP_MSG = "You must provide the point to analyze in the form of '<letter><number>'.\nYou can find a guide in the system map."
-        
-        if point is None:
-            await ctx.reply(HELP_MSG)
-            return
-        
-        if len(point) != 2:
-            await ctx.reply(HELP_MSG)
-            return
+        detailed = False
 
         telescope_level = user_account.get("telescope_level")
         radius = telescope_level + 2
         diameter = radius * 2 + 1
 
         letters = "abcdefghijk"
+        
+        if point is None:
+            point = f"{letters[radius]}{radius + 1}"
+            detailed = True
+        elif point == f"{letters[radius]}{radius + 1}":
+            detailed = True
 
-        pattern = "([a-{letter_end}])([1-{number_end}]{{1,{times}}})".format(
+        
+        if telescope_level >= 3:
+            if not(2 <= len(point) <= 3):
+                await ctx.reply(HELP_MSG)
+                return
+        else:
+            if len(point) != 2:
+                await ctx.reply(HELP_MSG)
+                return
+
+        pattern = "([a-{letter_end}])([{number_start}-{number_end}]{{1,{times}}})".format(
             letter_end = letters[diameter - 1],
+            number_start = 1 if diameter < 10 else 0,
             number_end = min(diameter, 9),
             times = len(str(diameter))
         )
@@ -5146,8 +5155,6 @@ anarchy - 1000% of your wager.
 
         ##########################################################
         ##### Getting the analysis data.
-        
-        detailed = modifier == "detailed"
 
         galaxy_x, galaxy_y = user_account.get_galaxy_location(json_interface=self.json_interface)
 
@@ -5195,10 +5202,6 @@ anarchy - 1000% of your wager.
         analysis_lines.append(f"{line_emoji} Analysis footer:")
         analysis_lines.append(f"{line_emoji} Move command:")
         analysis_lines.append(f"{line_emoji} $bread space move system {point} y")
-        if not detailed:
-            analysis_lines.append(line_emoji)
-            analysis_lines.append(f"{line_emoji} Attempt a detailed analysis:")
-            analysis_lines.append(f"{line_emoji} $bread space analyze {point} detailed")
 
         ##########################################################        
         ##### Sending the message.
