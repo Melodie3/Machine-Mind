@@ -928,7 +928,7 @@ class Bread_cog(commands.Cog, name="Bread"):
         # Format the error in an embed to supress pings and make it a little nicer to see while panicking.
         embed = discord.Embed(
             title = "Machine-Mind error",
-            description = f"```{output}```",
+            description = f"[Trigger message.](<{ctx.message.jump_url}>)\n```{output}```",
             color=8884479,
         )
         
