@@ -5127,8 +5127,8 @@ anarchy - 1000% of your wager.
             await ctx.reply(HELP_MSG)
             return
         
-        x_modifier = "abcdefghijk".index(matched.group(1)) # group 1 is the letter.
-        y_modifier = int(matched.group(2)) - 1 # group 2 is the number.
+        x_modifier = "abcdefghijk".index(matched.group(1).lower()) # group 1 is the letter.
+        y_modifier = int(matched.group(2).lower()) - 1 # group 2 is the number.
 
         if round(math.hypot(abs(x_modifier - radius), abs(y_modifier - radius))) > radius:
             await ctx.reply("You cannot see that point.")
@@ -5141,7 +5141,7 @@ anarchy - 1000% of your wager.
             account = user_account,
             json_interface = self.json_interface,
             mode = "system",
-            analyze_position = point
+            analyze_position = point.lower()
         )
 
         ##########################################################
@@ -6100,8 +6100,8 @@ anarchy - 1000% of your wager.
             self.currently_interacting.remove(ctx.author.id)
             return
         
-        x_modifier = "abcdefghijk".index(matched.group(1)) # group 1 is the letter.
-        y_modifier = int(matched.group(2)) - 1 # group 2 is the number.
+        x_modifier = "abcdefghijk".index(matched.group(1).lower()) # group 1 is the letter.
+        y_modifier = int(matched.group(2).lower()) - 1 # group 2 is the number.
 
         if round(math.hypot(abs(x_modifier - radius), abs(y_modifier - radius))) > radius:
             await ctx.reply("Autopilot error:\nUnrecognized location.")
