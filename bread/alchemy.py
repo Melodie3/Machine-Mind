@@ -305,7 +305,7 @@ recipes = {
     "bread": [
         {
             "cost": [(values.corrupted_bread, 10)],
-            "requirement": [("space_level", 1)]
+            "requirement": [("galaxy_move_count", 1)]
         }
     ],
 
@@ -323,7 +323,7 @@ recipes = {
 		},
         {
             "cost": [(values.corrupted_bread, 75)],
-            "requirement": [("space_level", 1)]
+            "requirement": [("galaxy_move_count", 1)]
         }
     ],
 
@@ -339,7 +339,7 @@ recipes = {
 		},
         {
             "cost": [(values.corrupted_bread, 75)],
-            "requirement": [("space_level", 1)]
+            "requirement": [("galaxy_move_count", 1)]
         }
     ],
 
@@ -355,7 +355,7 @@ recipes = {
 		},
         {
             "cost": [(values.corrupted_bread, 75)],
-            "requirement": [("space_level", 1)]
+            "requirement": [("galaxy_move_count", 1)]
         }
     ],
 
@@ -379,7 +379,7 @@ recipes = {
 		},
         {
             "cost": [(values.corrupted_bread, 25)],
-            "requirement": [("space_level", 1)]
+            "requirement": [("galaxy_move_count", 1)]
         }
     ],
 
@@ -401,7 +401,7 @@ recipes = {
 		},
         {
             "cost": [(values.corrupted_bread, 25)],
-            "requirement": [("space_level", 1)]
+            "requirement": [("galaxy_move_count", 1)]
         }
     ],
 
@@ -423,7 +423,7 @@ recipes = {
 		},
         {
             "cost": [(values.corrupted_bread, 25)],
-            "requirement": [("space_level", 1)]
+            "requirement": [("galaxy_move_count", 1)]
         }
     ],
 
@@ -445,7 +445,7 @@ recipes = {
 		},
         {
             "cost": [(values.corrupted_bread, 25)],
-            "requirement": [("space_level", 1)]
+            "requirement": [("galaxy_move_count", 1)]
         }
     ],
 
@@ -467,7 +467,7 @@ recipes = {
 		},
         {
             "cost": [(values.corrupted_bread, 25)],
-            "requirement": [("space_level", 1)]
+            "requirement": [("galaxy_move_count", 1)]
         }
     ],
 
