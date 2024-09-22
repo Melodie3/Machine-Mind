@@ -3131,21 +3131,22 @@ For example, "$bread gift Melodie all chess_pieces" would gift all your chess pi
         
         # Space gifting checks.
         if sender_account.get_space_level() != 0 or receiver_account.get_space_level() != 0:
-            send_check = space.gifting_check_user(
-                json_interface = self.json_interface,
-                user = sender_account
-            )
-            if not send_check:
-                await ctx.reply("You aren't able to access the Trade Hub network from where you are.")
-                return
-            
-            receiver_check = space.gifting_check_user(
-                json_interface = self.json_interface,
-                user = receiver_account
-            )
-            if not receiver_check:
-                await ctx.reply("You have access to the Trade Hub network, but you can't seem to reach that person.")
-                return
+            if sender_account.get_galaxy_location(self.json_interface) != receiver_account.get_galaxy_location(self.json_interface):
+                send_check = space.gifting_check_user(
+                    json_interface = self.json_interface,
+                    user = sender_account
+                )
+                if not send_check:
+                    await ctx.reply("You aren't able to access the Trade Hub network from where you are.")
+                    return
+                
+                receiver_check = space.gifting_check_user(
+                    json_interface = self.json_interface,
+                    user = receiver_account
+                )
+                if not receiver_check:
+                    await ctx.reply("You have access to the Trade Hub network, but you can't seem to reach that person.")
+                    return
         
         if arg1 is None: # If arg1 is None, then arg2 is None as well.
             await ctx.reply("Needs an amount and what to gift.")

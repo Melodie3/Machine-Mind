@@ -1804,9 +1804,6 @@ def gifting_check_user(
     
     return False
 
-
-
-
 def allowed_gifting(
         json_interface: bread_cog.JSON_interface,
         player_1: account.Bread_Account,
