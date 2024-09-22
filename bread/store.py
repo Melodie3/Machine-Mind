@@ -1620,7 +1620,7 @@ class Bread_Rocket(Space_Shop_Item):
         
         upgrades = [
             "go to space.",
-            f"upgrade your telescopes and research new methods of creating {values.fuel.text}.",
+            f"upgrade your telescopes, advance your exploration, and research new methods of creating {values.fuel.text}.",
             "use your fuel more efficiently.",
             "traverse through the galaxy.",
             "upgrade your telescopes and use your fuel more efficiently.",
@@ -1666,7 +1666,7 @@ class Bread_Rocket(Space_Shop_Item):
         unlocks = [
             "",
             "You can now view space via '$bread space map'.\nUse '$help bread space' to view a list of commands.",
-            "The Upgraded Telescopes and Fuel Research shop items have been added to the Space Shop.",
+            "The Upgraded Telescopes, Advanced Exploration, and Fuel Research shop items have been added to the Space Shop.",
             "The Engine Efficiency shop item has been added to the Space Shop.",
             "The Upgraded Autopilot shop item has been added to the Space Shop.",
             "The second tier of Upgraded Telescopes and Engine Efficiency shop items are now available to purchase.",
@@ -1933,6 +1933,15 @@ class Advanced_Exploration(Space_Shop_Item):
             out.append(values.anarchy_chessatron.text)
 
         return out
+    
+    @classmethod
+    def can_be_purchased(cls, user_account: account.Bread_Account) -> bool:
+        if not super().can_be_purchased(user_account):
+            return False
+        
+        space_level = user_account.get_space_level()
+        
+        return space_level >= 2
     
 class Engine_Efficiency(Space_Shop_Item):
     name = "engine_efficiency"
