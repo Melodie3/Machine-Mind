@@ -139,10 +139,12 @@ def bread_roll(
             output = utility.increment(output, "ten_breads", 1)
             output["highest_roll"] = loaf_count
         elif loaf_count == 11:
+            # an eleven bread roll?? in the bread game?? how queer!! ive never seen such a thing- i must inquire about this further with my supervisor post-haste!!
             count_commentary = "Eleven breads? How strange."
             output = utility.increment(output, "eleven_breads", 1)
             output["highest_roll"] = loaf_count
         elif loaf_count == 12:
+            # i guess we doin twelve breads now
             count_commentary = "TWELVE BREADS??"
             output = utility.increment(output, "twelve_breads", 1)
             output["highest_roll"] = loaf_count

@@ -1448,7 +1448,7 @@ def get_planet_modifiers(
         raw_seed = tile.tile_seed()
         tile_seed = tile.tile_seed() + day_seed
 
-        phi = (1 + math.sqrt(5)) / 2
+        sqrt_phi = math.sqrt((1 + math.sqrt(5)) / 2)
 
         # Get the planet seed for each category.
         # These do not change per day.
@@ -1456,12 +1456,22 @@ def get_planet_modifiers(
             odds[key] = random.Random(f"{raw_seed}{key}").gauss(mu=1, sigma=deviation)
 
             if key == priority:
-                odds[key] = (abs(odds[key] - 1) + 1) * phi
+                odds[key] = (abs(odds[key] - 1) + 1) * sqrt_phi
 
         # Now to get the actual modifiers.
         # These do change per day, but tend to be around the default seeds calculated above.
         for key, value in odds.copy().items():
-            odds[key] = random.Random(f"{tile_seed}{key}").gauss(mu=value, sigma=deviation / 2.5)
+            sigma = deviation / 2.5
+
+            if key == priority:
+                sigma = deviation / 1.5
+
+            odds[key] = random.Random(f"{tile_seed}{key}").gauss(mu=value, sigma=sigma)
+
+            # Incredibly unlikely to be an issue, but this forces the priority item to be greater than 1.
+            # This prevents the priority item from being less common than normal.
+            if key == priority and odds[key] < 1:
+                odds[key] = abs(odds[key] - 1) + 1
 
 
     result = {}
