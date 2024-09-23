@@ -4856,7 +4856,10 @@ anarchy - 1000% of your wager.
         account = self.json_interface.get_account(user, guild = ctx.guild.id)
 
         if account.get_space_level() < 1:
-            await ctx.reply("You do not yet have any space stats.")
+            if user == ctx.author:
+                await ctx.reply("You do not yet have any space stats.")
+            else:
+                await ctx.reply(f"{account.get_display_name()} does not yet have any space stats.")
             return
         
         sn = utility.smart_number
