@@ -1900,7 +1900,7 @@ class Advanced_Exploration(Space_Shop_Item):
     def cost(cls, user_account: account.Bread_Account) -> list[tuple[values.Emote, int]]:
         level = user_account.get(cls.name)
 
-        anarchy_tron = int(max(level - 4, 0))
+        anarchy_tron = int((level + 2) / 3)
         omega = int(1 + (level // 2))
         chessatron = int(100 + (level * 50))
         bread = int(50 * (4 ** (level // 2)))
@@ -1929,7 +1929,7 @@ class Advanced_Exploration(Space_Shop_Item):
     def get_cost_types(cls, user_account: account.Bread_Account, level: int = None):
         out = [values.omega_chessatron.text, values.chessatron.text, values.normal_bread.text]
 
-        if user_account.get(cls.name) >= 6:
+        if user_account.get(cls.name) >= 2:
             out.append(values.anarchy_chessatron.text)
 
         return out
