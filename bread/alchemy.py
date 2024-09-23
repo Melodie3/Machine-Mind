@@ -255,27 +255,28 @@ recipes = {
     "fuel": [
         {
             "cost": [(values.gem_red, 2)],
-            "requirement": [("space_level", 1)]
+            "requirement": [("space_level", 1)],
+            "result": 5
         },
         {
             "cost": [(values.gem_blue, 2)],
             "requirement": [("space_level", 1), ("fuel_research", 1)],
-            "result": 3
+            "result": 15
         },
         {
             "cost": [(values.gem_purple, 2)],
             "requirement": [("space_level", 1), ("fuel_research", 2)],
-            "result": 9
+            "result": 45
         },
         {
             "cost": [(values.gem_green, 2)],
             "requirement": [("space_level", 1), ("fuel_research", 3)],
-            "result": 27
+            "result": 135
         },
         {
             "cost": [(values.gem_gold, 2)],
             "requirement": [("space_level", 1), ("fuel_research", 4)],
-            "result": 150
+            "result": 750
         }
     ],
 
@@ -304,7 +305,7 @@ recipes = {
     "bread": [
         {
             "cost": [(values.corrupted_bread, 10)],
-            "requirement": [("space_level", 1)]
+            "requirement": [("galaxy_move_count", 1)]
         }
     ],
 
@@ -322,7 +323,7 @@ recipes = {
 		},
         {
             "cost": [(values.corrupted_bread, 75)],
-            "requirement": [("space_level", 1)]
+            "requirement": [("galaxy_move_count", 1)]
         }
     ],
 
@@ -338,7 +339,7 @@ recipes = {
 		},
         {
             "cost": [(values.corrupted_bread, 75)],
-            "requirement": [("space_level", 1)]
+            "requirement": [("galaxy_move_count", 1)]
         }
     ],
 
@@ -354,7 +355,7 @@ recipes = {
 		},
         {
             "cost": [(values.corrupted_bread, 75)],
-            "requirement": [("space_level", 1)]
+            "requirement": [("galaxy_move_count", 1)]
         }
     ],
 
@@ -378,7 +379,7 @@ recipes = {
 		},
         {
             "cost": [(values.corrupted_bread, 25)],
-            "requirement": [("space_level", 1)]
+            "requirement": [("galaxy_move_count", 1)]
         }
     ],
 
@@ -400,7 +401,7 @@ recipes = {
 		},
         {
             "cost": [(values.corrupted_bread, 25)],
-            "requirement": [("space_level", 1)]
+            "requirement": [("galaxy_move_count", 1)]
         }
     ],
 
@@ -422,7 +423,7 @@ recipes = {
 		},
         {
             "cost": [(values.corrupted_bread, 25)],
-            "requirement": [("space_level", 1)]
+            "requirement": [("galaxy_move_count", 1)]
         }
     ],
 
@@ -444,7 +445,7 @@ recipes = {
 		},
         {
             "cost": [(values.corrupted_bread, 25)],
-            "requirement": [("space_level", 1)]
+            "requirement": [("galaxy_move_count", 1)]
         }
     ],
 
@@ -466,7 +467,7 @@ recipes = {
 		},
         {
             "cost": [(values.corrupted_bread, 25)],
-            "requirement": [("space_level", 1)]
+            "requirement": [("galaxy_move_count", 1)]
         }
     ],
 
