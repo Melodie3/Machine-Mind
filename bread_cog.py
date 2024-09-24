@@ -5753,11 +5753,7 @@ anarchy - 1000% of your wager.
 
         hub = system.trade_hub
         
-        if system.trade_hub is None:
-            if system_x == 0 and system_y == 0:
-                await ctx.reply("You cannot create a Trade Hub on a star.")
-                return
-            
+        if system.trade_hub is None:            
             if action == "create":
                 if not projects.Trade_Hub.is_affordable_for(
                         day_seed = day_seed,
