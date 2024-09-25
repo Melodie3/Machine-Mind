@@ -1880,7 +1880,7 @@ loaf_converter""",
 
         self.json_interface.set_account(ctx.author.id, user_account, ctx.guild.id)
 
-        await ctx.reply(f"You have set the number of active Multirollers to {setting}.")
+        await ctx.reply(f"You have set the number of active Multirollers to {setting} ({2 ** setting} rolls.)")
         return
         
 
