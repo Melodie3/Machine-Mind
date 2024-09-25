@@ -2694,6 +2694,7 @@ loaf_converter""",
 
         if user_account.get_prestige_level() >= 1:
             output += "\nYou can also buy items from the **hidden bakery**. Find it with \"$bread hidden_bakery\"."
+            output += "\nYou're also able to purchase stuff from the **space shop**. Find it with \"$bread space shop\"."
 
         await ctx.reply(output)
         return
