@@ -1761,14 +1761,12 @@ class Fuel_Tank(Space_Shop_Item):
     def cost(cls, user_account: account.Bread_Account) -> list[tuple[values.Emote, int]]:
         level = user_account.get(cls.name) + 1
 
-        fuel = int(cls.multiplier * level)
-        green_gems = 20 * level
-        gold_gems = 5 * level
+        green_gems = 20 + (10 * level)
 
         return [
-            (values.fuel.text, fuel),
+            (values.fuel.text, 350),
             (values.gem_green.text, green_gems),
-            (values.gem_gold.text, gold_gems)
+            (values.gem_gold.text, 5)
         ]
     
     @classmethod
