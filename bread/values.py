@@ -972,8 +972,7 @@ fuel = Emote(
     name = "fuel",
     emoji= "🛢️",
     alternate_names = ["oil"],
-    attributes = ["misc"],
-    giftable = False,
+    attributes = ["misc"]
 )
 
 # Not an obtainable item, so it's not in any item list.
