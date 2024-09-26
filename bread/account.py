@@ -42,7 +42,7 @@ class Bread_Account:
         "black_hole_conditions" : ["<:anarchy_chess:960772054746005534>", "<:gem_gold:1006498746718244944>", "14+"],
         "gifts_disabled" : False,
         "max_days_of_stored_rolls" : 1,
-        "max_random_chess_pieces_per_day": 2500,
+        "max_random_chess_pieces_per_day": 6400,
         "max_special_bread_packs_per_day": 5000000,
         "brick_troll_percentage" : 0,
         "daily_fuel": 100
