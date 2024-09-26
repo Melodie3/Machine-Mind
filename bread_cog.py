@@ -5030,7 +5030,7 @@ anarchy - 1000% of your wager.
     async def space_map(self, ctx,
             mode: typing.Optional[str] = commands.parameter(description="The map mode to use.")
         ):
-        if get_channel_permission_level(ctx) < PERMISSION_LEVEL_ACTIVITIES:
+        if get_channel_permission_level(ctx) < PERMISSION_LEVEL_BASIC:
             await ctx.reply(f"I appreciate your interest in the space map! You can find the telescopes in {self.json_interface.get_rolling_channel(ctx.guild.id)}.")
             return
         
