@@ -1761,14 +1761,12 @@ class Fuel_Tank(Space_Shop_Item):
     def cost(cls, user_account: account.Bread_Account) -> list[tuple[values.Emote, int]]:
         level = user_account.get(cls.name) + 1
 
-        fuel = int(cls.multiplier * level)
-        green_gems = 20 * level
-        gold_gems = 5 * level
+        green_gems = 20 + (10 * level)
 
         return [
-            (values.fuel.text, fuel),
+            (values.fuel.text, 350),
             (values.gem_green.text, green_gems),
-            (values.gem_gold.text, gold_gems)
+            (values.gem_gold.text, 5)
         ]
     
     @classmethod
@@ -1900,10 +1898,11 @@ class Advanced_Exploration(Space_Shop_Item):
     def cost(cls, user_account: account.Bread_Account) -> list[tuple[values.Emote, int]]:
         level = user_account.get(cls.name)
 
-        anarchy_tron = int((level + 2) / 3)
+        anarchy_tron = int(level / 3)
         omega = int(1 + (level // 2))
         chessatron = int(100 + (level * 50))
         bread = int(50 * (4 ** (level // 2)))
+        moaks = level
 
         out = [
             (values.omega_chessatron.text, omega),
@@ -1913,6 +1912,8 @@ class Advanced_Exploration(Space_Shop_Item):
 
         if anarchy_tron > 0:
             out.append((values.anarchy_chessatron.text, anarchy_tron))
+        if moaks > 0:
+            out.append((values.anarchy_chess.text, moaks))
         
         return out
     
@@ -1929,8 +1930,10 @@ class Advanced_Exploration(Space_Shop_Item):
     def get_cost_types(cls, user_account: account.Bread_Account, level: int = None):
         out = [values.omega_chessatron.text, values.chessatron.text, values.normal_bread.text]
 
-        if user_account.get(cls.name) >= 2:
+        if user_account.get(cls.name) >= 4:
             out.append(values.anarchy_chessatron.text)
+        if user_account.get(cls.name) >= 2:
+            out.append(values.anarchy_chess.text)
 
         return out
     

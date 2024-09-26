@@ -1880,7 +1880,7 @@ loaf_converter""",
 
         self.json_interface.set_account(ctx.author.id, user_account, ctx.guild.id)
 
-        await ctx.reply(f"You have set the number of active Multirollers to {setting}.")
+        await ctx.reply(f"You have set the number of active Multirollers to {setting} ({2 ** setting} rolls.)")
         return
         
 
@@ -2694,6 +2694,7 @@ loaf_converter""",
 
         if user_account.get_prestige_level() >= 1:
             output += "\nYou can also buy items from the **hidden bakery**. Find it with \"$bread hidden_bakery\"."
+            output += "\nYou're also able to purchase stuff from the **space shop**. Find it with \"$bread space shop\"."
 
         await ctx.reply(output)
         return
@@ -4856,7 +4857,10 @@ anarchy - 1000% of your wager.
         account = self.json_interface.get_account(user, guild = ctx.guild.id)
 
         if account.get_space_level() < 1:
-            await ctx.reply("You do not yet have any space stats.")
+            if user == ctx.author:
+                await ctx.reply("You do not yet have any space stats.")
+            else:
+                await ctx.reply(f"{account.get_display_name()} does not yet have any space stats.")
             return
         
         sn = utility.smart_number
@@ -5026,7 +5030,7 @@ anarchy - 1000% of your wager.
     async def space_map(self, ctx,
             mode: typing.Optional[str] = commands.parameter(description="The map mode to use.")
         ):
-        if get_channel_permission_level(ctx) < PERMISSION_LEVEL_ACTIVITIES:
+        if get_channel_permission_level(ctx) < PERMISSION_LEVEL_BASIC:
             await ctx.reply(f"I appreciate your interest in the space map! You can find the telescopes in {self.json_interface.get_rolling_channel(ctx.guild.id)}.")
             return
         
@@ -5750,11 +5754,7 @@ anarchy - 1000% of your wager.
 
         hub = system.trade_hub
         
-        if system.trade_hub is None:
-            if system_x == 0 and system_y == 0:
-                await ctx.reply("You cannot create a Trade Hub on a star.")
-                return
-            
+        if system.trade_hub is None:            
             if action == "create":
                 if not projects.Trade_Hub.is_affordable_for(
                         day_seed = day_seed,

@@ -416,32 +416,31 @@ class SystemPlanet(SystemTile):
             "Many of a Kind": values.anarchy_chess,
             "Anarchy Piece": values.anarchy_black_pawn
         }
+        deviation = self.planet_deviation
+
+        ranges = [
+            (float('-inf'), 0.75, "Extremely Stable"),
+            (0.75, 0.85, "Very Stable"),
+            (0.85, 0.95, "Stable"),
+            (0.95, 1.05, "Neutral"),
+            (1.05, 1.15, "Unstable"),
+            (1.15, 1.25, "Very Unstable"),
+            (1.25, 1.5, "Extremely Unstable"),
+            (1.5, float('inf'), "boinge")
+        ]
+        
+        stability = next(
+            text for lower, upper, text in ranges
+            if (lower < deviation <= upper and upper > 1) or \
+                (lower <= deviation < upper and upper < 1) or \
+                (lower <= deviation <= upper and (upper > 1 and lower < 1))
+        )
 
         if not detailed:
-            deviation = self.planet_deviation
-
-            ranges = [
-                (float('-inf'), 0.75, "Extremely Stable"),
-                (0.75, 0.85, "Very Stable"),
-                (0.85, 0.95, "Stable"),
-                (0.95, 1.05, "Neutral"),
-                (1.05, 1.15, "Unstable"),
-                (1.15, 1.25, "Very Unstable"),
-                (1.25, 1.5, "Extremely Unstable"),
-                (1.5, float('inf'), "boinge")
-            ]
-            
-            result = next(
-                text for lower, upper, text in ranges
-                if (lower < deviation <= upper and upper > 1) or \
-                   (lower <= deviation < upper and upper < 1) or \
-                   (lower <= deviation <= upper and (upper > 1 and lower < 1))
-            )
-
             result = [
                 "Object type: Planet",
                 f"Planet type: {self.planet_type.text}",
-                f"Stability: {result}",
+                f"Stability: {stability}",
                 "",
                 "Distance too far to determine more information."
             ]
@@ -454,6 +453,7 @@ class SystemPlanet(SystemTile):
             f"Distance: {round(self.planet_distance, 3)}",
             f"Angle: {self.planet_angle}",
             f"Deviation: {round(self.planet_deviation, 3)}",
+            f"Stability: {stability}"
             "", # Blank item to add line break.
             "Item modifiers:"
         ]
