@@ -4907,7 +4907,7 @@ anarchy - 1000% of your wager.
             output.append(f"By having {account.write_count('fuel_research', 'level')} of fuel research, you can use {store.Fuel_Research.highest_gem[account.get('fuel_research')]} or any lower gem for making fuel.")
 
         if account.has("telescope_level"):
-            output.append(f"With {account.write_count('telescope_level', 'telescope level')}, you can see in a {sn(account.get('telescope_level') + 2)} tile radius area.")
+            output.append(f"With {account.write_count('telescope_level', 'telescope level')}, you can see in a {sn(account.get('telescope_level') * 2 + 5)} tile radius area.")
 
         if account.has("advanced_exploration"):
             rr = account.get_recipe_refinement_multiplier()
