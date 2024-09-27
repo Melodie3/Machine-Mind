@@ -4913,7 +4913,7 @@ anarchy - 1000% of your wager.
             rr = account.get_recipe_refinement_multiplier()
             lcs = account.get(store.Loaf_Converter.name)
             amount = account.get_anarchy_piece_luck((lcs + 1) * rr) - 1
-            output.append(f"With {account.write_count('advanced_exploration', 'level')} of Advanced Exploration, {int(amount)} of your Loaf Converters are used to find anarchy chess pieces.")
+            output.append(f"With {account.write_count('advanced_exploration', 'level')} of Advanced Exploration, {round(amount)} of your Loaf Converters are used to find anarchy chess pieces.")
 
         if account.has("engine_efficiency"):
             level = account.get('engine_efficiency')

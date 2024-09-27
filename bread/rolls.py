@@ -53,7 +53,7 @@ def bread_roll(
     if user_account.get_space_level() >= 1:
         # If the user has been to space, then check their current location and adjust the chance multipliers accordingly.
 
-        anarchy_piece_luck = user_account.get_anarchy_piece_luck(roll_luck * lc_boost)
+        anarchy_piece_luck = round(user_account.get_anarchy_piece_luck(roll_luck * lc_boost))
 
         #### Planet-based roll modifiers.
 
