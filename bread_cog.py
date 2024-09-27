@@ -7739,15 +7739,15 @@ anarchy - 1000% of your wager.
             if amount >= 1:
                 components[index // 2][(index % 2) + 3] = piece.text
         
-        lines.append(" ".join(components[0]))
+        lines.append(" ".join(components[0]).strip())
 
         pawn = min(account_values.get(values.anarchy_white_pawn.text, 0), 8)
-        lines.append(pawn * (values.anarchy_white_pawn.text + " "))
+        lines.append((pawn * (values.anarchy_white_pawn.text + " ")).strip())
 
         pawn = min(account_values.get(values.anarchy_black_pawn.text, 0), 8)
-        lines.append(pawn * (values.anarchy_black_pawn.text + " "))
+        lines.append((pawn * (values.anarchy_black_pawn.text + " ")).strip())
         
-        lines.append(" ".join(components[1]))
+        lines.append(" ".join(components[1]).strip())
 
         return "\n".join(lines)
         
