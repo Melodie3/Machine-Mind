@@ -828,6 +828,16 @@ class Bread_cog(commands.Cog, name="Bread"):
             random.seed(seed)
         except:
             random.seed(os.urandom(1024))
+    
+    def remove_from_interacting(
+            self: typing.Self,
+            user_id: int
+        ) -> None:
+        """Attempts to remove the given user id from the interacting list, but catches the exception raised if it is not in the list to begin with."""
+        try:
+            self.currently_interacting.remove(user_id)
+        except ValueError:
+            pass
 
     ########################################################################################################################
     #####      TASKS
@@ -1906,7 +1916,7 @@ loaf_converter""",
         user_account = self.json_interface.get_account(ctx.author, guild=ctx.guild.id)
         if not user_account.boolean_is("allowed", default=True):
             await ctx.reply("Sorry, you are not allowed to roll.")
-            self.currently_interacting.remove(ctx.author.id)
+            self.remove_from_interacting(ctx.author.id)
             return
 
         
@@ -1927,7 +1937,7 @@ loaf_converter""",
             # kick user out if they're out of rolls
             if rolls_remaining == 0:
                 await ctx.reply( "Sorry, but that's all the rolls you can do here for today. New rolls are available each day at <t:1653429922:t>.")
-                self.currently_interacting.remove(ctx.author.id)
+                self.remove_from_interacting(ctx.author.id)
                 return
         else:
             user_multiroll = 1
@@ -1966,7 +1976,7 @@ loaf_converter""",
          #check if it's just not a place to roll at all. We'll give first-timers a pass.
         elif get_channel_permission_level(ctx) == PERMISSION_LEVEL_NONE:
             await ctx.reply(f"Sorry, but you cannot roll bread here. Feel free to do so in {self.json_interface.get_rolling_channel(ctx.guild.id)}.")
-            self.currently_interacting.remove(ctx.author.id)
+            self.remove_from_interacting(ctx.author.id)
             return
         
         #can be rolled but not recorded
@@ -1990,7 +2000,7 @@ loaf_converter""",
                 record = True
             else:
                 await ctx.reply(f"Sorry, you can't roll here. Feel free to do so in {self.json_interface.get_rolling_channel(ctx.guild.id)}.")
-                self.currently_interacting.remove(ctx.author.id)
+                self.remove_from_interacting(ctx.author.id)
                 return
 
         ###########################################################################
@@ -2003,7 +2013,7 @@ loaf_converter""",
             # amount_remaining =  user_account.get("max_daily_rolls") - user_account.get("daily_rolls")
             if amount_remaining < 0:
                 await ctx.reply( "Sorry, but that's all the rolls you can do here for today. New rolls are available each day at <t:1653429922:t>.")
-                self.currently_interacting.remove(ctx.author.id)
+                self.remove_from_interacting(ctx.author.id)
                 return
             # we tell them how many stored rolls they have left
             elif stored_rolls_remaining > 0:
@@ -2164,7 +2174,7 @@ loaf_converter""",
         # self.json_interface.set_account(ctx.author, user_account, ctx.guild.id)
 
         #now we remove them from the list of rollers, this allows them to roll again without spamming
-        self.currently_interacting.remove(ctx.author.id)
+        self.remove_from_interacting(ctx.author.id)
 
     ########################################################################################################################
     #####      do CHESSBOARD COMPLETION
@@ -3044,7 +3054,7 @@ loaf_converter""",
         self.currently_interacting.append(ctx.author.id)
         await self.do_chessboard_completion(ctx)
         await self.anarchy_chessatron_completion(ctx)
-        self.currently_interacting.remove(ctx.author.id)
+        self.remove_from_interacting(ctx.author.id)
 
         return
 
@@ -3647,7 +3657,7 @@ anarchy - 1000% of your wager.
         user_account.increment("total_dough", winnings)
         self.json_interface.set_account(ctx.author, user_account, guild = ctx.guild.id)
 
-        self.currently_interacting.remove(ctx.author.id)
+        self.remove_from_interacting(ctx.author.id)
 
 
 
@@ -4550,7 +4560,7 @@ anarchy - 1000% of your wager.
                 except asyncio.TimeoutError: 
                     # at this point, the check didn't become True, let's handle it.
                     await utility.smart_reply(ctx, f"My patience is limited. Come back when you know what you want.")
-                    self.currently_interacting.remove(ctx.author.id)
+                    self.remove_from_interacting(ctx.author.id)
                     return
                 target_item = msg.content #values.get_emote(msg.content)
 
@@ -4562,7 +4572,7 @@ anarchy - 1000% of your wager.
 
             if (target_emote is None):
                 await utility.smart_reply(ctx, f"I do not recognize that item. Please start over.")
-                self.currently_interacting.remove(ctx.author.id)
+                self.remove_from_interacting(ctx.author.id)
                 return
 
             print(f"{ctx.author.name} requested to alchemize {count} {target_emote.name}.")
@@ -4571,7 +4581,7 @@ anarchy - 1000% of your wager.
             if target_emote.name in alchemy.recipes.keys():
                 if user_account.get("max_daily_rolls") < store.Daily_rolls.max_level(user_account) and target_emote.name in [emote.name for emote in values.all_one_of_a_kind]:  
                     await utility.smart_reply(ctx, f"I'm sorry, but you cannot alchemize any {target_emote.text} right now.")
-                    self.currently_interacting.remove(ctx.author.id)
+                    self.remove_from_interacting(ctx.author.id)
                     return
                 recipe_list = alchemy.recipes[target_emote.name].copy()
 
@@ -4592,11 +4602,11 @@ anarchy - 1000% of your wager.
                 if len(recipe_list) == 0:
                     # Either the recipe list was initially blank, in which there is some issue, or the user has not unlocked any recipes for the item yet.
                     await utility.smart_reply(ctx, f"I'm sorry, but your technology has not yet found a way to create {target_emote.text}.")
-                    self.currently_interacting.remove(ctx.author.id)
+                    self.remove_from_interacting(ctx.author.id)
                     return
             else:
                 await utility.smart_reply(ctx, f"There are no recipes to create {target_emote.text}. Perhaps research has not progressed far enough.")
-                self.currently_interacting.remove(ctx.author.id)
+                self.remove_from_interacting(ctx.author.id)
                 return
 
             ########################################################################################################################
@@ -4636,24 +4646,24 @@ anarchy - 1000% of your wager.
                 except asyncio.TimeoutError: 
                     # at this point, the check didn't become True, let's handle it.
                     await utility.smart_reply(ctx, f"My patience is limited. This offering is rejected.")
-                    self.currently_interacting.remove(ctx.author.id)
+                    self.remove_from_interacting(ctx.author.id)
                     return
 
                 if "cancel" in msg.content.lower():
                     await utility.smart_reply(ctx, "You have cancelled this transaction.")
-                    self.currently_interacting.remove(ctx.author.id)
+                    self.remove_from_interacting(ctx.author.id)
                     return
 
                 try:
                     recipe_num = parse_int(msg.content)
                 except ValueError:
                     await utility.smart_reply(ctx, f"I do not recognize that as a number. Please try again from the beginning.")
-                    self.currently_interacting.remove(ctx.author.id)
+                    self.remove_from_interacting(ctx.author.id)
                     return
             
             if recipe_num > len(recipe_list) or recipe_num < 1:
                 await utility.smart_reply(ctx, f"That is not a valid recipe number. Please start over.")
-                self.currently_interacting.remove(ctx.author.id)
+                self.remove_from_interacting(ctx.author.id)
                 return
 
             recipe = recipe_list[recipe_num-1]
@@ -4687,18 +4697,18 @@ anarchy - 1000% of your wager.
                     msg = await self.bot.wait_for('message', check = check, timeout = 60.0)
                 except asyncio.TimeoutError:
                     await utility.smart_reply(ctx, f"My patience is limited. This offering is rejected.")
-                    self.currently_interacting.remove(ctx.author.id)
+                    self.remove_from_interacting(ctx.author.id)
                     return
                 
                 if "yes" in msg.content.lower():
                     pass
                 elif "no" in msg.content.lower():
                     await utility.smart_reply(ctx, "You have rejected this recipe.")
-                    self.currently_interacting.remove(ctx.author.id)
+                    self.remove_from_interacting(ctx.author.id)
                     return
                 else:
                     await utility.smart_reply(ctx, "I do not recognize your response. You may come back when you are feeling more decisive.")
-                    self.currently_interacting.remove(ctx.author.id)
+                    self.remove_from_interacting(ctx.author.id)
                     return
 
             ########################################################################################################################
@@ -4714,7 +4724,7 @@ anarchy - 1000% of your wager.
                 # print(f"cost is {cost} and posessions is {posessions}")
                 if posessions < cost:
                     await utility.smart_reply(ctx, f"You do not have enough {pair[0].text} to create {count} {target_emote.text}. This offering is rejected.")
-                    self.currently_interacting.remove(ctx.author.id)
+                    self.remove_from_interacting(ctx.author.id)
                     return
             
             ##### If the person is making fuel, ensure if it's fuel the person has enough fuel in their fuel tank.
@@ -4758,7 +4768,7 @@ anarchy - 1000% of your wager.
             print(traceback.format_exc())
             pass
 
-        self.currently_interacting.remove(ctx.author.id)
+        self.remove_from_interacting(ctx.author.id)
         
     ########################################################################################################################
     #####      BREAD DOUGH
@@ -5945,7 +5955,7 @@ anarchy - 1000% of your wager.
         if get_channel_permission_level(ctx) < PERMISSION_LEVEL_ACTIVITIES:
             await ctx.reply(f"Thank you for trying to use the autopilot! The closest autopilot terminal is in {self.json_interface.get_rolling_channel(ctx.guild.id)}.")
 
-            self.currently_interacting.remove(ctx.author.id)
+            self.remove_from_interacting(ctx.author.id)
             return
         
         user_account = self.json_interface.get_account(ctx.author, guild = ctx.guild.id)
@@ -5953,7 +5963,7 @@ anarchy - 1000% of your wager.
         if user_account.get_space_level() < 1:
             await ctx.reply("You do not have access to any rockets with autopilot systems.\nYou can purchase the required rocket from the Space Shop.")
 
-            self.currently_interacting.remove(ctx.author.id)
+            self.remove_from_interacting(ctx.author.id)
             return
         
         #########################################################
@@ -5969,7 +5979,7 @@ anarchy - 1000% of your wager.
         if move_map is None:
             await ctx.reply("Autopilot error:\nFailure to specify the 'galaxy' or 'system' map.")
 
-            self.currently_interacting.remove(ctx.author.id)
+            self.remove_from_interacting(ctx.author.id)
             return
 
         confirm_text = ["yes", "y", "confirm"]
@@ -5982,7 +5992,7 @@ anarchy - 1000% of your wager.
         if move_map == "wormhole":
             if autopilot_level < 3:
                 await ctx.reply(f"Autopilot error:\nWormhole travel not possible with existing autopilot system.\nAutopilot level: {autopilot_level}, expected 3 or higher.")
-                self.currently_interacting.remove(ctx.author.id)
+                self.remove_from_interacting(ctx.author.id)
                 return
             
             # Wormhole travel :o
@@ -5991,7 +6001,7 @@ anarchy - 1000% of your wager.
             if system_tile.type != "wormhole":
                 await ctx.reply("Autopilot error:\nNo wormhole found.")
 
-                self.currently_interacting.remove(ctx.author.id)
+                self.remove_from_interacting(ctx.author.id)
                 return
             
             move_cost = int(space.MOVE_FUEL_WORMHOLE * user_account.get_engine_efficiency_multiplier())
@@ -6009,18 +6019,18 @@ anarchy - 1000% of your wager.
                     msg = await self.bot.wait_for('message', check = check, timeout = 60.0)
                 except asyncio.TimeoutError: 
                     await utility.smart_reply(ctx, f"Autopilot error:\nConfirmation timeout, aborting.")
-                    self.currently_interacting.remove(ctx.author.id)
+                    self.remove_from_interacting(ctx.author.id)
                     return
                 
                 if msg.content.lower() in cancel_text:
                     await utility.smart_reply(ctx, "Autopilot error:\nCancelled.")
 
-                    self.currently_interacting.remove(ctx.author.id)
+                    self.remove_from_interacting(ctx.author.id)
                     return
                 elif msg.content.lower() not in confirm_text:
                     await utility.smart_reply(ctx, "Autopilot error:\nUnrecognized confirmation response, aborting.")
 
-                    self.currently_interacting.remove(ctx.author.id)
+                    self.remove_from_interacting(ctx.author.id)
                     return
         
             fuel_item = user_account.get(values.fuel.text)
@@ -6030,7 +6040,7 @@ anarchy - 1000% of your wager.
             if player_fuel < move_cost:
                 await utility.smart_reply(ctx, "Autopilot error:\nLacking required fuel, aborting.")
 
-                self.currently_interacting.remove(ctx.author.id)
+                self.remove_from_interacting(ctx.author.id)
                 return
             
             end_galaxy_location = system_tile.wormhole_link_location
@@ -6064,7 +6074,7 @@ anarchy - 1000% of your wager.
 
             await utility.smart_reply(ctx, f"Autopilot success:\nSucessfully travelled through the wormhole..\n\nYou have **{utility.smart_number(item_left)} {values.fuel.text}** and **{utility.smart_number(daily_fuel)} {values.daily_fuel.text}** remaining.")
 
-            self.currently_interacting.remove(ctx.author.id)
+            self.remove_from_interacting(ctx.author.id)
             return
             
         ###################################
@@ -6074,13 +6084,13 @@ anarchy - 1000% of your wager.
         if move_location is None:
             await ctx.reply(HELP_MSG)
 
-            self.currently_interacting.remove(ctx.author.id)
+            self.remove_from_interacting(ctx.author.id)
             return
         
         if len(move_location) > 3:
             await ctx.reply(HELP_MSG)
 
-            self.currently_interacting.remove(ctx.author.id)
+            self.remove_from_interacting(ctx.author.id)
             return
 
         telescope_level = user_account.get("telescope_level")
@@ -6101,7 +6111,7 @@ anarchy - 1000% of your wager.
         if matched is None:
             await ctx.reply(HELP_MSG)
 
-            self.currently_interacting.remove(ctx.author.id)
+            self.remove_from_interacting(ctx.author.id)
             return
         
         x_modifier = "abcdefghijk".index(matched.group(1).lower()) # group 1 is the letter.
@@ -6110,7 +6120,7 @@ anarchy - 1000% of your wager.
         if round(math.hypot(abs(x_modifier - radius), abs(y_modifier - radius))) > radius:
             await ctx.reply("Autopilot error:\nUnrecognized location.")
 
-            self.currently_interacting.remove(ctx.author.id)
+            self.remove_from_interacting(ctx.author.id)
             return
         
         #########################################################
@@ -6136,7 +6146,7 @@ anarchy - 1000% of your wager.
             if not current_data.get("system", False):
                 await ctx.reply("Autopilot error:\nNo matter found in current system location, cannot move.")
 
-                self.currently_interacting.remove(ctx.author.id)
+                self.remove_from_interacting(ctx.author.id)
                 return
 
             # Ensure the location the player is moving to is a part of this system.   
@@ -6154,7 +6164,7 @@ anarchy - 1000% of your wager.
             if math.hypot(*end_location) >= system_data.get("radius") + 2:
                 await ctx.reply("Autopilot error:\nProvided location outside of system bounds.")
 
-                self.currently_interacting.remove(ctx.author.id)
+                self.remove_from_interacting(ctx.author.id)
                 return
             
             # In the end, determine how much fuel it'll cost to make the move.
@@ -6167,7 +6177,7 @@ anarchy - 1000% of your wager.
         else:
             if autopilot_level < 1:
                 await ctx.reply(f"Autopilot error:\nGalaxy travel not possible with existing autopilot system.\nAutopilot level: {autopilot_level}, expected 1 or higher.")
-                self.currently_interacting.remove(ctx.author.id)
+                self.remove_from_interacting(ctx.author.id)
                 return
             
             start_location = user_account.get_galaxy_location(json_interface=self.json_interface)
@@ -6185,7 +6195,7 @@ anarchy - 1000% of your wager.
 
             if autopilot_level < 2 and cost_data.get("nebula", False):
                 await ctx.reply(f"Autopilot error:\nNebula travel not possible with existing autopilot system.\nAutopilot level: {autopilot_level}, expected 2 or higher.")
-                self.currently_interacting.remove(ctx.author.id)
+                self.remove_from_interacting(ctx.author.id)
                 return
 
             move_cost = int(cost_data.get("cost", 500) * user_account.get_engine_efficiency_multiplier())
@@ -6204,18 +6214,18 @@ anarchy - 1000% of your wager.
                 msg = await self.bot.wait_for('message', check = check, timeout = 60.0)
             except asyncio.TimeoutError: 
                 await utility.smart_reply(ctx, f"Autopilot error:\nConfirmation timeout, aborting.")
-                self.currently_interacting.remove(ctx.author.id)
+                self.remove_from_interacting(ctx.author.id)
                 return
             
             if msg.content.lower() in cancel_text:
                 await utility.smart_reply(ctx, "Autopilot error:\nCancelled.")
 
-                self.currently_interacting.remove(ctx.author.id)
+                self.remove_from_interacting(ctx.author.id)
                 return
             elif msg.content.lower() not in confirm_text:
                 await utility.smart_reply(ctx, "Autopilot error:\nUnrecognized confirmation response, aborting.")
 
-                self.currently_interacting.remove(ctx.author.id)
+                self.remove_from_interacting(ctx.author.id)
                 return
         
         fuel_item = user_account.get(values.fuel.text)
@@ -6225,7 +6235,7 @@ anarchy - 1000% of your wager.
         if player_fuel < move_cost:
             await utility.smart_reply(ctx, "Autopilot error:\nLacking required fuel, aborting.")
 
-            self.currently_interacting.remove(ctx.author.id)
+            self.remove_from_interacting(ctx.author.id)
             return
         
         # Remove the fuel.
@@ -6303,7 +6313,7 @@ anarchy - 1000% of your wager.
 
         await utility.smart_reply(ctx, f"Autopilot success:\nSuccessfully moved to {end_location} on the {move_map} map, using {utility.smart_number(move_cost)} {values.fuel.text}.\n\nYou have **{utility.smart_number(item_left)} {values.fuel.text}** and **{utility.smart_number(daily_fuel)} {values.daily_fuel.text}** remaining.")
 
-        self.currently_interacting.remove(ctx.author.id)
+        self.remove_from_interacting(ctx.author.id)
 
 
 
@@ -7180,15 +7190,17 @@ anarchy - 1000% of your wager.
 
         if await self.await_confirmation(ctx) is False:
             return
+
+        self.currently_interacting.clear()
         
         # Go through all accounts in the database and set any instance of bling = 6 to 7.
         # This is done because when chessatron bling is added it will be between gold gems
         # and MoaKs. As a result MoaK bling, which was 6 prior to this, is now 7.
-        for guild in self.json_interface.all_guilds:
-            for account in self.json_interface.get_all_user_accounts(guild):
-                if account.get("bling") == 6:
-                    account.set("bling", 7)
-                    self.json_interface.set_account(account.get("id"), account, guild)
+        # for guild in self.json_interface.all_guilds:
+        #     for account in self.json_interface.get_all_user_accounts(guild):
+        #         if account.get("bling") == 6:
+        #             account.set("bling", 7)
+        #             self.json_interface.set_account(account.get("id"), account, guild)
         
         # go through all accounts and do the operation
         
