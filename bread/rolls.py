@@ -53,7 +53,7 @@ def bread_roll(
     if user_account.get_space_level() >= 1:
         # If the user has been to space, then check their current location and adjust the chance multipliers accordingly.
 
-        anarchy_piece_luck = user_account.get_anarchy_piece_luck(roll_luck * lc_boost)
+        anarchy_piece_luck = round(user_account.get_anarchy_piece_luck(roll_luck * lc_boost))
 
         #### Planet-based roll modifiers.
 
@@ -370,7 +370,7 @@ def loaf_roll(
     output = {}
     output["extra_profit"] = 0
 
-    if random.randint(1, 2**14) <= (anarchy_piece_luck * anarchy_piece_multiplier):
+    if random.randint(1, 2**13) <= (anarchy_piece_luck * anarchy_piece_multiplier):
         # anarchy piece
         white_piece_chances = store.chess_piece_distribution_levels[user_account.get("chess_piece_equalizer")]
 
@@ -580,15 +580,15 @@ def summarize_roll(
         output += f"\nChess pieces: {utility.smart_number(result['chess_pieces'])}\n"
         removals.append("chess_pieces")
 
-    if "anarchy_pieces" in result.keys():
-        output += f"\nAnarchy pieces: {utility.smart_number(result['anarchy_pieces'])}\n"
-        removals.append("anarchy_pieces")
-
     for key in result.keys():
         emote = values.get_emote(key)
         if emote is not None and ("chess_pieces" in emote.attributes):
             output += f"\t{key}: {utility.smart_number(result[key])}"
             removals.append(key)
+
+    if "anarchy_pieces" in result.keys():
+        output += f"\nAnarchy pieces: {utility.smart_number(result['anarchy_pieces'])}\n"
+        removals.append("anarchy_pieces")
 
     for key in result.keys():
         emote = values.get_emote(key)
