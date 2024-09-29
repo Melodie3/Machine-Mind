@@ -580,15 +580,15 @@ def summarize_roll(
         output += f"\nChess pieces: {utility.smart_number(result['chess_pieces'])}\n"
         removals.append("chess_pieces")
 
-    if "anarchy_pieces" in result.keys():
-        output += f"\nAnarchy pieces: {utility.smart_number(result['anarchy_pieces'])}\n"
-        removals.append("anarchy_pieces")
-
     for key in result.keys():
         emote = values.get_emote(key)
         if emote is not None and ("chess_pieces" in emote.attributes):
             output += f"\t{key}: {utility.smart_number(result[key])}"
             removals.append(key)
+
+    if "anarchy_pieces" in result.keys():
+        output += f"\nAnarchy pieces: {utility.smart_number(result['anarchy_pieces'])}\n"
+        removals.append("anarchy_pieces")
 
     for key in result.keys():
         emote = values.get_emote(key)
