@@ -370,7 +370,7 @@ def loaf_roll(
     output = {}
     output["extra_profit"] = 0
 
-    if random.randint(1, 2**14) <= (anarchy_piece_luck * anarchy_piece_multiplier):
+    if random.randint(1, 2**13) <= (anarchy_piece_luck * anarchy_piece_multiplier):
         # anarchy piece
         white_piece_chances = store.chess_piece_distribution_levels[user_account.get("chess_piece_equalizer")]
 
