@@ -1050,7 +1050,7 @@ class Appease_The_French(Project):
 
         amount = rng.randint(10, 20) * 1920
 
-        return [(values.stuffed_flatbread.text, amount)]
+        return [(values.french_bread.text, amount)]
     
     @classmethod
     def get_reward(
