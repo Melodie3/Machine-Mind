@@ -3141,7 +3141,8 @@ For example, "$bread gift Melodie all chess_pieces" would gift all your chess pi
             return
         
         # Space gifting checks.
-        if sender_account.get_space_level() != 0 or receiver_account.get_space_level() != 0:
+        if (sender_account.get_space_level() != 0 or receiver_account.get_space_level() != 0) and \
+            (sender_account.get_prestige_level() == receiver_account.get_prestige_level()): # Space related checks should only run if the two accounts are on the same ascension.
             if sender_account.get_galaxy_location(self.json_interface) != receiver_account.get_galaxy_location(self.json_interface):
                 send_check = space.gifting_check_user(
                     json_interface = self.json_interface,
