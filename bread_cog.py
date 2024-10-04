@@ -3141,7 +3141,8 @@ For example, "$bread gift Melodie all chess_pieces" would gift all your chess pi
             return
         
         # Space gifting checks.
-        if sender_account.get_space_level() != 0 or receiver_account.get_space_level() != 0:
+        if (sender_account.get_space_level() != 0 or receiver_account.get_space_level() != 0) and \
+            (sender_account.get_prestige_level() == receiver_account.get_prestige_level()): # Space related checks should only run if the two accounts are on the same ascension.
             if sender_account.get_galaxy_location(self.json_interface) != receiver_account.get_galaxy_location(self.json_interface):
                 send_check = space.gifting_check_user(
                     json_interface = self.json_interface,
@@ -5969,18 +5970,29 @@ anarchy - 1000% of your wager.
         #########################################################
 
         acceptable_maps = [
-            "system",
-            "galaxy",
-            "wormhole"
+            "system", "s",
+            "galaxy", "g",
+            "wormhole", "w"
         ]
-        if move_map not in acceptable_maps:
-            move_map = None
-        
-        if move_map is None:
-            await ctx.reply("Autopilot error:\nFailure to specify the 'galaxy' or 'system' map.")
+
+        if move_map in acceptable_maps:
+            if move_map == "s":
+                move_map = "system"
+            elif move_map == "g":
+                move_map = "galaxy"
+            elif move_map == "w":
+                move_map = "wormhole"
+        elif confirm is None:
+            confirm = move_location
+            move_location = move_map
+            move_map = "system"
+        else:
+            await ctx.reply("Autopilot error:\nUnrecognized map to move on.")
 
             self.remove_from_interacting(ctx.author.id)
             return
+        
+        #########################################################
 
         confirm_text = ["yes", "y", "confirm"]
         cancel_text = ["no", "n", "cancel"]
