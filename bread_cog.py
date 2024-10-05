@@ -2401,20 +2401,20 @@ loaf_converter""",
         
 
         if number_of_chessatrons is None:
-            number_of_chessatrons = total_gem_count // 64
+            number_of_chessatrons = total_gem_count // 32
         else:
-            number_of_chessatrons = min(total_gem_count // 64, number_of_chessatrons)
+            number_of_chessatrons = min(total_gem_count // 32, number_of_chessatrons)
 
         
         
 
         # gem_count = user_account.get(values.gem_red.text)
 
-        if total_gem_count < 64 or number_of_chessatrons == 0:
-            await utility.smart_reply(ctx, f"You need at least 64 gems to create a chessatron.")
+        if total_gem_count < 32 or number_of_chessatrons == 0:
+            await utility.smart_reply(ctx, f"You need at least 32 gems to create a chessatron.")
             return
 
-        gems_needed = number_of_chessatrons * 64
+        gems_needed = number_of_chessatrons * 32
 
         if gems_needed > red_gems: # if not enough red gems to make all trons
             gems_needed -= red_gems # then use all red gems in our count
@@ -2477,15 +2477,15 @@ loaf_converter""",
 
         # if arg is None:
         #     arg = None
-        #     number_of_chessatrons = gem_count // 64 # integer division
+        #     number_of_chessatrons = gem_count // 32 # integer division
         # elif is_numeric(arg):
         #     arg = parse_int(arg)
-        #     number_of_chessatrons = min(gem_count // 64,arg) # integer division
+        #     number_of_chessatrons = min(gem_count // 32,arg) # integer division
         # else:
         #     arg = None
-        #     number_of_chessatrons = gem_count // 64 # integer division
+        #     number_of_chessatrons = gem_count // 32 # integer division
 
-        # user_account.increment(values.gem_red.text, -64*number_of_chessatrons)
+        # user_account.increment(values.gem_red.text, -32*number_of_chessatrons)
 
         user_account.increment(values.black_pawn.text, 8*number_of_chessatrons)
         user_account.increment(values.black_rook.text, 2*number_of_chessatrons)
