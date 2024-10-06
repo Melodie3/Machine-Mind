@@ -552,9 +552,9 @@ class Anarchy_Piece_Emote(Emote):
         self.text = text
         self.name = name
         if isWhite:
-            self.value = 3600
+            self.value = 36000
         else:
-            self.value = 1800
+            self.value = 18000
         self.attributes = ["anarchy_pieces"]
         self.awards_value = False
         self.alchemy_value = self.value
