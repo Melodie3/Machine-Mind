@@ -487,7 +487,7 @@ recipes = {
             "requirement": [("space_level", 1)]
         },
         {
-            "cost": [(values.white_pawn, 250), (values.gem_green, 10)],
+            "cost": [(values.white_pawn, 1000), (values.gem_green, 10)],
             "requirement": [("space_level", 1)]
         }
     ],
@@ -510,7 +510,7 @@ recipes = {
             "requirement": [("space_level", 1)]
         },
         {
-            "cost": [(values.white_knight, 250), (values.gem_green, 10)],
+            "cost": [(values.white_knight, 1000), (values.gem_green, 10)],
             "requirement": [("space_level", 1)]
         }
     ],
@@ -533,7 +533,7 @@ recipes = {
             "requirement": [("space_level", 1)]
         },
         {
-            "cost": [(values.white_bishop, 250), (values.gem_green, 10)],
+            "cost": [(values.white_bishop, 1000), (values.gem_green, 10)],
             "requirement": [("space_level", 1)]
         }
     ],
@@ -556,7 +556,7 @@ recipes = {
             "requirement": [("space_level", 1)]
         },
         {
-            "cost": [(values.white_rook, 250), (values.gem_green, 10)],
+            "cost": [(values.white_rook, 1000), (values.gem_green, 10)],
             "requirement": [("space_level", 1)]
         }
     ],
@@ -579,7 +579,7 @@ recipes = {
             "requirement": [("space_level", 1)]
         },
         {
-            "cost": [(values.white_queen, 250), (values.gem_green, 10)],
+            "cost": [(values.white_queen, 1000), (values.gem_green, 10)],
             "requirement": [("space_level", 1)]
         }
     ],
@@ -602,7 +602,7 @@ recipes = {
             "requirement": [("space_level", 1)]
         },
         {
-            "cost": [(values.white_king, 250), (values.gem_green, 10)],
+            "cost": [(values.white_king, 1000), (values.gem_green, 10)],
             "requirement": [("space_level", 1)]
         }
     ],
@@ -615,7 +615,7 @@ recipes = {
             "requirement": [("space_level", 1)]
         },
         {
-            "cost": [(values.black_pawn, 250), (values.gem_green, 10)],
+            "cost": [(values.black_pawn, 1000), (values.gem_green, 10)],
             "requirement": [("space_level", 1)]
         }
     ],
@@ -626,7 +626,7 @@ recipes = {
             "requirement": [("space_level", 1)]
         },
         {
-            "cost": [(values.black_knight, 250), (values.gem_green, 10)],
+            "cost": [(values.black_knight, 1000), (values.gem_green, 10)],
             "requirement": [("space_level", 1)]
         }
     ],
@@ -637,7 +637,7 @@ recipes = {
             "requirement": [("space_level", 1)]
         },
         {
-            "cost": [(values.black_bishop, 250), (values.gem_green, 10)],
+            "cost": [(values.black_bishop, 1000), (values.gem_green, 10)],
             "requirement": [("space_level", 1)]
         }
     ],
@@ -648,7 +648,7 @@ recipes = {
             "requirement": [("space_level", 1)]
         },
         {
-            "cost": [(values.black_rook, 250), (values.gem_green, 10)],
+            "cost": [(values.black_rook, 1000), (values.gem_green, 10)],
             "requirement": [("space_level", 1)]
         }
     ],
@@ -659,7 +659,7 @@ recipes = {
             "requirement": [("space_level", 1)]
         },
         {
-            "cost": [(values.black_queen, 250), (values.gem_green, 10)],
+            "cost": [(values.black_queen, 1000), (values.gem_green, 10)],
             "requirement": [("space_level", 1)]
         }
     ],
@@ -670,7 +670,7 @@ recipes = {
             "requirement": [("space_level", 1)]
         },
         {
-            "cost": [(values.black_king, 250), (values.gem_green, 10)],
+            "cost": [(values.black_king, 1000), (values.gem_green, 10)],
             "requirement": [("space_level", 1)]
         }
     ],

@@ -4701,9 +4701,11 @@ anarchy - 1000% of your wager.
                     self.remove_from_interacting(ctx.author.id)
                     return
                 
-                if "yes" in msg.content.lower():
+                content = msg.content.lower()
+                
+                if any([i in content for i in ["yes", "y", "confirm"]]):
                     pass
-                elif "no" in msg.content.lower():
+                elif any([i in content for i in ["no", "n", "deny"]]):
                     await utility.smart_reply(ctx, "You have rejected this recipe.")
                     self.remove_from_interacting(ctx.author.id)
                     return

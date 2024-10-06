@@ -334,7 +334,7 @@ omega_chessatron = Emote(
 
 anarchy_chessatron = Emote(
     text="<:anarchy_chessatron:1271191972627087370>",
-    value=100_000,
+    value=100_000, # Doesn't really do much since the anarchy tron dough equation was changed.
     name="anarchy_chessatron",
     attributes=["unique", "full_anarchy_set"],
     awards_value = True
@@ -342,7 +342,7 @@ anarchy_chessatron = Emote(
 
 anarchy_omega_chessatron = Emote(
     text="<:anarchy_omega_chessatron:1271191852330123274>",
-    value=250_000,
+    value=31_004_150,
     name="anarchy_omega_chessatron",
     attributes=["unique"],
     awards_value = True,
@@ -552,9 +552,9 @@ class Anarchy_Piece_Emote(Emote):
         self.text = text
         self.name = name
         if isWhite:
-            self.value = 3600
+            self.value = 36000
         else:
-            self.value = 1800
+            self.value = 18000
         self.attributes = ["anarchy_pieces"]
         self.awards_value = False
         self.alchemy_value = self.value
@@ -563,73 +563,85 @@ class Anarchy_Piece_Emote(Emote):
 anarchy_white_pawn = Anarchy_Piece_Emote(
     name="Wpawnanarchy",
     text = "<:Wpawnanarchy:971046978349858936>",
-    isWhite=True
+    isWhite=True,
+    alternate_names = ["Wpawn_anarchy", "anarchy_Wpawn", "anarchyWpawn"]
 )
 
 anarchy_white_rook = Anarchy_Piece_Emote(
     name="Wrookanarchy",
     text = "<:Wrookanarchy:971047003402403862>",
-    isWhite=True
+    isWhite=True,
+    alternate_names = ["Wrook_anarchy", "anarchy_Wrook", "anarchyWrook"]
 )
 
 anarchy_white_bishop = Anarchy_Piece_Emote(
     name="Wbishopanarchy",
     text = "<:Wbishopanarchy:971046928395665448>",
-    isWhite=True
+    isWhite=True,
+    alternate_names = ["Wbishop_anarchy", "anarchy_Wbishop", "anarchyWbishop"]
 )
 
 anarchy_white_knight = Anarchy_Piece_Emote(
     name="Wknightanarchy",
     text = "<:Wknightanarchy:971046961811714158>",
-    isWhite=True
+    isWhite=True,
+    alternate_names = ["Wknight_anarchy", "anarchy_Wknight", "anarchyWknight"]
 )
 
 anarchy_white_queen = Anarchy_Piece_Emote(
     name="Wqueenanarchy",
     text = "<:Wqueenanarchy:971046990312013844>",
-    isWhite=True
+    isWhite=True,
+    alternate_names = ["Wqueen_anarchy", "anarchy_Wqueen", "anarchyWqueen"]
 )
 
 anarchy_white_king = Anarchy_Piece_Emote(
     name="Wkinganarchy",
     text = "<:Wkinganarchy:971046942144602172>",
-    isWhite=True
+    isWhite=True,
+    alternate_names = ["Wking_anarchy", "anarchy_Wking", "anarchyWking"]
 )
 
 anarchy_black_pawn = Anarchy_Piece_Emote(
     name="Bpawnanarchy",
     text = "<:Bpawnanarchy:971046900038004736>",
-    isWhite=False
+    isWhite=False,
+    alternate_names = ["Bpawn_anarchy", "anarchy_Bpawn", "anarchyBpawn"]
 )
 
 anarchy_black_rook = Anarchy_Piece_Emote(
     name="Brookanarchy",
     text = "<:Brookanarchy:971046920166457364>",
-    isWhite=False
+    isWhite=False,
+    alternate_names = ["Brook_anarchy", "anarchy_Brook", "anarchyBrook"]
 )
 
 anarchy_black_bishop = Anarchy_Piece_Emote(
     name="Bbishopanarchy",
     text = "<:Bbishopanarchy:971046862134050887>",
-    isWhite=False
+    isWhite=False,
+    alternate_names = ["Bbishop_anarchy", "anarchy_Bbishop", "anarchyBbishop"]
 )
 
 anarchy_black_knight = Anarchy_Piece_Emote(
     name="Bknightanarchy",
-    text =  "<:Bknightanarchy:971046888486891642>",
-    isWhite=False
+    text = "<:Bknightanarchy:971046888486891642>",
+    isWhite=False,
+    alternate_names = ["Bknight_anarchy", "anarchy_Bknight", "anarchyBknight"]
 )
 
 anarchy_black_queen = Anarchy_Piece_Emote(
     name="Bqueenanarchy",
-    text =  "<:Bqueenanarchy:971046911551356948>",
-    isWhite=False
+    text = "<:Bqueenanarchy:971046911551356948>",
+    isWhite=False,
+    alternate_names = ["Bqueen_anarchy", "anarchy_Bqueen", "anarchyBqueen"]
 )
 
 anarchy_black_king = Anarchy_Piece_Emote(
     name="Bkinganarchy",
-    text =  "<:Bkinganarchy:971046879540445275>",
-    isWhite=False
+    text = "<:Bkinganarchy:971046879540445275>",
+    isWhite=False,
+    alternate_names = ["Bking_anarchy", "anarchy_Bking", "anarchyBking"]
 )
 
 all_anarchy_pieces = [
