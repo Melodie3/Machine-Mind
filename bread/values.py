@@ -563,73 +563,85 @@ class Anarchy_Piece_Emote(Emote):
 anarchy_white_pawn = Anarchy_Piece_Emote(
     name="Wpawnanarchy",
     text = "<:Wpawnanarchy:971046978349858936>",
-    isWhite=True
+    isWhite=True,
+    alternate_names = ["Wpawn_anarchy", "anarchy_Wpawn"]
 )
 
 anarchy_white_rook = Anarchy_Piece_Emote(
     name="Wrookanarchy",
     text = "<:Wrookanarchy:971047003402403862>",
-    isWhite=True
+    isWhite=True,
+    alternate_names = ["Wrook_anarchy", "anarchy_Wrook"]
 )
 
 anarchy_white_bishop = Anarchy_Piece_Emote(
     name="Wbishopanarchy",
     text = "<:Wbishopanarchy:971046928395665448>",
-    isWhite=True
+    isWhite=True,
+    alternate_names = ["Wbishop_anarchy", "anarchy_Wbishop"]
 )
 
 anarchy_white_knight = Anarchy_Piece_Emote(
     name="Wknightanarchy",
     text = "<:Wknightanarchy:971046961811714158>",
-    isWhite=True
+    isWhite=True,
+    alternate_names = ["Wknight_anarchy", "anarchy_Wknight"]
 )
 
 anarchy_white_queen = Anarchy_Piece_Emote(
     name="Wqueenanarchy",
     text = "<:Wqueenanarchy:971046990312013844>",
-    isWhite=True
+    isWhite=True,
+    alternate_names = ["Wqueen_anarchy", "anarchy_Wqueen"]
 )
 
 anarchy_white_king = Anarchy_Piece_Emote(
     name="Wkinganarchy",
     text = "<:Wkinganarchy:971046942144602172>",
-    isWhite=True
+    isWhite=True,
+    alternate_names = ["Wking_anarchy", "anarchy_Wking"]
 )
 
 anarchy_black_pawn = Anarchy_Piece_Emote(
     name="Bpawnanarchy",
     text = "<:Bpawnanarchy:971046900038004736>",
-    isWhite=False
+    isWhite=False,
+    alternate_names = ["Bpawn_anarchy", "anarchy_Bpawn"]
 )
 
 anarchy_black_rook = Anarchy_Piece_Emote(
     name="Brookanarchy",
     text = "<:Brookanarchy:971046920166457364>",
-    isWhite=False
+    isWhite=False,
+    alternate_names = ["Brook_anarchy", "anarchy_Brook"]
 )
 
 anarchy_black_bishop = Anarchy_Piece_Emote(
     name="Bbishopanarchy",
     text = "<:Bbishopanarchy:971046862134050887>",
-    isWhite=False
+    isWhite=False,
+    alternate_names = ["Bbishop_anarchy", "anarchy_Bbishop"]
 )
 
 anarchy_black_knight = Anarchy_Piece_Emote(
     name="Bknightanarchy",
-    text =  "<:Bknightanarchy:971046888486891642>",
-    isWhite=False
+    text = "<:Bknightanarchy:971046888486891642>",
+    isWhite=False,
+    alternate_names = ["Bknight_anarchy", "anarchy_Bknight"]
 )
 
 anarchy_black_queen = Anarchy_Piece_Emote(
     name="Bqueenanarchy",
-    text =  "<:Bqueenanarchy:971046911551356948>",
-    isWhite=False
+    text = "<:Bqueenanarchy:971046911551356948>",
+    isWhite=False,
+    alternate_names = ["Bqueen_anarchy", "anarchy_Bqueen"]
 )
 
 anarchy_black_king = Anarchy_Piece_Emote(
     name="Bkinganarchy",
-    text =  "<:Bkinganarchy:971046879540445275>",
-    isWhite=False
+    text = "<:Bkinganarchy:971046879540445275>",
+    isWhite=False,
+    alternate_names = ["Bking_anarchy", "anarchy_Bking"]
 )
 
 all_anarchy_pieces = [
