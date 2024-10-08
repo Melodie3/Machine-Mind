@@ -4843,8 +4843,8 @@ anarchy - 1000% of your wager.
 
     @bread.command(
         name = "space_stats",
-        brief = "The Space Shop.",
-        description = "Shortcut to '$bread space shop'.",
+        brief = "Get your space stats.",
+        description = "Shortcut to '$bread space stats'.",
         hidden = True
     )
     async def space_stats_shortcut(self, ctx,
@@ -4920,7 +4920,7 @@ anarchy - 1000% of your wager.
             output.append(f"By having {account.write_count('fuel_research', 'level')} of fuel research, you can use {store.Fuel_Research.highest_gem[account.get('fuel_research')]} or any lower gem for making fuel.")
 
         if account.has("telescope_level"):
-            output.append(f"With {account.write_count('telescope_level', 'telescope level')}, you can see in a {sn(account.get('telescope_level') * 2 + 5)} tile radius area.")
+            output.append(f"With {account.write_count('telescope_level', 'telescope level')}, you can see in a {sn(account.get('telescope_level') * 2 + 5)} tile diameter area.")
 
         if account.has("advanced_exploration"):
             rr = account.get_recipe_refinement_multiplier()
@@ -5033,6 +5033,17 @@ anarchy - 1000% of your wager.
         
     ########################################################################################################################
     #####      BREAD SPACE MAP
+
+    @bread.command(
+        name = "map",
+        aliases = ["view"],
+        brief = "View the space map.",
+        description = "View the space map.\nYou can use the 'galaxy' mode to view the galaxy map."
+    )
+    async def bread_map(self, ctx,
+            mode: typing.Optional[str] = commands.parameter(description="The map mode to use.")
+        ):
+        await self.space_map(ctx, mode)
     
     @space.command(
         name = "map",
@@ -5093,6 +5104,17 @@ anarchy - 1000% of your wager.
         
     ########################################################################################################################
     #####      BREAD SPACE ANALYZE
+
+    @bread.command(
+        name = "analyze",
+        aliases = ["analyse", "analysis"],
+        brief = "Analyze and get information about planets.",
+        description = "Analyze and get information about planets.\n\nTo get a guide for the point parameter, look at the system map."
+    )
+    async def bread_analyze(self, ctx,
+            point: typing.Optional[str] = commands.parameter(description="The point around you to analyze.")
+        ):
+        await self.space_analyze(ctx, point)
     
     @space.command(
         name = "analyze",
@@ -5715,6 +5737,16 @@ anarchy - 1000% of your wager.
         
     ########################################################################################################################
     #####      BREAD SPACE HUB
+
+    @bread.command(
+        name = "hub",
+        brief = "Interact with Trade Hubs.",
+        description = "Interact with Trade Hubs."
+    )
+    async def bread_hub(self, ctx,
+            *, action: typing.Optional[str] = commands.parameter(description = "The action to perform at the Trade Hub.")
+        ):
+        await self.space_hub(ctx, action=action)
     
     @space.command(
         name = "hub",
@@ -5789,16 +5821,29 @@ anarchy - 1000% of your wager.
 
                 self.json_interface.set_account(ctx.author, user_account, guild = ctx.guild.id)
 
+                if system_x == 0 and system_y == 0:
+                    create_x = random.randint(-1, 1)
+                    create_y = random.randint(-1, 1)
+                    
+                    if create_x == 0 and create_y == 0:
+                        if random.randint(1, 2) == 1:
+                            create_x += random.randint(0, 1) * 2 - 1
+                        else:
+                            create_y += random.randint(0, 1) * 2 - 1
+                else:
+                    create_x = system_x
+                    create_y = system_y
+
                 space.create_trade_hub(
                     json_interface = self.json_interface,
                     user_account = user_account,
                     galaxy_x = galaxy_x,
                     galaxy_y = galaxy_y,
-                    system_x = system_x,
-                    system_y = system_y
+                    system_x = create_x,
+                    system_y = create_y
                 )
 
-                await ctx.reply("Well done, you have created a Trade Hub!")
+                await ctx.reply(f"Well done, you have created a Trade Hub at ({create_x}, {create_y})!")
                 return
 
             cost = projects.Trade_Hub.get_price_description(day_seed, hub)
@@ -5936,6 +5981,18 @@ anarchy - 1000% of your wager.
         
     ########################################################################################################################
     #####      BREAD SPACE MOVE
+
+    @bread.command(
+        name = "move",
+        brief = "Move around in space.",
+        description = "Move around in space by commanding the autopilot."
+    )
+    async def bread_move(self, ctx,
+            move_map: typing.Optional[str] = commands.parameter(description = "Which map to move on."),
+            move_location: typing.Optional[str] = commands.parameter(description = "The location to move to."),
+            confirm: typing.Optional[str] = commands.parameter(description = "Whether to confirm automatically.")
+        ):
+        await self.space_move(ctx, move_map, move_location, confirm)
     
     @space.command(
         name = "move",
@@ -6290,9 +6347,9 @@ anarchy - 1000% of your wager.
 
                 if x_diff == 0:
                     if y_diff < 0:
-                        angle = math.pi / -2
+                        angle = math.pi / 2
                     else:
-                        angle = math.pi
+                        angle = math.pi * 1.5
                 else:
                     angle = math.atan(y_diff / x_diff)
 
@@ -7205,7 +7262,22 @@ anarchy - 1000% of your wager.
         if await self.await_confirmation(ctx) is False:
             return
 
-        self.currently_interacting.clear()
+        # self.currently_interacting.clear()
+
+        ##########################################################
+        # Go through all trade hubs and set them to be at [0, 1] #
+        for guild in self.json_interface.all_guilds:
+            space_data = self.json_interface.get_custom_file("space", guild)
+            for ascension_key, ascension_value in space_data.items():
+                if not ascension_key.startswith("ascension"):
+                    continue
+
+                for hub_location, hub_data in ascension_value.get("trade_hubs", {}).items():
+                    if hub_data.get("location") == [0, 0]:
+                        space_data[ascension_key]["trade_hubs"][hub_location]["location"] = [0, 1]
+            
+            self.json_interface.set_custom_file("space", space_data, guild)
+
         
         # Go through all accounts in the database and set any instance of bling = 6 to 7.
         # This is done because when chessatron bling is added it will be between gold gems
