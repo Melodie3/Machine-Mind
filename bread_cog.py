@@ -7262,7 +7262,22 @@ anarchy - 1000% of your wager.
         if await self.await_confirmation(ctx) is False:
             return
 
-        self.currently_interacting.clear()
+        # self.currently_interacting.clear()
+
+        ##########################################################
+        # Go through all trade hubs and set them to be at [0, 1] #
+        for guild in self.json_interface.all_guilds:
+            space_data = self.json_interface.get_custom_file("space", guild)
+            for ascension_key, ascension_value in space_data.items():
+                if not ascension_key.startswith("ascension"):
+                    continue
+
+                for hub_location, hub_data in ascension_value.get("trade_hubs", {}).items():
+                    if hub_data.get("location") == [0, 0]:
+                        space_data[ascension_key]["trade_hubs"][hub_location]["location"] = [0, 1]
+            
+            self.json_interface.set_custom_file("space", space_data, guild)
+
         
         # Go through all accounts in the database and set any instance of bling = 6 to 7.
         # This is done because when chessatron bling is added it will be between gold gems
