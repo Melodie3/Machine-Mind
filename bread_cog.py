@@ -4843,8 +4843,8 @@ anarchy - 1000% of your wager.
 
     @bread.command(
         name = "space_stats",
-        brief = "The Space Shop.",
-        description = "Shortcut to '$bread space shop'.",
+        brief = "Get your space stats.",
+        description = "Shortcut to '$bread space stats'.",
         hidden = True
     )
     async def space_stats_shortcut(self, ctx,
