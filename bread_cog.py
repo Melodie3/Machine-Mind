@@ -6303,9 +6303,9 @@ anarchy - 1000% of your wager.
 
                 if x_diff == 0:
                     if y_diff < 0:
-                        angle = math.pi / -2
+                        angle = math.pi / 2
                     else:
-                        angle = math.pi
+                        angle = math.pi * 1.5
                 else:
                     angle = math.atan(y_diff / x_diff)
 
