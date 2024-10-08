@@ -5033,6 +5033,17 @@ anarchy - 1000% of your wager.
         
     ########################################################################################################################
     #####      BREAD SPACE MAP
+
+    @bread.command(
+        name = "map",
+        aliases = ["view"],
+        brief = "View the space map.",
+        description = "View the space map.\nYou can use the 'galaxy' mode to view the galaxy map."
+    )
+    async def bread_map(self, ctx,
+            mode: typing.Optional[str] = commands.parameter(description="The map mode to use.")
+        ):
+        await self.space_map(ctx, mode)
     
     @space.command(
         name = "map",
@@ -5093,6 +5104,17 @@ anarchy - 1000% of your wager.
         
     ########################################################################################################################
     #####      BREAD SPACE ANALYZE
+
+    @bread.command(
+        name = "analyze",
+        aliases = ["analyse", "analysis"],
+        brief = "Analyze and get information about planets.",
+        description = "Analyze and get information about planets.\n\nTo get a guide for the point parameter, look at the system map."
+    )
+    async def bread_analyze(self, ctx,
+            point: typing.Optional[str] = commands.parameter(description="The point around you to analyze.")
+        ):
+        await self.space_analyze(ctx, point)
     
     @space.command(
         name = "analyze",
@@ -5715,6 +5737,16 @@ anarchy - 1000% of your wager.
         
     ########################################################################################################################
     #####      BREAD SPACE HUB
+
+    @bread.command(
+        name = "hub",
+        brief = "Interact with Trade Hubs.",
+        description = "Interact with Trade Hubs."
+    )
+    async def bread_hub(self, ctx,
+            *, action: typing.Optional[str] = commands.parameter(description = "The action to perform at the Trade Hub.")
+        ):
+        await self.space_hub(ctx, action=action)
     
     @space.command(
         name = "hub",
@@ -5949,6 +5981,18 @@ anarchy - 1000% of your wager.
         
     ########################################################################################################################
     #####      BREAD SPACE MOVE
+
+    @bread.command(
+        name = "move",
+        brief = "Move around in space.",
+        description = "Move around in space by commanding the autopilot."
+    )
+    async def bread_move(self, ctx,
+            move_map: typing.Optional[str] = commands.parameter(description = "Which map to move on."),
+            move_location: typing.Optional[str] = commands.parameter(description = "The location to move to."),
+            confirm: typing.Optional[str] = commands.parameter(description = "Whether to confirm automatically.")
+        ):
+        await self.space_move(ctx, move_map, move_location, confirm)
     
     @space.command(
         name = "move",
