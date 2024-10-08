@@ -5789,16 +5789,29 @@ anarchy - 1000% of your wager.
 
                 self.json_interface.set_account(ctx.author, user_account, guild = ctx.guild.id)
 
+                if system_x == 0 and system_y == 0:
+                    create_x = random.randint(-1, 1)
+                    create_y = random.randint(-1, 1)
+                    
+                    if create_x == 0 and create_y == 0:
+                        if random.randint(1, 2) == 1:
+                            create_x += random.randint(0, 1) * 2 - 1
+                        else:
+                            create_y += random.randint(0, 1) * 2 - 1
+                else:
+                    create_x = system_x
+                    create_y = system_y
+
                 space.create_trade_hub(
                     json_interface = self.json_interface,
                     user_account = user_account,
                     galaxy_x = galaxy_x,
                     galaxy_y = galaxy_y,
-                    system_x = system_x,
-                    system_y = system_y
+                    system_x = create_x,
+                    system_y = create_y
                 )
 
-                await ctx.reply("Well done, you have created a Trade Hub!")
+                await ctx.reply(f"Well done, you have created a Trade Hub at ({create_x}, {create_y})!")
                 return
 
             cost = projects.Trade_Hub.get_price_description(day_seed, hub)
