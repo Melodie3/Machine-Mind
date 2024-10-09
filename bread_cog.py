@@ -5076,7 +5076,7 @@ anarchy - 1000% of your wager.
 
         corruption_chance = round(user_account.get_corruption_chance(json_interface=self.json_interface) * 100, 2)
 
-        if mode == "galaxy":
+        if mode == "galaxy" or mode == "g":
             prefix = "Galaxy map:"
             middle = f"Your current galaxy location: {user_account.get_galaxy_location(json_interface=self.json_interface)}.\nCorruption chance: {corruption_chance}%."
             suffix = "You can use '$bread space map' to view the map for the system you're in.\n\nUse '$bread space move galaxy' to move around on this map."

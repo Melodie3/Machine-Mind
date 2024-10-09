@@ -919,7 +919,7 @@ def space_map(
 
     ascension = account.get_prestige_level()
 
-    if mode == "galaxy":
+    if mode == "galaxy" or mode == "g":
         return galaxy_map(
             json_interface = json_interface,
             guild = guild,
