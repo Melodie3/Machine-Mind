@@ -1606,14 +1606,23 @@ class Bread_Rocket(Space_Shop_Item):
     @classmethod
     def description(cls, user_account: account.Bread_Account) -> str:
         level = user_account.get(cls.name)
-        # (a2 locked) Tier 1: Access to space.
-        #             Tier 2: Upgraded telescopes 1, Fuel research 4
+        # (a1 locked) Tier 1: Access to space.
+        #             Tier 2: Upgraded telescopes 1, Fuel research 4, Advanced Exploration
         #             Tier 3: Engine Efficiency 1
-        # (a3 locked) Tier 4: Upgraded Autopilot 1 (Galaxy travel)
+        # (a2 locked) Tier 4: Upgraded Autopilot 1 (Galaxy travel)
         #             Tier 5: Upgraded telescopes 2, Engine Efficiency 2
-        # (a4 locked) Tier 6: Upgraded Autopilot 2 (Nebula travel)
+        # (a3 locked) Tier 6: Upgraded Autopilot 2 (Nebula travel)
         #             Tier 7: Engine Efficiency 3
-        # (a5 locked) Tier 8: Upgraded Autopilot 3 (Wormhole travel), Upgraded telescopes 3
+        # (a4 locked) Tier 8: Upgraded Autopilot 3 (Wormhole travel), Upgraded telescopes 3
+
+        # Potential rework?
+        # (a1 locked) Tier 1: Access to space, Multiroller Terminal (all), Fuel Tank (all)
+        #             Tier 2: Advanced Exploration (all), Fuel Refinement 1, Upgraded Telescopes 1, Engine Efficiency 1
+        # (a2 locked) Tier 3: Upgraded Autopilot 1 (Galaxy travel), Fuel Refinement 2
+        #             Tier 4: Engine Efficiency 2, FueL Refinement 3
+        # (a3 locked) Tier 5: Upgraded Autopilot 2 (Nebula travel), Upgraded Telescopes 2
+        #             Tier 6: Engine Efficiency 3, Fuel Refinement 4
+        # (a4 locked) Tier 7: Upgraded Autopilot 3 (Wormhole travel), Upgraded telescopes 3
 
         if level == 0:
             return "A Bread Rocket that allows access to space."
@@ -2380,7 +2389,7 @@ class Gambit_Shop_Anarchy_Black_Knight(Gambit_shop_Item):
     display_name = "Knight Boost"
     level_required = 5
     boost_item = values.anarchy_black_knight
-    boost_amount = 900
+    boost_amount = 18000
     raw_cost = [(values.anarchy_black_pawn.text, 50), (values.anarchy_black_knight.text, 25), (values.black_knight.text, 250), (values.gem_purple.text, 50)]
 
 class Gambit_Shop_Anarchy_Black_Bishop(Gambit_shop_Item):
@@ -2388,7 +2397,7 @@ class Gambit_Shop_Anarchy_Black_Bishop(Gambit_shop_Item):
     display_name = "Il Vaticano"
     level_required = 5
     boost_item = values.anarchy_black_bishop
-    boost_amount = 900
+    boost_amount = 18000
     raw_cost = [(values.anarchy_black_pawn.text, 50), (values.anarchy_black_bishop.text, 25), (values.black_bishop.text, 250), (values.gem_purple.text, 50)]
 
 class Gambit_Shop_Anarchy_Black_Rook(Gambit_shop_Item):
@@ -2396,7 +2405,7 @@ class Gambit_Shop_Anarchy_Black_Rook(Gambit_shop_Item):
     display_name = "Siberian Swipe"
     level_required = 5
     boost_item = values.anarchy_black_rook
-    boost_amount = 900
+    boost_amount = 18000
     raw_cost = [(values.anarchy_black_pawn.text, 50), (values.anarchy_black_rook.text, 25), (values.black_rook.text, 250), (values.gem_purple.text, 50)]
 
 class Gambit_Shop_Anarchy_Black_Queen(Gambit_shop_Item):
@@ -2404,7 +2413,7 @@ class Gambit_Shop_Anarchy_Black_Queen(Gambit_shop_Item):
     display_name = "Radioactive Beta Decay"
     level_required = 5
     boost_item = values.anarchy_black_queen
-    boost_amount = 900
+    boost_amount = 18000
     raw_cost = [(values.anarchy_black_pawn.text, 50), (values.anarchy_black_queen.text, 25), (values.black_queen.text, 250), (values.gem_purple.text, 50)]
 
 class Gambit_Shop_Anarchy_Black_King(Gambit_shop_Item):
@@ -2412,7 +2421,7 @@ class Gambit_Shop_Anarchy_Black_King(Gambit_shop_Item):
     display_name = "La Bastarda"
     level_required = 5
     boost_item = values.anarchy_black_king
-    boost_amount = 900
+    boost_amount = 18000
     raw_cost = [(values.anarchy_black_pawn.text, 50), (values.anarchy_black_king.text, 25), (values.black_king.text, 250), (values.gem_purple.text, 50)]
 
 ##########################################################################################
@@ -2422,7 +2431,7 @@ class Gambit_Shop_Anarchy_White_Pawn(Gambit_shop_Item):
     display_name = "Knook Promotion"
     level_required = 6
     boost_item = values.anarchy_white_pawn
-    boost_amount = 1800
+    boost_amount = 36000
     raw_cost = [(values.anarchy_white_pawn.text, 50), (values.white_pawn.text, 250), (values.gem_green.text, 50)]
 
 class Gambit_Shop_Anarchy_White_Knight(Gambit_shop_Item):
@@ -2430,7 +2439,7 @@ class Gambit_Shop_Anarchy_White_Knight(Gambit_shop_Item):
     display_name = "Anti-Queen"
     level_required = 6
     boost_item = values.anarchy_white_knight
-    boost_amount = 1800
+    boost_amount = 36000
     raw_cost = [(values.anarchy_white_pawn.text, 50), (values.anarchy_white_knight.text, 25), (values.white_knight.text, 250), (values.gem_green.text, 50)]
 
 class Gambit_Shop_Anarchy_White_Bishop(Gambit_shop_Item):
@@ -2438,7 +2447,7 @@ class Gambit_Shop_Anarchy_White_Bishop(Gambit_shop_Item):
     display_name = "Vacation Home"
     level_required = 6
     boost_item = values.anarchy_white_bishop
-    boost_amount = 1800
+    boost_amount = 36000
     raw_cost = [(values.anarchy_white_pawn.text, 50), (values.anarchy_white_bishop.text, 25), (values.white_bishop.text, 250), (values.gem_green.text, 50)]
 
 class Gambit_Shop_Anarchy_White_Rook(Gambit_shop_Item):
@@ -2446,7 +2455,7 @@ class Gambit_Shop_Anarchy_White_Rook(Gambit_shop_Item):
     display_name = "Vertical Castling"
     level_required = 6
     boost_item = values.anarchy_white_rook
-    boost_amount = 1800
+    boost_amount = 36000
     raw_cost = [(values.anarchy_white_pawn.text, 50), (values.anarchy_white_rook.text, 25), (values.white_rook.text, 250), (values.gem_green.text, 50)]
 
 class Gambit_Shop_Anarchy_White_Queen(Gambit_shop_Item):
@@ -2454,7 +2463,7 @@ class Gambit_Shop_Anarchy_White_Queen(Gambit_shop_Item):
     display_name = "Botez Gambit"
     level_required = 6
     boost_item = values.anarchy_white_queen
-    boost_amount = 1800
+    boost_amount = 36000
     raw_cost = [(values.anarchy_white_pawn.text, 50), (values.anarchy_white_queen.text, 25), (values.white_queen.text, 250), (values.gem_green.text, 50)]
 
 class Gambit_Shop_Anarchy_White_King(Gambit_shop_Item):
@@ -2462,7 +2471,7 @@ class Gambit_Shop_Anarchy_White_King(Gambit_shop_Item):
     display_name = "Double Bongcloud"
     level_required = 6
     boost_item = values.anarchy_white_king
-    boost_amount = 1800
+    boost_amount = 36000
     raw_cost = [(values.anarchy_white_pawn.text, 50), (values.anarchy_white_king.text, 25), (values.white_king.text, 250), (values.gem_green.text, 50)]
 
 ##########################################################################################
