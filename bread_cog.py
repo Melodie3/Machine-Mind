@@ -2821,13 +2821,13 @@ loaf_converter""",
             ):
 
         if item_name is None:
-            await ctx.reply("Please specify an item to buy.")
+            await utility.smart_reply(ctx, "Please specify an item to buy.")
             return
 
         # first we make sure this is a valid channel
         #if ctx.channel.name not in earnable_channels:
         if get_channel_permission_level(ctx) < PERMISSION_LEVEL_ACTIVITIES:
-            await ctx.reply(f"Thank you for your interest in purchasing an item from the store. Please visit our nearby location in {self.json_interface.get_rolling_channel(ctx.guild.id)}.")
+            await utility.smart_reply(ctx, f"Thank you for your interest in purchasing an item from the store. Please visit our nearby location in {self.json_interface.get_rolling_channel(ctx.guild.id)}.")
             return
 
         # split the first word of the item name and check if it's a number
@@ -2835,7 +2835,7 @@ loaf_converter""",
         item_name_split = item_name.split(" ")
         if len(item_name_split) > 1:
             if item_name_split[0][0] == '-':
-                await ctx.reply("You can't buy negative numbers of items.")
+                await utility.smart_reply(ctx, "You can't buy negative numbers of items.")
                 return
             if is_digit(item_name_split[0]):
                 item_name = " ".join(item_name_split[1:])
@@ -2851,7 +2851,7 @@ loaf_converter""",
             item_name_2 = item_name
 
         if item_count < 1:
-            await ctx.reply("You can't buy zero of an item.")
+            await utility.smart_reply(ctx, "You can't buy zero of an item.")
             return
 
         # first we get the account of the user who called it
@@ -2885,7 +2885,7 @@ loaf_converter""",
                 item = i
                 break
         else: # if the for loop doesn't break, run this. This should run the same as an 'if item is None' check.
-            await ctx.reply("Sorry, but I don't recognize that item's name.")
+            await utility.smart_reply(ctx, "Sorry, but I don't recognize that item's name.")
             return
 
 
@@ -2920,12 +2920,12 @@ loaf_converter""",
             # if it exists but can't be bought, we say so
             if item not in buyable_items:
                 # removed item is None check, as item will never be None. see above.
-                await ctx.reply("Sorry, but you've already purchased as many of that as you can.")
+                await utility.smart_reply(ctx, "Sorry, but you've already purchased as many of that as you can.")
                 return
             
             try:
                 if item.find_max_purchasable_count(user_account) <= 0:
-                    await ctx.reply("Sorry, but you've already purchased as many of that as you can.")
+                    await utility.smart_reply(ctx, "Sorry, but you've already purchased as many of that as you can.")
                     return
             except AttributeError:
                 # If an AttributeError was thrown the shop item probably doesn't have find_max_purchasable_count and we can ignore it.
@@ -2934,7 +2934,7 @@ loaf_converter""",
 
             # now we check if the user has enough dough
             if not item.is_affordable_for(user_account):
-                await ctx.reply("Sorry, but you can't afford to buy that.")
+                await utility.smart_reply(ctx, "Sorry, but you can't afford to buy that.")
                 return
 
             # now we actually purchase the item
@@ -2966,7 +2966,7 @@ loaf_converter""",
                 cost_text += " remaining."
 
             if item in store.prestige_store_items:
-                #await ctx.reply(f"Congratulations! You've unlocked the **{item.display_name}**! {text}")
+                #await utility.smart_reply(ctx, f"Congratulations! You've unlocked the **{item.display_name}**! {text}")
                 if text is None:
                     text = f"Congratulations! You've unlocked the **{item.display_name}** upgrade! You are now at level {user_account.get(item.name)}."
                 
@@ -2980,7 +2980,7 @@ loaf_converter""",
 
             text += "\n\n" + cost_text
 
-            await ctx.reply(text)
+            await utility.smart_reply(ctx, text)
 
         else: # item count above 1
 
@@ -3045,7 +3045,7 @@ loaf_converter""",
 
             text += "\n\n" + cost_text
 
-            await ctx.reply(text)
+            await utility.smart_reply(ctx, text)
 
 
         # complete chessatron on this command
