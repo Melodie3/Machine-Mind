@@ -2821,13 +2821,13 @@ loaf_converter""",
             ):
 
         if item_name is None:
-            await ctx.reply("Please specify an item to buy.")
+            await utility.smart_reply(ctx, "Please specify an item to buy.")
             return
 
         # first we make sure this is a valid channel
         #if ctx.channel.name not in earnable_channels:
         if get_channel_permission_level(ctx) < PERMISSION_LEVEL_ACTIVITIES:
-            await ctx.reply(f"Thank you for your interest in purchasing an item from the store. Please visit our nearby location in {self.json_interface.get_rolling_channel(ctx.guild.id)}.")
+            await utility.smart_reply(ctx, f"Thank you for your interest in purchasing an item from the store. Please visit our nearby location in {self.json_interface.get_rolling_channel(ctx.guild.id)}.")
             return
 
         # split the first word of the item name and check if it's a number
@@ -2835,7 +2835,7 @@ loaf_converter""",
         item_name_split = item_name.split(" ")
         if len(item_name_split) > 1:
             if item_name_split[0][0] == '-':
-                await ctx.reply("You can't buy negative numbers of items.")
+                await utility.smart_reply(ctx, "You can't buy negative numbers of items.")
                 return
             if is_digit(item_name_split[0]):
                 item_name = " ".join(item_name_split[1:])
@@ -2851,7 +2851,7 @@ loaf_converter""",
             item_name_2 = item_name
 
         if item_count < 1:
-            await ctx.reply("You can't buy zero of an item.")
+            await utility.smart_reply(ctx, "You can't buy zero of an item.")
             return
 
         # first we get the account of the user who called it
@@ -2885,7 +2885,7 @@ loaf_converter""",
                 item = i
                 break
         else: # if the for loop doesn't break, run this. This should run the same as an 'if item is None' check.
-            await ctx.reply("Sorry, but I don't recognize that item's name.")
+            await utility.smart_reply(ctx, "Sorry, but I don't recognize that item's name.")
             return
 
 
@@ -2920,12 +2920,12 @@ loaf_converter""",
             # if it exists but can't be bought, we say so
             if item not in buyable_items:
                 # removed item is None check, as item will never be None. see above.
-                await ctx.reply("Sorry, but you've already purchased as many of that as you can.")
+                await utility.smart_reply(ctx, "Sorry, but you've already purchased as many of that as you can.")
                 return
             
             try:
                 if item.find_max_purchasable_count(user_account) <= 0:
-                    await ctx.reply("Sorry, but you've already purchased as many of that as you can.")
+                    await utility.smart_reply(ctx, "Sorry, but you've already purchased as many of that as you can.")
                     return
             except AttributeError:
                 # If an AttributeError was thrown the shop item probably doesn't have find_max_purchasable_count and we can ignore it.
@@ -2934,7 +2934,7 @@ loaf_converter""",
 
             # now we check if the user has enough dough
             if not item.is_affordable_for(user_account):
-                await ctx.reply("Sorry, but you can't afford to buy that.")
+                await utility.smart_reply(ctx, "Sorry, but you can't afford to buy that.")
                 return
 
             # now we actually purchase the item
@@ -2966,7 +2966,7 @@ loaf_converter""",
                 cost_text += " remaining."
 
             if item in store.prestige_store_items:
-                #await ctx.reply(f"Congratulations! You've unlocked the **{item.display_name}**! {text}")
+                #await utility.smart_reply(ctx, f"Congratulations! You've unlocked the **{item.display_name}**! {text}")
                 if text is None:
                     text = f"Congratulations! You've unlocked the **{item.display_name}** upgrade! You are now at level {user_account.get(item.name)}."
                 
@@ -2980,7 +2980,7 @@ loaf_converter""",
 
             text += "\n\n" + cost_text
 
-            await ctx.reply(text)
+            await utility.smart_reply(ctx, text)
 
         else: # item count above 1
 
@@ -3045,7 +3045,7 @@ loaf_converter""",
 
             text += "\n\n" + cost_text
 
-            await ctx.reply(text)
+            await utility.smart_reply(ctx, text)
 
 
         # complete chessatron on this command
@@ -4935,12 +4935,16 @@ anarchy - 1000% of your wager.
         output.append("")
         output.append(f"Throughout your time in space you've created {utility.write_count(account.get('trade_hubs_created'), 'Trade Hub')} and helped contribute to {utility.write_count(account.get('projects_completed'), 'completed project')}.")
 
-
-
         # Anarchy pieces.
+        formatted_anarchy_pieces = self.format_anarchy_pieces(account.values).strip(" \n")
+
+        if len("\n".join(output)) + len(formatted_anarchy_pieces) + 4 > 1900:
+            await utility.smart_reply(ctx, "\n".join(output))
+            output = ["Stats continued:"]
+
 
         output.append("") # Add a blank item to add an extra new line.
-        output.append(self.format_anarchy_pieces(account.values).strip(" \n"))
+        output.append(formatted_anarchy_pieces)
 
         await utility.smart_reply(ctx, "\n".join(output))
 
@@ -5025,7 +5029,7 @@ anarchy - 1000% of your wager.
                 output += "\n"
         
         if len(items) == 0:
-            output += "Sorry, but you can't buy anything right now. Please try again later."
+            output += "**It looks like you've bought everything here. Well done.**"
         else:
             output += 'To buy an item, just type "$bread buy [item name]".'
 
@@ -5076,7 +5080,7 @@ anarchy - 1000% of your wager.
 
         corruption_chance = round(user_account.get_corruption_chance(json_interface=self.json_interface) * 100, 2)
 
-        if mode == "galaxy":
+        if mode == "galaxy" or mode == "g":
             prefix = "Galaxy map:"
             middle = f"Your current galaxy location: {user_account.get_galaxy_location(json_interface=self.json_interface)}.\nCorruption chance: {corruption_chance}%."
             suffix = "You can use '$bread space map' to view the map for the system you're in.\n\nUse '$bread space move galaxy' to move around on this map."
@@ -5145,7 +5149,7 @@ anarchy - 1000% of your wager.
         radius = telescope_level + 2
         diameter = radius * 2 + 1
 
-        letters = "abcdefghijk"
+        letters = "abcdefghijklmnopqrstuvwxyz"
         
         if point is None:
             point = f"{letters[radius]}{radius + 1}"
@@ -5176,7 +5180,7 @@ anarchy - 1000% of your wager.
             await ctx.reply(HELP_MSG)
             return
         
-        x_modifier = "abcdefghijk".index(matched.group(1).lower()) # group 1 is the letter.
+        x_modifier = letters.index(matched.group(1).lower()) # group 1 is the letter.
         y_modifier = int(matched.group(2).lower()) - 1 # group 2 is the number.
 
         if round(math.hypot(abs(x_modifier - radius), abs(y_modifier - radius))) > radius:
@@ -6168,7 +6172,7 @@ anarchy - 1000% of your wager.
         radius = telescope_level + 2
         diameter = radius * 2 + 1
 
-        letters = "abcdefghijk"
+        letters = "abcdefghijklmnopqrstuvwxyz"
 
         pattern = "([a-{letter_end}])([{number_start}-{number_end}]{{1,{times}}})".format(
             letter_end = letters[diameter - 1],
@@ -6185,7 +6189,7 @@ anarchy - 1000% of your wager.
             self.remove_from_interacting(ctx.author.id)
             return
         
-        x_modifier = "abcdefghijk".index(matched.group(1).lower()) # group 1 is the letter.
+        x_modifier = letters.index(matched.group(1).lower()) # group 1 is the letter.
         y_modifier = int(matched.group(2).lower()) - 1 # group 2 is the number.
 
         if round(math.hypot(abs(x_modifier - radius), abs(y_modifier - radius))) > radius:
@@ -6906,14 +6910,13 @@ anarchy - 1000% of your wager.
             await ctx.reply("Please provide the file name.")
             return
         
-        output = ""
-        file = self.json_interface.get_custom_file(filename, guild = ctx.guild.id)
-        for key in file.keys():
-            output += str(key) + " -- " + str(file[key]) + "\n"
+        data = self.json_interface.get_custom_file(filename, guild = ctx.guild.id)
+        file_text = json.dumps(data, indent=4)
 
-        print("Outputting file for "+filename)
-        print(str(file))
-        await ctx.send(output)
+        fake_file = io.StringIO(file_text)
+        final_file = discord.File(fake_file, filename="export.json")
+
+        await ctx.reply(file=final_file)
 
     ########################################################################################################################
     #####      ADMIN SET_MAX_PRESTIGE
@@ -7029,7 +7032,7 @@ anarchy - 1000% of your wager.
                 continue
 
             for trade_hub_key in ascension_data.get("trade_hubs", {}):
-                ascension_data["trade_hubs"][trade_hub_key]["project_progress"] = blank_projects
+                ascension_data["trade_hubs"][trade_hub_key]["project_progress"] = blank_projects.copy()
             
             space_data[ascension_key] = ascension_data
 
@@ -7169,14 +7172,14 @@ anarchy - 1000% of your wager.
 
         account.set("total_dough", 10000000000000000000000000000)
         account.set("loaf_converter", 128)
-        account.set("max_daily_rolls", 1200)
+        account.set("max_daily_rolls", 1400)
         account.set("auto_chessatron", False)
 
-        account.set("space_level", 1)
+        account.set("space_level", 7)
         account.set("spellcheck", True)
         account.set("roll_summarizer", 1)
 
-        account.set("prestige_level", 2)
+        account.set("prestige_level", 9)
 
         items = values.all_shinies
         
@@ -7197,6 +7200,11 @@ anarchy - 1000% of your wager.
 
         for emote in items:
             account.set(emote.text, 50000000000)
+        
+        for shop_item in store.space_shop_items:
+            account.set(shop_item.name, shop_item.max_level(account))
+
+        account.set("fuel_tank", 40000)
 
         self.json_interface.set_account(user, account, guild = ctx.guild.id)
         await ctx.send("Done.")
@@ -7259,24 +7267,49 @@ anarchy - 1000% of your wager.
     @commands.check(verification.is_admin_check)
     async def do_operation(self, ctx):
 
-        if await self.await_confirmation(ctx) is False:
+        if not await self.await_confirmation(ctx):
             return
 
         # self.currently_interacting.clear()
 
         ##########################################################
         # Go through all trade hubs and set them to be at [0, 1] #
-        for guild in self.json_interface.all_guilds:
-            space_data = self.json_interface.get_custom_file("space", guild)
-            for ascension_key, ascension_value in space_data.items():
-                if not ascension_key.startswith("ascension"):
-                    continue
+        # for guild in self.json_interface.all_guilds:
+        #     space_data = self.json_interface.get_custom_file("space", guild)
+        #     for ascension_key, ascension_value in space_data.items():
+        #         if not ascension_key.startswith("ascension"):
+        #             continue
 
-                for hub_location, hub_data in ascension_value.get("trade_hubs", {}).items():
-                    if hub_data.get("location") == [0, 0]:
-                        space_data[ascension_key]["trade_hubs"][hub_location]["location"] = [0, 1]
+        #         for hub_location, hub_data in ascension_value.get("trade_hubs", {}).items():
+        #             if hub_data.get("location") == [0, 0]:
+        #                 space_data[ascension_key]["trade_hubs"][hub_location]["location"] = [0, 1]
             
-            self.json_interface.set_custom_file("space", space_data, guild)
+        #     self.json_interface.set_custom_file("space", space_data, guild)
+
+        # When the rocket tiers were shifted and tier 3 was removed this'll correct everyone stats.
+        for guild in self.json_interface.all_guilds:
+            for account in self.json_interface.get_all_user_accounts(guild=guild):
+                space_level = account.get_space_level()
+                if space_level >= 3:
+                    account.increment("space_level", -1)
+                
+                fr_level = account.get("fuel_research")
+
+                if fr_level > 2:
+                    account.increment("fuel_research", -1)
+                    account.increment(values.gem_green, 100)
+
+                if fr_level > 2:
+                    account.increment("fuel_research", -1)
+                    account.increment(values.gem_gold, 100)
+
+                if fr_level == 2 and space_level < 4:
+                    account.increment("fuel_research", -1)
+                    account.increment(values.gem_purple, 100)
+
+                self.json_interface.set_account(account.user_id, account, guild)
+
+
 
         
         # Go through all accounts in the database and set any instance of bling = 6 to 7.
@@ -7818,6 +7851,13 @@ anarchy - 1000% of your wager.
             account_values: dict
         ) -> str:
         """Returns a string for the formatted anarchy chess pieces of the given account data."""
+
+        def remove_double_spaces(string: str) -> str:
+            while "  " in string:
+                string = string.replace("  ", " ")
+            
+            return string
+        
         lines = []
         
         components = [["" for _ in range(8)] for _ in range(2)]
@@ -7837,7 +7877,7 @@ anarchy - 1000% of your wager.
             if amount >= 1:
                 components[index // 2][(index % 2) + 3] = piece.text
         
-        lines.append(" ".join(components[0]).strip())
+        lines.append(remove_double_spaces(" ".join(components[0]).strip()))
 
         pawn = min(account_values.get(values.anarchy_white_pawn.text, 0), 8)
         lines.append((pawn * (values.anarchy_white_pawn.text + " ")).strip())
@@ -7845,7 +7885,7 @@ anarchy - 1000% of your wager.
         pawn = min(account_values.get(values.anarchy_black_pawn.text, 0), 8)
         lines.append((pawn * (values.anarchy_black_pawn.text + " ")).strip())
         
-        lines.append(" ".join(components[1]).strip())
+        lines.append(remove_double_spaces(" ".join(components[1]).strip()))
 
         return "\n".join(lines)
         
