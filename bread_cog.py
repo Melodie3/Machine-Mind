@@ -7838,6 +7838,13 @@ anarchy - 1000% of your wager.
             account_values: dict
         ) -> str:
         """Returns a string for the formatted anarchy chess pieces of the given account data."""
+
+        def remove_double_spaces(string: str) -> str:
+            while "  " in string:
+                string = string.replace("  ", " ")
+            
+            return string
+        
         lines = []
         
         components = [["" for _ in range(8)] for _ in range(2)]
@@ -7857,7 +7864,7 @@ anarchy - 1000% of your wager.
             if amount >= 1:
                 components[index // 2][(index % 2) + 3] = piece.text
         
-        lines.append(" ".join(components[0]).strip())
+        lines.append(remove_double_spaces(" ".join(components[0]).strip()))
 
         pawn = min(account_values.get(values.anarchy_white_pawn.text, 0), 8)
         lines.append((pawn * (values.anarchy_white_pawn.text + " ")).strip())
@@ -7865,7 +7872,7 @@ anarchy - 1000% of your wager.
         pawn = min(account_values.get(values.anarchy_black_pawn.text, 0), 8)
         lines.append((pawn * (values.anarchy_black_pawn.text + " ")).strip())
         
-        lines.append(" ".join(components[1]).strip())
+        lines.append(remove_double_spaces(" ".join(components[1]).strip()))
 
         return "\n".join(lines)
         
