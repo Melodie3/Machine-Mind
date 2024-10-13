@@ -7294,6 +7294,10 @@ anarchy - 1000% of your wager.
                     account.increment("fuel_research", -1)
                     account.increment(values.gem_gold, 100)
 
+                if fr_level == 2 and space_level < 4:
+                    account.increment("fuel_research", -1)
+                    account.increment(values.gem_purple, 100)
+
                 self.json_interface.set_account(account.user_id, account, guild)
 
 
