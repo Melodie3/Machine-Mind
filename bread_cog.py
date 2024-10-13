@@ -4935,12 +4935,16 @@ anarchy - 1000% of your wager.
         output.append("")
         output.append(f"Throughout your time in space you've created {utility.write_count(account.get('trade_hubs_created'), 'Trade Hub')} and helped contribute to {utility.write_count(account.get('projects_completed'), 'completed project')}.")
 
-
-
         # Anarchy pieces.
+        formatted_anarchy_pieces = self.format_anarchy_pieces(account.values).strip(" \n")
+
+        if len("\n".join(output)) + len(formatted_anarchy_pieces) + 4 > 1900:
+            await utility.smart_reply(ctx, "\n".join(output))
+            output = ["Stats continued:"]
+
 
         output.append("") # Add a blank item to add an extra new line.
-        output.append(self.format_anarchy_pieces(account.values).strip(" \n"))
+        output.append(formatted_anarchy_pieces)
 
         await utility.smart_reply(ctx, "\n".join(output))
 
