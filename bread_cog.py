@@ -7028,7 +7028,7 @@ anarchy - 1000% of your wager.
                 continue
 
             for trade_hub_key in ascension_data.get("trade_hubs", {}):
-                ascension_data["trade_hubs"][trade_hub_key]["project_progress"] = blank_projects
+                ascension_data["trade_hubs"][trade_hub_key]["project_progress"] = blank_projects.copy()
             
             space_data[ascension_key] = ascension_data
 
@@ -7168,14 +7168,14 @@ anarchy - 1000% of your wager.
 
         account.set("total_dough", 10000000000000000000000000000)
         account.set("loaf_converter", 128)
-        account.set("max_daily_rolls", 1200)
+        account.set("max_daily_rolls", 1400)
         account.set("auto_chessatron", False)
 
-        account.set("space_level", 1)
+        account.set("space_level", 7)
         account.set("spellcheck", True)
         account.set("roll_summarizer", 1)
 
-        account.set("prestige_level", 2)
+        account.set("prestige_level", 9)
 
         items = values.all_shinies
         
@@ -7196,6 +7196,11 @@ anarchy - 1000% of your wager.
 
         for emote in items:
             account.set(emote.text, 50000000000)
+        
+        for shop_item in store.space_shop_items:
+            account.set(shop_item.name, shop_item.max_level(account))
+
+        account.set("fuel_tank", 40000)
 
         self.json_interface.set_account(user, account, guild = ctx.guild.id)
         await ctx.send("Done.")
