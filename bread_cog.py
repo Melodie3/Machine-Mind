@@ -5025,7 +5025,7 @@ anarchy - 1000% of your wager.
                 output += "\n"
         
         if len(items) == 0:
-            output += "Sorry, but you can't buy anything right now. Please try again later."
+            output += "**It looks like you've bought everything here. Well done.**"
         else:
             output += 'To buy an item, just type "$bread buy [item name]".'
 
@@ -5145,7 +5145,7 @@ anarchy - 1000% of your wager.
         radius = telescope_level + 2
         diameter = radius * 2 + 1
 
-        letters = "abcdefghijk"
+        letters = "abcdefghijklmnopqrstuvwxyz"
         
         if point is None:
             point = f"{letters[radius]}{radius + 1}"
@@ -5176,7 +5176,7 @@ anarchy - 1000% of your wager.
             await ctx.reply(HELP_MSG)
             return
         
-        x_modifier = "abcdefghijk".index(matched.group(1).lower()) # group 1 is the letter.
+        x_modifier = letters.index(matched.group(1).lower()) # group 1 is the letter.
         y_modifier = int(matched.group(2).lower()) - 1 # group 2 is the number.
 
         if round(math.hypot(abs(x_modifier - radius), abs(y_modifier - radius))) > radius:
@@ -6168,7 +6168,7 @@ anarchy - 1000% of your wager.
         radius = telescope_level + 2
         diameter = radius * 2 + 1
 
-        letters = "abcdefghijk"
+        letters = "abcdefghijklmnopqrstuvwxyz"
 
         pattern = "([a-{letter_end}])([{number_start}-{number_end}]{{1,{times}}})".format(
             letter_end = letters[diameter - 1],
@@ -6185,7 +6185,7 @@ anarchy - 1000% of your wager.
             self.remove_from_interacting(ctx.author.id)
             return
         
-        x_modifier = "abcdefghijk".index(matched.group(1).lower()) # group 1 is the letter.
+        x_modifier = letters.index(matched.group(1).lower()) # group 1 is the letter.
         y_modifier = int(matched.group(2).lower()) - 1 # group 2 is the number.
 
         if round(math.hypot(abs(x_modifier - radius), abs(y_modifier - radius))) > radius:
@@ -6906,14 +6906,13 @@ anarchy - 1000% of your wager.
             await ctx.reply("Please provide the file name.")
             return
         
-        output = ""
-        file = self.json_interface.get_custom_file(filename, guild = ctx.guild.id)
-        for key in file.keys():
-            output += str(key) + " -- " + str(file[key]) + "\n"
+        data = self.json_interface.get_custom_file(filename, guild = ctx.guild.id)
+        file_text = json.dumps(data, indent=4)
 
-        print("Outputting file for "+filename)
-        print(str(file))
-        await ctx.send(output)
+        fake_file = io.StringIO(file_text)
+        final_file = discord.File(fake_file, filename="export.json")
+
+        await ctx.reply(file=final_file)
 
     ########################################################################################################################
     #####      ADMIN SET_MAX_PRESTIGE
@@ -7259,24 +7258,45 @@ anarchy - 1000% of your wager.
     @commands.check(verification.is_admin_check)
     async def do_operation(self, ctx):
 
-        if await self.await_confirmation(ctx) is False:
+        if not await self.await_confirmation(ctx):
             return
 
         # self.currently_interacting.clear()
 
         ##########################################################
         # Go through all trade hubs and set them to be at [0, 1] #
-        for guild in self.json_interface.all_guilds:
-            space_data = self.json_interface.get_custom_file("space", guild)
-            for ascension_key, ascension_value in space_data.items():
-                if not ascension_key.startswith("ascension"):
-                    continue
+        # for guild in self.json_interface.all_guilds:
+        #     space_data = self.json_interface.get_custom_file("space", guild)
+        #     for ascension_key, ascension_value in space_data.items():
+        #         if not ascension_key.startswith("ascension"):
+        #             continue
 
-                for hub_location, hub_data in ascension_value.get("trade_hubs", {}).items():
-                    if hub_data.get("location") == [0, 0]:
-                        space_data[ascension_key]["trade_hubs"][hub_location]["location"] = [0, 1]
+        #         for hub_location, hub_data in ascension_value.get("trade_hubs", {}).items():
+        #             if hub_data.get("location") == [0, 0]:
+        #                 space_data[ascension_key]["trade_hubs"][hub_location]["location"] = [0, 1]
             
-            self.json_interface.set_custom_file("space", space_data, guild)
+        #     self.json_interface.set_custom_file("space", space_data, guild)
+
+        # When the rocket tiers were shifted and tier 3 was removed this'll correct everyone stats.
+        for guild in self.json_interface.all_guilds:
+            for account in self.json_interface.get_all_user_accounts(guild=guild):
+                space_level = account.get_space_level()
+                if space_level >= 3:
+                    account.increment("space_level", -1)
+                
+                fr_level = account.get("fuel_research")
+
+                if fr_level > 2:
+                    account.increment("fuel_research", -1)
+                    account.increment(values.gem_green, 100)
+
+                if fr_level > 2:
+                    account.increment("fuel_research", -1)
+                    account.increment(values.gem_gold, 100)
+
+                self.json_interface.set_account(account.user_id, account, guild)
+
+
 
         
         # Go through all accounts in the database and set any instance of bling = 6 to 7.

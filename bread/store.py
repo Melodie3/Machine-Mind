@@ -1553,11 +1553,10 @@ class Bread_Rocket(Space_Shop_Item):
         # 1     2500	    1000	75	        15			                                       #
         # 2	    3750	    1500	112	        22			                                       #
         # 3		            2250	168	        33	        5		                               #
-        # 4		            3375	253	        50	        7		                               #
-        # 5		    	            379	        75	        11	    1	                           #
-        # 6			                569	        113	        16	    2	                           #
-        # 7			                854	        170	        25	    3	            1              #
-        # 8			                1281	    256	        37	    4	            3              #
+        # 4		            3375	253	        50	        7		1                              #
+        # 5		    	            379	        75	        11	    2	                           #
+        # 6			                569	        113	        16	    3	                           #
+        # 7			                854	        170	        25	    4	            1              #
         ############################################################################################
 
         return [
@@ -1583,58 +1582,51 @@ class Bread_Rocket(Space_Shop_Item):
             # Tier 4.
             [
                 (values.doughnut.text, 3375), (values.bagel.text, 3375), (values.waffle.text, 3375),
-                (values.chessatron.text, 253), (values.gem_gold.text, 50), (values.anarchy_chess.text, 7)
+                (values.chessatron.text, 253), (values.gem_gold.text, 50), (values.anarchy_chess.text, 7), (values.anarchy_chessatron.text, 1)
             ],
             # Tier 5.
             [
-                (values.chessatron.text, 379), (values.gem_gold.text, 75), (values.anarchy_chess.text, 11), (values.anarchy_chessatron.text, 1)
+                (values.chessatron.text, 379), (values.gem_gold.text, 75), (values.anarchy_chess.text, 11), (values.anarchy_chessatron.text, 2)
             ],
             # Tier 6.
             [
-                (values.chessatron.text, 569), (values.gem_gold.text, 113), (values.anarchy_chess.text, 16), (values.anarchy_chessatron.text, 2)
+                (values.chessatron.text, 569), (values.gem_gold.text, 113), (values.anarchy_chess.text, 16), (values.anarchy_chessatron.text, 3)
             ],
             # Tier 7.
             [
-                (values.chessatron.text, 854), (values.gem_gold.text, 170), (values.anarchy_chess.text, 25), (values.anarchy_chessatron.text, 3), (values.anarchy_omega_chessatron.text, 1)
-            ],
-            # Tier 8.
-            [
-                (values.chessatron.text, 1281), (values.gem_gold.text, 256), (values.anarchy_chess.text, 37), (values.anarchy_chessatron.text, 4), (values.anarchy_omega_chessatron.text, 3)
-            ],
+                (values.chessatron.text, 854), (values.gem_gold.text, 170), (values.anarchy_chess.text, 25), (values.anarchy_chessatron.text, 4), (values.anarchy_omega_chessatron.text, 1)
+            ]
         ]
     
     @classmethod
     def description(cls, user_account: account.Bread_Account) -> str:
         level = user_account.get(cls.name)
-        # (a1 locked) Tier 1: Access to space.
-        #             Tier 2: Upgraded telescopes 1, Fuel research 4, Advanced Exploration
-        #             Tier 3: Engine Efficiency 1
-        # (a2 locked) Tier 4: Upgraded Autopilot 1 (Galaxy travel)
-        #             Tier 5: Upgraded telescopes 2, Engine Efficiency 2
-        # (a3 locked) Tier 6: Upgraded Autopilot 2 (Nebula travel)
-        #             Tier 7: Engine Efficiency 3
-        # (a4 locked) Tier 8: Upgraded Autopilot 3 (Wormhole travel), Upgraded telescopes 3
-
-        # Potential rework?
+        
         # (a1 locked) Tier 1: Access to space, Multiroller Terminal (all), Fuel Tank (all)
-        #             Tier 2: Advanced Exploration (all), Fuel Refinement 1, Upgraded Telescopes 1, Engine Efficiency 1
-        # (a2 locked) Tier 3: Upgraded Autopilot 1 (Galaxy travel), Fuel Refinement 2
-        #             Tier 4: Engine Efficiency 2, FueL Refinement 3
-        # (a3 locked) Tier 5: Upgraded Autopilot 2 (Nebula travel), Upgraded Telescopes 2
-        #             Tier 6: Engine Efficiency 3, Fuel Refinement 4
-        # (a4 locked) Tier 7: Upgraded Autopilot 3 (Wormhole travel), Upgraded telescopes 3
+        #             Tier 2: Advanced Exploration (all), Fuel Research 1, Upgraded Telescopes 1, Engine Efficiency 1
+        # (a2 locked) Tier 3: Upgraded Autopilot 1 (Galaxy travel), Fuel Research 2
+        #             Tier 4: Engine Efficiency 2, Fuel Research 3, Upgraded Telescopes 2
+        # (a3 locked) Tier 5: Upgraded Autopilot 2 (Nebula travel), Upgraded Telescopes 3
+        #             Tier 6: Engine Efficiency 3, Fuel Research 4, Upgraded Telescopes 4
+        # (a4 locked) Tier 7: Upgraded Autopilot 3 (Wormhole travel), Upgraded telescopes 5
 
         if level == 0:
             return "A Bread Rocket that allows access to space."
         
         upgrades = [
+            # Tier 1.
             "go to space.",
-            f"upgrade your telescopes, advance your exploration, and research new methods of creating {values.fuel.text}.",
-            "use your fuel more efficiently.",
-            "traverse through the galaxy.",
-            "upgrade your telescopes and use your fuel more efficiently.",
-            "adventure through nebulae.",
-            "use your fuel more efficiently.",
+            # Tier 2.
+            f"upgrade your telescopes, advance your exploration, research new methods of creating {values.fuel.text}, and use your fuel more efficiently.",
+            # Tier 3.
+            f"traverse through the galaxy and research new methods of creating {values.fuel.text}.",
+            # Tier 4.
+            f"use your fuel more efficiently, research new methods of creating {values.fuel.text}, and upgrade your telescopes",
+            # Tier 5.
+            "adventure through nebulae and upgrade your telescopes.",
+            # Tier 6.
+            f"use your fuel more efficiently, research new methods of creating {values.fuel.text}, and upgrade your telescopes",
+            # Tier 7.
             "explore wormholes and upgrade your telescopes.",
         ]
         return f"An upgraded Bread Rocket allows you to {upgrades[level]}"
@@ -1653,13 +1645,13 @@ class Bread_Rocket(Space_Shop_Item):
         if ascension < 1:
             return False
 
-        if level >= 8:
+        if level >= 7:
             return ascension >= 4
 
-        elif level >= 6:
+        elif level >= 5:
             return ascension >= 3
 
-        elif level >= 4:
+        elif level >= 3:
             return ascension >= 2
         
         return True
@@ -1673,15 +1665,22 @@ class Bread_Rocket(Space_Shop_Item):
         message = f"You have constructed the tier {level} Bread Rocket!"
 
         unlocks = [
+            # Tier 0.
             "",
-            "You can now view space via '$bread space map'.\nUse '$help bread space' to view a list of commands.",
-            "The Upgraded Telescopes, Advanced Exploration, and Fuel Research shop items have been added to the Space Shop.",
-            "The Engine Efficiency shop item has been added to the Space Shop.",
-            "The Upgraded Autopilot shop item has been added to the Space Shop.",
-            "The second tier of Upgraded Telescopes and Engine Efficiency shop items are now available to purchase.",
-            "The second tier of Upgraded Autopilot is now available to purchase.",
-            "The third tier of Engine Efficiency is now available to purchase.",
-            "The third tier of Upgraded Autopilot and Upgraded Telescopes are now available to purchase."
+            # Tier 1.
+            "You can now view space via '$bread space map'.\nUse '$help bread space' to view a list of commands.\nIn addition, the Multiroller Terminal and Fuel Tank items have been added to the Space Shop.",
+            # Tier 2.
+            "The Upgraded Telescopes, Advanced Exploration, Fuel Research, and Engine Efficiency shop items have been added to the Space Shop.",
+            # Tier 3.
+            "The Upgraded Autopilot and second tier of Fuel Research shop items have been added to the Space Shop.",
+            # Tier 4.
+            "The third tier of Fuel Research and second tier of Upgraded Telescopes and Engine Efficiency are now available to purchase.",
+            # Tier 5.
+            "The second tier of Upgraded Autopilot and third tier of Upgraded Telescopes is now available to purchase.",
+            # Tier 6.
+            "The third tier of Engine Efficiency, fourth tier of Fuel Research, and fourth tier of Upgraded Telescopes is now available to purchase.",
+            # Tier 7.
+            "The third tier of Upgraded Autopilot and fifth tier of Upgraded Telescopes is now available to purchase."
         ]
 
         message += "\n"
@@ -1734,13 +1733,13 @@ class Upgraded_Autopilot(Space_Shop_Item):
         level = user_account.get(cls.name) + 1
         space_level = user_account.get_space_level()
 
-        if space_level <= 3:
+        if space_level <= 2:
             return False
         
-        if space_level <= 5:
+        if space_level <= 4:
             return level <= 1
         
-        if space_level <= 7:
+        if space_level <= 6:
             return level <= 2
 
         return True
@@ -1789,7 +1788,7 @@ class Fuel_Tank(Space_Shop_Item):
     
     @classmethod
     def max_level(cls, user_account: account.Bread_Account = None) -> int | None:
-        return 32 # 11,300 daily fuel.
+        return 64 # 11,300 daily fuel.
     
     @classmethod
     def do_purchase(cls, user_account: account.Bread_Account):
@@ -1823,9 +1822,22 @@ class Fuel_Research(Space_Shop_Item):
         if not super().can_be_purchased(user_account):
             return False
         
+        level = user_account.get(cls.name) + 1
         space_level = user_account.get_space_level()
+
+        if space_level <= 1:
+            return False
         
-        return space_level >= 2
+        if space_level <= 2:
+            return level <= 1
+        
+        if space_level <= 3:
+            return level <= 2
+        
+        if space_level <= 5:
+            return level <= 3
+
+        return True
 
 class Upgraded_Telescopes(Space_Shop_Item):
     name = "telescope_level"
@@ -1837,7 +1849,9 @@ class Upgraded_Telescopes(Space_Shop_Item):
             [],
             [(values.gem_purple.text, 50), (values.chessatron.text, 75)],
             [(values.gem_green.text, 75), (values.chessatron.text, 100)],
-            [(values.gem_gold.text, 100), (values.chessatron.text, 125), (values.anarchy_chessatron.text, 1)],
+            [(values.gem_gold.text, 100), (values.chessatron.text, 125)],
+            [(values.gem_gold.text, 150), (values.chessatron.text, 200)],
+            [(values.gem_gold.text, 200), (values.chessatron.text, 300), (values.anarchy_chessatron.text, 1)],
         ]
     
     @classmethod
@@ -1858,11 +1872,17 @@ class Upgraded_Telescopes(Space_Shop_Item):
         if space_level <= 1:
             return False
         
-        if space_level <= 4:
+        if space_level <= 3:
             return level <= 1
         
-        if space_level <= 7:
+        if space_level <= 4:
             return level <= 2
+        
+        if space_level <= 5:
+            return level <= 3
+        
+        if space_level <= 6:
+            return level <= 4
         
         return True
 
@@ -1984,13 +2004,13 @@ class Engine_Efficiency(Space_Shop_Item):
         level = user_account.get(cls.name) + 1
         space_level = user_account.get_space_level()
 
-        if space_level <= 2:
+        if space_level <= 1:
             return False
         
-        if space_level <= 4:
+        if space_level <= 3:
             return level <= 1
         
-        if space_level <= 6:
+        if space_level <= 5:
             return level <= 2
         
         return True

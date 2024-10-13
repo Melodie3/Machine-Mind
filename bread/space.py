@@ -68,6 +68,21 @@ EMOJI_PATHS = {
     "9": "images/9.png",
     "10": "images/10.png", # yoggers
     "11": "images/11.png",
+    "12": "images/12.png",
+    "13": "images/13.png",
+    "14": "images/14.png",
+    "15": "images/15.png",
+    "16": "images/16.png",
+    "17": "images/17.png",
+    "18": "images/18.png",
+    "19": "images/19.png",
+    "20": "images/20.png",
+    "21": "images/21.png",
+    "22": "images/22.png",
+    "23": "images/23.png",
+    "24": "images/24.png",
+    "25": "images/25.png",
+    "26": "images/26.png",
 
     # Letters.
     "a": "images/a.png",
@@ -81,6 +96,21 @@ EMOJI_PATHS = {
     "i": "images/i.png",
     "j": "images/j.png",
     "k": "images/k.png",
+    "l": "images/l.png",
+    "m": "images/m.png",
+    "n": "images/n.png",
+    "o": "images/o.png",
+    "p": "images/p.png",
+    "q": "images/q.png",
+    "r": "images/r.png",
+    "s": "images/s.png",
+    "t": "images/t.png",
+    "u": "images/u.png",
+    "v": "images/v.png",
+    "w": "images/w.png",
+    "x": "images/x.png",
+    "y": "images/y.png",
+    "z": "images/z.png", # This should be able to handle up to Upgraded Telecopes 10, but not beyond.
     
     # Filler.
     "border": "images/border.png",
@@ -144,7 +174,10 @@ print("Bread Space: Loading map images.")
 EMOJI_IMAGES = {}
 
 for key, path in EMOJI_PATHS.items():
-    EMOJI_IMAGES[key] = Image.open(path).resize((128, 128))
+    try:
+        EMOJI_IMAGES[key] = Image.open(path).resize((128, 128))
+    except FileNotFoundError:
+        print(f"Bread Space: Map image loading failed for {key} ({path}) as the file does not exist.")
 
 print("Bread Space: Map image loading complete.")
 
@@ -983,7 +1016,7 @@ def galaxy_map(
     x_size = max(bottom_right[0], top_left[0]) - min(bottom_right[0], top_left[0]) + 1
     y_size = max(bottom_right[1], top_left[1]) - min(bottom_right[1], top_left[1]) + 1
 
-    letters = "abcdefghijk"
+    letters = "abcdefghijklmnopqrstuvwxyz"
 
     corners = [
         (0, 0), (0, 1), (1, 0),
@@ -992,7 +1025,8 @@ def galaxy_map(
         (x_size + 3, y_size + 3), (x_size + 3, y_size + 2), (x_size + 2, y_size + 3),
     ]
     
-    size_check = x_size - round(2 * ((telescope_level + 1) ** 0.5)) # https://www.desmos.com/calculator/jbtcaxcbl6
+    def size_check(x, y):
+        return round(math.sqrt(x ** 2 + y ** 2)) <= telescope_level + 2
     
     img = Image.new(
         mode = "RGBA",
@@ -1029,7 +1063,7 @@ def galaxy_map(
             
         
             # Whether this is in the visible area or not.
-            if abs(xpos - 2 - radius) + abs(ypos - 2 - radius) > size_check:
+            if not size_check(xpos - 2 - radius, ypos - 2 - radius):
                 place("fog", xpos, ypos)
                 continue
 
@@ -1109,7 +1143,7 @@ def system_map(
     border_emoji = "border"
     blocker = "blocker"
 
-    letters = "abcdefghijk"
+    letters = "abcdefghijklmnopqrstuvwxyz"
 
     corners = [
         (0, 0), (0, 1), (1, 0),
@@ -1117,8 +1151,9 @@ def system_map(
         (x_size + 3, 0), (x_size + 2, 0), (x_size + 3, 1),
         (x_size + 3, y_size + 3), (x_size + 3, y_size + 2), (x_size + 2, y_size + 3),
     ]
-
-    size_check = x_size - round(2 * ((telescope_level + 1) ** 0.5)) # https://www.desmos.com/calculator/jbtcaxcbl6
+    
+    def size_check(x, y):
+        return round(math.sqrt(x ** 2 + y ** 2)) <= telescope_level + 2
 
     visible_coordinates = []
 
@@ -1144,7 +1179,7 @@ def system_map(
             return fill_emoji
         
         # Whether this is in the visible area or not.
-        if abs(grid_x - 2 - radius) + abs(grid_y - 2 - radius) <= size_check:
+        if size_check(grid_x - 2 - radius, grid_y - 2 - radius):
             visible_coordinates.append(
                 (grid_x - 2 - radius + system_x,
                 grid_y - 2 - radius + system_y)
@@ -1242,7 +1277,7 @@ def system_map(
     place("rocket", radius + 2, radius + 2)
     
     if analyze_position is not None:
-        xpos = "abcdefghijk".index(analyze_position[0])
+        xpos = letters.index(analyze_position[0])
         ypos = int(analyze_position[1:]) - 1
         
         width = 50
