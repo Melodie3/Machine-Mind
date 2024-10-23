@@ -4580,10 +4580,6 @@ anarchy - 1000% of your wager.
             # print(f"Available recipes are: {alchemy.recipes}")
 
             if target_emote.name in alchemy.recipes.keys():
-                if user_account.get("max_daily_rolls") < store.Daily_rolls.max_level(user_account) and target_emote.name in [emote.name for emote in values.all_one_of_a_kind]:  
-                    await utility.smart_reply(ctx, f"I'm sorry, but you cannot alchemize any {target_emote.text} right now.")
-                    self.remove_from_interacting(ctx.author.id)
-                    return
                 recipe_list = alchemy.recipes[target_emote.name].copy()
 
                 # Remove recipes that the user doesn't have the requirements for.
@@ -4594,11 +4590,18 @@ anarchy - 1000% of your wager.
                     if "requirement" not in recipe:
                         continue # Recipe doesn't have any requirements.
                         
-                    for require_key, require_amount in recipe["requirement"]:
-                        if user_account.get(require_key) < require_amount:
-                            # User does not have a requirement.
-                            recipe_list.remove(recipe)
-                            break
+                    for requirement in recipe["requirement"]:
+                        # Assume it's a callable and attempt to call it, but fall back on unpacking the requirement if it isn't a callable.
+                        try:
+                            if not requirement(user_account):
+                                recipe_list.remove(recipe)
+                                break
+                        except TypeError: # If the requirement isn't a callable a TypeError will be raised.
+                            require_key, require_amount = requirement
+                            if user_account.get(require_key) < require_amount:
+                                # User does not have a requirement.
+                                recipe_list.remove(recipe)
+                                break
                                 
                 if len(recipe_list) == 0:
                     # Either the recipe list was initially blank, in which there is some issue, or the user has not unlocked any recipes for the item yet.
@@ -4623,7 +4626,15 @@ anarchy - 1000% of your wager.
                     recipes_description += f"**[ {i+1} ]**    {alchemy.describe_individual_recipe(recipe)}"
 
                     if "result" in recipe:
-                        recipes_description += f"   **({recipe['result']}x)**"
+                        result_amount = recipe['result']
+
+                        # Check if the result amount is a callable by trying to call it and catching the TypeError that occurs if it isn't.
+                        try:
+                            result_amount = result_amount(user_account)
+                        except TypeError:
+                            pass
+
+                        recipes_description += f"   **({result_amount}x)**"
 
                     recipes_description += "\n"
 
@@ -4675,6 +4686,12 @@ anarchy - 1000% of your wager.
             item_multiplier = 1 # Amount of the output item to provide, by default it's 1 but something else can be specified via the recipe in alchemy.py.
             if "result" in recipe:
                 item_multiplier = recipe["result"]
+
+                # Check if the result amount is a callable by trying to call it and catching the TypeError that occurs if it isn't.
+                try:
+                    item_multiplier = item_multiplier(user_account)
+                except TypeError:
+                    pass
 
             already_confirmed = False
             if confirm is not None:
@@ -4733,9 +4750,6 @@ anarchy - 1000% of your wager.
             ##### If the person is making fuel, ensure if it's fuel the person has enough fuel in their fuel tank.
             
             output_amount = item_multiplier
-            
-            if target_emote.text == values.fuel.text:
-                output_amount = int(output_amount * user_account.get_fuel_refinement_boost())
             
             value = 0
 
