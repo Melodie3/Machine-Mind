@@ -1685,8 +1685,7 @@ def get_trade_hub_projects(
         key = f"project_{len(out_projects) + 1}"
         rng = random.Random(utility.hash_args(seed, daily_seed, galaxy_x, galaxy_y, project_id))
         
-        # project = projects.all_projects.copy()
-        project = projects.item_project_lists
+        project = projects.all_projects.copy()
 
         while isinstance(project, list):
             if isinstance(project, list):
