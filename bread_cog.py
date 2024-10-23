@@ -4888,6 +4888,11 @@ anarchy - 1000% of your wager.
 
         daily_fuel_cap = account.get_daily_fuel_cap()
         output.append(f"Out of your {sn(daily_fuel_cap)} {values.daily_fuel.text} you have {sn(account.get('daily_fuel'))} remaining.")
+
+        if account.has(values.anarchy_omega_chessatron.text):
+            output.append(f"With {utility.write_count(account.get(values.anarchy_omega_chessatron.text), 'Anarchy Omega Chessatron')} you get {sn(account.get_anarchy_chessatron_dough_amount(True))} for each new anarchy chessatron.")
+
+
         output.append("")
 
         if account.has(store.Upgraded_Autopilot.name):
@@ -4934,6 +4939,20 @@ anarchy - 1000% of your wager.
         
         output.append("")
         output.append(f"Throughout your time in space you've created {utility.write_count(account.get('trade_hubs_created'), 'Trade Hub')} and helped contribute to {utility.write_count(account.get('projects_completed'), 'completed project')}.")
+
+        # Add item amount information.
+        item_list = [values.corrupted_bread, values.anarchy_chessatron, values.anarchy_omega_chessatron]
+
+        item_line = []
+        for item in item_list:
+            if account.has(item.text):
+                item_line.append(f"{account.get(item.text)} {item.text}")
+        
+        # Only show the item amount information if there is any information to show.
+        if len(item_line) > 0:
+            output.append("")
+            output.append("Space items:")
+            output.append(" , ".join(item_line))
 
         # Anarchy pieces.
         formatted_anarchy_pieces = self.format_anarchy_pieces(account.values).strip(" \n")
