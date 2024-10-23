@@ -5881,7 +5881,7 @@ anarchy - 1000% of your wager.
                 galaxy_x = galaxy_x,
                 galaxy_y = galaxy_y,
                 system_x = system_x,
-                system_y = system_x
+                system_y = system_y
             )
 
         
