@@ -1717,6 +1717,29 @@ def get_trade_hub_projects(
     
     return out_projects
 
+def get_project_credits_usage(
+        total_items: int,
+        items_contributed: int,
+        item_offset: int = 0
+    ) -> int:
+    """Calculates the amount of credits contributing to a project consumes.
+
+    Args:
+        total_items (int): The total number of items the project requires.
+        items_contributed (int): The amount of items that have been contributed.
+        item_offset (int, optional): The number of items already contributed by the player. Defaults to 0.
+    Returns:
+        int: The amount of credits to consume, between 0 and 100.
+    """
+
+    total_contributes = items_contributed + item_offset
+    amount_done = total_contributes / total_items
+
+    if amount_done == 0:
+        return 0
+
+    return max(int(amount_done / ((1 / amount_done) + 1) * 2000), 1)
+
 
             
 

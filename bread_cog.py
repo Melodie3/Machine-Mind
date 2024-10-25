@@ -4901,7 +4901,9 @@ anarchy - 1000% of your wager.
         output.append(f"Your location in the galaxy is currently {account.get_galaxy_location(self.json_interface)}.")
 
         daily_fuel_cap = account.get_daily_fuel_cap()
+        project_credits_cap = account.get_projects_credits_cap()
         output.append(f"Out of your {sn(daily_fuel_cap)} {values.daily_fuel.text} you have {sn(account.get('daily_fuel'))} remaining.")
+        output.append(f"From your {sn(project_credits_cap)} daily {values.project_credits.text} you have {sn(account.get('hub_credits'))} remaining.")
 
         if account.has(values.anarchy_omega_chessatron.text):
             output.append(f"With {utility.write_count(account.get(values.anarchy_omega_chessatron.text), 'Anarchy Omega Chessatron')} you get {sn(account.get_anarchy_chessatron_dough_amount(True))} for each new anarchy chessatron.")
@@ -5475,12 +5477,12 @@ anarchy - 1000% of your wager.
             return
         
         if amount < 0:
-            await ctx.reply("Trying to steal resources? Mum won't be very happy about that.")
-            await ctx.invoke(self.bot.get_command('brick'), member=ctx.author, duration="1")
+            await ctx.reply("Hey there, are you trying to steal resources?\nThat's kind of rude.")
+            await ctx.invoke(self.bot.get_command('brick'), member=ctx.author)
             return
         
         if amount == 0:
-            await ctx.reply("That's not much of a contribution.")
+            await ctx.reply("Congratulations, you have done absolutely nothing. I will now take your spleen.")
             return
         
         if amount > user_account.get(item.text):
@@ -5512,7 +5514,7 @@ anarchy - 1000% of your wager.
             await ctx.reply("This project has already been completed.")
             return
         
-        project = project_data.get("project")
+        project = project_data.get("project") # type: projects.Project
 
         remaining = project.get_remaining_items(
             day_seed = day_seed,
@@ -5547,6 +5549,66 @@ anarchy - 1000% of your wager.
         contribution_data = project_data.get("contributions", [])
 
         player_data = contribution_data.get(str(ctx.author.id), {"items": {}})
+
+        # Make sure the player has the credits to contribute this.
+        prior_items = sum(player_data["items"].values())
+        total_required = project.total_items_required(day_seed, hub)
+
+        total_credits_used = space.get_project_credits_usage(
+            total_items = total_required,
+            items_contributed = amount_contribute,
+            item_offset = prior_items
+        )
+
+        old_credits_used = space.get_project_credits_usage(
+            total_items = total_required,
+            items_contributed = prior_items
+        )
+
+        credits_used = total_credits_used - old_credits_used
+
+        remaining_credits = user_account.get("hub_credits")
+
+        if remaining_credits < credits_used:
+            await ctx.reply(f"You don't have enough {values.project_credits.text} to contribute that.")
+            return
+
+        ##########
+        # Ask for confirmation.
+
+        project_name = project.name(day_seed, hub)
+
+        confirm_text = ["yes", "y", "confirm"]
+        cancel_text = ["no", "n", "cancel"]
+
+        await utility.smart_reply(ctx, f"You are contributing {utility.smart_number(amount_contribute)} {item.text} to the {project_name} project.\nThis will require {utility.smart_number(credits_used)} {values.project_credits.text}.\nYou currently have the following:\n- {utility.smart_number(user_account.get(item.text))} {item.text}\n- {utility.smart_number(user_account.get('hub_credits'))} {values.project_credits.text}\nWould you like to go through with your confirmation? Yes or No.")
+            
+        def check(m: discord.Message):
+            return m.author.id == ctx.author.id and m.channel.id == ctx.channel.id 
+
+        try:
+            msg = await self.bot.wait_for('message', check = check, timeout = 60.0)
+        except asyncio.TimeoutError: 
+            await utility.smart_reply(ctx, "I'm sorry, but you have taken too long and I must attend to the next customer.")
+            self.remove_from_interacting(ctx.author.id)
+            return
+        
+        if msg.content.lower() in cancel_text:
+            await utility.smart_reply(ctx, "Very well, come back when you would like to contribute.")
+
+            self.remove_from_interacting(ctx.author.id)
+            return
+        elif msg.content.lower() not in confirm_text:
+            await utility.smart_reply(ctx, "I'm not entirely sure what that is, please try again.")
+
+            self.remove_from_interacting(ctx.author.id)
+            return
+
+
+
+        ##########
+
+        user_account.increment("hub_credits", -credits_used)
         
         user_account.increment(item.text, -amount_contribute)
 
@@ -5574,7 +5636,7 @@ anarchy - 1000% of your wager.
 
         amount_left = user_account.get(item.text)
         
-        await ctx.reply(f"You have contributed {utility.smart_number(amount_contribute)} {item.text} to the {project.name(day_seed, hub)} project.\nYou now have {utility.smart_number(amount_left)} {item.text} remaining.")
+        await ctx.reply(f"You have contributed {utility.smart_number(amount_contribute)} {item.text} to the {project_name} project.\nYou now have {utility.smart_number(amount_left)} {item.text} and {utility.smart_number(user_account.get('hub_credits'))} {values.project_credits.text} remaining.")
 
         updated_required = project.get_remaining_items(
             day_seed = day_seed,
