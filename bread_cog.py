@@ -5580,6 +5580,8 @@ anarchy - 1000% of your wager.
         project_name = project.name(day_seed, hub)
 
         if not confirmation:
+            self.currently_interacting.append(ctx.author.id)
+            
             confirm_text = ["yes", "y", "confirm"]
             cancel_text = ["no", "n", "cancel"]
 
@@ -5605,6 +5607,8 @@ anarchy - 1000% of your wager.
 
                 self.remove_from_interacting(ctx.author.id)
                 return
+            
+            self.remove_from_interacting(ctx.author.id)
 
 
 
