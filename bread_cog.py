@@ -4923,11 +4923,11 @@ anarchy - 1000% of your wager.
 
             message = ""
             for i in range(1, autopilot_level + 1):
-                if i != 1:
+                if i != 1 and i != autopilot_level:
                     message += ", "
 
-                if i == autopilot_level:
-                    message += "and "
+                if i == autopilot_level and i != 1:
+                    message += " and "
 
                 message += messages[i]
 
