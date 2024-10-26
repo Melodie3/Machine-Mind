@@ -5452,7 +5452,7 @@ anarchy - 1000% of your wager.
         """Contributes items to a trade hub project, or the trade hub level."""
         galaxy_x, galaxy_y = user_account.get_galaxy_location(json_interface=self.json_interface)
 
-        actions += [" ", " ", " "]
+        actions += [" ", " ", " ", " "]
 
         try:
             if actions[1] == "level":
@@ -5462,6 +5462,7 @@ anarchy - 1000% of your wager.
 
             amount = parse_int(actions[2])
             item = values.get_emote(actions[3])
+            confirmation = actions[4].lower() in ["yes", "y", "confirm"]
         except ValueError:
             if project_number == "level":
                 await ctx.reply("To help level up the Trade Hub, use this format:\n'$bread space hub contribute level [amount] [item]'")
@@ -5578,31 +5579,32 @@ anarchy - 1000% of your wager.
 
         project_name = project.name(day_seed, hub)
 
-        confirm_text = ["yes", "y", "confirm"]
-        cancel_text = ["no", "n", "cancel"]
+        if not confirmation:
+            confirm_text = ["yes", "y", "confirm"]
+            cancel_text = ["no", "n", "cancel"]
 
-        await utility.smart_reply(ctx, f"You are contributing {utility.smart_number(amount_contribute)} {item.text} to the {project_name} project.\nThis will require {utility.smart_number(credits_used)} {values.project_credits.text}.\nYou currently have the following:\n- {utility.smart_number(user_account.get(item.text))} {item.text}\n- {utility.smart_number(user_account.get('hub_credits'))} {values.project_credits.text}\nWould you like to go through with your confirmation? Yes or No.")
+            await utility.smart_reply(ctx, f"You are contributing {utility.smart_number(amount_contribute)} {item.text} to the {project_name} project.\nThis will require {utility.smart_number(credits_used)} {values.project_credits.text}.\nYou currently have the following:\n- {utility.smart_number(user_account.get(item.text))} {item.text}\n- {utility.smart_number(user_account.get('hub_credits'))} {values.project_credits.text}\nWould you like to go through with your confirmation? Yes or No.")
+                
+            def check(m: discord.Message):
+                return m.author.id == ctx.author.id and m.channel.id == ctx.channel.id 
+
+            try:
+                msg = await self.bot.wait_for('message', check = check, timeout = 60.0)
+            except asyncio.TimeoutError: 
+                await utility.smart_reply(ctx, "I'm sorry, but you have taken too long and I must attend to the next customer.")
+                self.remove_from_interacting(ctx.author.id)
+                return
             
-        def check(m: discord.Message):
-            return m.author.id == ctx.author.id and m.channel.id == ctx.channel.id 
+            if msg.content.lower() in cancel_text:
+                await utility.smart_reply(ctx, "Very well, come back when you would like to contribute.")
 
-        try:
-            msg = await self.bot.wait_for('message', check = check, timeout = 60.0)
-        except asyncio.TimeoutError: 
-            await utility.smart_reply(ctx, "I'm sorry, but you have taken too long and I must attend to the next customer.")
-            self.remove_from_interacting(ctx.author.id)
-            return
-        
-        if msg.content.lower() in cancel_text:
-            await utility.smart_reply(ctx, "Very well, come back when you would like to contribute.")
+                self.remove_from_interacting(ctx.author.id)
+                return
+            elif msg.content.lower() not in confirm_text:
+                await utility.smart_reply(ctx, "I'm not entirely sure what that is, please try again.")
 
-            self.remove_from_interacting(ctx.author.id)
-            return
-        elif msg.content.lower() not in confirm_text:
-            await utility.smart_reply(ctx, "I'm not entirely sure what that is, please try again.")
-
-            self.remove_from_interacting(ctx.author.id)
-            return
+                self.remove_from_interacting(ctx.author.id)
+                return
 
 
 
