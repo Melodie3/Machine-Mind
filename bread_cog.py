@@ -1310,7 +1310,7 @@ class Bread_cog(commands.Cog, name="Bread"):
                 if LC_booster_level >= 1:
                     multiplier = 2 ** LC_booster_level 
                 boosted_amount = user_account.get("loaf_converter") * multiplier
-                output += f", which, with Recipe Refinement level {LC_booster_level}, makes you {boosted_amount} times more likely to find special items.\n"
+                output += f", which, with Recipe Refinement level {LC_booster_level}, makes you {utility.smart_number(boosted_amount)} times more likely to find special items.\n"
             else:
                 output += ".\n"
         if user_account.has(values.omega_chessatron.text):
