@@ -46,7 +46,8 @@ class Bread_Account:
         "max_special_bread_packs_per_day": 5000000,
         "brick_troll_percentage" : 0,
         "daily_fuel": 100,
-        "hub_credits": 2000
+        "hub_credits": 2000,
+        "auto_move_map": False
     }
 
 

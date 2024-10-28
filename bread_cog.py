@@ -5073,6 +5073,64 @@ anarchy - 1000% of your wager.
     ########################################################################################################################
     #####      BREAD SPACE MAP
 
+    async def handle_map(
+            self: typing.Self,
+            ctx: commands.Context,
+            map_type: str,
+            user_account: account.Bread_Account,
+            content: str = None,
+            reduced_info: bool = False
+        ) -> discord.Message:
+        """Handles the process of generating the map and sending it to standardize how it's sent."""
+
+        if content is None:
+            content = ""
+
+        ###############################
+
+        map_data = space.space_map(
+            account = user_account,
+            json_interface = self.json_interface,
+            mode = map_type
+        )
+
+        ###############################
+
+        corruption_chance = round(user_account.get_corruption_chance(json_interface=self.json_interface) * 100, 2)
+
+        suffix = ""
+
+        if map_type == "galaxy" or map_type == "g":
+            prefix = "Galaxy map:"
+            middle = f"Your current galaxy location: {user_account.get_galaxy_location(json_interface=self.json_interface)}.\nCorruption chance: {corruption_chance}%."
+
+            if not reduced_info:
+                suffix = "You can use '$bread space map' to view the map for the system you're in.\n\nUse '$bread space move galaxy' to move around on this map."
+        else:
+            prefix = "System map:"
+            middle = f"Your current galaxy location: {user_account.get_galaxy_location(json_interface=self.json_interface)}.\nYour current system location: {user_account.get_system_location()}.\nCorruption chance: {corruption_chance}%."
+            
+            if not reduced_info:
+                suffix = "You can use '$bread space map galaxy' to view the galaxy map.\n\nUse '$bread space move system' to move around on this map.\nUse '$bread space analyze' to get more information about somewhere."
+
+        send_file = discord.File(map_data, filename="space_map.png")
+        file_path = "attachment://space_map.png"
+
+        unfortunate_embed = discord.Embed( # It's unfortunate that we have to use one.
+            title = prefix,
+            description = middle + "\n\n" + suffix,
+            color=8884479,
+        )
+        unfortunate_embed.set_image(url=file_path)
+
+        try:
+            # We need to copy send_file here because if we don't and this message is unable to send
+            # when it sends it below it won't have the image. I'm not sure why this happens, but it does.
+            return await ctx.reply(content, embed=unfortunate_embed, file=copy.deepcopy(send_file))
+        except discord.HTTPException:
+            return await ctx.send(ctx.author.mention + "\n\n" + str(content), embed=unfortunate_embed, file=send_file)
+
+
     @bread.command(
         name = "map",
         aliases = ["view"],
@@ -5103,43 +5161,50 @@ anarchy - 1000% of your wager.
             await ctx.reply("You do not yet have a rocket that can help you map the vast reaches of space.\nYou can purchase the required rocket from the Space Shop.")
             return
         
-        ###############################
-
-        map_data = space.space_map(
-            account=user_account,
-            json_interface = self.json_interface,
-            mode=mode
+        await self.handle_map(
+            ctx = ctx,
+            map_type = mode,
+            user_account = user_account,
+            content = None # So it includes nothing else in the message.
         )
+        
+        # ###############################
 
-        ###############################
+        # map_data = space.space_map(
+        #     account=user_account,
+        #     json_interface = self.json_interface,
+        #     mode=mode
+        # )
 
-        corruption_chance = round(user_account.get_corruption_chance(json_interface=self.json_interface) * 100, 2)
+        # ###############################
 
-        if mode == "galaxy" or mode == "g":
-            prefix = "Galaxy map:"
-            middle = f"Your current galaxy location: {user_account.get_galaxy_location(json_interface=self.json_interface)}.\nCorruption chance: {corruption_chance}%."
-            suffix = "You can use '$bread space map' to view the map for the system you're in.\n\nUse '$bread space move galaxy' to move around on this map."
-        else:
-            prefix = "System map:"
-            middle = f"Your current galaxy location: {user_account.get_galaxy_location(json_interface=self.json_interface)}.\nYour current system location: {user_account.get_system_location()}.\nCorruption chance: {corruption_chance}%."
-            suffix = "You can use '$bread space map galaxy' to view the galaxy map.\n\nUse '$bread space move system' to move around on this map.\nUse '$bread space analyze' to get more information about somewhere."
+        # corruption_chance = round(user_account.get_corruption_chance(json_interface=self.json_interface) * 100, 2)
 
-        send_file = discord.File(map_data, filename="space_map.png")
-        file_path = "attachment://space_map.png"
+        # if mode == "galaxy" or mode == "g":
+        #     prefix = "Galaxy map:"
+        #     middle = f"Your current galaxy location: {user_account.get_galaxy_location(json_interface=self.json_interface)}.\nCorruption chance: {corruption_chance}%."
+        #     suffix = "You can use '$bread space map' to view the map for the system you're in.\n\nUse '$bread space move galaxy' to move around on this map."
+        # else:
+        #     prefix = "System map:"
+        #     middle = f"Your current galaxy location: {user_account.get_galaxy_location(json_interface=self.json_interface)}.\nYour current system location: {user_account.get_system_location()}.\nCorruption chance: {corruption_chance}%."
+        #     suffix = "You can use '$bread space map galaxy' to view the galaxy map.\n\nUse '$bread space move system' to move around on this map.\nUse '$bread space analyze' to get more information about somewhere."
 
-        unfortunate_embed = discord.Embed( # It's unfortunate that we have to use one.
-            title = prefix,
-            description = middle + "\n\n" + suffix,
-            color=8884479,
-        )
-        unfortunate_embed.set_image(url=file_path)
+        # send_file = discord.File(map_data, filename="space_map.png")
+        # file_path = "attachment://space_map.png"
 
-        try:
-            # We need to copy send_file here because if we don't and this message is unable to send
-            # when it sends it below it won't have the image. I'm not sure why this happens, but it does.
-            await ctx.reply(embed=unfortunate_embed, file=copy.deepcopy(send_file))
-        except discord.HTTPException:
-            await ctx.send(ctx.author.mention, embed=unfortunate_embed, file=send_file)
+        # unfortunate_embed = discord.Embed( # It's unfortunate that we have to use one.
+        #     title = prefix,
+        #     description = middle + "\n\n" + suffix,
+        #     color=8884479,
+        # )
+        # unfortunate_embed.set_image(url=file_path)
+
+        # try:
+        #     # We need to copy send_file here because if we don't and this message is unable to send
+        #     # when it sends it below it won't have the image. I'm not sure why this happens, but it does.
+        #     await ctx.reply(embed=unfortunate_embed, file=copy.deepcopy(send_file))
+        # except discord.HTTPException:
+        #     await ctx.send(ctx.author.mention, embed=unfortunate_embed, file=send_file)
         
     ########################################################################################################################
     #####      BREAD SPACE ANALYZE
@@ -6133,6 +6198,39 @@ anarchy - 1000% of your wager.
         
         #########################################################
 
+        # Map configuration check.
+
+        if move_map == "map":
+            new_state = False
+
+            if move_location in ["on", "off", "yes", "no", "y", "n"]:
+                if move_location in ["on", "yes", "y"]:
+                    user_account.set("auto_move_map", True)
+                    
+                    new_state = True
+                else:
+                    user_account.set("auto_move_map", False)
+
+                    new_state = False
+            else:
+                current_state = user_account.get("auto_move_map", False)
+
+                user_account.set("auto_move_map", not current_state)
+                new_state = not current_state
+
+            self.json_interface.set_account(ctx.author, user_account, ctx.guild)
+            
+            if new_state:
+                await ctx.reply("Automatic map sending after moving has been enabled.")
+            else:
+                await ctx.reply("Automatic map sending after moving has been disabled.")
+
+            self.remove_from_interacting(ctx.author.id)
+            return
+
+
+        #########################################################
+
         acceptable_maps = [
             "system", "s",
             "galaxy", "g",
@@ -6248,7 +6346,20 @@ anarchy - 1000% of your wager.
             item_left = user_account.get(values.fuel.text)
             daily_fuel = user_account.get("daily_fuel")
 
-            await utility.smart_reply(ctx, f"Autopilot success:\nSucessfully travelled through the wormhole..\n\nYou have **{utility.smart_number(item_left)} {values.fuel.text}** and **{utility.smart_number(daily_fuel)} {values.daily_fuel.text}** remaining.")
+            message_content = f"Autopilot success:\nSucessfully travelled through the wormhole..\n\nYou have **{utility.smart_number(item_left)} {values.fuel.text}** and **{utility.smart_number(daily_fuel)} {values.daily_fuel.text}** remaining."
+            
+            auto_map = user_account.get("auto_move_map", False)
+
+            if auto_map:
+                await self.handle_map(
+                    ctx = ctx,
+                    map_type = "system", # This is a weird scenario since wormholes move on both maps.
+                    user_account = user_account,
+                    content = message_content,
+                reduced_info = True
+                )
+            else:
+                await utility.smart_reply(ctx, message_content)
 
             self.remove_from_interacting(ctx.author.id)
             return
@@ -6487,7 +6598,20 @@ anarchy - 1000% of your wager.
         item_left = user_account.get(values.fuel.text)
         daily_fuel = user_account.get("daily_fuel")
 
-        await utility.smart_reply(ctx, f"Autopilot success:\nSuccessfully moved to {end_location} on the {move_map} map, using {utility.smart_number(move_cost)} {values.fuel.text}.\n\nYou have **{utility.smart_number(item_left)} {values.fuel.text}** and **{utility.smart_number(daily_fuel)} {values.daily_fuel.text}** remaining.")
+        message_content = f"Autopilot success:\nSuccessfully moved to {end_location} on the {move_map} map, using {utility.smart_number(move_cost)} {values.fuel.text}.\n\nYou have **{utility.smart_number(item_left)} {values.fuel.text}** and **{utility.smart_number(daily_fuel)} {values.daily_fuel.text}** remaining."
+
+        auto_map = user_account.get("auto_move_map", False)
+
+        if auto_map:
+            await self.handle_map(
+                ctx = ctx,
+                map_type = move_map,
+                user_account = user_account,
+                content = message_content,
+                reduced_info = True
+            )
+        else:
+            await utility.smart_reply(ctx, message_content)
 
         self.remove_from_interacting(ctx.author.id)
 
