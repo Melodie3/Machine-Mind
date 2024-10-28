@@ -209,7 +209,13 @@ recipes = {
         {
 			"cost": [(values.gem_gold, 1)],
             "result": 4
-		}
+		},
+        {
+			"cost": [(values.gem_red, 8)]
+		},
+        {
+			"cost": [(values.gem_blue, 4)]
+		},
     ],
 
     "gem_purple": [
@@ -218,7 +224,14 @@ recipes = {
 		},
         {
 			"cost": [(values.gem_green, 1)]
-		}
+		},
+        {
+			"cost": [(values.gem_red, 4)]
+		},
+        {
+            "cost": [(values.gem_gold, 1)],
+            "result": 4
+        }
     ],
 
     "gem_blue": [
@@ -227,13 +240,30 @@ recipes = {
 		},
         {
 			"cost": [(values.gem_purple, 1)]
-		}
+		},
+        {
+            "cost": [(values.gem_green, 1)]
+        },
+        {
+            "cost": [(values.gem_gold, 1)],
+            "result": 4
+        }
     ],
 
     "gem_red": [
         {
 			"cost": [(values.gem_blue, 1)]
-		}
+		},
+        {
+            "cost": [(values.gem_purple, 1)]
+        },
+        {
+            "cost": [(values.gem_green, 1)]
+        },
+        {
+            "cost": [(values.gem_gold, 1)],
+            "result": 4
+        }
     ],
 
     ######################################################################################
