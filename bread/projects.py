@@ -3600,7 +3600,7 @@ class Emergency_Fuel(Project):
         ) -> list[tuple[str, int]]:
         rng = random.Random(utility.hash_args(day_seed, system_tile.tile_seed()))
 
-        amount = rng.randint(2, 6) * 50 + 100
+        amount = rng.randint(4, 8) * 50
 
         return [(values.gem_red.text, amount)]
     
@@ -3612,7 +3612,7 @@ class Emergency_Fuel(Project):
         ) -> list[tuple[str, int]]:
         rng = random.Random(utility.hash_args(day_seed, system_tile.tile_seed()))
 
-        amount = rng.randint(2, 6) * 20
+        amount = rng.randint(4, 8) * 40
 
         return [(values.gem_blue.text, amount)]
 
