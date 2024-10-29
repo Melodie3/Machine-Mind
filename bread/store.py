@@ -33,8 +33,10 @@ moak_booster_multipliers = [1, 1.3, 1.7, 2.1, 2.8,3.7]
 # chessatron_shadow_booster_levels = [0, 5, 10, 15, 20]
 # shadow_gold_gem_luck_boost_levels = [0, 10, 20, 30, 40]
 
-trade_hub_distances = [0, 5, 10, 25, 50, 75]
+trade_hub_distances = [0, 2, 4, 4, 6, 6]
 trade_hub_squared = [n ** 2 for n in trade_hub_distances]
+
+trade_hub_projects = [0, 3, 3, 4, 4, 5]
 
 class Store_Item:
     name = "generic_item"

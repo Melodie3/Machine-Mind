@@ -994,6 +994,12 @@ daily_fuel = Emote(
     name = "daily_fuel"
 )
 
+# Also not obtainable, but similar situation to daily fuel.
+project_credits = Emote(
+    text = "<:project_credits:1299459973142679653>",
+    name = "project_credits"
+)
+
 all_bricks = [brick, brick_gold, fide_brick, brick_fide]
 all_bricks_weighted = [brick] * 10 + [brick_gold] * 1 + [fide_brick] * 5 + [brick_fide] * 5
 misc_emotes = [ascension_token, middle_finger, cherry, brick, brick_gold, fide_brick, brick_fide, lemon, grapes, rigged, bcapy, wcapy, corrupted_bread, fuel]

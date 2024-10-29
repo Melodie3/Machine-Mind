@@ -45,7 +45,9 @@ class Bread_Account:
         "max_random_chess_pieces_per_day": 6400,
         "max_special_bread_packs_per_day": 5000000,
         "brick_troll_percentage" : 0,
-        "daily_fuel": 100
+        "daily_fuel": 100,
+        "hub_credits": 2000,
+        "auto_move_map": False
     }
 
 
@@ -100,6 +102,7 @@ class Bread_Account:
             self.set("special_bread_pack_bought", 0)
         
         self.set("daily_fuel", self.get_daily_fuel_cap())
+        self.set("hub_credits", self.get_projects_credits_cap())
 
     def increase_prestige_level(self: typing.Self) -> None:
         """Increases this account's prestige level by 1."""
@@ -438,7 +441,11 @@ class Bread_Account:
             128 # 128 is the cap.
         )
     
-    def get_daily_fuel_cap(self: typing.Self):
+    def get_projects_credits_cap(self: typing.Self) -> int:
+        """Returns the maximum amount of Trade Hub credits this account can have."""
+        return 2000
+    
+    def get_daily_fuel_cap(self: typing.Self) -> int:
         """Returns the maximum amount of daily fuel this account can have. This is `350 * fuel_tank + 100` where `fuel_tank` is the fuel tank level."""
         return store.Fuel_Tank.multiplier * self.get(store.Fuel_Tank.name) + 100 # 100 base daily fuel.
 

@@ -209,7 +209,13 @@ recipes = {
         {
 			"cost": [(values.gem_gold, 1)],
             "result": 4
-		}
+		},
+        {
+			"cost": [(values.gem_red, 8)]
+		},
+        {
+			"cost": [(values.gem_blue, 4)]
+		},
     ],
 
     "gem_purple": [
@@ -218,7 +224,14 @@ recipes = {
 		},
         {
 			"cost": [(values.gem_green, 1)]
-		}
+		},
+        {
+			"cost": [(values.gem_red, 4)]
+		},
+        {
+            "cost": [(values.gem_gold, 1)],
+            "result": 4
+        }
     ],
 
     "gem_blue": [
@@ -227,13 +240,30 @@ recipes = {
 		},
         {
 			"cost": [(values.gem_purple, 1)]
-		}
+		},
+        {
+            "cost": [(values.gem_green, 1)]
+        },
+        {
+            "cost": [(values.gem_gold, 1)],
+            "result": 4
+        }
     ],
 
     "gem_red": [
         {
 			"cost": [(values.gem_blue, 1)]
-		}
+		},
+        {
+            "cost": [(values.gem_purple, 1)]
+        },
+        {
+            "cost": [(values.gem_green, 1)]
+        },
+        {
+            "cost": [(values.gem_gold, 1)],
+            "result": 4
+        }
     ],
 
     ######################################################################################
@@ -256,27 +286,27 @@ recipes = {
         {
             "cost": [(values.gem_red, 2)],
             "requirement": [("space_level", 1)],
-            "result": 5
+            "result": lambda a: round(5 * a.get_fuel_refinement_boost())
         },
         {
             "cost": [(values.gem_blue, 2)],
             "requirement": [("space_level", 1), ("fuel_research", 1)],
-            "result": 15
+            "result": lambda a: round(15 * a.get_fuel_refinement_boost())
         },
         {
             "cost": [(values.gem_purple, 2)],
             "requirement": [("space_level", 1), ("fuel_research", 2)],
-            "result": 45
+            "result": lambda a: round(45 * a.get_fuel_refinement_boost())
         },
         {
             "cost": [(values.gem_green, 2)],
             "requirement": [("space_level", 1), ("fuel_research", 3)],
-            "result": 135
+            "result": lambda a: round(135 * a.get_fuel_refinement_boost())
         },
         {
             "cost": [(values.gem_gold, 2)],
             "requirement": [("space_level", 1), ("fuel_research", 4)],
-            "result": 750
+            "result": lambda a: round(750 * a.get_fuel_refinement_boost())
         }
     ],
 
@@ -284,19 +314,22 @@ recipes = {
 
     "holy_hell": [
         {
-			"cost": [ (values.anarchy_chess, 5) ]
+			"cost": [ (values.anarchy_chess, 5) ],
+            "requirement": [lambda a: a.get_maximum_daily_rolls() == a.get("max_daily_rolls")]
 		}
     ],
 
     "anarchy": [
         {
-			"cost": [(values.anarchy_chess, 5)]
+			"cost": [(values.anarchy_chess, 5)],
+            "requirement": [lambda a: a.get_maximum_daily_rolls() == a.get("max_daily_rolls")]
 		}
     ],
 
     "horsey": [
         {
-			"cost": [(values.anarchy_chess, 5)]
+			"cost": [(values.anarchy_chess, 5)],
+            "requirement": [lambda a: a.get_maximum_daily_rolls() == a.get("max_daily_rolls")]
 		}
     ],
 

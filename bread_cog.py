@@ -1310,7 +1310,7 @@ class Bread_cog(commands.Cog, name="Bread"):
                 if LC_booster_level >= 1:
                     multiplier = 2 ** LC_booster_level 
                 boosted_amount = user_account.get("loaf_converter") * multiplier
-                output += f", which, with Recipe Refinement level {LC_booster_level}, makes you {boosted_amount} times more likely to find special items.\n"
+                output += f", which, with Recipe Refinement level {LC_booster_level}, makes you {utility.smart_number(boosted_amount)} times more likely to find special items.\n"
             else:
                 output += ".\n"
         if user_account.has(values.omega_chessatron.text):
@@ -1445,14 +1445,14 @@ class Bread_cog(commands.Cog, name="Bread"):
             output_3 += f"You have {user_account.write_count('special_bread', 'Special Bread')}.\n"
         
         if len(output) + len(output_2) + len(output_3) < 1900:
-            await ctx.reply( output + output_2 + output_3 )
+            await utility.smart_reply(ctx, output + output_2 + output_3)
         elif len(output) + len(output_2) < 1900:
-            await ctx.reply( output + output_2 )
-            await ctx.reply( "Stats continued:\n" + output_3 )
+            await utility.smart_reply(ctx, output + output_2)
+            await utility.smart_reply(ctx, "Stats continued:\n" + output_3)
         else:
-            await ctx.reply( output )
-            await ctx.reply( "Stats continued:\n" + output_2 )
-            await ctx.reply( "Stats continued:\n" + output_3 )
+            await utility.smart_reply(ctx, output)
+            await utility.smart_reply(ctx, "Stats continued:\n" + output_2)
+            await utility.smart_reply(ctx, "Stats continued:\n" + output_3)
         # await ctx.reply(output)
 
         #await self.do_chessboard_completion(ctx)
@@ -2017,7 +2017,7 @@ loaf_converter""",
                 return
             # we tell them how many stored rolls they have left
             elif stored_rolls_remaining > 0:
-                count_commentary = f"You have {stored_rolls_remaining} stored rolls and a total of {amount_remaining} more rolls today."
+                count_commentary = f"You have {utility.smart_number(stored_rolls_remaining)} stored rolls and a total of {utility.smart_number(amount_remaining)} more rolls today."
             #we remove 1 because this check happens *before* the increment, but talks about what happens *after* the increment.
 
             elif amount_remaining == 0:
@@ -2162,11 +2162,28 @@ loaf_converter""",
 
         try:
             if output_commentary != "" and not output_commentary.isspace():
+                messages = [output_commentary]
+                if len(output_commentary) > 1900:
+                    messages = []
+                    split = output_commentary.split("\n")
+
+                    add = []
+
+                    for split_item in split:
+                        if len("\n".join(add + [split_item])) > 1900:
+                            messages.append("\n".join(add))
+                            add = ["Summary continued:", split_item]
+                        else:
+                            add.append(split_item)
+                    
+                    if len(add) > 0:
+                        messages.append("\n".join(add))
                 
-                await utility.smart_reply(ctx, output_commentary)
+                for message in messages:
+                    await utility.smart_reply(ctx, message)
                 
         except:
-            pass
+            print(traceback.format_exc())
 
         await self.do_chessboard_completion(ctx)
         await self.anarchy_chessatron_completion(ctx)
@@ -4580,10 +4597,6 @@ anarchy - 1000% of your wager.
             # print(f"Available recipes are: {alchemy.recipes}")
 
             if target_emote.name in alchemy.recipes.keys():
-                if user_account.get("max_daily_rolls") < store.Daily_rolls.max_level(user_account) and target_emote.name in [emote.name for emote in values.all_one_of_a_kind]:  
-                    await utility.smart_reply(ctx, f"I'm sorry, but you cannot alchemize any {target_emote.text} right now.")
-                    self.remove_from_interacting(ctx.author.id)
-                    return
                 recipe_list = alchemy.recipes[target_emote.name].copy()
 
                 # Remove recipes that the user doesn't have the requirements for.
@@ -4594,11 +4607,18 @@ anarchy - 1000% of your wager.
                     if "requirement" not in recipe:
                         continue # Recipe doesn't have any requirements.
                         
-                    for require_key, require_amount in recipe["requirement"]:
-                        if user_account.get(require_key) < require_amount:
-                            # User does not have a requirement.
-                            recipe_list.remove(recipe)
-                            break
+                    for requirement in recipe["requirement"]:
+                        # Assume it's a callable and attempt to call it, but fall back on unpacking the requirement if it isn't a callable.
+                        try:
+                            if not requirement(user_account):
+                                recipe_list.remove(recipe)
+                                break
+                        except TypeError: # If the requirement isn't a callable a TypeError will be raised.
+                            require_key, require_amount = requirement
+                            if user_account.get(require_key) < require_amount:
+                                # User does not have a requirement.
+                                recipe_list.remove(recipe)
+                                break
                                 
                 if len(recipe_list) == 0:
                     # Either the recipe list was initially blank, in which there is some issue, or the user has not unlocked any recipes for the item yet.
@@ -4623,7 +4643,15 @@ anarchy - 1000% of your wager.
                     recipes_description += f"**[ {i+1} ]**    {alchemy.describe_individual_recipe(recipe)}"
 
                     if "result" in recipe:
-                        recipes_description += f"   **({recipe['result']}x)**"
+                        result_amount = recipe['result']
+
+                        # Check if the result amount is a callable by trying to call it and catching the TypeError that occurs if it isn't.
+                        try:
+                            result_amount = result_amount(user_account)
+                        except TypeError:
+                            pass
+
+                        recipes_description += f"   **({result_amount}x)**"
 
                     recipes_description += "\n"
 
@@ -4675,6 +4703,12 @@ anarchy - 1000% of your wager.
             item_multiplier = 1 # Amount of the output item to provide, by default it's 1 but something else can be specified via the recipe in alchemy.py.
             if "result" in recipe:
                 item_multiplier = recipe["result"]
+
+                # Check if the result amount is a callable by trying to call it and catching the TypeError that occurs if it isn't.
+                try:
+                    item_multiplier = item_multiplier(user_account)
+                except TypeError:
+                    pass
 
             already_confirmed = False
             if confirm is not None:
@@ -4733,9 +4767,6 @@ anarchy - 1000% of your wager.
             ##### If the person is making fuel, ensure if it's fuel the person has enough fuel in their fuel tank.
             
             output_amount = item_multiplier
-            
-            if target_emote.text == values.fuel.text:
-                output_amount = int(output_amount * user_account.get_fuel_refinement_boost())
             
             value = 0
 
@@ -4887,7 +4918,14 @@ anarchy - 1000% of your wager.
         output.append(f"Your location in the galaxy is currently {account.get_galaxy_location(self.json_interface)}.")
 
         daily_fuel_cap = account.get_daily_fuel_cap()
+        project_credits_cap = account.get_projects_credits_cap()
         output.append(f"Out of your {sn(daily_fuel_cap)} {values.daily_fuel.text} you have {sn(account.get('daily_fuel'))} remaining.")
+        output.append(f"From your {sn(project_credits_cap)} daily {values.project_credits.text} you have {sn(account.get('hub_credits'))} remaining.")
+
+        if account.has(values.anarchy_omega_chessatron.text):
+            output.append(f"With {utility.write_count(account.get(values.anarchy_omega_chessatron.text), 'Anarchy Omega Chessatron')} you get {sn(account.get_anarchy_chessatron_dough_amount(True))} for each new anarchy chessatron.")
+
+
         output.append("")
 
         if account.has(store.Upgraded_Autopilot.name):
@@ -4902,11 +4940,11 @@ anarchy - 1000% of your wager.
 
             message = ""
             for i in range(1, autopilot_level + 1):
-                if i != 1:
+                if i != 1 and i != autopilot_level:
                     message += ", "
 
-                if i == autopilot_level:
-                    message += "and "
+                if i == autopilot_level and i != 1:
+                    message += " and "
 
                 message += messages[i]
 
@@ -4934,6 +4972,20 @@ anarchy - 1000% of your wager.
         
         output.append("")
         output.append(f"Throughout your time in space you've created {utility.write_count(account.get('trade_hubs_created'), 'Trade Hub')} and helped contribute to {utility.write_count(account.get('projects_completed'), 'completed project')}.")
+
+        # Add item amount information.
+        item_list = [values.corrupted_bread, values.anarchy_chessatron, values.anarchy_omega_chessatron]
+
+        item_line = []
+        for item in item_list:
+            if account.has(item.text):
+                item_line.append(f"{account.get(item.text)} {item.text}")
+        
+        # Only show the item amount information if there is any information to show.
+        if len(item_line) > 0:
+            output.append("")
+            output.append("Space items:")
+            output.append(" , ".join(item_line))
 
         # Anarchy pieces.
         formatted_anarchy_pieces = self.format_anarchy_pieces(account.values).strip(" \n")
@@ -5038,6 +5090,64 @@ anarchy - 1000% of your wager.
     ########################################################################################################################
     #####      BREAD SPACE MAP
 
+    async def handle_map(
+            self: typing.Self,
+            ctx: commands.Context,
+            map_type: str,
+            user_account: account.Bread_Account,
+            content: str = None,
+            reduced_info: bool = False
+        ) -> discord.Message:
+        """Handles the process of generating the map and sending it to standardize how it's sent."""
+
+        if content is None:
+            content = ""
+
+        ###############################
+
+        map_data = space.space_map(
+            account = user_account,
+            json_interface = self.json_interface,
+            mode = map_type
+        )
+
+        ###############################
+
+        corruption_chance = round(user_account.get_corruption_chance(json_interface=self.json_interface) * 100, 2)
+
+        suffix = ""
+
+        if map_type == "galaxy" or map_type == "g":
+            prefix = "Galaxy map:"
+            middle = f"Your current galaxy location: {user_account.get_galaxy_location(json_interface=self.json_interface)}.\nCorruption chance: {corruption_chance}%."
+
+            if not reduced_info:
+                suffix = "You can use '$bread space map' to view the map for the system you're in.\n\nUse '$bread space move galaxy' to move around on this map."
+        else:
+            prefix = "System map:"
+            middle = f"Your current galaxy location: {user_account.get_galaxy_location(json_interface=self.json_interface)}.\nYour current system location: {user_account.get_system_location()}.\nCorruption chance: {corruption_chance}%."
+            
+            if not reduced_info:
+                suffix = "You can use '$bread space map galaxy' to view the galaxy map.\n\nUse '$bread space move system' to move around on this map.\nUse '$bread space analyze' to get more information about somewhere."
+
+        send_file = discord.File(map_data, filename="space_map.png")
+        file_path = "attachment://space_map.png"
+
+        unfortunate_embed = discord.Embed( # It's unfortunate that we have to use one.
+            title = prefix,
+            description = middle + "\n\n" + suffix,
+            color=8884479,
+        )
+        unfortunate_embed.set_image(url=file_path)
+
+        try:
+            # We need to copy send_file here because if we don't and this message is unable to send
+            # when it sends it below it won't have the image. I'm not sure why this happens, but it does.
+            return await ctx.reply(content, embed=unfortunate_embed, file=copy.deepcopy(send_file))
+        except discord.HTTPException:
+            return await ctx.send(ctx.author.mention + "\n\n" + str(content), embed=unfortunate_embed, file=send_file)
+
+
     @bread.command(
         name = "map",
         aliases = ["view"],
@@ -5068,43 +5178,50 @@ anarchy - 1000% of your wager.
             await ctx.reply("You do not yet have a rocket that can help you map the vast reaches of space.\nYou can purchase the required rocket from the Space Shop.")
             return
         
-        ###############################
-
-        map_data = space.space_map(
-            account=user_account,
-            json_interface = self.json_interface,
-            mode=mode
+        await self.handle_map(
+            ctx = ctx,
+            map_type = mode,
+            user_account = user_account,
+            content = None # So it includes nothing else in the message.
         )
+        
+        # ###############################
 
-        ###############################
+        # map_data = space.space_map(
+        #     account=user_account,
+        #     json_interface = self.json_interface,
+        #     mode=mode
+        # )
 
-        corruption_chance = round(user_account.get_corruption_chance(json_interface=self.json_interface) * 100, 2)
+        # ###############################
 
-        if mode == "galaxy" or mode == "g":
-            prefix = "Galaxy map:"
-            middle = f"Your current galaxy location: {user_account.get_galaxy_location(json_interface=self.json_interface)}.\nCorruption chance: {corruption_chance}%."
-            suffix = "You can use '$bread space map' to view the map for the system you're in.\n\nUse '$bread space move galaxy' to move around on this map."
-        else:
-            prefix = "System map:"
-            middle = f"Your current galaxy location: {user_account.get_galaxy_location(json_interface=self.json_interface)}.\nYour current system location: {user_account.get_system_location()}.\nCorruption chance: {corruption_chance}%."
-            suffix = "You can use '$bread space map galaxy' to view the galaxy map.\n\nUse '$bread space move system' to move around on this map.\nUse '$bread space analyze' to get more information about somewhere."
+        # corruption_chance = round(user_account.get_corruption_chance(json_interface=self.json_interface) * 100, 2)
 
-        send_file = discord.File(map_data, filename="space_map.png")
-        file_path = "attachment://space_map.png"
+        # if mode == "galaxy" or mode == "g":
+        #     prefix = "Galaxy map:"
+        #     middle = f"Your current galaxy location: {user_account.get_galaxy_location(json_interface=self.json_interface)}.\nCorruption chance: {corruption_chance}%."
+        #     suffix = "You can use '$bread space map' to view the map for the system you're in.\n\nUse '$bread space move galaxy' to move around on this map."
+        # else:
+        #     prefix = "System map:"
+        #     middle = f"Your current galaxy location: {user_account.get_galaxy_location(json_interface=self.json_interface)}.\nYour current system location: {user_account.get_system_location()}.\nCorruption chance: {corruption_chance}%."
+        #     suffix = "You can use '$bread space map galaxy' to view the galaxy map.\n\nUse '$bread space move system' to move around on this map.\nUse '$bread space analyze' to get more information about somewhere."
 
-        unfortunate_embed = discord.Embed( # It's unfortunate that we have to use one.
-            title = prefix,
-            description = middle + "\n\n" + suffix,
-            color=8884479,
-        )
-        unfortunate_embed.set_image(url=file_path)
+        # send_file = discord.File(map_data, filename="space_map.png")
+        # file_path = "attachment://space_map.png"
 
-        try:
-            # We need to copy send_file here because if we don't and this message is unable to send
-            # when it sends it below it won't have the image. I'm not sure why this happens, but it does.
-            await ctx.reply(embed=unfortunate_embed, file=copy.deepcopy(send_file))
-        except discord.HTTPException:
-            await ctx.send(ctx.author.mention, embed=unfortunate_embed, file=send_file)
+        # unfortunate_embed = discord.Embed( # It's unfortunate that we have to use one.
+        #     title = prefix,
+        #     description = middle + "\n\n" + suffix,
+        #     color=8884479,
+        # )
+        # unfortunate_embed.set_image(url=file_path)
+
+        # try:
+        #     # We need to copy send_file here because if we don't and this message is unable to send
+        #     # when it sends it below it won't have the image. I'm not sure why this happens, but it does.
+        #     await ctx.reply(embed=unfortunate_embed, file=copy.deepcopy(send_file))
+        # except discord.HTTPException:
+        #     await ctx.send(ctx.author.mention, embed=unfortunate_embed, file=send_file)
         
     ########################################################################################################################
     #####      BREAD SPACE ANALYZE
@@ -5383,8 +5500,15 @@ anarchy - 1000% of your wager.
             galaxy_y = galaxy_y,
             new_data = existing
         )
+        
+        message = ""
 
-        send_lines = f"Trade Hub levelled up to level {existing['level']}! This Trade Hub is now able to relay signals from the Trade Hub network up to {store.trade_hub_distances[existing['level']]} tiles away!"
+        if existing["level"] == 2 or existing["level"] == 4:
+            message = f"This Trade Hub is now able to relay signals from the Trade Hub network up to {store.trade_hub_distances[existing['level']]} tiles away!"
+        elif existing["level"] == 3 or existing["level"] == 5:
+            message = f"This Trade Hub now has {store.trade_hub_projects[existing['level']]} project slots!"
+
+        send_lines = f"Trade Hub levelled up to level {existing['level']}! {message}"
         send_lines += level_project.completion(day_seed, hub)
 
         send_lines += "\n\n"
@@ -5417,7 +5541,7 @@ anarchy - 1000% of your wager.
         """Contributes items to a trade hub project, or the trade hub level."""
         galaxy_x, galaxy_y = user_account.get_galaxy_location(json_interface=self.json_interface)
 
-        actions += [" ", " ", " "]
+        actions += [" ", " ", " ", " "]
 
         try:
             if actions[1] == "level":
@@ -5427,6 +5551,7 @@ anarchy - 1000% of your wager.
 
             amount = parse_int(actions[2])
             item = values.get_emote(actions[3])
+            confirmation = actions[4].lower() in ["yes", "y", "confirm"]
         except ValueError:
             if project_number == "level":
                 await ctx.reply("To help level up the Trade Hub, use this format:\n'$bread space hub contribute level [amount] [item]'")
@@ -5442,12 +5567,12 @@ anarchy - 1000% of your wager.
             return
         
         if amount < 0:
-            await ctx.reply("Trying to steal resources? Mum won't be very happy about that.")
-            await ctx.invoke(self.bot.get_command('brick'), member=ctx.author, duration="1")
+            await ctx.reply("Hey there, are you trying to steal resources?\nThat's kind of rude.")
+            await ctx.invoke(self.bot.get_command('brick'), member=ctx.author)
             return
         
         if amount == 0:
-            await ctx.reply("That's not much of a contribution.")
+            await ctx.reply("Congratulations, you have done absolutely nothing. I will now take your spleen.")
             return
         
         if amount > user_account.get(item.text):
@@ -5469,7 +5594,7 @@ anarchy - 1000% of your wager.
             )
             return
 
-        if not (1 <= project_number <= 3):
+        if not (1 <= project_number <= hub.project_count):
             await ctx.reply("That is an unrecognized project number.")
             return
         
@@ -5479,7 +5604,7 @@ anarchy - 1000% of your wager.
             await ctx.reply("This project has already been completed.")
             return
         
-        project = project_data.get("project")
+        project = project_data.get("project") # type: projects.Project
 
         remaining = project.get_remaining_items(
             day_seed = day_seed,
@@ -5514,6 +5639,71 @@ anarchy - 1000% of your wager.
         contribution_data = project_data.get("contributions", [])
 
         player_data = contribution_data.get(str(ctx.author.id), {"items": {}})
+
+        # Make sure the player has the credits to contribute this.
+        prior_items = sum(player_data["items"].values())
+        total_required = project.total_items_required(day_seed, hub)
+
+        total_credits_used = space.get_project_credits_usage(
+            total_items = total_required,
+            items_contributed = amount_contribute,
+            item_offset = prior_items
+        )
+
+        old_credits_used = space.get_project_credits_usage(
+            total_items = total_required,
+            items_contributed = prior_items
+        )
+
+        credits_used = total_credits_used - old_credits_used
+
+        remaining_credits = user_account.get("hub_credits")
+
+        if remaining_credits < credits_used:
+            await ctx.reply(f"You don't have enough {values.project_credits.text} to contribute that.")
+            return
+
+        ##########
+        # Ask for confirmation.
+
+        project_name = project.name(day_seed, hub)
+
+        if not confirmation:
+            self.currently_interacting.append(ctx.author.id)
+            
+            confirm_text = ["yes", "y", "confirm"]
+            cancel_text = ["no", "n", "cancel"]
+
+            await utility.smart_reply(ctx, f"You are contributing {utility.smart_number(amount_contribute)} {item.text} to the {project_name} project.\nThis will require {utility.smart_number(credits_used)} {values.project_credits.text}.\nYou currently have the following:\n- {utility.smart_number(user_account.get(item.text))} {item.text}\n- {utility.smart_number(user_account.get('hub_credits'))} {values.project_credits.text}\nWould you like to go through with your confirmation? Yes or No.")
+                
+            def check(m: discord.Message):
+                return m.author.id == ctx.author.id and m.channel.id == ctx.channel.id 
+
+            try:
+                msg = await self.bot.wait_for('message', check = check, timeout = 60.0)
+            except asyncio.TimeoutError: 
+                await utility.smart_reply(ctx, "I'm sorry, but you have taken too long and I must attend to the next customer.")
+                self.remove_from_interacting(ctx.author.id)
+                return
+            
+            if msg.content.lower() in cancel_text:
+                await utility.smart_reply(ctx, "Very well, come back when you would like to contribute.")
+
+                self.remove_from_interacting(ctx.author.id)
+                return
+            elif msg.content.lower() not in confirm_text:
+                await utility.smart_reply(ctx, "I'm not entirely sure what that is, please try again.")
+
+                self.remove_from_interacting(ctx.author.id)
+                return
+            
+            self.remove_from_interacting(ctx.author.id)
+
+
+
+        ##########
+
+        user_account.increment("hub_credits", -credits_used)
         
         user_account.increment(item.text, -amount_contribute)
 
@@ -5541,7 +5731,7 @@ anarchy - 1000% of your wager.
 
         amount_left = user_account.get(item.text)
         
-        await ctx.reply(f"You have contributed {utility.smart_number(amount_contribute)} {item.text} to the {project.name(day_seed, hub)} project.\nYou now have {utility.smart_number(amount_left)} {item.text} remaining.")
+        await ctx.reply(f"You have contributed {utility.smart_number(amount_contribute)} {item.text} to the {project_name} project.\nYou now have {utility.smart_number(amount_left)} {item.text} and {utility.smart_number(user_account.get('hub_credits'))} {values.project_credits.text} remaining.")
 
         updated_required = project.get_remaining_items(
             day_seed = day_seed,
@@ -5621,7 +5811,7 @@ anarchy - 1000% of your wager.
             await ctx.reply("To get information about a project, use '$bread space hub info [project number]'")
             return
         
-        if not (1 <= project_number <= 3):
+        if not (1 <= project_number <= hub.project_count):
             await ctx.reply("That is an unrecognized project number.")
             return
         
@@ -5881,7 +6071,7 @@ anarchy - 1000% of your wager.
                 galaxy_x = galaxy_x,
                 galaxy_y = galaxy_y,
                 system_x = system_x,
-                system_y = system_x
+                system_y = system_y
             )
 
         
@@ -5962,7 +6152,7 @@ anarchy - 1000% of your wager.
         
         message_lines += "\n\n**# -- Projects --**"
 
-        for project_id, data in enumerate(hub_projects):
+        for project_id, data in enumerate(hub_projects[:hub.project_count]):
             message_lines += f"#{project_id + 1}: "
             message_lines += data.get("project").display_info(
                 day_seed = day_seed,
@@ -6030,6 +6220,39 @@ anarchy - 1000% of your wager.
             self.remove_from_interacting(ctx.author.id)
             return
         
+        #########################################################
+
+        # Map configuration check.
+
+        if move_map == "map":
+            new_state = False
+
+            if move_location in ["on", "off", "yes", "no", "y", "n"]:
+                if move_location in ["on", "yes", "y"]:
+                    user_account.set("auto_move_map", True)
+                    
+                    new_state = True
+                else:
+                    user_account.set("auto_move_map", False)
+
+                    new_state = False
+            else:
+                current_state = user_account.get("auto_move_map", False)
+
+                user_account.set("auto_move_map", not current_state)
+                new_state = not current_state
+
+            self.json_interface.set_account(ctx.author, user_account, ctx.guild)
+            
+            if new_state:
+                await ctx.reply("Automatic map sending after moving has been enabled.")
+            else:
+                await ctx.reply("Automatic map sending after moving has been disabled.")
+
+            self.remove_from_interacting(ctx.author.id)
+            return
+
+
         #########################################################
 
         acceptable_maps = [
@@ -6147,7 +6370,20 @@ anarchy - 1000% of your wager.
             item_left = user_account.get(values.fuel.text)
             daily_fuel = user_account.get("daily_fuel")
 
-            await utility.smart_reply(ctx, f"Autopilot success:\nSucessfully travelled through the wormhole..\n\nYou have **{utility.smart_number(item_left)} {values.fuel.text}** and **{utility.smart_number(daily_fuel)} {values.daily_fuel.text}** remaining.")
+            message_content = f"Autopilot success:\nSucessfully travelled through the wormhole..\n\nYou have **{utility.smart_number(item_left)} {values.fuel.text}** and **{utility.smart_number(daily_fuel)} {values.daily_fuel.text}** remaining."
+            
+            auto_map = user_account.get("auto_move_map", False)
+
+            if auto_map:
+                await self.handle_map(
+                    ctx = ctx,
+                    map_type = "system", # This is a weird scenario since wormholes move on both maps.
+                    user_account = user_account,
+                    content = message_content,
+                reduced_info = True
+                )
+            else:
+                await utility.smart_reply(ctx, message_content)
 
             self.remove_from_interacting(ctx.author.id)
             return
@@ -6386,7 +6622,20 @@ anarchy - 1000% of your wager.
         item_left = user_account.get(values.fuel.text)
         daily_fuel = user_account.get("daily_fuel")
 
-        await utility.smart_reply(ctx, f"Autopilot success:\nSuccessfully moved to {end_location} on the {move_map} map, using {utility.smart_number(move_cost)} {values.fuel.text}.\n\nYou have **{utility.smart_number(item_left)} {values.fuel.text}** and **{utility.smart_number(daily_fuel)} {values.daily_fuel.text}** remaining.")
+        message_content = f"Autopilot success:\nSuccessfully moved to {end_location} on the {move_map} map, using {utility.smart_number(move_cost)} {values.fuel.text}.\n\nYou have **{utility.smart_number(item_left)} {values.fuel.text}** and **{utility.smart_number(daily_fuel)} {values.daily_fuel.text}** remaining."
+
+        auto_map = user_account.get("auto_move_map", False)
+
+        if auto_map:
+            await self.handle_map(
+                ctx = ctx,
+                map_type = move_map,
+                user_account = user_account,
+                content = message_content,
+                reduced_info = True
+            )
+        else:
+            await utility.smart_reply(ctx, message_content)
 
         self.remove_from_interacting(ctx.author.id)
 
@@ -7025,7 +7274,9 @@ anarchy - 1000% of your wager.
         blank_projects = {
             "project_1": {},
             "project_2": {},
-            "project_3": {}
+            "project_3": {},
+            "project_4": {},
+            "project_5": {}
         }
         for ascension_key, ascension_data in space_data.copy().items():
             if not ascension_key.startswith("ascension"):
