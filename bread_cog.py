@@ -1445,14 +1445,14 @@ class Bread_cog(commands.Cog, name="Bread"):
             output_3 += f"You have {user_account.write_count('special_bread', 'Special Bread')}.\n"
         
         if len(output) + len(output_2) + len(output_3) < 1900:
-            await ctx.reply( output + output_2 + output_3 )
+            await utility.smart_reply(ctx, output + output_2 + output_3)
         elif len(output) + len(output_2) < 1900:
-            await ctx.reply( output + output_2 )
-            await ctx.reply( "Stats continued:\n" + output_3 )
+            await utility.smart_reply(ctx, output + output_2)
+            await utility.smart_reply(ctx, "Stats continued:\n" + output_3)
         else:
-            await ctx.reply( output )
-            await ctx.reply( "Stats continued:\n" + output_2 )
-            await ctx.reply( "Stats continued:\n" + output_3 )
+            await utility.smart_reply(ctx, output)
+            await utility.smart_reply(ctx, "Stats continued:\n" + output_2)
+            await utility.smart_reply(ctx, "Stats continued:\n" + output_3)
         # await ctx.reply(output)
 
         #await self.do_chessboard_completion(ctx)
@@ -2017,7 +2017,7 @@ loaf_converter""",
                 return
             # we tell them how many stored rolls they have left
             elif stored_rolls_remaining > 0:
-                count_commentary = f"You have {stored_rolls_remaining} stored rolls and a total of {amount_remaining} more rolls today."
+                count_commentary = f"You have {utility.smart_number(stored_rolls_remaining)} stored rolls and a total of {utility.smart_number(amount_remaining)} more rolls today."
             #we remove 1 because this check happens *before* the increment, but talks about what happens *after* the increment.
 
             elif amount_remaining == 0:
@@ -2162,11 +2162,28 @@ loaf_converter""",
 
         try:
             if output_commentary != "" and not output_commentary.isspace():
+                messages = [output_commentary]
+                if len(output_commentary) > 1900:
+                    messages = []
+                    split = output_commentary.split("\n")
+
+                    add = []
+
+                    for split_item in split:
+                        if len("\n".join(add + [split_item])) > 1900:
+                            messages.append("\n".join(add))
+                            add = ["Summary continued:", split_item]
+                        else:
+                            add.append(split_item)
+                    
+                    if len(add) > 0:
+                        messages.append("\n".join(add))
                 
-                await utility.smart_reply(ctx, output_commentary)
+                for message in messages:
+                    await utility.smart_reply(ctx, message)
                 
         except:
-            pass
+            print(traceback.format_exc())
 
         await self.do_chessboard_completion(ctx)
         await self.anarchy_chessatron_completion(ctx)
@@ -5483,8 +5500,15 @@ anarchy - 1000% of your wager.
             galaxy_y = galaxy_y,
             new_data = existing
         )
+        
+        message = ""
 
-        send_lines = f"Trade Hub levelled up to level {existing['level']}! This Trade Hub is now able to relay signals from the Trade Hub network up to {store.trade_hub_distances[existing['level']]} tiles away!"
+        if existing["level"] == 2 or existing["level"] == 4:
+            message = f"This Trade Hub is now able to relay signals from the Trade Hub network up to {store.trade_hub_distances[existing['level']]} tiles away!"
+        elif existing["level"] == 3 or existing["level"] == 5:
+            message = f"This Trade Hub now has {store.trade_hub_projects[existing['level']]} project slots!"
+
+        send_lines = f"Trade Hub levelled up to level {existing['level']}! {message}"
         send_lines += level_project.completion(day_seed, hub)
 
         send_lines += "\n\n"
@@ -5570,7 +5594,7 @@ anarchy - 1000% of your wager.
             )
             return
 
-        if not (1 <= project_number <= 3):
+        if not (1 <= project_number <= hub.project_count):
             await ctx.reply("That is an unrecognized project number.")
             return
         
@@ -5787,7 +5811,7 @@ anarchy - 1000% of your wager.
             await ctx.reply("To get information about a project, use '$bread space hub info [project number]'")
             return
         
-        if not (1 <= project_number <= 3):
+        if not (1 <= project_number <= hub.project_count):
             await ctx.reply("That is an unrecognized project number.")
             return
         
@@ -6128,7 +6152,7 @@ anarchy - 1000% of your wager.
         
         message_lines += "\n\n**# -- Projects --**"
 
-        for project_id, data in enumerate(hub_projects):
+        for project_id, data in enumerate(hub_projects[:hub.project_count]):
             message_lines += f"#{project_id + 1}: "
             message_lines += data.get("project").display_info(
                 day_seed = day_seed,
@@ -7250,7 +7274,9 @@ anarchy - 1000% of your wager.
         blank_projects = {
             "project_1": {},
             "project_2": {},
-            "project_3": {}
+            "project_3": {},
+            "project_4": {},
+            "project_5": {}
         }
         for ascension_key, ascension_data in space_data.copy().items():
             if not ascension_key.startswith("ascension"):

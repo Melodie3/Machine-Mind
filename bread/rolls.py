@@ -8,7 +8,7 @@ import bread.store as store
 import bread.space as space
 import bread_cog
 
-
+CURRENT_ROLL_RECORD = 25 # By prockpj.
 
 def bread_roll(
         roll_luck = 1,
@@ -102,7 +102,6 @@ def bread_roll(
     # the commentary message will have the most valuable emote and the most valuable amount message in it
     
     for i in range(roll_count):
-
         profit = 0
         count_commentary = ""
 
@@ -120,16 +119,25 @@ def bread_roll(
             out_luck = max(roll_luck*4, 16) # extra lucky
             count_commentary = "You won the lottery!!!! Congratulations!!!"
             output = utility.increment(output, "lottery_win", 1)
-            lottery = True
+            lottery = True\
             #lottery
         
         # this section does 11 and higher breads
-        elif random.randint(1,512) == 1: # normally 512
+        elif random.randint(1,512) == 1: # normally 512\
             loaf_count = 11
             while random.randint(1,2) == 1:
                 loaf_count += 1
 
         # print (f"roll_count: {roll_count}")
+
+        def name_amount(amount: int) -> str:
+            if amount > 99:
+                return f"{amount}_breads"
+            
+            single = ["", "_one", "_two", "_three", "_four", "_five", "_six", "_seven", "_eight", "_nine"]
+            ten = ["", "", "twenty", "thirty", "forty", "fifty", "sixty", "seventy", "eighty", "ninety"]
+
+            return f"{ten[amount // 10]}{single[amount % 10]}_breads"
 
         if loaf_count == 1:
             count_commentary = "Better luck next time."
@@ -155,31 +163,48 @@ def bread_roll(
         elif loaf_count == 14:
             count_commentary = "Fourteen breads? That's a lot of breads. Like really a lot."
             output = utility.increment(output, "fourteen_or_higher", 1)
+            output = utility.increment(output, "fourteen_breads", 1)
             output["highest_roll"] = loaf_count
         elif loaf_count == 15:
             count_commentary = "Woah! Fifteen breads! It really do be like that."
             output = utility.increment(output, "fourteen_or_higher", 1)
+            output = utility.increment(output, "fifteen_breads", 1)
             output["highest_roll"] = loaf_count
         elif loaf_count == 16:
             count_commentary = "Surely that's not possible. Sixteen breads?!"
             output = utility.increment(output, "fourteen_or_higher", 1)
+            output = utility.increment(output, "sixteen_breads", 1)
             output["highest_roll"] = loaf_count
         elif loaf_count == 17:
             count_commentary = "Seventeen breads? You're a wizard, Harry."
             output = utility.increment(output, "fourteen_or_higher", 1)
+            output = utility.increment(output, "seventeen_breads", 1)
             output["highest_roll"] = loaf_count
         elif loaf_count == 18:
             count_commentary = "A historical occurence! Eighteen breads!"
             output = utility.increment(output, "fourteen_or_higher", 1)
+            output = utility.increment(output, "eighteen_breads", 1)
             output["highest_roll"] = loaf_count
         elif loaf_count == 19:
             count_commentary = "Nineteen breads. I have no words for such a confluence of events."
             output = utility.increment(output, "fourteen_or_higher", 1)
+            output = utility.increment(output, "nineteen_breads", 1)
             output["highest_roll"] = loaf_count
+        elif loaf_count > CURRENT_ROLL_RECORD and loaf_count < 100:
+            stat = name_amount(loaf_count)
+
+            count_commentary = f"Holy crap! That's a new record of {loaf_count} breads!"
+            output["highest_roll"] = loaf_count
+            output = utility.increment(output, "fourteen_or_higher", 1)
+            output = utility.increment(output, "loaf_records", 1)
+            output = utility.increment(output, stat, 1)
         elif loaf_count > 19 and loaf_count < 100:
+            stat = name_amount(loaf_count)
+
             count_commentary = f"Holy hell! {loaf_count} breads!"
             output["highest_roll"] = loaf_count
             output = utility.increment(output, "fourteen_or_higher", 1)
+            output = utility.increment(output, stat, 1)
         elif count_commentary is None:
             count_commentary = ""
 
@@ -276,7 +301,12 @@ def bread_roll(
             output_roll_messages.append(emote_output)
 
         # if the commentary is of a higher value than the previous one, replace it
-        if (loaf_count > output_count_commentary_value) and (count_commentary != ""):
+        if (loaf_count > output_count_commentary_value) and (count_commentary != "") and \
+            not(loaf_count > 99 and output_count_commentary_value > CURRENT_ROLL_RECORD) or \
+            (output_count_commentary_value > 99 and loaf_count > CURRENT_ROLL_RECORD):
+            # If the highest so far is lower than the current roll then set the highest to the current.
+            # However, if the highest is a new record and the current roll is a lottery then don't set it, the record takes priority.
+            # If the highest is a lottery and the current roll is a new record then do set it for the same reason.
             output_count_commentary = count_commentary
             output_count_commentary_value = loaf_count
         
@@ -314,7 +344,7 @@ def bread_roll(
     output["commentary"] = ""
 
     if roll_count > 1:
-        output["commentary"] += f"Multiroll of {roll_count} complete."
+        output["commentary"] += f"Multiroll of {utility.smart_number(roll_count)} complete."
 
     # it's not better luck next time if you got something nice
     if output_count_commentary == "Better luck next time.":
@@ -624,4 +654,7 @@ def summarize_roll(
                 last_header = False
             output += f"{key}: {utility.smart_number(result[key])}\n"
     # output += f"{roll['emote']} {roll['commentary']}"
+    if "\nExtra items" in output and not "\n\nExtra items" in output:
+        output = output.replace("\nExtra items", "\n\nExtra items")
+
     return output

@@ -314,7 +314,7 @@ class Trade_Hub(Project):
             ],
             # Level 5:
             [
-                (values.anarchy_chess.text, 40), (values.chessatron.text, 1600), (values.anarchy_chessatron.text, 4),
+                (values.anarchy_chess.text, 40), (values.chessatron.text, 1600), (values.anarchy_chessatron.text, 2),
                 (values.gem_gold.text, 126), (values.gem_green.text, 253), (values.gem_purple.text, 506), (values.gem_blue.text, 1012), (values.gem_red.text, 3037)
             ],
         ]
@@ -325,12 +325,22 @@ class Trade_Hub(Project):
             day_seed: str,
             system_tile: space.SystemTradeHub
         ) -> str:
-        if random.randint(1, 32) != 1:
+        if random.randint(1, 4) != 1:
             return ""
         
         messages = [
             "The new Trade Hub employees are a little confused by the weird 'Spleen Room' in the yellow quadrant, but they'll get used to it.",
-            "The existance of multiple Blåhaj in the green quadrant is slightly concerning, but it's probably fine."
+            "The existance of multiple Blåhaj in the green quadrant is slightly concerning, but it's probably fine.",
+            "The many new visitors to the Trade Hub are all addicted to the all you can eat bacon restaurant in the red quadrant.",
+            "Some of the middle-aged employees are a little confused by weird fuel tanks, but both older and younger employees do not have any problems with it.",
+            "After some weird gold gem shaped vandalization appeared on a few of the Trade Hub hallways the managers have cracked down on a weird 'RR4 Fellowship' meeting they found in a large unused air duct.",
+            "An announcement has been made over the Trade Hub intercom that the Bread Bank:tm: has started to be more involved in debt repayments, and that their first target is a Miss Starlight who works in the blue quadrant.",
+            "The Trade Hub cafeteria workers are getting a little antsy about the usage of :bread: due to a decreasing supply and increasing demand.",
+            "An illegal black market of Omega Chessatrons named 'Omega Tron Exchange' has recently been upended after a member was caught leaving a secret meeting.",
+            "A weird radio signal from outer space has been received by the Trade Hub's radio telescopes saying 'kewko is the chosen one' has everybody confused.",
+            "The Trade Hub's stonk trading station recently had a major issue after a faulty order of 093258468905632490863452 pretzels was recieved.",
+            "During the Trade Hub's farmers market event the stalls for Mataza's Mega Market and Goldenpggie's ᵐⁱⁿⁱ MEGA Market both had so much excitement it caused a riot.",
+            "There's a new establishment in the cafeteria. It's themed around Boggle and food, and people are going crazy about it. "
         ]
 
         out = "\n"

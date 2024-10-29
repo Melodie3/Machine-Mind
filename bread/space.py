@@ -375,6 +375,7 @@ class SystemTradeHub(SystemTile):
         super().__init__(galaxy_seed, galaxy_xpos, galaxy_ypos, system_xpos, system_ypos)
 
         self.trade_hub_level = trade_hub_level
+        self.project_count = store.trade_hub_projects[trade_hub_level]
         self.type = "trade_hub"
     
     def get_emoji(self: typing.Self) -> str:
@@ -1679,7 +1680,7 @@ def get_trade_hub_projects(
     used_names = []
 
     project_id = -1
-    while len(out_projects) < 3:
+    while len(out_projects) < 5:
         project_id += 1
 
         key = f"project_{len(out_projects) + 1}"
