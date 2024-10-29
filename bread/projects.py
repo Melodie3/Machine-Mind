@@ -549,7 +549,7 @@ class Essential_Oils(Project):
         ) -> list[tuple[str, int]]:
         rng = random.Random(utility.hash_args(day_seed, system_tile.tile_seed()))
 
-        amount = rng.randint(2, 6) * 50 + 50
+        amount = rng.randint(2, 6) * 250 + 50
 
         return [(values.fuel.text, amount)]
     
@@ -561,7 +561,7 @@ class Essential_Oils(Project):
         ) -> list[tuple[str, int]]:
         rng = random.Random(utility.hash_args(day_seed, system_tile.tile_seed()))
 
-        amount = rng.randint(2, 6) * 50 + 50
+        amount = rng.randint(2, 6) * 250 + 50
 
         options = [
             values.gem_red, values.gem_red, values.gem_red, values.gem_red, values.gem_red, values.gem_red, values.gem_red, values.gem_red, values.gem_red, values.gem_red, values.gem_red, values.gem_red, values.gem_red, values.gem_red, values.gem_red, values.gem_red, 
@@ -571,11 +571,11 @@ class Essential_Oils(Project):
             values.gem_gold
         ]
         amounts = {
-            values.gem_red: amount / 1 * 0.75,
-            values.gem_blue: amount / 3 * 0.75,
-            values.gem_purple: amount / 9 * 0.75,
-            values.gem_green: amount / 27 * 0.75,
-            values.gem_gold: amount / 150 * 0.75
+            values.gem_red: amount / 5 * 2,
+            values.gem_blue: amount / 15 * 2,
+            values.gem_purple: amount / 35 * 2,
+            values.gem_green: amount / 135 * 2,
+            values.gem_gold: amount / 750 * 2
         }
 
         item = rng.choice(options)
@@ -804,7 +804,7 @@ class Beach_Disappearance(Project):
         ) -> list[tuple[str, int]]:
         rng = random.Random(utility.hash_args(day_seed, system_tile.tile_seed()))
 
-        amount = rng.randint(10, 20) * 1280
+        amount = rng.randint(10, 20) * 12800
 
         return [(values.sandwich.text, amount)]
     
@@ -816,7 +816,7 @@ class Beach_Disappearance(Project):
         ) -> list[tuple[str, int]]:
         rng = random.Random(utility.hash_args(day_seed, system_tile.tile_seed()))
 
-        amount = rng.randint(10, 20) * 20
+        amount = rng.randint(10, 20) * 200
 
         item = rng.choice(values.chess_pieces_black_biased)
 
@@ -938,7 +938,7 @@ class Croissant_Cravings(Project):
         ) -> list[tuple[str, int]]:
         rng = random.Random(utility.hash_args(day_seed, system_tile.tile_seed()))
 
-        amount = rng.randint(10, 20) * 1920
+        amount = rng.randint(10, 20) * 19200
 
         return [(values.croissant.text, amount)]
     
@@ -950,9 +950,9 @@ class Croissant_Cravings(Project):
         ) -> list[tuple[str, int]]:
         rng = random.Random(utility.hash_args(day_seed, system_tile.tile_seed()))
 
-        amount = rng.randint(10, 20) * 30
+        amount = rng.randint(10, 20) * 200
 
-        item = rng.choice(values.chess_pieces_black_biased)
+        item = rng.choice(values.chess_pieces_white_biased)
 
         return [(item.text, amount)]
 
@@ -1064,7 +1064,7 @@ class Appease_The_French(Project):
         ) -> list[tuple[str, int]]:
         rng = random.Random(utility.hash_args(day_seed, system_tile.tile_seed()))
 
-        amount = rng.randint(10, 20) * 1920
+        amount = rng.randint(10, 20) * 19200
 
         return [(values.french_bread.text, amount)]
     
@@ -1076,7 +1076,7 @@ class Appease_The_French(Project):
         ) -> list[tuple[str, int]]:
         rng = random.Random(utility.hash_args(day_seed, system_tile.tile_seed()))
 
-        amount = rng.randint(10, 20) * 15
+        amount = rng.randint(10, 20) * 150
 
         return [(values.gem_red.text, amount)]
 
@@ -1216,7 +1216,7 @@ class Flatbread_Shortage(Project):
         ) -> list[tuple[str, int]]:
         rng = random.Random(utility.hash_args(day_seed, system_tile.tile_seed()))
 
-        amount = rng.randint(10, 20) * 960
+        amount = rng.randint(10, 20) * 9600
 
         return [(values.stuffed_flatbread.text, amount)]
     
@@ -1228,7 +1228,7 @@ class Flatbread_Shortage(Project):
         ) -> list[tuple[str, int]]:
         rng = random.Random(utility.hash_args(day_seed, system_tile.tile_seed()))
 
-        amount = rng.randint(10, 20) * 10
+        amount = rng.randint(10, 20) * 100
 
         item = rng.choice(values.chess_pieces_white_biased)
 
@@ -1377,7 +1377,7 @@ class Too_Much_Stuffing(Project):
         ) -> list[tuple[str, int]]:
         rng = random.Random(utility.hash_args(day_seed, system_tile.tile_seed()))
 
-        amount = rng.randint(10, 20) * 1440
+        amount = rng.randint(10, 20) * 14400
 
         return [(values.flatbread.text, amount)]
     
@@ -1389,7 +1389,7 @@ class Too_Much_Stuffing(Project):
         ) -> list[tuple[str, int]]:
         rng = random.Random(utility.hash_args(day_seed, system_tile.tile_seed()))
 
-        amount = rng.randint(10, 20) * 15
+        amount = rng.randint(10, 20) * 150
 
         item = rng.choice(values.chess_pieces_white_biased)
 
@@ -1532,7 +1532,7 @@ class Waffle_Machine(Project):
         ) -> list[tuple[str, int]]:
         rng = random.Random(utility.hash_args(day_seed, system_tile.tile_seed()))
 
-        amount = rng.randint(10, 20) * 1280
+        amount = rng.randint(10, 20) * 12800
 
         return [(values.waffle.text, amount)]
     
@@ -1544,7 +1544,7 @@ class Waffle_Machine(Project):
         ) -> list[tuple[str, int]]:
         rng = random.Random(utility.hash_args(day_seed, system_tile.tile_seed()))
 
-        amount = rng.randint(10, 20) * 20
+        amount = rng.randint(10, 20) * 200
 
         return [(values.gem_red.text, amount)]
 
@@ -1684,7 +1684,7 @@ class Stolen_Donuts(Project):
         ) -> list[tuple[str, int]]:
         rng = random.Random(utility.hash_args(day_seed, system_tile.tile_seed()))
 
-        amount = rng.randint(10, 20) * 1280
+        amount = rng.randint(10, 20) * 12800
 
         return [(values.doughnut.text, amount)]
     
@@ -1696,7 +1696,7 @@ class Stolen_Donuts(Project):
         ) -> list[tuple[str, int]]:
         rng = random.Random(utility.hash_args(day_seed, system_tile.tile_seed()))
 
-        amount = rng.randint(10, 20) * 10
+        amount = rng.randint(10, 20) * 100
 
         return [(values.gem_blue.text, amount)]
 
@@ -1821,7 +1821,7 @@ class Ecosystem_Problem(Project):
         ) -> list[tuple[str, int]]:
         rng = random.Random(utility.hash_args(day_seed, system_tile.tile_seed()))
 
-        amount = rng.randint(10, 20) * 1280
+        amount = rng.randint(10, 20) * 12800
 
         return [(values.bagel.text, amount)]
     
@@ -1833,7 +1833,7 @@ class Ecosystem_Problem(Project):
         ) -> list[tuple[str, int]]:
         rng = random.Random(utility.hash_args(day_seed, system_tile.tile_seed()))
 
-        amount = rng.randint(10, 20) * 5
+        amount = rng.randint(10, 20) * 50
 
         return [(values.gem_purple.text, amount)]
 
@@ -2654,7 +2654,7 @@ class Royal_Summit_Duplicate(Project):
         ) -> list[tuple[str, int]]:
         rng = random.Random(utility.hash_args(day_seed, system_tile.tile_seed()))
 
-        amount = rng.randint(1, 4) * 100
+        amount = rng.randint(2, 6) * 128
         return [(values.black_king.text, amount)]
     
     @classmethod
@@ -2665,7 +2665,7 @@ class Royal_Summit_Duplicate(Project):
         ) -> list[tuple[str, int]]:
         rng = random.Random(utility.hash_args(day_seed, system_tile.tile_seed()))
 
-        amount = rng.randint(1, 4)
+        amount = rng.randint(2, 6)
         return [(values.anarchy_black_king.text, amount)]
 
 ##### White chess pieces.
@@ -3490,7 +3490,7 @@ class Royal_Summit(Project):
         ) -> list[tuple[str, int]]:
         rng = random.Random(utility.hash_args(day_seed, system_tile.tile_seed()))
 
-        amount = rng.randint(1, 4) * 100
+        amount = rng.randint(2, 6) * 128
         return [(values.white_king.text, amount)]
     
     @classmethod
@@ -3501,7 +3501,7 @@ class Royal_Summit(Project):
         ) -> list[tuple[str, int]]:
         rng = random.Random(utility.hash_args(day_seed, system_tile.tile_seed()))
 
-        amount = rng.randint(1, 4)
+        amount = rng.randint(2, 6)
         return [(values.anarchy_white_king.text, amount)]
 
 ##### Gems.
@@ -3737,7 +3737,7 @@ class Gem_Mining(Project):
         ) -> list[tuple[str, int]]:
         rng = random.Random(utility.hash_args(day_seed, system_tile.tile_seed()))
 
-        amount = rng.randint(2, 6) * 50 + 100
+        amount = rng.randint(2, 6) * 20
 
         return [(values.gem_blue.text, amount)]
     
@@ -3749,9 +3749,9 @@ class Gem_Mining(Project):
         ) -> list[tuple[str, int]]:
         rng = random.Random(utility.hash_args(day_seed, system_tile.tile_seed()))
 
-        amount = rng.randint(2, 6) * 45
+        amount = rng.randint(2, 6) * 40
 
-        return [(values.gem_purple.text, amount)]
+        return [(values.gem_red.text, amount)]
 
 class Jewelry_Store(Project):
     """Written by Kapola."""
@@ -3861,7 +3861,7 @@ class Jewelry_Store(Project):
         ) -> list[tuple[str, int]]:
         rng = random.Random(utility.hash_args(day_seed, system_tile.tile_seed()))
 
-        amount = rng.randint(2, 6) * 50 + 100
+        amount = rng.randint(2, 6) * 20
 
         return [(values.gem_purple.text, amount)]
     
@@ -3873,9 +3873,9 @@ class Jewelry_Store(Project):
         ) -> list[tuple[str, int]]:
         rng = random.Random(utility.hash_args(day_seed, system_tile.tile_seed()))
 
-        amount = rng.randint(2, 6) * 45
+        amount = rng.randint(2, 6) * 40
 
-        return [(values.gem_green.text, amount)]
+        return [(values.gem_blue.text, amount)]
 
 class Generator_Breakdown(Project):
     """Written by Kapola."""
@@ -3992,7 +3992,7 @@ class Generator_Breakdown(Project):
         ) -> list[tuple[str, int]]:
         rng = random.Random(utility.hash_args(day_seed, system_tile.tile_seed()))
 
-        amount = rng.randint(2, 6) * 50 + 100
+        amount = rng.randint(2, 6) * 20
 
         return [(values.gem_green.text, amount)]
     
@@ -4004,9 +4004,9 @@ class Generator_Breakdown(Project):
         ) -> list[tuple[str, int]]:
         rng = random.Random(utility.hash_args(day_seed, system_tile.tile_seed()))
 
-        amount = rng.randint(2, 6) * 12
+        amount = rng.randint(2, 6) * 40
 
-        return [(values.gem_gold.text, amount)]
+        return [(values.gem_purple.text, amount)]
 
 class Gem_Salesman(Project):
     """Written by Kapola."""
@@ -4139,7 +4139,7 @@ class Gem_Salesman(Project):
         ) -> list[tuple[str, int]]:
         rng = random.Random(utility.hash_args(day_seed, system_tile.tile_seed()))
 
-        amount = rng.randint(2, 6) * 25 + 100
+        amount = rng.randint(2, 6) * 5
 
         return [(values.gem_gold.text, amount)]
     
@@ -4151,13 +4151,9 @@ class Gem_Salesman(Project):
         ) -> list[tuple[str, int]]:
         rng = random.Random(utility.hash_args(day_seed, system_tile.tile_seed()))
 
-        amount = rng.randint(2, 6) * 2
+        amount = rng.randint(2, 6) * 40
 
-        item_1 = rng.choice(values.anarchy_pieces_black_biased)
-        item_2 = rng.choice(values.anarchy_pieces_white_biased)
-
-
-        return [(item_1.text, amount), (item_2.text, amount)]
+        return [(values.gem_green.text, amount)]
 
 ##### Misc items.
 
@@ -4281,7 +4277,7 @@ class Omega_Order(Project):
         ) -> list[tuple[str, int]]:
         rng = random.Random(utility.hash_args(day_seed, system_tile.tile_seed()))
 
-        amount = rng.randint(2, 6)
+        amount = rng.randint(2, 6) * 3
 
         return [(values.omega_chessatron.text, amount)]
 
@@ -4401,7 +4397,7 @@ class Chessatron_Repair(Project):
         ) -> list[tuple[str, int]]:
         rng = random.Random(utility.hash_args(day_seed, system_tile.tile_seed()))
 
-        amount = rng.randint(2, 6) * 10
+        amount = rng.randint(2, 6) * 3
 
         item = rng.choice(values.anarchy_pieces_black_biased)
 
