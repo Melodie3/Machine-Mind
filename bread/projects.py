@@ -337,10 +337,16 @@ class Trade_Hub(Project):
             "An announcement has been made over the Trade Hub intercom that the Bread Bank:tm: has started to be more involved in debt repayments, and that their first target is a Miss Starlight who works in the blue quadrant.",
             "The Trade Hub cafeteria workers are getting a little antsy about the usage of :bread: due to a decreasing supply and increasing demand.",
             "An illegal black market of Omega Chessatrons named 'Omega Tron Exchange' has recently been upended after a member was caught leaving a secret meeting.",
-            "A weird radio signal from outer space has been received by the Trade Hub's radio telescopes saying 'kewko is the chosen one' has everybody confused.",
+            "A weird radio signal received by the Trade Hub's radio telescopes from outer space saying 'kewko is the chosen one' has everybody confused.",
             "The Trade Hub's stonk trading station recently had a major issue after a faulty order of 093258468905632490863452 pretzels was recieved.",
             "During the Trade Hub's farmers market event the stalls for Mataza's Mega Market and Goldenpggie's ᵐⁱⁿⁱ MEGA Market both had so much excitement it caused a riot.",
-            "There's a new establishment in the cafeteria. It's themed around Boggle and food, and people are going crazy about it. "
+            "There's a new establishment in the cafeteria. It's themed around Boggle and food, and people are going crazy about it. People are, however, confused about why the name 'Resterert' was chosen.",
+            "Widespread panic recently hit the Trade Hub staff after the head manager of the Trade Hub, after others got a lot more lucky than him, said '*I am dying*'",
+            f"The Trade Hub has had a sudden influx of tourism after the sunlight, reflecting off of one of the system's moons, came together to form a glowing outline of {values.anarchy_chess.text} at the center of the Trade Hub. The Trade Hub scientists are unsure what was directing the light to do this, but the Guiding Moonlight quickly became a large tourism attraction.",
+            "A large Chess tournament event has been coordinated in the Trade Hub's cafeteria. The tournament, however, is not a regular Chess tournament as it has the modification where neither player starts with any rooks, but promoting to a rook is stil allowed. A competition was held among the Trade Hub staff to name the event, and in the end the name 'EmptyRook' won.",
+            "A weird creature recently visited the Trade Hub. People were suspicious of it at first but quickly became friends with him as he got more and more well known in the Trade Hub. When he arrived he didn't say he had a name, so someone gave him the name Dave, but people typically refer to him as DaveTheImp.",
+            "After a scientist on board the Trade Hub calculated how many times you would need to run around the Trade Hub in order to run a marathon, an event was setup to see who could run it the fastest. Inspired by the legendary runner Javson the event coordinators decided to name the event Javran.",
+            "It was recently discovered by Trade Hub officials that an individual by the name of Meta had the permissions required to access many of the internal Trade Hub rooms, including very high security rooms, despite being a regular Trade Hub employee."
         ]
 
         out = "\n"
