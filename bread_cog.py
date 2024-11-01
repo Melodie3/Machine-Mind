@@ -2,19 +2,8 @@
 HOW TO UNRESTRICT SPACE TO a9:
 - Go to Bread_cog.space_shop and remove the if that's "if user_account.get_prestige_level() < 9:"
 
-Patch Notes: 
-- Added space.
-  - Currently only available on a9, when a9 finishes it will be available from a2 and above.
-  - Added a Space Shop accessible via "$bread space shop"
-  - In order to access space you need to purchase a Bread Rocket in the Space Shop.
-  - The anarchy piece set can be found when bread rolling in space.
-- Special and rare bread can now be alchemized out of :bread: and other specials of the same rarity.
-- You can now use fractions in gifting to specify a custom amount.
-- Modified Chessatron dough equation to buff Chessatron Contraption.
-- Decreased Chessatron Contraption max level to 10.
-- Changed the Random Chess Piece price scheme to be the chessatron value divided by 6, rounded up to the nearest 50.
-- You can now buy up to 2,500 Random Chess Pieces and 5,000,000 Special Bread Packs per day.
-- You can now ascend to the highest ascension from any ascension if you have the ascension requirements on your current ascension.
+Patch 27.11:
+- Projects and planet rolling odds now refresh twice per day. Once at bread o' clock and once 12 hours later.
 
 
 (todo) test reply ping
@@ -864,6 +853,11 @@ class Bread_cog(commands.Cog, name="Bread"):
             self.reset_internal() # this resets all roll counts to 0
             print("Daily reset called")
             await self.announce("bread_o_clock", "It's Bread O'Clock!")
+        
+        #run at 3am
+        elif time.hour == 3:
+            print("Mid-day space reset called")
+            self.reset_space_all()
 
         # every 6 hours, based around 3pm
         # print (f"Hour +15 %6 is {(time.hour + 15) % 6}")
@@ -7259,11 +7253,11 @@ anarchy - 1000% of your wager.
         self.reset_internal()
         await ctx.send("Done.")
 
-    def reset_space(
+    def reset_space_guild(
             self: typing.Self,
             guild: typing.Union[discord.Guild,str,int]
         ) -> None:
-        """Daily reset for Bread Space."""
+        """Twice per day reset for Bread Space."""
 
         # Set a new day seed.
         space_data = self.json_interface.get_space_data(guild=guild)
@@ -7288,6 +7282,15 @@ anarchy - 1000% of your wager.
             space_data[ascension_key] = ascension_data
 
         self.json_interface.set_custom_file("space", file_data=space_data, guild=guild)
+    
+    def reset_space_all(self: typing.Self) -> None:
+        """Twice per day space reset for all guilds in the JSON interface."""
+        print("Bread Space: Running twice per day reset on all guilds.")
+
+        for guild_id in self.json_interface.get_list_of_all_guilds():
+            self.reset_space_guild(guild_id)
+        
+        print("Bread Space: Done.")
 
     def reset_internal(
             self: typing.Self,
@@ -7298,6 +7301,8 @@ anarchy - 1000% of your wager.
         print("Internal daily reset called")
         self.currently_interacting.clear()
 
+        self.reset_space_all()
+
         if guild is not None:
             guild_id = get_id_from_guild(guild)
 
@@ -7307,8 +7312,6 @@ anarchy - 1000% of your wager.
                 self.json_interface.set_account(account.get("id"), account, guild_id)
         else: #call for all accounts
             for guild_id in self.json_interface.get_list_of_all_guilds():
-                self.reset_space(guild_id)
-
                 for account in self.json_interface.get_all_user_accounts(guild_id):
                     account.daily_reset()
                     self.json_interface.set_account(account.get("id"), account, guild_id)
@@ -7523,6 +7526,8 @@ anarchy - 1000% of your wager.
 
         # self.currently_interacting.clear()
 
+        # await self.daily_task()
+
         ##########################################################
         # Go through all trade hubs and set them to be at [0, 1] #
         # for guild in self.json_interface.all_guilds:
@@ -7538,27 +7543,27 @@ anarchy - 1000% of your wager.
         #     self.json_interface.set_custom_file("space", space_data, guild)
 
         # When the rocket tiers were shifted and tier 3 was removed this'll correct everyone stats.
-        for guild in self.json_interface.all_guilds:
-            for account in self.json_interface.get_all_user_accounts(guild=guild):
-                space_level = account.get_space_level()
-                if space_level >= 3:
-                    account.increment("space_level", -1)
+        # for guild in self.json_interface.all_guilds:
+        #     for account in self.json_interface.get_all_user_accounts(guild=guild):
+        #         space_level = account.get_space_level()
+        #         if space_level >= 3:
+        #             account.increment("space_level", -1)
                 
-                fr_level = account.get("fuel_research")
+        #         fr_level = account.get("fuel_research")
 
-                if fr_level > 2:
-                    account.increment("fuel_research", -1)
-                    account.increment(values.gem_green, 100)
+        #         if fr_level > 2:
+        #             account.increment("fuel_research", -1)
+        #             account.increment(values.gem_green, 100)
 
-                if fr_level > 2:
-                    account.increment("fuel_research", -1)
-                    account.increment(values.gem_gold, 100)
+        #         if fr_level > 2:
+        #             account.increment("fuel_research", -1)
+        #             account.increment(values.gem_gold, 100)
 
-                if fr_level == 2 and space_level < 4:
-                    account.increment("fuel_research", -1)
-                    account.increment(values.gem_purple, 100)
+        #         if fr_level == 2 and space_level < 4:
+        #             account.increment("fuel_research", -1)
+        #             account.increment(values.gem_purple, 100)
 
-                self.json_interface.set_account(account.user_id, account, guild)
+        #         self.json_interface.set_account(account.user_id, account, guild)
 
 
 

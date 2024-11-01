@@ -1730,7 +1730,7 @@ def get_project_credits_usage(
         items_contributed (int): The amount of items that have been contributed.
         item_offset (int, optional): The number of items already contributed by the player. Defaults to 0.
     Returns:
-        int: The amount of credits to consume, between 0 and 100.
+        int: The amount of credits to consume, between 0 and 1000.
     """
 
     total_contributes = items_contributed + item_offset
