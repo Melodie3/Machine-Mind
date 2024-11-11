@@ -594,6 +594,8 @@ class GalaxyTile:
             system: bool,
             in_nebula: bool = False,
 
+            raw_system_data: dict | None = None,
+
             system_radius: int = None,
             star: SystemStar = None,
             trade_hub: SystemTradeHub = False,
@@ -626,9 +628,12 @@ class GalaxyTile:
 
         self.xpos = xpos
         self.ypos = ypos
+        self.position_id = xpos + 256 * ypos
+
         self.in_nebula = in_nebula
 
         self.system = system
+        self.raw_system_data = raw_system_data
 
         self.system_radius = system_radius
         self.star = star
@@ -687,13 +692,18 @@ class GalaxyTile:
         if not self.system:
             return None
         
-        # Get the data for the system.
-        raw_data = generation.generate_system(
-            galaxy_seed = self.galaxy_seed,
-            galaxy_xpos = self.xpos,
-            galaxy_ypos = self.ypos,
-            get_wormholes = get_wormholes
-        )
+        if self.raw_system_data is None:
+            raw_data = get_system_raw_data(
+                json_interface = json_interface,
+                guild = guild,
+                galaxy_seed = self.galaxy_seed,
+                ascension = self.ascension,
+                xpos = self.xpos,
+                ypos = self.ypos,
+                load_wormholes = get_wormholes
+            )
+
+            self.raw_system_data = raw_data
 
         # If the generated data is None, then return.
         # It should only be None if there isn't a system here, which should be prevented earlier, but just in case.
@@ -780,7 +790,7 @@ class GalaxyTile:
                 system_xpos = planet_data.get("xpos", 1),
                 system_ypos = planet_data.get("ypos", 1),
 
-                planet_type = planet_data.get("type"),
+                planet_type = values.get_emote(planet_data.get("type")),
                 planet_distance = planet_data.get("distance"),
                 planet_angle = planet_data.get("angle"),
                 planet_deviation = planet_data.get("deviation")
@@ -896,6 +906,72 @@ class GalaxyTile:
             system_x = system_x,
             system_y = system_y
         )
+    
+    def save_to_database(
+            self: typing.Self,
+            json_interface: bread_cog.JSON_interface,
+            map_data: dict = None
+        ) -> dict:
+        if map_data is None:
+            map_data = json_interface.get_space_map_data(
+                ascension_id = self.ascension,
+                guild = self.guild
+            )
+
+        chunk = self.position_id // 8192
+        sub_chunk = self.position_id % 8192
+
+        if not has_seen_tile(
+                json_interface = json_interface,
+                guild = self.guild,
+                ascension = self.ascension,
+                xpos = self.xpos,
+                ypos = self.ypos,
+                map_data = map_data
+            ):
+            # If the tile hasn't been seen, update it.
+
+            if "seen_tiles" not in map_data:
+                map_data["seen_tiles"] = [0, 0, 0, 0, 0, 0, 0, 0]
+            
+            # Bitwise OR to update the bit without worrying about adding something and messing up other data.
+            map_data["seen_tiles"][chunk] |= 2 ** sub_chunk
+
+        if self.in_nebula and not in_nebula_database(
+                json_interface = json_interface,
+                guild = self.guild,
+                ascension = self.ascension,
+                xpos = self.xpos,
+                ypos = self.ypos,
+                map_data = map_data
+            ):
+            # If the tile has a nebula but the database doesn't think so, update it.
+
+            if "nebula_tiles" not in map_data:
+                map_data["nebula_tiles"] = [0, 0, 0, 0, 0, 0, 0, 0]
+
+            # Bitwise OR to update the bit without worrying about adding something and messing up other data.
+            map_data["nebula_tiles"][chunk] |= 2 ** sub_chunk
+        
+        if self.system:
+            if str(self.position_id) not in map_data.get("system_data", {}):
+                if self.raw_system_data is None:
+                    self.load_system_data(json_interface, self.guild, True)
+                
+                if "system_data" in map_data:
+                    map_data["system_data"][str(self.position_id)] = self.raw_system_data
+                else:
+                    map_data["system_data"] = {
+                        str(self.position_id): self.raw_system_data
+                    }
+            
+        # Set the map data to this.
+        json_interface.set_space_map_data(
+            ascension_id = self.ascension,
+            guild = self.guild,
+            new_data = map_data
+        )
+        return map_data
 
 def get_corruption_chance(
         xpos: int,
@@ -1337,6 +1413,126 @@ def generate_galaxy_seed() -> str:
     """Generates a random new galaxy seed."""
     return "{:064x}".format(random.randrange(16 ** 64)) # Random 64 digit hexadecimal number.
 
+def has_seen_tile(
+        json_interface: bread_cog.JSON_interface,
+        guild: typing.Union[discord.Guild, int, str],
+        ascension: int,
+        xpos: int,
+        ypos: int,
+        map_data: dict = None
+    ) -> bool:
+    """Returns a boolean for whether the given tile has been seen yet.
+
+    Args:
+        json_interface (bread_cog.JSON_interface): The Bread Cog's JSON interface.
+        guild (typing.Union[discord.Guild, int, str]): The guild to get the data for.
+        ascension (int): The ascension to get the data for.
+        xpos (int): The x position of the tile to check.
+        ypos (int): The x position of the tile to check.
+        map_data (dict, optional): Already fetched map data, to avoid getting the data from the JSON interface multiple times. Defaults to None.
+
+    Returns:
+        bool: Whether the given tile coordinates has been seen before.
+    """
+    if map_data is None:
+        map_data = json_interface.get_space_map_data(
+            ascension_id = ascension,
+            guild = guild
+        )
+
+    seen_data = map_data.get("seen_tiles", [0, 0, 0, 0, 0, 0, 0, 0])
+
+    tile_id = xpos + 256 * ypos
+
+    chunk = tile_id // 8192
+    
+    # Bitwise AND to get the bit on its own.
+    return bool(seen_data[chunk] & 2 ** (tile_id % 8192))
+
+def in_nebula_database(
+        json_interface: bread_cog.JSON_interface,
+        guild: typing.Union[discord.Guild, int, str],
+        ascension: int,
+        xpos: int,
+        ypos: int,
+        map_data: dict = None
+    ) -> bool:
+    """Returns a boolean for whether the given tile has been marked as in a nebula in the database.
+    
+    This will not generate anything, only check already generated data. Due to this, it should only be used if `has_seen_tile()` is also True.
+
+    Args:
+        json_interface (bread_cog.JSON_interface): The Bread Cog's JSON interface.
+        guild (typing.Union[discord.Guild, int, str]): The guild to get the data for.
+        ascension (int): The ascension to get the data for.
+        xpos (int): The x position of the tile to check.
+        ypos (int): The x position of the tile to check.
+        map_data (dict, optional): Already fetched map data, to avoid getting the data from the JSON interface multiple times. Defaults to None.
+
+    Returns:
+        bool: Whether the given tile coordinates are marked as in a nebula in the database.
+    """
+    if map_data is None:
+        map_data = json_interface.get_space_map_data(
+            ascension_id = ascension,
+            guild = guild
+        )
+
+    seen_data = map_data.get("nebula_tiles", [0, 0, 0, 0, 0, 0, 0, 0])
+
+    tile_id = xpos + 256 * ypos
+
+    chunk = tile_id // 8192
+    
+    # Bitwise AND to get the bit on its own.
+    return bool(seen_data[chunk] & 2 ** (tile_id % 8192))
+
+def get_system_raw_data(
+        json_interface: bread_cog.JSON_interface,
+        guild: typing.Union[discord.Guild, int, str],
+        galaxy_seed: str,
+        ascension: int,
+        xpos: int,
+        ypos: int,
+        load_wormholes: bool = True,
+        map_data: dict = None
+    ) -> dict:
+    """Gets the raw data for a system either from the database if it's there or by generating it.
+
+    Args:
+        json_interface (bread_cog.JSON_interface): The JSON interface to use.
+        guild (typing.Union[discord.Guild, int, str]): The guild to get the data for.
+        galaxy_seed (str): The seed of the galaxy.
+        ascension (int): The ascension for the data.
+        xpos (int): The galaxy x position of the tile to generate.
+        ypos (int): The galaxy y position of the tile to generate.
+        load_wormholes (bool, optional): Whether to load the wormholes in the system if there are any. Defaults to True.
+        map_data (dict, optional): An already fetched copy of the map data to avoid fetching it multiple times. Defaults to None.
+
+    Returns:
+        dict: The raw data for the system.
+    """
+    if map_data is None:
+        map_data = json_interface.get_space_map_data(
+            ascension_id = ascension,
+            guild = guild
+        )
+
+    tile_id = xpos + 256 * ypos
+
+    if str(tile_id) in map_data.get("system_data", {}):
+        # If it's already in the database, get it from there.
+        return map_data.get("system_data", {}).get(str(tile_id))
+    else:
+        # Generate the data for the system.
+        return generation.generate_system(
+            galaxy_seed = galaxy_seed,
+            galaxy_xpos = xpos,
+            galaxy_ypos = ypos,
+            get_wormholes = load_wormholes
+        )
+
+
 def get_galaxy_coordinate(
         json_interface: bread_cog.JSON_interface,
         guild: typing.Union[discord.Guild, int, str],
@@ -1354,11 +1550,71 @@ def get_galaxy_coordinate(
         ascension (int): The ascension of this galaxy.
         xpos (int): The x position of the coordinate to get.
         ypos (int): The y position of the coordinate to get.
-        load_data (bool, optional): Whether to load the system data when making the GalaxyTile object. Defaults to False.
+        load_data (bool, optional): Whether to load the system data when making the GalaxyTile object. If the tile is not already in
+           the database and needs to be generated the data will be loaded no matter what this is. Defaults to False.
     
     Returns:
         GalaxyTile: A GalaxyTile object for the coordinate.
     """
+    # If the tile is outside the galaxy, return an empty GalaxyTile.
+    if generation.position_check(xpos, ypos):
+        return GalaxyTile(
+            galaxy_seed = galaxy_seed,
+            ascension = ascension,
+            guild = guild,
+            xpos = xpos,
+            ypos = ypos,
+            system = False,
+            in_nebula = False
+        )
+    
+    map_data = json_interface.get_space_map_data(
+        ascension_id = ascension,
+        guild = guild
+    )
+
+    if has_seen_tile(
+            json_interface = json_interface,
+            guild = guild,
+            ascension = ascension,
+            xpos = xpos,
+            ypos = ypos,
+            map_data = map_data
+        ):
+        # The tile has been seen, so get the data from storage instead of generating it again.
+        
+        in_nebula = in_nebula_database(
+            json_interface = json_interface,
+            guild = guild,
+            ascension = ascension,
+            xpos = xpos,
+            ypos = ypos,
+            map_data = map_data
+        )
+
+        tile_id = xpos + 256 * ypos
+
+        system = str(tile_id) in map_data.get("system_data", {})
+
+        out = GalaxyTile(
+            galaxy_seed = galaxy_seed,
+            ascension = ascension,
+            guild = guild,
+            xpos = xpos,
+            ypos = ypos,
+            system = system,
+            in_nebula = in_nebula
+        )
+
+        if load_data:
+            out.load_system_data(json_interface, guild, True)
+        
+        return out
+
+
+    #####################################################
+    # If it's not in the database, generate it.
+
     position_data = generation.galaxy_single(
         galaxy_seed = galaxy_seed,
         x = xpos,
@@ -1378,6 +1634,9 @@ def get_galaxy_coordinate(
         system = is_system,
         in_nebula = in_nebula
     )
+    
+    # Save the new data.
+    out.save_to_database(json_interface)
 
     if not is_system:
         return out

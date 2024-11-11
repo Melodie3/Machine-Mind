@@ -71,6 +71,10 @@ PLANET_OPTIONS = {
 ####################################
 ### GALAXY GENERATION UTILITIES
 
+def position_check(x: int, y: int) -> bool:
+    """Checks if the given x and y coordinates are in the galaxy at all."""
+    return (x ** 2 + y ** 2) <= MAP_RADIUS_SQUARED
+
 def generate_gradients(galaxy_seed: str) -> list:
     """Generates the gradient info for the galaxy.
 
@@ -310,7 +314,7 @@ def get_spot(
         int: What is on the given point. 0 is nothing, 1 is a system without a trade hub, 2 is a system with a trade hub.
     """
     
-    if (x ** 2 + y ** 2) > MAP_RADIUS_SQUARED:
+    if not position_check(x, y):
         return 0
 
     rng = core_spot(
@@ -677,7 +681,7 @@ def generate_system(
             "ypos": planet_y,
             "distance": planet_distance,
             "angle": planet_angle,
-            "type": planet_type, # what type of item is prioritized
+            "type": planet_type.text, # what type of item is prioritized
             "deviation": deviation # how much variation there is in the roll multipliers
         })
     

@@ -4,6 +4,8 @@ HOW TO UNRESTRICT SPACE TO a9:
 
 Patch 27.11:
 - Projects and planet rolling odds now refresh twice per day. Once at bread o' clock and once 12 hours later.
+- Some internal changes have been made with how the map works, nothing should be different except the galaxy map should be generated slightly faster now with higher telescope levels.
+- It will now say how long it took the map to generate. This was originally just for development but Lilly wanted it to be kept.
 
 
 (todo) test reply ping
@@ -495,6 +497,32 @@ class JSON_interface:
         space_data = self.get_space_data(guild=guild)
 
         return space_data.get(f"ascension_{ascension_id}", default)
+
+    def get_space_map_data(
+            self: typing.Self,
+            ascension_id: typing.Union[int, str],
+            guild: typing.Union[discord.Guild, int, str],
+        ) -> dict:
+        """Gets the map data for the given ascension in the given guild."""
+        ascension_data = self.get_space_ascension(ascension_id, guild, dict())
+
+        return ascension_data.get("map_data", {})
+
+    def set_space_map_data(
+            self: typing.Self,
+            ascension_id: typing.Union[int, str],
+            guild: typing.Union[discord.Guild, int, str],
+            new_data: dict
+        ) -> dict:
+        """Sets the map data for the given ascension in the given guild."""
+        ascension_data = self.get_space_ascension(ascension_id, guild, dict())
+
+        space_data = self.get_space_data(guild=guild)
+
+        ascension_data["map_data"] = new_data
+        space_data[f"ascension_{ascension_id}"] = ascension_data
+
+        self.set_custom_file("space", file_data=space_data, guild=guild)
 
     def get_ascension_seed(
             self: typing.Self,
@@ -5098,6 +5126,7 @@ anarchy - 1000% of your wager.
             content = ""
 
         ###############################
+        before = time.time()
 
         map_data = space.space_map(
             account = user_account,
@@ -5105,6 +5134,7 @@ anarchy - 1000% of your wager.
             mode = map_type
         )
 
+        after = time.time()
         ###############################
 
         corruption_chance = round(user_account.get_corruption_chance(json_interface=self.json_interface) * 100, 2)
@@ -5133,6 +5163,7 @@ anarchy - 1000% of your wager.
             color=8884479,
         )
         unfortunate_embed.set_image(url=file_path)
+        unfortunate_embed.set_footer(text=f"Map generated in {round(after-before, 3)} seconds.")
 
         try:
             # We need to copy send_file here because if we don't and this message is unable to send
@@ -5222,7 +5253,7 @@ anarchy - 1000% of your wager.
 
     @bread.command(
         name = "analyze",
-        aliases = ["analyse", "analysis"],
+        aliases = ["analyse", "analysis", "scan"],
         brief = "Analyze and get information about planets.",
         description = "Analyze and get information about planets.\n\nTo get a guide for the point parameter, look at the system map."
     )
@@ -5233,7 +5264,7 @@ anarchy - 1000% of your wager.
     
     @space.command(
         name = "analyze",
-        aliases = ["analyse", "analysis"],
+        aliases = ["analyse", "analysis", "scan"],
         brief = "Analyze and get information about planets.",
         description = "Analyze and get information about planets.\n\nTo get a guide for the point parameter, look at the system map."
     )
@@ -7158,6 +7189,29 @@ anarchy - 1000% of your wager.
 
         fake_file = io.StringIO(file_text)
         final_file = discord.File(fake_file, filename="export.json")
+
+        await ctx.reply(file=final_file)
+
+    ########################################################################################################################
+    #####      ADMIN DUMP_MAP_DATA
+
+    @admin.command(
+        brief="Dumps the space map data.",
+        help = "Usage: bread admin dump_map_data"
+    )
+    @commands.check(verification.is_admin_check)
+    async def dump_map_data(self, ctx,
+            ascension: typing.Optional[int]
+        ):
+        if ascension is None:
+            await ctx.reply("Please provide the ascension to use.")
+            return
+    
+        data = self.json_interface.get_space_map_data(ascension, ctx.guild)
+        file_text = json.dumps(data, indent=4)
+
+        fake_file = io.StringIO(file_text)
+        final_file = discord.File(fake_file, filename="map_dump.json")
 
         await ctx.reply(file=final_file)
 
