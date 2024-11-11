@@ -5568,6 +5568,10 @@ anarchy - 1000% of your wager.
 
         actions += [" ", " ", " ", " "]
 
+        if actions[1] == " ":
+            await ctx.reply("To contribute to a project, use this format:\n'$bread space hub contribute [project number] [amount] [item]'")
+            return
+        
         try:
             if actions[1] == "level":
                 project_number = "level"
