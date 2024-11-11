@@ -5461,6 +5461,9 @@ anarchy - 1000% of your wager.
         if item.text not in remaining:
             await ctx.reply("We don't need any more of that to level up the Trade Hub.")
             return
+        
+        if amount == "all":
+            amount = user_account.get(item.text)
     
         amount_contribute = min(remaining[item.text], amount)
 
@@ -5567,18 +5570,19 @@ anarchy - 1000% of your wager.
         galaxy_x, galaxy_y = user_account.get_galaxy_location(json_interface=self.json_interface)
 
         actions += [" ", " ", " ", " "]
-
-        if actions[1] == " ":
-            await ctx.reply("To contribute to a project, use this format:\n'$bread space hub contribute [project number] [amount] [item]'")
-            return
         
+        project_number = None
         try:
             if actions[1] == "level":
                 project_number = "level"
             else:
                 project_number = parse_int(actions[1])
 
-            amount = parse_int(actions[2])
+            if actions[2] == "all":
+                amount = "all"
+            else:
+                amount = parse_int(actions[2])
+
             item = values.get_emote(actions[3])
             confirmation = actions[4].lower() in ["yes", "y", "confirm"]
         except ValueError:
@@ -5595,18 +5599,19 @@ anarchy - 1000% of your wager.
                 await ctx.reply("To contribute to a project, use this format:\n'$bread space hub contribute [project number] [amount] [item]'")
             return
         
-        if amount < 0:
-            await ctx.reply("Hey there, are you trying to steal resources?\nThat's kind of rude.")
-            await ctx.invoke(self.bot.get_command('brick'), member=ctx.author)
-            return
-        
-        if amount == 0:
-            await ctx.reply("Congratulations, you have done absolutely nothing. I will now take your spleen.")
-            return
-        
-        if amount > user_account.get(item.text):
-            await ctx.reply("You don't have enough of that to contribute.")
-            return
+        if amount != "all":
+            if amount < 0:
+                await ctx.reply("Hey there, are you trying to steal resources?\nThat's kind of rude.")
+                await ctx.invoke(self.bot.get_command('brick'), member=ctx.author)
+                return
+            
+            if amount == 0:
+                await ctx.reply("Congratulations, you have done absolutely nothing. I will now take your spleen.")
+                return
+            
+            if amount > user_account.get(item.text):
+                await ctx.reply("You don't have enough of that to contribute.")
+                return
         
         if project_number == "level":
             await self.trade_hub_contribute_level(
@@ -5663,7 +5668,13 @@ anarchy - 1000% of your wager.
             await ctx.reply("The project doesn't need any more of that item.")
             return
         
-        amount_contribute = min(remaining[item.text], amount)
+        total_required = project.total_items_required(day_seed, hub)
+
+        if amount == "all":
+            percentage_left = user_account.get("hub_credits") / 2000
+            amount = math.ceil(((percentage_left + math.sqrt(percentage_left ** 2 + 4 * percentage_left)) / 2) * total_required)
+        
+        amount_contribute = min(remaining[item.text], amount, user_account.get(item.text))
 
         contribution_data = project_data.get("contributions", [])
 
@@ -5671,7 +5682,6 @@ anarchy - 1000% of your wager.
 
         # Make sure the player has the credits to contribute this.
         prior_items = sum(player_data["items"].values())
-        total_required = project.total_items_required(day_seed, hub)
 
         total_credits_used = space.get_project_credits_usage(
             total_items = total_required,
