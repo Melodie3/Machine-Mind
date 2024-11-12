@@ -6,6 +6,9 @@ Patch 27.11:
 - Projects and planet rolling odds now refresh twice per day. Once at bread o' clock and once 12 hours later.
 - Some internal changes have been made with how the map works, nothing should be different except the galaxy map should be generated slightly faster now with higher telescope levels.
 - It will now say how long it took the map to generate. This was originally just for development but Lilly wanted it to be kept.
+- You can now use `$bread hub contribute <project> all <item>` to contribute as much as you can to a project.
+- Fixed bug where running `$bread hub contribute` without any parameters would break.
+- Slightly changed planet rolling odds math.
 
 
 (todo) test reply ping

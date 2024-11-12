@@ -1730,13 +1730,13 @@ def get_planet_modifiers(
         ) # type: GalaxyTile
 
         if galaxy_tile.in_nebula:
-            denominator = 2.5
+            denominator = 1
         else:
             denominator = math.tau
 
         if galaxy_tile.star.star_type == "black_hole":
-            # If it's a black hole, make it a little crazier by dividing the denominator by 2.
-            denominator /= 2
+            # If it's a black hole, make it a little crazier by dividing the denominator by 5.
+            denominator /= 5
 
         deviation = (1 - tile.planet_deviation) / denominator
 
