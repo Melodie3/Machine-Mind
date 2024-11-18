@@ -2026,12 +2026,30 @@ def get_spawn_location(
         user_account: account.Bread_Account
     ) -> tuple[int, int]:
     """Returns a 2D tuple of the spawn location in the galaxy the given player is in."""
+    map_data = json_interface.get_space_map_data(
+        ascension_id = user_account.get_prestige_level(),
+        guild = user_account.get("guild_id")
+    )
+
+    if "spawn_point" in map_data:
+        return tuple(map_data["spawn_point"])
+
     seed = json_interface.get_ascension_seed(
         ascension_id = user_account.get_prestige_level(),
         guild = user_account.get("guild_id")
     )
 
-    return generation.get_galaxy_spawn(galaxy_seed=seed)
+    location = generation.get_galaxy_spawn(galaxy_seed=seed)
+
+    map_data["spawn_point"] = list(location)
+
+    json_interface.set_space_map_data(
+        ascension_id = user_account.get_prestige_level(),
+        guild = user_account.get("guild_id"),
+        new_data = map_data
+    )
+
+    return location
 
 def get_move_cost_galaxy(
         galaxy_seed: str,
