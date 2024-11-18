@@ -1596,7 +1596,7 @@ class Bread_Rocket(Space_Shop_Item):
         
         # (a1 locked) Tier 1: Access to space, Multiroller Terminal (all), Fuel Tank (all)
         #             Tier 2: Advanced Exploration (all), Fuel Research 1, Upgraded Telescopes 1, Engine Efficiency 1
-        # (a2 locked) Tier 3: Upgraded Autopilot 1 (Galaxy travel), Fuel Research 2
+        # (a2 locked) Tier 3: Upgraded Autopilot 1 (Galaxy travel), Fuel Research 2, Payment Bonus (all)
         #             Tier 4: Engine Efficiency 2, Fuel Research 3, Upgraded Telescopes 2
         # (a3 locked) Tier 5: Upgraded Autopilot 2 (Nebula travel), Upgraded Telescopes 3
         #             Tier 6: Engine Efficiency 3, Fuel Research 4, Upgraded Telescopes 4
@@ -1611,7 +1611,7 @@ class Bread_Rocket(Space_Shop_Item):
             # Tier 2.
             f"upgrade your telescopes, advance your exploration, research new methods of creating {values.fuel.text}, and use your fuel more efficiently.",
             # Tier 3.
-            f"traverse through the galaxy and research new methods of creating {values.fuel.text}.",
+            f"traverse through the galaxy, research new methods of creating {values.fuel.text}, and make suspicious deals to obtain more {values.project_credits.text}.",
             # Tier 4.
             f"use your fuel more efficiently, research new methods of creating {values.fuel.text}, and upgrade your telescopes",
             # Tier 5.
@@ -1664,7 +1664,7 @@ class Bread_Rocket(Space_Shop_Item):
             # Tier 2.
             "The Upgraded Telescopes, Advanced Exploration, Fuel Research, and Engine Efficiency shop items have been added to the Space Shop.",
             # Tier 3.
-            "The Upgraded Autopilot and second tier of Fuel Research shop items have been added to the Space Shop.",
+            "The Upgraded Autopilot, Payment Bonus, and second tier of Fuel Research shop items have been added to the Space Shop.",
             # Tier 4.
             "The third tier of Fuel Research and second tier of Upgraded Telescopes and Engine Efficiency are now available to purchase.",
             # Tier 5.
@@ -2053,7 +2053,7 @@ class Payment_Bonus(Space_Shop_Item):
         
         space_level = user_account.get_space_level()
 
-        if space_level <= 4: # Tier 5.
+        if space_level <= 2: # Tier 3.
             return False
         
         required_projects = (user_account.get(cls.name) + 1) * 10 + 10
@@ -2078,7 +2078,7 @@ class Payment_Bonus(Space_Shop_Item):
         ) -> str | None:
         space_level = user_account.get_space_level()
 
-        if space_level <= 4:
+        if space_level <= 2:
             return None # If the rocket level hasn't been reached don't list it at all.
         
         required_projects = (user_account.get(cls.name) + 1) * 10 + 10
