@@ -6790,7 +6790,7 @@ anarchy - 1000% of your wager.
                 await utility.smart_reply(ctx, board)
                 await asyncio.sleep(1)
 
-                await utility.smart_reply(ctx, f"For an incredible feat like this, you have been awared the Anarchy Chessatron!")
+                await utility.smart_reply(ctx, f"For an incredible feat like this, you have been awarded the Anarchy Chessatron!")
                 await asyncio.sleep(1)
 
                 await utility.smart_reply(ctx, values.anarchy_chessatron.text)
