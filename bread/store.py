@@ -2029,9 +2029,7 @@ class Payment_Bonus(Space_Shop_Item):
 
         gem_amount = 500 + 100 * level
 
-        specific_gem = random.Random(f"{user_account.get('id')}-{user_account.get_prestige_level()}-{level}").choice(list(gems.keys()))
-
-        print(f"Random seed: {user_account.get('id')}-{user_account.get_prestige_level()}-{level}")
+        specific_gem = random.Random(f"{user_account.get_prestige_level()}-{level}").choice(list(gems.keys()))
 
         return [
             ("total_dough", dough),
