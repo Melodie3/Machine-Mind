@@ -163,11 +163,15 @@ class Custom_price_item(Store_Item):
         # print(f"Price description called for level {user_account.get(cls.name)}")
         cost = cls.cost(user_account)
         output = ""
-        for i in range(len(cost)):
-            # for pair in cost:
-            pair = cost[i]
-            output += f"{utility.smart_number(pair[1])} {pair[0]}"
-            if i != len(cost) - 1:
+        for index, pair in enumerate(cost):
+            item, amount = pair
+            
+            if item == "total_dough":
+                item = "dough"
+
+            output += f"{utility.smart_number(amount)} {item}"
+
+            if index != len(cost) - 1:
                 output += " ,  "
         return output
 
@@ -1485,19 +1489,6 @@ class Space_Shop_Item(Custom_price_item):
 
     #required
     @classmethod
-    def get_price_description(cls, user_account: account.Bread_Account) -> str:
-        cost = cls.cost(user_account)
-        output = ""
-        for i in range(len(cost)):
-            # for pair in cost:
-            pair = cost[i]
-            output += f"{utility.smart_number(pair[1])} {pair[0]}"
-            if i != len(cost) - 1:
-                output += " ,  "
-        return output
-
-    #required
-    @classmethod
     def description(cls, user_account: account.Bread_Account) -> str:
         return "An item in the space shop"
 
@@ -2016,8 +2007,84 @@ class Engine_Efficiency(Space_Shop_Item):
             return level <= 2
         
         return True
+    
+class Project_Credit_Bonus(Space_Shop_Item):
+    name = "project_credit_bonus"
+    display_name = "Payment Bonus"
 
-space_shop_items = [Bread_Rocket, Upgraded_Autopilot, Fuel_Tank, Fuel_Research, Upgraded_Telescopes, Multiroller_Terminal, Advanced_Exploration, Engine_Efficiency]
+    @classmethod
+    def cost(cls, user_account: account.Bread_Account) -> list[tuple[values.Emote, int]]:
+        level = user_account.get(cls.name)
+
+        dough = int(1.75 ** (level + 27))
+        bread = 1000 + 100 * level
+        corrupted_bread = 500 + 50 * level
+        chessatrons = 150 + 75 * level
+        blue_gems = 2000 + 250 * level
+
+        return [
+            ("total_dough", dough),
+            (values.normal_bread.text, bread),
+            (values.corrupted_bread.text, corrupted_bread),
+            (values.chessatron.text, chessatrons),
+            (values.gem_blue.text, blue_gems)
+        ]
+    
+    @classmethod
+    def description(cls, user_account: account.Bread_Account) -> str:
+        level = user_account.get(cls.name) + 1
+        return f"Sketchy methods to increase your Trade Hub credibility giving you {utility.smart_number(2000 + level * 100)} {values.project_credits.text} to use per day."
+    
+    @classmethod
+    def can_be_purchased(cls, user_account: account.Bread_Account) -> bool:
+        if not super().can_be_purchased(user_account):
+            return False
+        
+        space_level = user_account.get_space_level()
+
+        if space_level <= 4: # Tier 5.
+            return False
+        
+        required_projects = (user_account.get(cls.name) + 1) * 10 + 10
+
+        if user_account.get("projects_completed") < required_projects:
+            return False
+        
+        return True
+
+    @classmethod
+    def get_cost_types(cls, user_account: account.Bread_Account, level: int = None):
+        return ["total_dough", values.normal_bread.text, values.corrupted_bread.text, values.chessatron.text, values.gem_blue.text]
+    
+    @classmethod
+    def max_level(cls, user_account: account.Bread_Account = None) -> int | None:
+        return 20
+
+    @classmethod
+    def get_requirement(
+            cls,
+            user_account: account.Bread_Account
+        ) -> str | None:
+        space_level = user_account.get_space_level()
+
+        if space_level <= 4:
+            return None # If the rocket level hasn't been reached don't list it at all.
+        
+        required_projects = (user_account.get(cls.name) + 1) * 10 + 10
+
+        # If the amount of completed projects is not enough, say so.
+        if user_account.get("projects_completed") < required_projects:
+            return f"Complete {utility.smart_number(required_projects)} projects."
+        
+        # If all else fails, return None.
+        return None
+    
+    @classmethod
+    def do_purchase(cls, user_account: account.Bread_Account):
+        super().do_purchase(user_account)
+        return f"Through some shady business practices you have gotten another {values.project_credits.text} bonus!\nThis is bonus number {user_account.get(cls.name)} for you, your {values.project_credits.text} will be available tomorrow."
+
+space_shop_items = [Bread_Rocket, Upgraded_Autopilot, Fuel_Tank, Fuel_Research, Upgraded_Telescopes, Multiroller_Terminal, Advanced_Exploration, Engine_Efficiency, Project_Credit_Bonus]
 
 
 

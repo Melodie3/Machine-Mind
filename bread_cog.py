@@ -2796,6 +2796,9 @@ loaf_converter""",
             purchasable_set = set(items)
             item_set = set(store.prestige_store_items)
             non_purchasable_items = item_set - purchasable_set # type: set[store.Prestige_Store_Item]
+
+            displayed_items = 0
+
             for item in list(non_purchasable_items):
                 if user_account.get(item.name) >= item.max_level(user_account):
                     continue
@@ -2806,8 +2809,9 @@ loaf_converter""",
                     continue
 
                 output += f"*{item.display_name}: {requirement}*\n\n"
+                displayed_items += 1
             
-            if len(items) == 0:
+            if displayed_items == 0:
                 output += "**It looks like you've bought everything here. Well done.**"
             else:
                 output += 'To buy an item, just type "$bread buy [item name]".'
@@ -5091,6 +5095,9 @@ anarchy - 1000% of your wager.
 
         output = ""
         output += f"Welcome to the Space Shop!\nHere are the items available for purchase:\n\n"
+
+        displayed_items = 0
+
         for item in item_list:
             requirement_given = False
             requirement = None
@@ -5114,8 +5121,10 @@ anarchy - 1000% of your wager.
                     output += f"*Not purchasable right now. {requirement}*\n"
                     
                 output += "\n"
+
+                displayed_items += 1
         
-        if len(items) == 0:
+        if displayed_items == 0:
             output += "**It looks like you've bought everything here. Well done.**"
         else:
             output += 'To buy an item, just type "$bread buy [item name]".'
@@ -6782,7 +6791,6 @@ anarchy - 1000% of your wager.
 
         # then we send the tron messages
         if trons_to_make < 3:
-            print(board)
             for _ in range(trons_to_make):
                 await utility.smart_reply(ctx, f"You've collected all the anarchy pieces! Congratulations!")
                 await asyncio.sleep(1)
@@ -7526,6 +7534,7 @@ anarchy - 1000% of your wager.
 
         items.append(values.ascension_token)
         items.append(values.normal_bread)
+        items.append(values.corrupted_bread)
         items.append(values.anarchy_chess)
         items.append(values.chessatron)
         items.append(values.anarchy_chessatron)
