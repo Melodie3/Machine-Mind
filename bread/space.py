@@ -988,6 +988,15 @@ def get_corruption_chance(
     # where `d` is the distance to (0, 0).
     return ((dist ** 2.15703654359 / 1000) + 118 * math.e ** (-0.232232152965 * (dist / 22.5) ** 2) - 19) / 100
 
+def get_anarchy_corruption_chance(
+        xpos: int,
+        ypos: int
+    ) -> float:
+    """Returns the chance of an anarchy piece becoming corrupted for any point in the galaxy. Between 0 and 1."""
+    regular = get_corruption_chance(xpos, ypos)
+
+    return (regular ** 2) / 1.9602
+
             
 
         

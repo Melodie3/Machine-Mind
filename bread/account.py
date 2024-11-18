@@ -599,6 +599,22 @@ class Bread_Account:
         multiplier = self.get_corruption_negation_multiplier()
 
         return base_chance * multiplier
+    
+    def get_anarchy_corruption_chance(
+            self: typing.Self,
+            json_interface: bread_cog.JSON_interface
+        ) -> float:
+        """Provides the chance of an anarchy piece becoming corrupted. Is going to be a float between 0 and 1."""
+        if self.get_space_level() < 1:
+            return 0.0
+        
+        xpos, ypos = self.get_galaxy_location(json_interface=json_interface)
+
+        return space.get_anarchy_corruption_chance(
+            xpos - space.MAP_RADIUS,
+            ypos - space.MAP_RADIUS
+        )
+        
 
     def get_galaxy_tile(
             self: typing.Self,

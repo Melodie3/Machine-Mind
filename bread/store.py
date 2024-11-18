@@ -1378,7 +1378,6 @@ class First_Catch(Prestige_Store_Item):
 class Fuel_Refinement(Prestige_Store_Item):
     name = "fuel_refinement"
     display_name = "Fuel Refinement"
-    aliases = ["fr"]
 
     costs = [0, 1, 1, 1, 1, 2, 2, 2, 2]
 
@@ -1425,7 +1424,7 @@ class Corruption_Negation(Prestige_Store_Item):
     @classmethod
     def description(cls, user_account: account.Bread_Account) -> str:
         level = user_account.get(cls.name) + 1
-        return f"Decreases the amount of corrupted loaves by 10%, to {100 - (level * 10)}% of base."
+        return f"Decreases the chance of non-anarchy piece loaves from being corrupted by 10%, to {100 - (level * 10)}% of base."
 
     @classmethod
     def max_level(cls, user_account: account.Bread_Account = None) -> typing.Optional[int]:
@@ -1433,8 +1432,8 @@ class Corruption_Negation(Prestige_Store_Item):
     
     @classmethod
     def can_be_purchased(cls, user_account: account.Bread_Account) -> bool:
-        # If the space level is less than 4 (which unlocks galaxy travel) then don't allow this to be purchased.
-        if user_account.get_space_level() < 4:
+        # If the space level is less than 3 (which unlocks galaxy travel) then don't allow this to be purchased.
+        if user_account.get_space_level() < 3:
             return False
         
         return super().can_be_purchased(user_account)
