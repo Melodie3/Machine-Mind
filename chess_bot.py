@@ -750,7 +750,7 @@ class Chess_bot(commands.Cog, name="Chess"):
             await ctx.reply("You declined en passant. Tsk, tsk.")
             #JSON_cog = bot_ref.get_cog("JSON")
             #bot_ref.brick(ctx, ctx.author)
-            await ctx.invoke(self.bot.get_command('brick'), member=ctx.author, duration=None)
+            await ctx.invoke(self.bot.get_command('brick'), member=ctx.author)
         
 
     ##############################################################################################################################################################
