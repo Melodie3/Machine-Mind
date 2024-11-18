@@ -3,6 +3,7 @@ import math
 import typing
 import discord
 import hashlib
+import copy
 from discord.ext import commands
 
 def smart_number(number: int) -> str:
@@ -266,3 +267,59 @@ def plot_line(
 def hash_args(*args, separator: str = "") -> str:
     """Converts a list of args into a string, and then returns the SHA-256 hash of it."""
     return hashlib.sha256(separator.join([str(arg) for arg in args]).encode()).digest()
+
+def get_display_name(member: discord.Member) -> str:
+    """Gets the display name of a discord.Member object."""
+    return (member.global_name if (member.global_name is not None and member.name == member.display_name) else member.display_name)
+
+#################################################################################################################
+#################################################################################################################
+#################################################################################################################
+
+everyone_prevention = discord.AllowedMentions(everyone=False, roles=False)
+
+class CustomContext(commands.Context):    
+    async def safe_reply(
+            self: typing.Self,
+            content: str = "",
+            **kwargs
+        ) -> discord.Message:        
+        kwargs["allowed_mentions"] = everyone_prevention
+
+        return await super().reply(content, **kwargs)
+    
+    async def send(
+            self: typing.Self,
+            content: str = "",
+            **kwargs
+        ) -> discord.Message:
+        kwargs["allowed_mentions"] = everyone_prevention
+
+        return await super().send(content, **kwargs)
+    
+    async def reply(
+            self: typing.Self,
+            content: str = "",
+            **kwargs
+        ) -> discord.Message | None:
+        if (content is None or len(str(content)) == 0) and kwargs.get("embed", None) is None and kwargs.get("file", None) is None:
+            return None
+        
+        try:
+            return await self.safe_reply(content, **copy.deepcopy(kwargs))
+        except discord.HTTPException:
+            # If something went wrong replying.
+            if kwargs.get("mention_author", True):
+                return await self.send(f"{self.author.mention},\n\n{content}", **kwargs)
+            else:
+                return await self.send(f"{sanitize_ping(self.author.display_name)},\n\n{content}", **kwargs)
+
+class CustomBot(commands.Bot):
+    # THIS CAN ONLY BE RELOADED BY RESTARTING THE ENTIRE BOT.
+    
+    async def get_context(
+            self: typing.Self,
+            message: discord.Message,
+            *,
+            cls=CustomContext):
+        return await super().get_context(message, cls=cls)
