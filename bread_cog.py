@@ -5185,7 +5185,7 @@ anarchy - 1000% of your wager.
             color=8884479,
         )
         unfortunate_embed.set_image(url=file_path)
-        unfortunate_embed.set_footer(text=f"Map generated in {round(after-before, 3)} seconds.")
+        unfortunate_embed.set_footer(text=f"Map generated in {round(after - before, 3)} seconds.")
 
         return await ctx.reply(content, embed=unfortunate_embed, file=send_file)
 
@@ -5310,6 +5310,7 @@ anarchy - 1000% of your wager.
         
         ##########################################################
         ##### Generating the map.
+        before = time.time()
 
         map_path = space.space_map(
             account = user_account,
@@ -5318,6 +5319,7 @@ anarchy - 1000% of your wager.
             analyze_position = point.lower()
         )
 
+        after = time.time()
         ##########################################################
         ##### Getting the analysis data.
 
@@ -5380,6 +5382,7 @@ anarchy - 1000% of your wager.
             color=8884479,
         )
         embed_send.set_image(url=file_path)
+        embed_send.set_footer(text=f"Analysis generated in {round(after - before, 3)} seconds.")
         
         await ctx.reply(embed=embed_send, file=send_file)
 
