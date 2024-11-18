@@ -2007,8 +2007,8 @@ class Engine_Efficiency(Space_Shop_Item):
         
         return True
     
-class Project_Credit_Bonus(Space_Shop_Item):
-    name = "project_credit_bonus"
+class Payment_Bonus(Space_Shop_Item):
+    name = "payment_bonus"
     display_name = "Payment Bonus"
 
     @classmethod
@@ -2019,14 +2019,26 @@ class Project_Credit_Bonus(Space_Shop_Item):
         bread = 1000 + 100 * level
         corrupted_bread = 500 + 50 * level
         chessatrons = 150 + 75 * level
-        blue_gems = 2000 + 250 * level
+
+        gems = {
+            values.gem_green.text: 1,
+            values.gem_purple.text: 2,
+            values.gem_blue.text: 4,
+            values.gem_red.text: 8,
+        }
+
+        gem_amount = 500 + 100 * level
+
+        specific_gem = random.Random(f"{user_account.get('id')}-{user_account.get_prestige_level()}-{level}").choice(list(gems.keys()))
+
+        print(f"Random seed: {user_account.get('id')}-{user_account.get_prestige_level()}-{level}")
 
         return [
             ("total_dough", dough),
             (values.normal_bread.text, bread),
             (values.corrupted_bread.text, corrupted_bread),
             (values.chessatron.text, chessatrons),
-            (values.gem_blue.text, blue_gems)
+            (specific_gem, gems[specific_gem] * gem_amount)
         ]
     
     @classmethod
@@ -2083,7 +2095,7 @@ class Project_Credit_Bonus(Space_Shop_Item):
         super().do_purchase(user_account)
         return f"Through some shady business practices you have gotten another {values.project_credits.text} bonus!\nThis is bonus number {user_account.get(cls.name)} for you, your {values.project_credits.text} will be available tomorrow."
 
-space_shop_items = [Bread_Rocket, Upgraded_Autopilot, Fuel_Tank, Fuel_Research, Upgraded_Telescopes, Multiroller_Terminal, Advanced_Exploration, Engine_Efficiency, Project_Credit_Bonus]
+space_shop_items = [Bread_Rocket, Upgraded_Autopilot, Fuel_Tank, Fuel_Research, Upgraded_Telescopes, Multiroller_Terminal, Advanced_Exploration, Engine_Efficiency, Payment_Bonus]
 
 
 
