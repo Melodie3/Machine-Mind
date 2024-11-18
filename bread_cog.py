@@ -180,18 +180,28 @@ all_stonks = main_stonks + shadow_stonks
 def get_channel_permission_level(ctx: commands.Context):
     """Returns the permission level for the channel the context was invoked in.
     This will handle threads as well."""
-    # print (f"getting channel permission level for {ctx.channel.name}")
-    # first, can only roll in channels and not in threads
-    if isinstance(ctx.channel, discord.threads.Thread):
-        # print("tried to roll in a thread")
-        return PERMISSION_LEVEL_NONE
-    #channel = ctx.channel.parent if isinstance(ctx.channel, discord.threads.Thread) else ctx.channel
+
+    # First, check if the channel is actually a thread.
+    # Threads are handled seperately from regular channel, and have their own restrictions.
+    if isinstance(ctx.channel, discord.Thread):
+        parent_channel = ctx.channel.parent
+        parent_level = channel_permission_levels.get(parent_channel.name, PERMISSION_LEVEL_NONE)
+
+        # If the permission level of the parent channel is not 2 or higher then doing stuff here isn't allowed.
+        if parent_level < 2:
+            return PERMISSION_LEVEL_NONE
+        
+        # Next, check if it's a private thread.
+        # You can't do stuff in private threads, but regular threads are okay.
+        if ctx.channel.is_private():
+            return PERMISSION_LEVEL_NONE
+        
+        # If it passed all of the previous checks it's okay to use, but only activities, so not rolling.
+        return PERMISSION_LEVEL_ACTIVITIES
+
+    # If it's not a thread, get the permission level based off of the name.
     permission_level = channel_permission_levels.get(ctx.channel.name, PERMISSION_LEVEL_NONE)
-    # print(f"permission level is {permission_level}")
-    # if ctx.guild.id != default_guild and ctx.guild.id != testing_guild:
-    #     # print("not in default guild")
-    #     # TODO: change this once we support multi-server gaming
-    #     permission_level = min(permission_level, PERMISSION_LEVEL_BASIC)
+
     return permission_level
 
 def get_id_from_guild(guild: typing.Union[discord.Guild, int, str]) -> str:
