@@ -1913,7 +1913,9 @@ def create_trade_hub(
         "project_progress": {
             "project_1": {},
             "project_2": {},
-            "project_3": {}
+            "project_3": {},
+            "project_4": {},
+            "project_5": {}
         }
     }
 
