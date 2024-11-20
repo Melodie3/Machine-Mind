@@ -5355,6 +5355,7 @@ anarchy - 1000% of your wager.
             analysis_lines = tile_analyze.get_analysis(
                 guild = ctx.guild.id,
                 json_interface = self.json_interface,
+                user_account = user_account,
                 detailed = detailed
             )
         else:

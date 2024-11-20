@@ -226,6 +226,8 @@ class SystemTile:
         self.galaxy_ypos = galaxy_ypos
         self.system_xpos = round(system_xpos)
         self.system_ypos = round(system_ypos)
+
+        self.galaxy_tile = None
     
     # Optional for subclasses.
     def __str__(self: typing.Self):
@@ -247,7 +249,25 @@ class SystemTile:
     def get_emoji(self: typing.Self) -> str:
         """Returns an emoji that represents this tile."""
         return "background"
+    
+    def get_galaxy_tile(
+            self: typing.Self,
+            user_account: account.Bread_Account,
+            json_interface: bread_cog.JSON_interface,
+        ) -> GalaxyTile:
+        """Gets the galaxy tile for the tile this is in. This is based off of the `galaxy_tile` attribute, but will load it if it has not been loaded yet."""
+        if self.galaxy_tile is None:
+            self.galaxy_tile = get_galaxy_coordinate(
+                json_interface = json_interface,
+                guild = user_account.get("guild_id"),
+                galaxy_seed = self.galaxy_seed,
+                ascension = user_account.get_prestige_level(),
+                xpos = self.galaxy_xpos,
+                ypos = self.galaxy_ypos,
+                load_data = True
+            )
         
+        return self.galaxy_tile
         
 
     ###############################################################################
@@ -258,6 +278,7 @@ class SystemTile:
             self: typing.Self,
             guild: typing.Union[discord.Guild, int, str],
             json_interface: bread_cog.JSON_interface,
+            user_account: account.Bread_Account,
             detailed: bool = False
         ) -> list[str]:
         """Generates a list of strings that describe this tile, to be used by the analysis command."""
@@ -286,6 +307,7 @@ class SystemEmpty(SystemTile):
             self: typing.Self,
             guild: typing.Union[discord.Guild, int, str],
             json_interface: bread_cog.JSON_interface,
+            user_account: account.Bread_Account,
             detailed: bool = False
         ) -> list[str]:
         return ["There seems to be nothing here."]
@@ -316,12 +338,19 @@ class SystemStar(SystemTile):
             self: typing.Self,
             guild: typing.Union[discord.Guild, int, str],
             json_interface: bread_cog.JSON_interface,
+            user_account: account.Bread_Account,
             detailed: bool = False
         ) -> list[str]:
-        return [
-                "Object type: Star",
-                f"Star type: {self.star_type.title()}"
-            ]
+        out = [
+            "Object type: Star",
+            f"Star type: {self.star_type.title()}"
+        ]
+
+        if self.star_type == "black_hole":
+            out.append("Sensors read more interference and")
+            out.append("more dynamic deviations than normal.")
+
+        return out
     
 ########################################################
 
@@ -345,6 +374,7 @@ class SystemAsteroid(SystemTile):
             self: typing.Self,
             guild: typing.Union[discord.Guild, int, str],
             json_interface: bread_cog.JSON_interface,
+            user_account: account.Bread_Account,
             detailed: bool = False
         ) -> list[str]:
         result = [
@@ -385,6 +415,7 @@ class SystemTradeHub(SystemTile):
             self: typing.Self,
             guild: typing.Union[discord.Guild, int, str],
             json_interface: bread_cog.JSON_interface,
+            user_account: account.Bread_Account,
             detailed: bool = False
         ) -> list[str]:
         return [
@@ -425,6 +456,7 @@ class SystemPlanet(SystemTile):
             self: typing.Self,
             guild: typing.Union[discord.Guild, int, str],
             json_interface: bread_cog.JSON_interface,
+            user_account: account.Bread_Account,
             detailed: bool = False
         ) -> list[str]:
         day_seed = json_interface.get_day_seed(guild=guild)
@@ -451,6 +483,22 @@ class SystemPlanet(SystemTile):
             "Anarchy Piece": values.anarchy_black_pawn
         }
         deviation = self.planet_deviation
+        
+        galaxy_tile = self.get_galaxy_tile(
+            json_interface = json_interface,
+            user_account = user_account
+        )
+
+        if galaxy_tile.in_nebula:
+            denominator = 1
+        else:
+            denominator = math.tau
+
+        if galaxy_tile.star.star_type == "black_hole":
+            # If it's a black hole, make it a little crazier by dividing the denominator by 5.
+            denominator /= 5
+        
+        effective_deviation = (1 - self.planet_deviation) / denominator
 
         ranges = [
             (float('-inf'), 0.75, "Extremely Stable"),
@@ -486,8 +534,9 @@ class SystemPlanet(SystemTile):
             f"Planet type: {self.planet_type.text}",
             f"Distance: {round(self.planet_distance, 3)}",
             f"Angle: {self.planet_angle}",
-            f"Deviation: {round(self.planet_deviation, 3)}",
-            f"Stability: {stability}"
+            f"Raw deviation: {round(deviation, 3)}",
+            f"Effective deviation: {round(effective_deviation, 3)}",
+            f"Base stability: {stability}"
             "", # Blank item to add line break.
             "Item modifiers:"
         ]
