@@ -6170,12 +6170,15 @@ anarchy - 1000% of your wager.
         message_lines += "\n\n**# -- Projects --**"
 
         for project_id, data in enumerate(hub_projects[:hub.project_count]):
+            contributions = data.get('contributions')
+
             message_lines += f"#{project_id + 1}: "
             message_lines += data.get("project").display_info(
                 day_seed = day_seed,
                 system_tile = hub,
                 compress_description = True,
-                completed = data.get("completed", False)
+                completed = data.get("completed", False),
+                item_information = contributions
             )
             message_lines += "\n\n"
         
