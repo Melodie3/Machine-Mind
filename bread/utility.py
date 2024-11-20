@@ -52,13 +52,14 @@ def write_number_of_times(number: int) -> str:
 
 def write_count(
         number: int,
-        word: str
+        word: str,
+        delimiter: str = ""
     ) -> str:
     """Writes the count of a number and word, and will pluralize the word if the number is not 1."""
     if number == 1:
         pass
     else:
-        word =  word + "s"
+        word =  word + delimiter + "s"
     output = smart_number(number) + " " + word
     return output
 
