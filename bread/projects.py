@@ -58,7 +58,7 @@ class Project:
                 system_tile = system_tile
             ))
 
-            item_info = "(" + ", ".join(f"{utility.smart_number(required.get(key, 0) - remaining.get(key))}/{utility.smart_number(required.get(key, 0))} {key}" for key in remaining) + ")"
+            item_info = "(" + ", ".join(f"{utility.smart_number(required.get(key, 0) - remaining.get(key))}/{utility.smart_number(required.get(key, 0))} {key}" for key in remaining) + f" for {cls.get_reward_description(day_seed, system_tile)})"
         else:
             item_info = ""
 
