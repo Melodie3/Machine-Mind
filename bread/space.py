@@ -346,7 +346,7 @@ class SystemStar(SystemTile):
             f"Star type: {self.star_type.title()}"
         ]
 
-        if self.star_type == "black_hole":
+        if self.star_type == "black_hole" and detailed:
             out.append("Sensors read more interference and")
             out.append("more dynamic deviations than normal.")
 
