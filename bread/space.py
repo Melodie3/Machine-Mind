@@ -753,6 +753,8 @@ class GalaxyTile:
             )
 
             self.raw_system_data = raw_data
+        else:
+            raw_data = self.raw_system_data
 
         # If the generated data is None, then return.
         # It should only be None if there isn't a system here, which should be prevented earlier, but just in case.
