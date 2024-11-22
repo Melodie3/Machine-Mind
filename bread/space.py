@@ -1615,7 +1615,7 @@ def get_galaxy_coordinate(
         GalaxyTile: A GalaxyTile object for the coordinate.
     """
     # If the tile is outside the galaxy, return an empty GalaxyTile.
-    if generation.position_check(xpos, ypos):
+    if not generation.position_check(xpos - MAP_RADIUS, ypos - MAP_RADIUS):
         return GalaxyTile(
             galaxy_seed = galaxy_seed,
             ascension = ascension,
