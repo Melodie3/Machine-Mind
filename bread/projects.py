@@ -22,7 +22,8 @@ class Project:
             day_seed: str,
             system_tile: space.SystemTradeHub,
             compress_description: bool = False,
-            completed: bool = False
+            completed: bool = False,
+            item_information: dict = None
         ) -> str:
         """Returns a string that represents this project, it includes the name and description, as well as some text if the project has been completed."""
         name = cls.name(day_seed, system_tile)
@@ -45,7 +46,23 @@ class Project:
         completed_prefix = "~~" if completed else ""
         completed_suffix = "~~    COMPLETED" if completed else ""
 
-        return f"   **{completed_prefix}{name}:{completed_suffix}**\n{description_use}"
+        if item_information is not None and not completed:
+            remaining = cls.get_remaining_items(
+                day_seed = day_seed,
+                system_tile = system_tile,
+                progress_data = item_information
+            )
+
+            required = dict(cls.get_cost(
+                day_seed = day_seed,
+                system_tile = system_tile
+            ))
+
+            item_info = "(" + ", ".join(f"{utility.smart_number(required.get(key, 0) - remaining.get(key))}/{utility.smart_number(required.get(key, 0))} {key}" for key in remaining) + f" for {cls.get_reward_description(day_seed, system_tile)})"
+        else:
+            item_info = ""
+
+        return f"   **{completed_prefix}{name}:{completed_suffix}** {item_info}\n{description_use}"
 
     # Required for subclasses.
     @classmethod

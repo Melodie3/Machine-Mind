@@ -2,19 +2,13 @@
 HOW TO UNRESTRICT SPACE TO a9:
 - Go to Bread_cog.space_shop and remove the if that's "if user_account.get_prestige_level() < 9:"
 
-Patch Notes: 
-- Added space.
-  - Currently only available on a9, when a9 finishes it will be available from a2 and above.
-  - Added a Space Shop accessible via "$bread space shop"
-  - In order to access space you need to purchase a Bread Rocket in the Space Shop.
-  - The anarchy piece set can be found when bread rolling in space.
-- Special and rare bread can now be alchemized out of :bread: and other specials of the same rarity.
-- You can now use fractions in gifting to specify a custom amount.
-- Modified Chessatron dough equation to buff Chessatron Contraption.
-- Decreased Chessatron Contraption max level to 10.
-- Changed the Random Chess Piece price scheme to be the chessatron value divided by 6, rounded up to the nearest 50.
-- You can now buy up to 2,500 Random Chess Pieces and 5,000,000 Special Bread Packs per day.
-- You can now ascend to the highest ascension from any ascension if you have the ascension requirements on your current ascension.
+Patch 27.11:
+- Projects and planet rolling odds now refresh twice per day. Once at bread o' clock and once 12 hours later.
+- Some internal changes have been made with how the map works, nothing should be different except the galaxy map should be generated slightly faster now with higher telescope levels.
+- It will now say how long it took the map to generate. This was originally just for development but Lilly wanted it to be kept.
+- You can now use `$bread hub contribute <project> all <item>` to contribute as much as you can to a project.
+- Fixed bug where running `$bread hub contribute` without any parameters would break.
+- Slightly changed planet rolling odds math.
 
 
 (todo) test reply ping
@@ -186,18 +180,28 @@ all_stonks = main_stonks + shadow_stonks
 def get_channel_permission_level(ctx: commands.Context):
     """Returns the permission level for the channel the context was invoked in.
     This will handle threads as well."""
-    # print (f"getting channel permission level for {ctx.channel.name}")
-    # first, can only roll in channels and not in threads
-    if isinstance(ctx.channel, discord.threads.Thread):
-        # print("tried to roll in a thread")
-        return PERMISSION_LEVEL_NONE
-    #channel = ctx.channel.parent if isinstance(ctx.channel, discord.threads.Thread) else ctx.channel
+
+    # First, check if the channel is actually a thread.
+    # Threads are handled seperately from regular channel, and have their own restrictions.
+    if isinstance(ctx.channel, discord.Thread):
+        parent_channel = ctx.channel.parent
+        parent_level = channel_permission_levels.get(parent_channel.name, PERMISSION_LEVEL_NONE)
+
+        # If the permission level of the parent channel is not 2 or higher then doing stuff here isn't allowed.
+        if parent_level < 2:
+            return PERMISSION_LEVEL_NONE
+        
+        # Next, check if it's a private thread.
+        # You can't do stuff in private threads, but regular threads are okay.
+        if ctx.channel.is_private():
+            return PERMISSION_LEVEL_NONE
+        
+        # If it passed all of the previous checks it's okay to use, but only activities, so not rolling.
+        return PERMISSION_LEVEL_ACTIVITIES
+
+    # If it's not a thread, get the permission level based off of the name.
     permission_level = channel_permission_levels.get(ctx.channel.name, PERMISSION_LEVEL_NONE)
-    # print(f"permission level is {permission_level}")
-    # if ctx.guild.id != default_guild and ctx.guild.id != testing_guild:
-    #     # print("not in default guild")
-    #     # TODO: change this once we support multi-server gaming
-    #     permission_level = min(permission_level, PERMISSION_LEVEL_BASIC)
+
     return permission_level
 
 def get_id_from_guild(guild: typing.Union[discord.Guild, int, str]) -> str:
@@ -506,6 +510,32 @@ class JSON_interface:
         space_data = self.get_space_data(guild=guild)
 
         return space_data.get(f"ascension_{ascension_id}", default)
+
+    def get_space_map_data(
+            self: typing.Self,
+            ascension_id: typing.Union[int, str],
+            guild: typing.Union[discord.Guild, int, str],
+        ) -> dict:
+        """Gets the map data for the given ascension in the given guild."""
+        ascension_data = self.get_space_ascension(ascension_id, guild, dict())
+
+        return ascension_data.get("map_data", {})
+
+    def set_space_map_data(
+            self: typing.Self,
+            ascension_id: typing.Union[int, str],
+            guild: typing.Union[discord.Guild, int, str],
+            new_data: dict
+        ) -> dict:
+        """Sets the map data for the given ascension in the given guild."""
+        ascension_data = self.get_space_ascension(ascension_id, guild, dict())
+
+        space_data = self.get_space_data(guild=guild)
+
+        ascension_data["map_data"] = new_data
+        space_data[f"ascension_{ascension_id}"] = ascension_data
+
+        self.set_custom_file("space", file_data=space_data, guild=guild)
 
     def get_ascension_seed(
             self: typing.Self,
@@ -864,6 +894,11 @@ class Bread_cog(commands.Cog, name="Bread"):
             self.reset_internal() # this resets all roll counts to 0
             print("Daily reset called")
             await self.announce("bread_o_clock", "It's Bread O'Clock!")
+        
+        #run at 3am
+        elif time.hour == 3:
+            print("Mid-day space reset called")
+            self.reset_space_all()
 
         # every 6 hours, based around 3pm
         # print (f"Hour +15 %6 is {(time.hour + 15) % 6}")
@@ -1445,14 +1480,14 @@ class Bread_cog(commands.Cog, name="Bread"):
             output_3 += f"You have {user_account.write_count('special_bread', 'Special Bread')}.\n"
         
         if len(output) + len(output_2) + len(output_3) < 1900:
-            await utility.smart_reply(ctx, output + output_2 + output_3)
+            await ctx.reply(output + output_2 + output_3)
         elif len(output) + len(output_2) < 1900:
-            await utility.smart_reply(ctx, output + output_2)
-            await utility.smart_reply(ctx, "Stats continued:\n" + output_3)
+            await ctx.reply(output + output_2)
+            await ctx.reply("Stats continued:\n" + output_3)
         else:
-            await utility.smart_reply(ctx, output)
-            await utility.smart_reply(ctx, "Stats continued:\n" + output_2)
-            await utility.smart_reply(ctx, "Stats continued:\n" + output_3)
+            await ctx.reply(output)
+            await ctx.reply("Stats continued:\n" + output_2)
+            await ctx.reply("Stats continued:\n" + output_3)
         # await ctx.reply(output)
 
         #await self.do_chessboard_completion(ctx)
@@ -2134,11 +2169,11 @@ loaf_converter""",
             
         # check if black hole is activated and if we're in #bread-rolls
         if user_account.get("black_hole") == 2 and get_channel_permission_level(ctx) == PERMISSION_LEVEL_MAX:
-            await utility.smart_reply(ctx, ":cyclone:")
+            await ctx.reply(":cyclone:")
         
         # black hole is not activated, send messages normally
         for roll in output_messages:
-            await utility.smart_reply(ctx, roll)
+            await ctx.reply(roll)
             if len(output_messages) > 1:
                 await asyncio.sleep(.75)
                 
@@ -2180,7 +2215,7 @@ loaf_converter""",
                         messages.append("\n".join(add))
                 
                 for message in messages:
-                    await utility.smart_reply(ctx, message)
+                    await ctx.reply(message)
                 
         except:
             print(traceback.format_exc())
@@ -2261,45 +2296,45 @@ loaf_converter""",
         elif user_account.get("full_chess_set") <= 5:
             messages_to_send = trons_to_make
             while messages_to_send > 0:
-                await utility.smart_reply(ctx, f"You have collected all the chess pieces! Congratulations!\n\nWhat a beautiful collection!")
+                await ctx.reply(f"You have collected all the chess pieces! Congratulations!\n\nWhat a beautiful collection!")
                 await asyncio.sleep(1)
 
-                await utility.smart_reply(ctx, f"{board}")
+                await ctx.reply(f"{board}")
                 await asyncio.sleep(1)
 
-                await utility.smart_reply(ctx, f"You will now be awarded the most prestigious of chess pieces: The Mega Chessatron!")
+                await ctx.reply(f"You will now be awarded the most prestigious of chess pieces: The Mega Chessatron!")
                 await asyncio.sleep(1)
 
-                await utility.smart_reply(ctx, f"{values.chessatron.text}")
+                await ctx.reply(f"{values.chessatron.text}")
                 await asyncio.sleep(1)
-                await utility.smart_reply(ctx, f"May it serve you well. You also have been awarded **{utility.smart_number(total_dough_value//trons_to_make)} dough** for your efforts.")
+                await ctx.reply(f"May it serve you well. You also have been awarded **{utility.smart_number(total_dough_value//trons_to_make)} dough** for your efforts.")
                 messages_to_send -= 1
         elif trons_to_make < 10:
             messages_to_send = trons_to_make
             while messages_to_send > 0:
                 await asyncio.sleep(1)
-                await utility.smart_reply(ctx, f"Congratulations! You've collected all the chess pieces! This will be chessatron **#{utility.smart_number(user_account.get('full_chess_set')+1-messages_to_send)}** for you.\n\n{board}\nHere is your award of **{utility.smart_number(total_dough_value//trons_to_make)} dough**, and here's your new chessatron!")
+                await ctx.reply(f"Congratulations! You've collected all the chess pieces! This will be chessatron **#{utility.smart_number(user_account.get('full_chess_set')+1-messages_to_send)}** for you.\n\n{board}\nHere is your award of **{utility.smart_number(total_dough_value//trons_to_make)} dough**, and here's your new chessatron!")
                 await asyncio.sleep(1)
-                await utility.smart_reply(ctx, f"{values.chessatron.text}")
+                await ctx.reply(f"{values.chessatron.text}")
                 messages_to_send -= 1
         elif trons_to_make < 5000:
             output = f"Congratulations! More chessatrons! You've made {utility.smart_number(user_account.get('full_chess_set'))} of them in total and {utility.smart_number(trons_to_make)} right now! Here's your reward of **{utility.smart_number(total_dough_value)} dough**."
-            await utility.smart_reply(ctx, output)
+            await ctx.reply(output)
             await asyncio.sleep(1)
             
             output = ""
             for _ in range(trons_to_make):
                 output += f"{values.chessatron.text} "
                 if len(output) > 1800:
-                    await utility.smart_reply(ctx, output)
+                    await ctx.reply(output)
                     output = ""
                     await asyncio.sleep(1)
-            await utility.smart_reply(ctx, output)
+            await ctx.reply(output)
         else:
             output = f"Wow. You have created a **lot** of chessatrons. {utility.smart_number(trons_to_make)} to be exact. I will not even attempt to list them all. Here is your reward of **{utility.smart_number(total_dough_value)} dough**."
-            await utility.smart_reply(ctx, output)
+            await ctx.reply(output)
             await asyncio.sleep(1)
-            await utility.smart_reply(ctx, f"{values.chessatron.text} x {utility.smart_number(trons_to_make)}")
+            await ctx.reply(f"{values.chessatron.text} x {utility.smart_number(trons_to_make)}")
 
     
 
@@ -2326,14 +2361,14 @@ loaf_converter""",
         if arg.lower() == "on":
             user_account.set("auto_chessatron", True)
             self.json_interface.set_account(ctx.author, user_account, guild = ctx.guild.id)
-            await utility.smart_reply(ctx, f"Auto chessatron is now on.")
+            await ctx.reply(f"Auto chessatron is now on.")
         elif arg.lower() == "off":
             user_account.set("auto_chessatron", False)
             self.json_interface.set_account(ctx.author, user_account, guild = ctx.guild.id)
-            await utility.smart_reply(ctx, f"Auto chessatron is now off.")
+            await ctx.reply(f"Auto chessatron is now off.")
         else:
             if get_channel_permission_level(ctx) < PERMISSION_LEVEL_ACTIVITIES:
-                await utility.smart_reply(ctx, f"Thank you for your interest in creating chessatrons! You can do so over in {self.json_interface.get_rolling_channel(ctx.guild.id)}.")
+                await ctx.reply(f"Thank you for your interest in creating chessatrons! You can do so over in {self.json_interface.get_rolling_channel(ctx.guild.id)}.")
                 return
             
             if is_numeric(arg):
@@ -2392,7 +2427,7 @@ loaf_converter""",
                 break
         
         if number_of_chessatrons is not None and number_of_chessatrons < 0:
-            await utility.smart_reply(ctx, "You can't make a negative number of chessatrons.")
+            await ctx.reply("You can't make a negative number of chessatrons.")
             return
         
 
@@ -2428,7 +2463,7 @@ loaf_converter""",
         # gem_count = user_account.get(values.gem_red.text)
 
         if total_gem_count < 32 or number_of_chessatrons == 0:
-            await utility.smart_reply(ctx, f"You need at least 32 gems to create a chessatron.")
+            await ctx.reply(f"You need at least 32 gems to create a chessatron.")
             return
 
         gems_needed = number_of_chessatrons * 32
@@ -2479,7 +2514,7 @@ loaf_converter""",
             gold_gems -= gold_gems_used
 
         if gems_needed > 0:
-            await utility.smart_reply(ctx, "It seems something went wrong.")
+            await ctx.reply("It seems something went wrong.")
             return
 
         if gold_gems // 4 != gold_gems / 4:
@@ -2535,7 +2570,7 @@ loaf_converter""",
 
         gems_string = ", ".join(gems_list)
 
-        await utility.smart_reply(ctx, f"You have used {gems_string} to make chess pieces.")
+        await ctx.reply(f"You have used {gems_string} to make chess pieces.")
 
         await self.do_chessboard_completion(ctx, amount = parse_int(number_of_chessatrons))
 
@@ -2563,16 +2598,16 @@ loaf_converter""",
         
         if toggle.lower() == "on":
             user_account.set("spellcheck", True)
-            await utility.smart_reply(ctx, f"Spellcheck is now on.")
+            await ctx.reply(f"Spellcheck is now on.")
         elif toggle.lower() == "off":
             user_account.set("spellcheck", False)
-            await utility.smart_reply(ctx, f"Spellcheck is now off.")
+            await ctx.reply(f"Spellcheck is now off.")
         else:
             user_account.set("spellcheck", not user_account.get("spellcheck"))
             if user_account.get("spellcheck"):
-                await utility.smart_reply(ctx, f"Spellcheck is now on.")
+                await ctx.reply(f"Spellcheck is now on.")
             else:
-                await utility.smart_reply(ctx, f"Spellcheck is now off.")
+                await ctx.reply(f"Spellcheck is now off.")
 
         self.json_interface.set_account(ctx.author, user_account, guild = ctx.guild.id)
 
@@ -2643,14 +2678,14 @@ loaf_converter""",
 
         description += """If you would like to ascend, please type "I would like to ascend".\nIf you would like to ascend to the highest available ascension, please type "Take me to the latest ascension".\nRemember that this is a permanent action that cannot be undone."""
 
-        await utility.smart_reply(ctx, description)
+        await ctx.reply(description)
 
         def check(m: discord.Message):  # m = discord.Message.
             return m.author.id == ctx.author.id and m.channel.id == ctx.channel.id 
         try:
             msg = await self.bot.wait_for('message', check = check, timeout = 60.0)
         except asyncio.TimeoutError: 
-            await utility.smart_reply(ctx, "If you are not ready yet, that is okay.")
+            await ctx.reply("If you are not ready yet, that is okay.")
             return 
         
         response = msg.content
@@ -2658,7 +2693,7 @@ loaf_converter""",
         latest_ascension_msg = "take me to the latest ascension" in response.lower()
 
         if next_ascension_msg and latest_ascension_msg:
-            await utility.smart_reply(ctx, "Contradictory messages, I see. Please come back when you are feeling more decisive.")
+            await ctx.reply("Contradictory messages, I see. Please come back when you are feeling more decisive.")
             return
         elif next_ascension_msg:
             # now we can ascend
@@ -2667,7 +2702,7 @@ loaf_converter""",
 
             description = f"Congratulations! You have ascended to a higher plane of existence. You are now at level {user_account.get_prestige_level()} of ascension. I wish you the best of luck on your journey!\n\n"
             description += f"You have also recieved **1 {values.ascension_token.text}**. You will recieve more as you get more daily rolls. You can spend it at the hidden bakery to buy special upgrades. Find it with \"$bread hidden_bakery\"."
-            await utility.smart_reply(ctx, description)
+            await ctx.reply(description)
         elif latest_ascension_msg:
             pre_ascension_tokens = user_account.get(values.ascension_token.text)
             user_account.increase_prestige_to_goal(max_prestige_level)
@@ -2675,9 +2710,9 @@ loaf_converter""",
 
             description = f"Congratulations! You have ascended to the highest plane of existence. You are now at level {user_account.get_prestige_level()} of ascension. I wish you the best of luck on your journey!\n\n"
             description += f"You have also recieved **{post_ascension_tokens - pre_ascension_tokens} {values.ascension_token.text}**. You will recieve more as you get more daily rolls. You can spend it at the hidden bakery to buy special upgrades. Find it with \"$bread hidden_bakery\"."
-            await utility.smart_reply(ctx, description)
+            await ctx.reply(description)
         else:
-            await utility.smart_reply(ctx, "If you are not ready yet, that is okay.")
+            await ctx.reply("If you are not ready yet, that is okay.")
             return 
 
         # and save the account
@@ -2761,6 +2796,9 @@ loaf_converter""",
             purchasable_set = set(items)
             item_set = set(store.prestige_store_items)
             non_purchasable_items = item_set - purchasable_set # type: set[store.Prestige_Store_Item]
+
+            displayed_items = 0
+
             for item in list(non_purchasable_items):
                 if user_account.get(item.name) >= item.max_level(user_account):
                     continue
@@ -2771,8 +2809,9 @@ loaf_converter""",
                     continue
 
                 output += f"*{item.display_name}: {requirement}*\n\n"
+                displayed_items += 1
             
-            if len(items) == 0:
+            if displayed_items == 0:
                 output += "**It looks like you've bought everything here. Well done.**"
             else:
                 output += 'To buy an item, just type "$bread buy [item name]".'
@@ -2808,11 +2847,11 @@ loaf_converter""",
         for item in items:
             addition = f"\t**{item.display_name}** - {item.get_price_description(user_account)}\n{item.description(user_account)}\n\n"
             if len(output) + len(addition) > 1800:
-                await utility.smart_reply(ctx, output)
+                await ctx.reply(output)
                 output = "Shop Continued:\n\n"
             output += addition
             # if len(output) > 1800:
-            #     await utility.smart_reply(ctx, output)
+            #     await ctx.reply(output)
             #     output = "Shop Continued:\n\n"
         
         if len(items) == 0:
@@ -2820,7 +2859,7 @@ loaf_converter""",
         else:
             output += 'To buy an item, just type "$bread buy [item name]".'
 
-        await utility.smart_reply(ctx, output)
+        await ctx.reply(output)
         return
 
     ########################################################################################################################
@@ -2838,13 +2877,13 @@ loaf_converter""",
             ):
 
         if item_name is None:
-            await utility.smart_reply(ctx, "Please specify an item to buy.")
+            await ctx.reply("Please specify an item to buy.")
             return
 
         # first we make sure this is a valid channel
         #if ctx.channel.name not in earnable_channels:
         if get_channel_permission_level(ctx) < PERMISSION_LEVEL_ACTIVITIES:
-            await utility.smart_reply(ctx, f"Thank you for your interest in purchasing an item from the store. Please visit our nearby location in {self.json_interface.get_rolling_channel(ctx.guild.id)}.")
+            await ctx.reply(f"Thank you for your interest in purchasing an item from the store. Please visit our nearby location in {self.json_interface.get_rolling_channel(ctx.guild.id)}.")
             return
 
         # split the first word of the item name and check if it's a number
@@ -2852,7 +2891,7 @@ loaf_converter""",
         item_name_split = item_name.split(" ")
         if len(item_name_split) > 1:
             if item_name_split[0][0] == '-':
-                await utility.smart_reply(ctx, "You can't buy negative numbers of items.")
+                await ctx.reply("You can't buy negative numbers of items.")
                 return
             if is_digit(item_name_split[0]):
                 item_name = " ".join(item_name_split[1:])
@@ -2868,7 +2907,7 @@ loaf_converter""",
             item_name_2 = item_name
 
         if item_count < 1:
-            await utility.smart_reply(ctx, "You can't buy zero of an item.")
+            await ctx.reply("You can't buy zero of an item.")
             return
 
         # first we get the account of the user who called it
@@ -2902,7 +2941,7 @@ loaf_converter""",
                 item = i
                 break
         else: # if the for loop doesn't break, run this. This should run the same as an 'if item is None' check.
-            await utility.smart_reply(ctx, "Sorry, but I don't recognize that item's name.")
+            await ctx.reply("Sorry, but I don't recognize that item's name.")
             return
 
 
@@ -2937,12 +2976,12 @@ loaf_converter""",
             # if it exists but can't be bought, we say so
             if item not in buyable_items:
                 # removed item is None check, as item will never be None. see above.
-                await utility.smart_reply(ctx, "Sorry, but you've already purchased as many of that as you can.")
+                await ctx.reply("Sorry, but you've already purchased as many of that as you can.")
                 return
             
             try:
                 if item.find_max_purchasable_count(user_account) <= 0:
-                    await utility.smart_reply(ctx, "Sorry, but you've already purchased as many of that as you can.")
+                    await ctx.reply("Sorry, but you've already purchased as many of that as you can.")
                     return
             except AttributeError:
                 # If an AttributeError was thrown the shop item probably doesn't have find_max_purchasable_count and we can ignore it.
@@ -2951,7 +2990,7 @@ loaf_converter""",
 
             # now we check if the user has enough dough
             if not item.is_affordable_for(user_account):
-                await utility.smart_reply(ctx, "Sorry, but you can't afford to buy that.")
+                await ctx.reply("Sorry, but you can't afford to buy that.")
                 return
 
             # now we actually purchase the item
@@ -2983,7 +3022,7 @@ loaf_converter""",
                 cost_text += " remaining."
 
             if item in store.prestige_store_items:
-                #await utility.smart_reply(ctx, f"Congratulations! You've unlocked the **{item.display_name}**! {text}")
+                #await ctx.reply(f"Congratulations! You've unlocked the **{item.display_name}**! {text}")
                 if text is None:
                     text = f"Congratulations! You've unlocked the **{item.display_name}** upgrade! You are now at level {user_account.get(item.name)}."
                 
@@ -2997,7 +3036,7 @@ loaf_converter""",
 
             text += "\n\n" + cost_text
 
-            await utility.smart_reply(ctx, text)
+            await ctx.reply(text)
 
         else: # item count above 1
 
@@ -3062,7 +3101,7 @@ loaf_converter""",
 
             text += "\n\n" + cost_text
 
-            await utility.smart_reply(ctx, text)
+            await ctx.reply(text)
 
 
         # complete chessatron on this command
@@ -3315,9 +3354,9 @@ For example, "$bread gift Melodie all chess_pieces" would gift all your chess pi
                     await asyncio.sleep(1)
                 
             if gifted_count > 0:
-                await utility.smart_reply(ctx, f"Gifted {utility.smart_number(gifted_count)} {emoji} to {receiver_account.get_display_name()}.")
+                await ctx.reply(f"Gifted {utility.smart_number(gifted_count)} {emoji} to {receiver_account.get_display_name()}.")
             else:
-                await utility.smart_reply(ctx, f"Sorry, you don't have any {emoji} to gift.")
+                await ctx.reply(f"Sorry, you don't have any {emoji} to gift.")
 
             return        
 
@@ -3616,7 +3655,7 @@ anarchy - 1000% of your wager.
                     # grid[i][k] = random.choice(gamble.reward_values).text
         try:  #sometimes we'll get a timeout error and the function will crash, this should allow
               # the user to be removed from the currently_interacting list
-            message = await utility.smart_reply(ctx, self.show_grid(grid))
+            message = await ctx.reply(self.show_grid(grid))
             await asyncio.sleep(2)
 
 
@@ -3644,28 +3683,28 @@ anarchy - 1000% of your wager.
             pass
         try: #try block because of potential messsage deletion.
             if result['result'].name == "horsey":
-                await utility.smart_reply(ctx, "Sorry, you didn't win anything. Better luck next time.")
+                await ctx.reply("Sorry, you didn't win anything. Better luck next time.")
             elif result['result'].name in ["brick", "fide_brick", "brick_fide", "brick_gold"]:
                 try: # brick avoidance deterrant
                     response = "You found a brick. Please hold, delivering reward at high speed."
                     if result['result'].name == "brick_gold":
                         response += f" Looks like you'll be able to sell this one for {utility.smart_number(winnings)} dough."
-                    await utility.smart_reply(ctx, response)
+                    await ctx.reply(response)
                     await asyncio.sleep(2)
                 except:
                     pass 
                 await ctx.invoke(self.bot.get_command('brick'), member=ctx.author)
             else:
-                await utility.smart_reply(ctx, f"With a {winning_text}, you won {utility.smart_number(winnings)} dough.")
+                await ctx.reply(f"With a {winning_text}, you won {utility.smart_number(winnings)} dough.")
         
             daily_gambles = user_account.get_value_strict("daily_gambles")
             if daily_gambles == max_gambles:
-                await utility.smart_reply(ctx, "That was all the gambling you can do today.")
+                await ctx.reply("That was all the gambling you can do today.")
 
             elif daily_gambles >= max_gambles-3:
                 #await ctx.reply("You can gamble one more time today.")
                 text= "You can gamble "+Bread_cog.write_number_of_times(max_gambles-daily_gambles)+" more today."
-                await utility.smart_reply(ctx, text)
+                await ctx.reply(text)
         except:
             pass #only happens if original message was deleted.
 
@@ -4534,19 +4573,19 @@ anarchy - 1000% of your wager.
         if count is None:
             count = 1
         if count == 0:
-            await utility.smart_reply(ctx, "Alright, I have made zero of those for you...")
+            await ctx.reply("Alright, I have made zero of those for you...")
             return
         if count < 0:
-            await utility.smart_reply(ctx, "The laws of alchemy prevent me from utilizing negative energy.")
+            await ctx.reply("The laws of alchemy prevent me from utilizing negative energy.")
             return
         if count > 1000000000000000:
-            await utility.smart_reply(ctx, "That is an unreasonable number of items to alchemize. Please try again with a smaller number.")
+            await ctx.reply("That is an unreasonable number of items to alchemize. Please try again with a smaller number.")
             return
 
         # print(f"{ctx.author.name} requested to alchemize {count} {target_item}.")
 
         if get_channel_permission_level(ctx) < PERMISSION_LEVEL_ACTIVITIES:
-            await utility.smart_reply(ctx, f"Thank you for your interest in bread alchemy. Please find the alchemical circle is present in {self.json_interface.get_rolling_channel(ctx.guild.id)}.")
+            await ctx.reply(f"Thank you for your interest in bread alchemy. Please find the alchemical circle is present in {self.json_interface.get_rolling_channel(ctx.guild.id)}.")
             return
 
         #check if they're already alchemizing
@@ -4572,12 +4611,12 @@ anarchy - 1000% of your wager.
             #####      GET ITEM
 
             if (target_item is None):
-                await utility.smart_reply(ctx, "Welcome to the alchemy circle. Please say the item you would like to create.")
+                await ctx.reply("Welcome to the alchemy circle. Please say the item you would like to create.")
                 try:
                     msg = await self.bot.wait_for('message', check = check, timeout = 60.0)
                 except asyncio.TimeoutError: 
                     # at this point, the check didn't become True, let's handle it.
-                    await utility.smart_reply(ctx, f"My patience is limited. Come back when you know what you want.")
+                    await ctx.reply(f"My patience is limited. Come back when you know what you want.")
                     self.remove_from_interacting(ctx.author.id)
                     return
                 target_item = msg.content #values.get_emote(msg.content)
@@ -4589,7 +4628,7 @@ anarchy - 1000% of your wager.
             target_emote = values.get_emote(target_item)
 
             if (target_emote is None):
-                await utility.smart_reply(ctx, f"I do not recognize that item. Please start over.")
+                await ctx.reply(f"I do not recognize that item. Please start over.")
                 self.remove_from_interacting(ctx.author.id)
                 return
 
@@ -4622,11 +4661,11 @@ anarchy - 1000% of your wager.
                                 
                 if len(recipe_list) == 0:
                     # Either the recipe list was initially blank, in which there is some issue, or the user has not unlocked any recipes for the item yet.
-                    await utility.smart_reply(ctx, f"I'm sorry, but your technology has not yet found a way to create {target_emote.text}.")
+                    await ctx.reply(f"I'm sorry, but your technology has not yet found a way to create {target_emote.text}.")
                     self.remove_from_interacting(ctx.author.id)
                     return
             else:
-                await utility.smart_reply(ctx, f"There are no recipes to create {target_emote.text}. Perhaps research has not progressed far enough.")
+                await ctx.reply(f"There are no recipes to create {target_emote.text}. Perhaps research has not progressed far enough.")
                 self.remove_from_interacting(ctx.author.id)
                 return
 
@@ -4668,30 +4707,30 @@ anarchy - 1000% of your wager.
                     recipes_description += f"{ingredient.text}: {user_account.get(ingredient.text)}\n"
             
                 recipes_description += "\nPlease reply with either the number of the recipe you would like to use, or \"cancel\"."
-                await utility.smart_reply(ctx, recipes_description)
+                await ctx.reply(recipes_description)
                 
                 try:
                     msg = await self.bot.wait_for('message', check = check, timeout = 60.0)
                 except asyncio.TimeoutError: 
                     # at this point, the check didn't become True, let's handle it.
-                    await utility.smart_reply(ctx, f"My patience is limited. This offering is rejected.")
+                    await ctx.reply(f"My patience is limited. This offering is rejected.")
                     self.remove_from_interacting(ctx.author.id)
                     return
 
                 if "cancel" in msg.content.lower():
-                    await utility.smart_reply(ctx, "You have cancelled this transaction.")
+                    await ctx.reply("You have cancelled this transaction.")
                     self.remove_from_interacting(ctx.author.id)
                     return
 
                 try:
                     recipe_num = parse_int(msg.content)
                 except ValueError:
-                    await utility.smart_reply(ctx, f"I do not recognize that as a number. Please try again from the beginning.")
+                    await ctx.reply(f"I do not recognize that as a number. Please try again from the beginning.")
                     self.remove_from_interacting(ctx.author.id)
                     return
             
             if recipe_num > len(recipe_list) or recipe_num < 1:
-                await utility.smart_reply(ctx, f"That is not a valid recipe number. Please start over.")
+                await ctx.reply(f"That is not a valid recipe number. Please start over.")
                 self.remove_from_interacting(ctx.author.id)
                 return
 
@@ -4726,12 +4765,12 @@ anarchy - 1000% of your wager.
                     question_text += f"{pair[0].text}: {user_account.get(pair[0].text)} of {pair[1] * count}\n"
                         
                 question_text += "\nWould you like to proceed? Yes or No."
-                await utility.smart_reply(ctx, question_text)
+                await ctx.reply(question_text)
 
                 try:
                     msg = await self.bot.wait_for('message', check = check, timeout = 60.0)
                 except asyncio.TimeoutError:
-                    await utility.smart_reply(ctx, f"My patience is limited. This offering is rejected.")
+                    await ctx.reply(f"My patience is limited. This offering is rejected.")
                     self.remove_from_interacting(ctx.author.id)
                     return
                 
@@ -4740,11 +4779,11 @@ anarchy - 1000% of your wager.
                 if any([i in content for i in ["yes", "y", "confirm"]]):
                     pass
                 elif any([i in content for i in ["no", "n", "deny"]]):
-                    await utility.smart_reply(ctx, "You have rejected this recipe.")
+                    await ctx.reply("You have rejected this recipe.")
                     self.remove_from_interacting(ctx.author.id)
                     return
                 else:
-                    await utility.smart_reply(ctx, "I do not recognize your response. You may come back when you are feeling more decisive.")
+                    await ctx.reply("I do not recognize your response. You may come back when you are feeling more decisive.")
                     self.remove_from_interacting(ctx.author.id)
                     return
 
@@ -4760,7 +4799,7 @@ anarchy - 1000% of your wager.
                 # print(f"{ctx.author.display_name} is attempting to alchemize {count} {target_emote.name}")
                 # print(f"cost is {cost} and posessions is {posessions}")
                 if posessions < cost:
-                    await utility.smart_reply(ctx, f"You do not have enough {pair[0].text} to create {count} {target_emote.text}. This offering is rejected.")
+                    await ctx.reply(f"You do not have enough {pair[0].text} to create {count} {target_emote.text}. This offering is rejected.")
                     self.remove_from_interacting(ctx.author.id)
                     return
             
@@ -4793,7 +4832,7 @@ anarchy - 1000% of your wager.
             if target_emote.gives_alchemy_award() and not override_dough:
                 output += f"\nYou have also been awarded **{utility.smart_number(value)} dough** for your efforts."
 
-            await utility.smart_reply(ctx, output)
+            await ctx.reply(output)
 
             await self.do_chessboard_completion(ctx)
             await self.anarchy_chessatron_completion(ctx)
@@ -4969,6 +5008,10 @@ anarchy - 1000% of your wager.
         if account.has("engine_efficiency"):
             level = account.get('engine_efficiency')
             output.append(f"You use {round((1 - store.Engine_Efficiency.consumption_multipliers[level]) * 100)}% less fuel with {account.write_count('engine_efficiency', 'level')} of Engine Efficiency.")
+
+        if account.has("payment_bonus"):
+            level = account.get('payment_bonus')
+            output.append(f"You've recieved {utility.write_count(level, 'dubious bonus', 'e')} so far, and that gets you {level * 100} more {values.project_credits.text} per day.")
         
         output.append("")
         output.append(f"Throughout your time in space you've created {utility.write_count(account.get('trade_hubs_created'), 'Trade Hub')} and helped contribute to {utility.write_count(account.get('projects_completed'), 'completed project')}.")
@@ -4991,14 +5034,14 @@ anarchy - 1000% of your wager.
         formatted_anarchy_pieces = self.format_anarchy_pieces(account.values).strip(" \n")
 
         if len("\n".join(output)) + len(formatted_anarchy_pieces) + 4 > 1900:
-            await utility.smart_reply(ctx, "\n".join(output))
+            await ctx.reply("\n".join(output))
             output = ["Stats continued:"]
 
 
         output.append("") # Add a blank item to add an extra new line.
         output.append(formatted_anarchy_pieces)
 
-        await utility.smart_reply(ctx, "\n".join(output))
+        await ctx.reply("\n".join(output))
 
 
 
@@ -5056,6 +5099,9 @@ anarchy - 1000% of your wager.
 
         output = ""
         output += f"Welcome to the Space Shop!\nHere are the items available for purchase:\n\n"
+
+        displayed_items = 0
+
         for item in item_list:
             requirement_given = False
             requirement = None
@@ -5079,8 +5125,10 @@ anarchy - 1000% of your wager.
                     output += f"*Not purchasable right now. {requirement}*\n"
                     
                 output += "\n"
+
+                displayed_items += 1
         
-        if len(items) == 0:
+        if displayed_items == 0:
             output += "**It looks like you've bought everything here. Well done.**"
         else:
             output += 'To buy an item, just type "$bread buy [item name]".'
@@ -5104,6 +5152,7 @@ anarchy - 1000% of your wager.
             content = ""
 
         ###############################
+        before = time.time()
 
         map_data = space.space_map(
             account = user_account,
@@ -5111,6 +5160,7 @@ anarchy - 1000% of your wager.
             mode = map_type
         )
 
+        after = time.time()
         ###############################
 
         corruption_chance = round(user_account.get_corruption_chance(json_interface=self.json_interface) * 100, 2)
@@ -5139,13 +5189,9 @@ anarchy - 1000% of your wager.
             color=8884479,
         )
         unfortunate_embed.set_image(url=file_path)
+        unfortunate_embed.set_footer(text=f"Map generated in {round(after - before, 3)} seconds.")
 
-        try:
-            # We need to copy send_file here because if we don't and this message is unable to send
-            # when it sends it below it won't have the image. I'm not sure why this happens, but it does.
-            return await ctx.reply(content, embed=unfortunate_embed, file=copy.deepcopy(send_file))
-        except discord.HTTPException:
-            return await ctx.send(ctx.author.mention + "\n\n" + str(content), embed=unfortunate_embed, file=send_file)
+        return await ctx.reply(content, embed=unfortunate_embed, file=send_file)
 
 
     @bread.command(
@@ -5185,50 +5231,12 @@ anarchy - 1000% of your wager.
             content = None # So it includes nothing else in the message.
         )
         
-        # ###############################
-
-        # map_data = space.space_map(
-        #     account=user_account,
-        #     json_interface = self.json_interface,
-        #     mode=mode
-        # )
-
-        # ###############################
-
-        # corruption_chance = round(user_account.get_corruption_chance(json_interface=self.json_interface) * 100, 2)
-
-        # if mode == "galaxy" or mode == "g":
-        #     prefix = "Galaxy map:"
-        #     middle = f"Your current galaxy location: {user_account.get_galaxy_location(json_interface=self.json_interface)}.\nCorruption chance: {corruption_chance}%."
-        #     suffix = "You can use '$bread space map' to view the map for the system you're in.\n\nUse '$bread space move galaxy' to move around on this map."
-        # else:
-        #     prefix = "System map:"
-        #     middle = f"Your current galaxy location: {user_account.get_galaxy_location(json_interface=self.json_interface)}.\nYour current system location: {user_account.get_system_location()}.\nCorruption chance: {corruption_chance}%."
-        #     suffix = "You can use '$bread space map galaxy' to view the galaxy map.\n\nUse '$bread space move system' to move around on this map.\nUse '$bread space analyze' to get more information about somewhere."
-
-        # send_file = discord.File(map_data, filename="space_map.png")
-        # file_path = "attachment://space_map.png"
-
-        # unfortunate_embed = discord.Embed( # It's unfortunate that we have to use one.
-        #     title = prefix,
-        #     description = middle + "\n\n" + suffix,
-        #     color=8884479,
-        # )
-        # unfortunate_embed.set_image(url=file_path)
-
-        # try:
-        #     # We need to copy send_file here because if we don't and this message is unable to send
-        #     # when it sends it below it won't have the image. I'm not sure why this happens, but it does.
-        #     await ctx.reply(embed=unfortunate_embed, file=copy.deepcopy(send_file))
-        # except discord.HTTPException:
-        #     await ctx.send(ctx.author.mention, embed=unfortunate_embed, file=send_file)
-        
     ########################################################################################################################
     #####      BREAD SPACE ANALYZE
 
     @bread.command(
         name = "analyze",
-        aliases = ["analyse", "analysis"],
+        aliases = ["analyse", "analysis", "scan"],
         brief = "Analyze and get information about planets.",
         description = "Analyze and get information about planets.\n\nTo get a guide for the point parameter, look at the system map."
     )
@@ -5239,7 +5247,7 @@ anarchy - 1000% of your wager.
     
     @space.command(
         name = "analyze",
-        aliases = ["analyse", "analysis"],
+        aliases = ["analyse", "analysis", "scan"],
         brief = "Analyze and get information about planets.",
         description = "Analyze and get information about planets.\n\nTo get a guide for the point parameter, look at the system map."
     )
@@ -5306,6 +5314,7 @@ anarchy - 1000% of your wager.
         
         ##########################################################
         ##### Generating the map.
+        before = time.time()
 
         map_path = space.space_map(
             account = user_account,
@@ -5314,6 +5323,7 @@ anarchy - 1000% of your wager.
             analyze_position = point.lower()
         )
 
+        after = time.time()
         ##########################################################
         ##### Getting the analysis data.
 
@@ -5349,6 +5359,7 @@ anarchy - 1000% of your wager.
             analysis_lines = tile_analyze.get_analysis(
                 guild = ctx.guild.id,
                 json_interface = self.json_interface,
+                user_account = user_account,
                 detailed = detailed
             )
         else:
@@ -5376,13 +5387,9 @@ anarchy - 1000% of your wager.
             color=8884479,
         )
         embed_send.set_image(url=file_path)
+        embed_send.set_footer(text=f"Analysis generated in {round(after - before, 3)} seconds.")
         
-        try:
-            # We need to copy send_file here because if we don't and this message is unable to send
-            # when it sends it below it won't have the image. I'm not sure why this happens, but it does.
-            await ctx.reply(embed=embed_send, file=copy.deepcopy(send_file))
-        except discord.HTTPException:
-            await ctx.send(ctx.author.mention, embed=embed_send, file=send_file)
+        await ctx.reply(embed=embed_send, file=send_file)
 
 
 
@@ -5436,6 +5443,9 @@ anarchy - 1000% of your wager.
         if item.text not in remaining:
             await ctx.reply("We don't need any more of that to level up the Trade Hub.")
             return
+        
+        if amount == "all":
+            amount = user_account.get(item.text)
     
         amount_contribute = min(remaining[item.text], amount)
 
@@ -5542,14 +5552,19 @@ anarchy - 1000% of your wager.
         galaxy_x, galaxy_y = user_account.get_galaxy_location(json_interface=self.json_interface)
 
         actions += [" ", " ", " ", " "]
-
+        
+        project_number = None
         try:
             if actions[1] == "level":
                 project_number = "level"
             else:
                 project_number = parse_int(actions[1])
 
-            amount = parse_int(actions[2])
+            if actions[2] == "all":
+                amount = "all"
+            else:
+                amount = parse_int(actions[2])
+
             item = values.get_emote(actions[3])
             confirmation = actions[4].lower() in ["yes", "y", "confirm"]
         except ValueError:
@@ -5566,18 +5581,19 @@ anarchy - 1000% of your wager.
                 await ctx.reply("To contribute to a project, use this format:\n'$bread space hub contribute [project number] [amount] [item]'")
             return
         
-        if amount < 0:
-            await ctx.reply("Hey there, are you trying to steal resources?\nThat's kind of rude.")
-            await ctx.invoke(self.bot.get_command('brick'), member=ctx.author)
-            return
-        
-        if amount == 0:
-            await ctx.reply("Congratulations, you have done absolutely nothing. I will now take your spleen.")
-            return
-        
-        if amount > user_account.get(item.text):
-            await ctx.reply("You don't have enough of that to contribute.")
-            return
+        if amount != "all":
+            if amount < 0:
+                await ctx.reply("Hey there, are you trying to steal resources?\nThat's kind of rude.")
+                await ctx.invoke(self.bot.get_command('brick'), member=ctx.author)
+                return
+            
+            if amount == 0:
+                await ctx.reply("Congratulations, you have done absolutely nothing. I will now take your spleen.")
+                return
+            
+            if amount > user_account.get(item.text):
+                await ctx.reply("You don't have enough of that to contribute.")
+                return
         
         if project_number == "level":
             await self.trade_hub_contribute_level(
@@ -5634,7 +5650,13 @@ anarchy - 1000% of your wager.
             await ctx.reply("The project doesn't need any more of that item.")
             return
         
-        amount_contribute = min(remaining[item.text], amount)
+        total_required = project.total_items_required(day_seed, hub)
+
+        if amount == "all":
+            percentage_left = user_account.get("hub_credits") / 2000
+            amount = math.ceil(((percentage_left + math.sqrt(percentage_left ** 2 + 4 * percentage_left)) / 2) * total_required)
+        
+        amount_contribute = min(remaining[item.text], amount, user_account.get(item.text))
 
         contribution_data = project_data.get("contributions", [])
 
@@ -5642,7 +5664,6 @@ anarchy - 1000% of your wager.
 
         # Make sure the player has the credits to contribute this.
         prior_items = sum(player_data["items"].values())
-        total_required = project.total_items_required(day_seed, hub)
 
         total_credits_used = space.get_project_credits_usage(
             total_items = total_required,
@@ -5674,7 +5695,7 @@ anarchy - 1000% of your wager.
             confirm_text = ["yes", "y", "confirm"]
             cancel_text = ["no", "n", "cancel"]
 
-            await utility.smart_reply(ctx, f"You are contributing {utility.smart_number(amount_contribute)} {item.text} to the {project_name} project.\nThis will require {utility.smart_number(credits_used)} {values.project_credits.text}.\nYou currently have the following:\n- {utility.smart_number(user_account.get(item.text))} {item.text}\n- {utility.smart_number(user_account.get('hub_credits'))} {values.project_credits.text}\nWould you like to go through with your confirmation? Yes or No.")
+            await ctx.reply(f"You are contributing {utility.smart_number(amount_contribute)} {item.text} to the {project_name} project.\nThis will require {utility.smart_number(credits_used)} {values.project_credits.text}.\nYou currently have the following:\n- {utility.smart_number(user_account.get(item.text))} {item.text}\n- {utility.smart_number(user_account.get('hub_credits'))} {values.project_credits.text}\nWould you like to go through with your confirmation? Yes or No.")
                 
             def check(m: discord.Message):
                 return m.author.id == ctx.author.id and m.channel.id == ctx.channel.id 
@@ -5682,17 +5703,17 @@ anarchy - 1000% of your wager.
             try:
                 msg = await self.bot.wait_for('message', check = check, timeout = 60.0)
             except asyncio.TimeoutError: 
-                await utility.smart_reply(ctx, "I'm sorry, but you have taken too long and I must attend to the next customer.")
+                await ctx.reply("I'm sorry, but you have taken too long and I must attend to the next customer.")
                 self.remove_from_interacting(ctx.author.id)
                 return
             
             if msg.content.lower() in cancel_text:
-                await utility.smart_reply(ctx, "Very well, come back when you would like to contribute.")
+                await ctx.reply("Very well, come back when you would like to contribute.")
 
                 self.remove_from_interacting(ctx.author.id)
                 return
             elif msg.content.lower() not in confirm_text:
-                await utility.smart_reply(ctx, "I'm not entirely sure what that is, please try again.")
+                await ctx.reply("I'm not entirely sure what that is, please try again.")
 
                 self.remove_from_interacting(ctx.author.id)
                 return
@@ -6153,12 +6174,15 @@ anarchy - 1000% of your wager.
         message_lines += "\n\n**# -- Projects --**"
 
         for project_id, data in enumerate(hub_projects[:hub.project_count]):
+            contributions = data.get('contributions')
+
             message_lines += f"#{project_id + 1}: "
             message_lines += data.get("project").display_info(
                 day_seed = day_seed,
                 system_tile = hub,
                 compress_description = True,
-                completed = data.get("completed", False)
+                completed = data.get("completed", False),
+                item_information = contributions
             )
             message_lines += "\n\n"
         
@@ -6308,7 +6332,7 @@ anarchy - 1000% of your wager.
                 current_fuel = user_account.get(values.fuel.text)
                 daily_fuel = user_account.get("daily_fuel")
                 
-                await utility.smart_reply(ctx, f"You are trying to travel through the wormhole.\nThis will require **{utility.smart_number(move_cost)}** {values.fuel.text}.\nYou have {utility.smart_number(current_fuel)} {values.fuel.text} and {utility.smart_number(daily_fuel)} {values.daily_fuel.text}.\nAre you sure you want to move? Yes or No.")
+                await ctx.reply(f"You are trying to travel through the wormhole.\nThis will require **{utility.smart_number(move_cost)}** {values.fuel.text}.\nYou have {utility.smart_number(current_fuel)} {values.fuel.text} and {utility.smart_number(daily_fuel)} {values.daily_fuel.text}.\nAre you sure you want to move? Yes or No.")
             
                 def check(m: discord.Message):
                     return m.author.id == ctx.author.id and m.channel.id == ctx.channel.id 
@@ -6316,17 +6340,17 @@ anarchy - 1000% of your wager.
                 try:
                     msg = await self.bot.wait_for('message', check = check, timeout = 60.0)
                 except asyncio.TimeoutError: 
-                    await utility.smart_reply(ctx, f"Autopilot error:\nConfirmation timeout, aborting.")
+                    await ctx.reply(f"Autopilot error:\nConfirmation timeout, aborting.")
                     self.remove_from_interacting(ctx.author.id)
                     return
                 
                 if msg.content.lower() in cancel_text:
-                    await utility.smart_reply(ctx, "Autopilot error:\nCancelled.")
+                    await ctx.reply("Autopilot error:\nCancelled.")
 
                     self.remove_from_interacting(ctx.author.id)
                     return
                 elif msg.content.lower() not in confirm_text:
-                    await utility.smart_reply(ctx, "Autopilot error:\nUnrecognized confirmation response, aborting.")
+                    await ctx.reply("Autopilot error:\nUnrecognized confirmation response, aborting.")
 
                     self.remove_from_interacting(ctx.author.id)
                     return
@@ -6336,7 +6360,7 @@ anarchy - 1000% of your wager.
             player_fuel = fuel_item + daily_fuel
 
             if player_fuel < move_cost:
-                await utility.smart_reply(ctx, "Autopilot error:\nLacking required fuel, aborting.")
+                await ctx.reply("Autopilot error:\nLacking required fuel, aborting.")
 
                 self.remove_from_interacting(ctx.author.id)
                 return
@@ -6383,7 +6407,7 @@ anarchy - 1000% of your wager.
                 reduced_info = True
                 )
             else:
-                await utility.smart_reply(ctx, message_content)
+                await ctx.reply(message_content)
 
             self.remove_from_interacting(ctx.author.id)
             return
@@ -6515,7 +6539,7 @@ anarchy - 1000% of your wager.
             current_fuel = user_account.get(values.fuel.text)
             daily_fuel = user_account.get("daily_fuel")
 
-            await utility.smart_reply(ctx, f"You are trying to move from {start_location} to {end_location}.\nThis will require **{utility.smart_number(move_cost)}** {values.fuel.text}.\nYou have {utility.smart_number(current_fuel)} {values.fuel.text} and {utility.smart_number(daily_fuel)} {values.daily_fuel.text}.\nAre you sure you want to move? Yes or No.")
+            await ctx.reply(f"You are trying to move from {start_location} to {end_location}.\nThis will require **{utility.smart_number(move_cost)}** {values.fuel.text}.\nYou have {utility.smart_number(current_fuel)} {values.fuel.text} and {utility.smart_number(daily_fuel)} {values.daily_fuel.text}.\nAre you sure you want to move? Yes or No.")
             
             def check(m: discord.Message):
                 return m.author.id == ctx.author.id and m.channel.id == ctx.channel.id 
@@ -6524,17 +6548,17 @@ anarchy - 1000% of your wager.
             try:
                 msg = await self.bot.wait_for('message', check = check, timeout = 60.0)
             except asyncio.TimeoutError: 
-                await utility.smart_reply(ctx, f"Autopilot error:\nConfirmation timeout, aborting.")
+                await ctx.reply(f"Autopilot error:\nConfirmation timeout, aborting.")
                 self.remove_from_interacting(ctx.author.id)
                 return
             
             if msg.content.lower() in cancel_text:
-                await utility.smart_reply(ctx, "Autopilot error:\nCancelled.")
+                await ctx.reply("Autopilot error:\nCancelled.")
 
                 self.remove_from_interacting(ctx.author.id)
                 return
             elif msg.content.lower() not in confirm_text:
-                await utility.smart_reply(ctx, "Autopilot error:\nUnrecognized confirmation response, aborting.")
+                await ctx.reply("Autopilot error:\nUnrecognized confirmation response, aborting.")
 
                 self.remove_from_interacting(ctx.author.id)
                 return
@@ -6544,7 +6568,7 @@ anarchy - 1000% of your wager.
         player_fuel = fuel_item + daily_fuel
 
         if player_fuel < move_cost:
-            await utility.smart_reply(ctx, "Autopilot error:\nLacking required fuel, aborting.")
+            await ctx.reply("Autopilot error:\nLacking required fuel, aborting.")
 
             self.remove_from_interacting(ctx.author.id)
             return
@@ -6635,7 +6659,7 @@ anarchy - 1000% of your wager.
                 reduced_info = True
             )
         else:
-            await utility.smart_reply(ctx, message_content)
+            await ctx.reply(message_content)
 
         self.remove_from_interacting(ctx.author.id)
 
@@ -6659,7 +6683,7 @@ anarchy - 1000% of your wager.
             amount: typing.Optional[parse_int] = commands.parameter(description = "The amount of Anarchy Chessatrons to create.")
         ):
         if get_channel_permission_level(ctx) < PERMISSION_LEVEL_ACTIVITIES:
-            await utility.smart_reply(ctx, f"Thank you for your interest in creating anarchy chessatrons! You can do so over in {self.json_interface.get_rolling_channel(ctx.guild.id)}.")
+            await ctx.reply(f"Thank you for your interest in creating anarchy chessatrons! You can do so over in {self.json_interface.get_rolling_channel(ctx.guild.id)}.")
             return
         
         if amount is not None:
@@ -6730,33 +6754,32 @@ anarchy - 1000% of your wager.
 
         # then we send the tron messages
         if trons_to_make < 3:
-            print(board)
             for _ in range(trons_to_make):
-                await utility.smart_reply(ctx, f"You've collected all the anarchy pieces! Congratulations!")
+                await ctx.reply(f"You've collected all the anarchy pieces! Congratulations!")
                 await asyncio.sleep(1)
 
-                await utility.smart_reply(ctx, board)
+                await ctx.reply(board)
                 await asyncio.sleep(1)
 
-                await utility.smart_reply(ctx, f"For an incredible feat like this, you have been awared the Anarchy Chessatron!")
+                await ctx.reply(f"For an incredible feat like this, you have been awarded the Anarchy Chessatron!")
                 await asyncio.sleep(1)
 
-                await utility.smart_reply(ctx, values.anarchy_chessatron.text)
+                await ctx.reply(values.anarchy_chessatron.text)
                 await asyncio.sleep(1)
 
-                await utility.smart_reply(ctx, f"Amazing work! You have also been awarded **{utility.smart_number(total_dough_value//trons_to_make)} dough!**")
+                await ctx.reply(f"Amazing work! You have also been awarded **{utility.smart_number(total_dough_value//trons_to_make)} dough!**")
                 await asyncio.sleep(1)
 
         elif trons_to_make < 20:
             for _ in range(trons_to_make):
-                await utility.smart_reply(ctx, f"Very well done! You have collected all the anarchy pieces!\n\n{board}")
+                await ctx.reply(f"Very well done! You have collected all the anarchy pieces!\n\n{board}")
                 await asyncio.sleep(1)
 
-                await utility.smart_reply(ctx, f"Not only have you been awarded the prestigious {values.anarchy_chessatron.text}, but you also have been awarded **{utility.smart_number(total_dough_value//trons_to_make)} dough**!")
+                await ctx.reply(f"Not only have you been awarded the prestigious {values.anarchy_chessatron.text}, but you also have been awarded **{utility.smart_number(total_dough_value//trons_to_make)} dough**!")
                 await asyncio.sleep(1)
 
         elif trons_to_make < 5000:
-            await utility.smart_reply(ctx, f"You've collected all the anarchy pieces again! Great job! You have enough pieces to make {utility.smart_number(trons_to_make)} Anarchy Chessatrons! Here's your reward of **{utility.smart_number(total_dough_value)} dough**!")
+            await ctx.reply(f"You've collected all the anarchy pieces again! Great job! You have enough pieces to make {utility.smart_number(trons_to_make)} Anarchy Chessatrons! Here's your reward of **{utility.smart_number(total_dough_value)} dough**!")
             await asyncio.sleep(1)
 
             max_per = 1800 // len(values.anarchy_chessatron.text)
@@ -6767,19 +6790,19 @@ anarchy - 1000% of your wager.
             if full_messages >= 1:
                 send = values.anarchy_chessatron.text * max_per
                 for _ in range(full_messages):
-                    await utility.smart_reply(ctx, send)
+                    await ctx.reply(send)
                     await asyncio.sleep(1)
             
             if extra >= 1:
-                await utility.smart_reply(ctx, values.anarchy_chessatron.text * extra)
+                await ctx.reply(values.anarchy_chessatron.text * extra)
                 await asyncio.sleep(1)
 
 
         else:
-            await utility.smart_reply(ctx, f"Wow! You have so many anarchy pieces! In fact, you have enough to make a shocking {utility.smart_number(trons_to_make)} Anarchy Chessatrons!")
+            await ctx.reply(f"Wow! You have so many anarchy pieces! In fact, you have enough to make a shocking {utility.smart_number(trons_to_make)} Anarchy Chessatrons!")
             await asyncio.sleep(1)
 
-            await utility.smart_reply(ctx, f"Here are your new Anarchy Chessatrons:\n{values.anarchy_chessatron.text} x {utility.smart_number(trons_to_make)}\n\nAnd here is your **{utility.smart_number(total_dough_value)} dough**!")
+            await ctx.reply(f"Here are your new Anarchy Chessatrons:\n{values.anarchy_chessatron.text} x {utility.smart_number(trons_to_make)}\n\nAnd here is your **{utility.smart_number(total_dough_value)} dough**!")
             await asyncio.sleep(1)
 
     #############################################################################################################################
@@ -7168,6 +7191,29 @@ anarchy - 1000% of your wager.
         await ctx.reply(file=final_file)
 
     ########################################################################################################################
+    #####      ADMIN DUMP_MAP_DATA
+
+    @admin.command(
+        brief="Dumps the space map data.",
+        help = "Usage: bread admin dump_map_data"
+    )
+    @commands.check(verification.is_admin_check)
+    async def dump_map_data(self, ctx,
+            ascension: typing.Optional[int]
+        ):
+        if ascension is None:
+            await ctx.reply("Please provide the ascension to use.")
+            return
+    
+        data = self.json_interface.get_space_map_data(ascension, ctx.guild)
+        file_text = json.dumps(data, indent=4)
+
+        fake_file = io.StringIO(file_text)
+        final_file = discord.File(fake_file, filename="map_dump.json")
+
+        await ctx.reply(file=final_file)
+
+    ########################################################################################################################
     #####      ADMIN SET_MAX_PRESTIGE
 
     @admin.command(
@@ -7259,11 +7305,11 @@ anarchy - 1000% of your wager.
         self.reset_internal()
         await ctx.send("Done.")
 
-    def reset_space(
+    def reset_space_guild(
             self: typing.Self,
             guild: typing.Union[discord.Guild,str,int]
         ) -> None:
-        """Daily reset for Bread Space."""
+        """Twice per day reset for Bread Space."""
 
         # Set a new day seed.
         space_data = self.json_interface.get_space_data(guild=guild)
@@ -7288,6 +7334,15 @@ anarchy - 1000% of your wager.
             space_data[ascension_key] = ascension_data
 
         self.json_interface.set_custom_file("space", file_data=space_data, guild=guild)
+    
+    def reset_space_all(self: typing.Self) -> None:
+        """Twice per day space reset for all guilds in the JSON interface."""
+        print("Bread Space: Running twice per day reset on all guilds.")
+
+        for guild_id in self.json_interface.get_list_of_all_guilds():
+            self.reset_space_guild(guild_id)
+        
+        print("Bread Space: Done.")
 
     def reset_internal(
             self: typing.Self,
@@ -7298,6 +7353,8 @@ anarchy - 1000% of your wager.
         print("Internal daily reset called")
         self.currently_interacting.clear()
 
+        self.reset_space_all()
+
         if guild is not None:
             guild_id = get_id_from_guild(guild)
 
@@ -7307,8 +7364,6 @@ anarchy - 1000% of your wager.
                 self.json_interface.set_account(account.get("id"), account, guild_id)
         else: #call for all accounts
             for guild_id in self.json_interface.get_list_of_all_guilds():
-                self.reset_space(guild_id)
-
                 for account in self.json_interface.get_all_user_accounts(guild_id):
                     account.daily_reset()
                     self.json_interface.set_account(account.get("id"), account, guild_id)
@@ -7442,6 +7497,7 @@ anarchy - 1000% of your wager.
 
         items.append(values.ascension_token)
         items.append(values.normal_bread)
+        items.append(values.corrupted_bread)
         items.append(values.anarchy_chess)
         items.append(values.chessatron)
         items.append(values.anarchy_chessatron)
@@ -7523,6 +7579,8 @@ anarchy - 1000% of your wager.
 
         # self.currently_interacting.clear()
 
+        # await self.daily_task()
+
         ##########################################################
         # Go through all trade hubs and set them to be at [0, 1] #
         # for guild in self.json_interface.all_guilds:
@@ -7538,27 +7596,27 @@ anarchy - 1000% of your wager.
         #     self.json_interface.set_custom_file("space", space_data, guild)
 
         # When the rocket tiers were shifted and tier 3 was removed this'll correct everyone stats.
-        for guild in self.json_interface.all_guilds:
-            for account in self.json_interface.get_all_user_accounts(guild=guild):
-                space_level = account.get_space_level()
-                if space_level >= 3:
-                    account.increment("space_level", -1)
+        # for guild in self.json_interface.all_guilds:
+        #     for account in self.json_interface.get_all_user_accounts(guild=guild):
+        #         space_level = account.get_space_level()
+        #         if space_level >= 3:
+        #             account.increment("space_level", -1)
                 
-                fr_level = account.get("fuel_research")
+        #         fr_level = account.get("fuel_research")
 
-                if fr_level > 2:
-                    account.increment("fuel_research", -1)
-                    account.increment(values.gem_green, 100)
+        #         if fr_level > 2:
+        #             account.increment("fuel_research", -1)
+        #             account.increment(values.gem_green, 100)
 
-                if fr_level > 2:
-                    account.increment("fuel_research", -1)
-                    account.increment(values.gem_gold, 100)
+        #         if fr_level > 2:
+        #             account.increment("fuel_research", -1)
+        #             account.increment(values.gem_gold, 100)
 
-                if fr_level == 2 and space_level < 4:
-                    account.increment("fuel_research", -1)
-                    account.increment(values.gem_purple, 100)
+        #         if fr_level == 2 and space_level < 4:
+        #             account.increment("fuel_research", -1)
+        #             account.increment(values.gem_purple, 100)
 
-                self.json_interface.set_account(account.user_id, account, guild)
+        #         self.json_interface.set_account(account.user_id, account, guild)
 
 
 

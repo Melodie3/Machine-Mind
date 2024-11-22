@@ -48,6 +48,7 @@ def bread_roll(
         lc_boost = 1
 
     corruption_chance = user_account.get_corruption_chance(json_interface=json_interface)
+    anarchy_corruption_chance = user_account.get_anarchy_corruption_chance(json_interface=json_interface)
     
     # If the user has access to space.
     if user_account.get_space_level() >= 1:
@@ -240,6 +241,7 @@ def bread_roll(
                 gem_luck = gem_luck,
 
                 corruption_chance = corruption_chance,
+                anarchy_corruption_chance = anarchy_corruption_chance,
                 anarchy_piece_luck = anarchy_piece_luck,
 
                 moak_multiplier = moak_multiplier,
@@ -382,6 +384,7 @@ def loaf_roll(
         gem_luck: int = 0,
 
         corruption_chance: float = 0.0,
+        anarchy_corruption_chance: float = 0.0,
         anarchy_piece_luck: int = 0,
 
         moak_multiplier: float = 1,
@@ -401,17 +404,21 @@ def loaf_roll(
     output["extra_profit"] = 0
 
     if random.randint(1, 2**13) <= (anarchy_piece_luck * anarchy_piece_multiplier):
-        # anarchy piece
-        white_piece_chances = store.chess_piece_distribution_levels[user_account.get("chess_piece_equalizer")]
-
-        if random.randint(1, 100) <= white_piece_chances:
-            # White anarchy piece
-            output["emote"] = random.choice(values.anarchy_pieces_white_biased)
-            output["commentary"] = "Your Karma has been increased by 20 points."
+        if random.random() < anarchy_corruption_chance:
+            output["commentary"] = ""
+            output["emote"] = values.corrupted_bread
         else:
-            # Black anarchy piece
-            output["emote"] = random.choice(values.anarchy_pieces_black_biased)
-            output["commentary"] = "Your Karma has been increased by 10 points."
+            # anarchy piece
+            white_piece_chances = store.chess_piece_distribution_levels[user_account.get("chess_piece_equalizer")]
+
+            if random.randint(1, 100) <= white_piece_chances:
+                # White anarchy piece
+                output["emote"] = random.choice(values.anarchy_pieces_white_biased)
+                output["commentary"] = "Your Karma has been increased by 20 points."
+            else:
+                # Black anarchy piece
+                output["emote"] = random.choice(values.anarchy_pieces_black_biased)
+                output["commentary"] = "Your Karma has been increased by 10 points."
     
     elif random.random() < corruption_chance: # Corrupted bread :|
         output["commentary"] = ""
@@ -575,8 +582,10 @@ def summarize_roll(
         removals.append("ten_breads")
 
     if values.corrupted_bread.text in result:
-        output += f"\t{values.corrupted_bread.text}: {utility.smart_number(result[values.corrupted_bread.text])}"
+        output += f"\t{values.corrupted_bread.text}: {utility.smart_number(result[values.corrupted_bread.text])}\n"
         removals.append(values.corrupted_bread.text)
+        if "misc" in result:
+            result["misc"] -= result[values.corrupted_bread.text]
 
     if ":bread:" in result:
         output += f"\t:bread:: {utility.smart_number(result[':bread:'])}\n"
@@ -649,6 +658,9 @@ def summarize_roll(
     last_header = True
     for key in result.keys():
         if key not in ["commentary", "emote_text",  "roll_messages", "total_dough", "lifetime_dough", "value", "earned_dough", "individual_values"] + removals:
+            if result[key] == 0:
+                continue
+
             if last_header:
                 output += "\nExtra items:\n"
                 last_header = False

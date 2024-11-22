@@ -443,7 +443,7 @@ class Bread_Account:
     
     def get_projects_credits_cap(self: typing.Self) -> int:
         """Returns the maximum amount of Trade Hub credits this account can have."""
-        return 2000
+        return 2000 + self.get(store.Payment_Bonus.name) * 100
     
     def get_daily_fuel_cap(self: typing.Self) -> int:
         """Returns the maximum amount of daily fuel this account can have. This is `350 * fuel_tank + 100` where `fuel_tank` is the fuel tank level."""
@@ -599,6 +599,22 @@ class Bread_Account:
         multiplier = self.get_corruption_negation_multiplier()
 
         return base_chance * multiplier
+    
+    def get_anarchy_corruption_chance(
+            self: typing.Self,
+            json_interface: bread_cog.JSON_interface
+        ) -> float:
+        """Provides the chance of an anarchy piece becoming corrupted. Is going to be a float between 0 and 1."""
+        if self.get_space_level() < 1:
+            return 0.0
+        
+        xpos, ypos = self.get_galaxy_location(json_interface=json_interface)
+
+        return space.get_anarchy_corruption_chance(
+            xpos - space.MAP_RADIUS,
+            ypos - space.MAP_RADIUS
+        )
+        
 
     def get_galaxy_tile(
             self: typing.Self,

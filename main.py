@@ -12,6 +12,7 @@ from os import getenv
 #from verification import from_owner
 #from verification import get_rejection_reason
 import verification
+import bread.utility as utility
 """
 #local imports
 import roles
@@ -34,7 +35,8 @@ intents.messages = True
 intents.guilds = True
 intents.message_content = True
 
-bot = commands.Bot(command_prefix=COMMAND_PREFIX, intents=intents, owner_id=OWNER_ID)
+bot = utility.CustomBot(command_prefix=COMMAND_PREFIX, intents=intents, owner_id=OWNER_ID)
+# bot = commands.Bot(command_prefix=COMMAND_PREFIX, intents=intents, owner_id=OWNER_ID)
 
 
 #intents = discord.Intents(messages=True, guilds=True, members=True)
