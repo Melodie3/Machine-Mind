@@ -5796,7 +5796,7 @@ anarchy - 1000% of your wager.
             items_added = []
 
             for win_item, win_amount in reward:
-                amount = math.ceil(win_amount * percent_cut)
+                amount = math.ceil(win_amount * (percent_cut - 0.2))
                 player_account.increment(win_item, amount)
 
                 items_added.append(f"{utility.smart_number(amount)} {win_item}")
