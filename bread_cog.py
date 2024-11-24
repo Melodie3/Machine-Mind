@@ -3422,6 +3422,7 @@ For example, "$bread gift Melodie all chess_pieces" would gift all your chess pi
                 amount = leftover
             if sender_account.has(item, amount):
                 receiver_account.increment("daily_gifts", amount)
+                self.json_interface.set_account(target, receiver_account, guild = ctx.guild.id)
             else:
                 await ctx.reply("Except you don't have that much dough to give. Too bad.")
                 return
