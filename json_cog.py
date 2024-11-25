@@ -415,6 +415,8 @@ async def setup(bot):
     #try:
         #Bread_cog.internal_load(bot)
     json_cog.internal_load()
+
+    bot.json_cog = json_cog_ref
     #except BaseException as err:
     #    print(err)
     #bot.add_cog(Chess_game(bot)) #do we want to actually have this be a *cog*, or just a helper class?

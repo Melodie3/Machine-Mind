@@ -307,6 +307,14 @@ class CustomContext(commands.Context):
             return None
         
         try:
+            ping_data = self.bot.json_cog.get_filing_cabinet("ping_settings", guild=self.guild, create_if_nonexistent=True)
+            
+            if str(self.author.id) in ping_data:
+                kwargs["mention_author"] = ping_data.get(str(self.author.id), True)
+        except: # oh well
+            pass
+        
+        try:
             return await self.safe_reply(content, **copy.deepcopy(kwargs))
         except discord.HTTPException:
             # If something went wrong replying.
