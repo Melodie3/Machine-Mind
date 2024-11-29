@@ -129,6 +129,7 @@ class Bread_Account:
         emotes_to_remove.append(values.normal_bread)
         emotes_to_remove.append(values.anarchy_chess)
         emotes_to_remove.append(values.fuel)
+        emotes_to_remove.append(values.corrupted_bread)
         # we're keeping OoaKs
 
         entries_to_remove = [   "total_dough",
@@ -160,6 +161,9 @@ class Bread_Account:
         # convert moaks to shadows
         if self.get(values.anarchy_chess.text) > 0:
             self.increment(values.shadow_moak.text, self.get(values.anarchy_chess.text))
+        # convert anarchy omegas to shadows
+        if self.get(values.anarchy_omega_chessatron.text) > 0:
+            self.increment(values.anarchy_shadowmega.text, self.get(values.anarchy_omega_chessatron.text))
 
         for stat in lifetime_stats:
             if stat in self.values.keys():
