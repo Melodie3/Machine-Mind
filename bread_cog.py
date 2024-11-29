@@ -7509,7 +7509,7 @@ anarchy - 1000% of your wager.
         for emote in items:
             account.set(emote.text, 50000000000)
         
-        for shop_item in store.space_shop_items:
+        for shop_item in store.all_store_items:
             account.set(shop_item.name, shop_item.max_level(account))
 
         account.set("fuel_tank", 40000)

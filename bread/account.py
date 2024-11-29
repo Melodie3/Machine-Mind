@@ -469,7 +469,7 @@ class Bread_Account:
 
     def get_shadowmega_boost_amount(self: typing.Self) -> int:
         """Returns the multiplier applied to omegas this player gets per chessatron from Chessatron Contraption and shadowmega chessatrons."""
-        return 1.05 ** self.get_shadowmega_boost_count()
+        return 1 + 0.02 * self.get_shadowmega_boost_count()
 
     def get_shadow_gold_gem_boost_count(self: typing.Self) -> int:
         """Returns the amount of shadow gold gems that this player can use to increase their odds of finding gems. Essentially, this is the number of active shadow gold gems."""
