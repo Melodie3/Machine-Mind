@@ -316,23 +316,23 @@ class Trade_Hub(Project):
             ],
             # Level 2:
             [
-                (values.anarchy_chess.text, 5), (values.chessatron.text, 200),
-                (values.gem_gold.text, 37), (values.gem_green.text, 75), (values.gem_purple.text, 150), (values.gem_blue.text, 300), (values.gem_red.text, 900)
+                (values.anarchy_chess.text, 5), (values.chessatron.text, 10),
+                (values.gem_gold.text, 50), (values.gem_green.text, 100), (values.gem_purple.text, 200), (values.gem_blue.text, 400), (values.gem_red.text, 1200)
             ],
             # Level 3:
             [
-                (values.anarchy_chess.text, 10), (values.chessatron.text, 400),
-                (values.gem_gold.text, 56), (values.gem_green.text, 112), (values.gem_purple.text, 225), (values.gem_blue.text, 450), (values.gem_red.text, 1350)
+                (values.anarchy_chess.text, 5), (values.chessatron.text, 10),
+                (values.gem_gold.text, 50), (values.gem_green.text, 100), (values.gem_purple.text, 200), (values.gem_blue.text, 400), (values.gem_red.text, 1200)
             ],
             # Level 4:
             [
-                (values.anarchy_chess.text, 20), (values.chessatron.text, 800), (values.anarchy_chessatron.text, 1),
-                (values.gem_gold.text, 84), (values.gem_green.text, 168), (values.gem_purple.text, 337), (values.gem_blue.text, 675), (values.gem_red.text, 2025)
+                (values.anarchy_chess.text, 5), (values.chessatron.text, 10), (values.anarchy_chessatron.text, 1),
+                (values.gem_gold.text, 50), (values.gem_green.text, 100), (values.gem_purple.text, 200), (values.gem_blue.text, 400), (values.gem_red.text, 1200)
             ],
             # Level 5:
             [
-                (values.anarchy_chess.text, 40), (values.chessatron.text, 1600), (values.anarchy_chessatron.text, 2),
-                (values.gem_gold.text, 126), (values.gem_green.text, 253), (values.gem_purple.text, 506), (values.gem_blue.text, 1012), (values.gem_red.text, 3037)
+                (values.anarchy_chess.text, 5), (values.chessatron.text, 10), (values.anarchy_chessatron.text, 2),
+                (values.gem_gold.text, 50), (values.gem_green.text, 100), (values.gem_purple.text, 200), (values.gem_blue.text, 400), (values.gem_red.text, 1200)
             ],
         ]
     
