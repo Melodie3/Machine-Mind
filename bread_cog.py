@@ -1118,8 +1118,17 @@ class Bread_cog(commands.Cog, name="Bread"):
     @bread.command(
         hidden=True,
     )
-    async def help(self, ctx):
-        await ctx.send_help(Bread_cog.bread)
+    async def help(self, ctx, *, subcommand: typing.Optional[str] = commands.parameter(description = "A subcommand to get the help for.")):
+        if subcommand is None:
+            subcommand = ""
+
+        command = bot_ref.get_command(f"bread {subcommand}")
+
+        if command is None:
+            await ctx.reply("I can't find that command.")
+            return
+
+        await ctx.send_help(command)
 
     ########################################################################################################################
     #####      BREAD WIKI
