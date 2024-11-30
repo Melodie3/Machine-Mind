@@ -394,6 +394,8 @@ class Trade_Hub(Project):
 #######################################################################################################
 ##### Base project. ###################################################################################
 #######################################################################################################
+# While technically a functional project, this is just a base to copy from to make other projects.
+# It is not something that should be subclassed, the `Project` class is fine.
 
 class Base_Project(Project):
     """Written by ???."""
@@ -4430,7 +4432,7 @@ story_projects = [Essential_Oils, Bingobango]
 take_special_bread_projects = [Too_Much_Stuffing, Flatbread_Shortage, Appease_The_French, Croissant_Cravings, Beach_Disappearance]
 take_rare_bread_projects = [Ecosystem_Problem, Stolen_Donuts, Waffle_Machine]
 take_black_chess_piece_projects = [Board_Game_Festival, Electrical_Issue, Chess_Tournament, Diorama_Issue, Offering_Ritual_Duplicate, Royal_Summit_Duplicate]
-take_white_chess_piece_projects = [Board_Game_Festival_Duplicate, Royal_Summit, Offering_Ritual, Fortress_Building, Round_Table]
+take_white_chess_piece_projects = [Board_Game_Festival_Duplicate, Royal_Summit, Stolen_Bishops, Offering_Ritual, Fortress_Building, Round_Table]
 take_gem_projects = [Gem_Salesman, Generator_Breakdown, Jewelry_Store, Gem_Mining, Emergency_Fuel]
 take_misc_item_projects = [Chessatron_Repair, Omega_Order]
 
