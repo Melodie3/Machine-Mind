@@ -5095,9 +5095,9 @@ anarchy - 1000% of your wager.
             return
         
         # Temporarily lock all of space to a9 or higher. When a9 ends this should be removed.
-        if user_account.get_prestige_level() < 9:
-            await ctx.reply("Currently the Space Shop is only available on the 9th ascension. When that ascension ends it will be available from the first ascension onwards.")
-            return
+        # if user_account.get_prestige_level() < 9:
+        #     await ctx.reply("Currently the Space Shop is only available on the 9th ascension. When that ascension ends it will be available from the first ascension onwards.")
+        #     return
 
         # now we get the list of items
         items = self.get_buyable_items(user_account, store.space_shop_items)
