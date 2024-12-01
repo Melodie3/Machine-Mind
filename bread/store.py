@@ -1916,6 +1916,15 @@ class Advanced_Exploration(Space_Shop_Item):
     per_level = 0.00015
 
     @classmethod
+    def get_contribution(cls, level: int | account.Bread_Account) -> float:
+        if isinstance(level, account.Bread_Account):
+            level_use = level.get(cls.name)
+        else:
+            level_use = level
+
+        return math.log(level_use + 1, 11) / 2000
+
+    @classmethod
     def cost(cls, user_account: account.Bread_Account) -> list[tuple[values.Emote, int]]:
         level = user_account.get(cls.name)
 
@@ -1945,7 +1954,7 @@ class Advanced_Exploration(Space_Shop_Item):
     @classmethod
     def description(cls, user_account: account.Bread_Account) -> str:
         level = user_account.get(cls.name) + 1
-        return f"Advanced exploration devices allowing the use of {round(level * cls.per_level * 100, 4)}% of your Loaf Converters when rolling anarchy chess pieces, up to 127 Loaf Converters."
+        return f"Advanced exploration devices allowing the use of {round(cls.get_contribution(level) * 100, 4)}% of your Loaf Converters when rolling anarchy chess pieces, up to 63 Loaf Converters."
 
     @classmethod
     def get_cost_types(cls, user_account: account.Bread_Account, level: int = None):
