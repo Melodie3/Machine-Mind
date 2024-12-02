@@ -7575,6 +7575,37 @@ anarchy - 1000% of your wager.
         await ctx.send("Done.")
 
     ########################################################################################################################
+    #####      ADMIN BEQUEATH_CHERRY
+    
+    @admin.command(
+        brief="Remove the cherry.",
+        help = "Usage: bread admin bequeath_cherry"
+    )
+    @commands.check(verification.is_admin_check)
+    async def bequeath_cherry(self, ctx):
+        if not await self.await_confirmation(ctx):
+            return
+        
+        all_accounts = self.json_interface.get_all_user_accounts(ctx.guild)
+
+        removed = [] # type: list[account.Bread_Account]
+
+        for account in all_accounts:
+            if account.has(values.cherry.text):
+                account.set(values.cherry.text, 0)
+                removed.append(account)
+
+                self.json_interface.set_account(account.get("id"), account, ctx.guild)
+        
+        await ctx.reply("Done.\n{} affected:\n{}".format(
+            utility.write_count(len(removed), 'account'),
+            "\n".join([
+                f"- {account.get_display_name()} ({account.get('id')})"
+                for account in removed
+            ])
+        ))
+
+    ########################################################################################################################
     #####      ADMIN DO_OPERATION
     
     @admin.command(
