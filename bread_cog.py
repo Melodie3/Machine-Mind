@@ -5095,9 +5095,9 @@ anarchy - 1000% of your wager.
             return
         
         # Temporarily lock all of space to a9 or higher. When a9 ends this should be removed.
-        if user_account.get_prestige_level() < 9:
-            await ctx.reply("Currently the Space Shop is only available on the 9th ascension. When that ascension ends it will be available from the first ascension onwards.")
-            return
+        # if user_account.get_prestige_level() < 9:
+        #     await ctx.reply("Currently the Space Shop is only available on the 9th ascension. When that ascension ends it will be available from the first ascension onwards.")
+        #     return
 
         # now we get the list of items
         items = self.get_buyable_items(user_account, store.space_shop_items)
@@ -7573,6 +7573,37 @@ anarchy - 1000% of your wager.
         self.json_interface.internal_save()
         
         await ctx.send("Done.")
+
+    ########################################################################################################################
+    #####      ADMIN BEQUEATH_CHERRY
+    
+    @admin.command(
+        brief="Remove the cherry.",
+        help = "Usage: bread admin bequeath_cherry"
+    )
+    @commands.check(verification.is_admin_check)
+    async def bequeath_cherry(self, ctx):
+        if not await self.await_confirmation(ctx):
+            return
+        
+        all_accounts = self.json_interface.get_all_user_accounts(ctx.guild)
+
+        removed = [] # type: list[account.Bread_Account]
+
+        for account in all_accounts:
+            if account.has(values.cherry.text):
+                account.set(values.cherry.text, 0)
+                removed.append(account)
+
+                self.json_interface.set_account(account.get("id"), account, ctx.guild)
+        
+        await ctx.reply("Done.\n{} affected:\n{}".format(
+            utility.write_count(len(removed), 'account'),
+            "\n".join([
+                f"- {account.get_display_name()} ({account.get('id')})"
+                for account in removed
+            ])
+        ))
 
     ########################################################################################################################
     #####      ADMIN DO_OPERATION
