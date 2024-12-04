@@ -2796,17 +2796,17 @@ loaf_converter""",
             # now we get the list of items
             items = self.get_buyable_items(user_account, store.prestige_store_items)
     
+            displayed_items = 0
             output = ""
             output += f"Welcome to the hidden bakery! All upgrades in this shop are permanent, and persist through ascensions. You have **{utility.smart_number(user_account.get(values.ascension_token.text))} {values.ascension_token.text}**.\n\*Prices subject to change.\nHere are the items available for purchase:\n\n"
             for item in items:
                 output += f"\t**{item.display_name}** - {item.get_price_description(user_account)}\n{item.description(user_account)}\n\n"
+                displayed_items += 1
 
             # Add lines for non-purchasable items that have a requirement if the item isn't at the max level.
             purchasable_set = set(items)
             item_set = set(store.prestige_store_items)
             non_purchasable_items = item_set - purchasable_set # type: set[store.Prestige_Store_Item]
-
-            displayed_items = 0
 
             for item in list(non_purchasable_items):
                 if user_account.get(item.name) >= item.max_level(user_account):
@@ -2818,7 +2818,6 @@ loaf_converter""",
                     continue
 
                 output += f"*{item.display_name}: {requirement}*\n\n"
-                displayed_items += 1
             
             if displayed_items == 0:
                 output += "**It looks like you've bought everything here. Well done.**"
