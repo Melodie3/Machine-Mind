@@ -7229,7 +7229,7 @@ anarchy - 1000% of your wager.
         brief="Sets the max prestige level.",
         help = "Usage: bread admin set_max_prestige_level [value]"
     )
-    @commands.is_owner()
+    @commands.check(verification.is_admin_check)
     async def set_max_prestige_level(self, ctx,
             value: typing.Optional[parse_int]
         ):
