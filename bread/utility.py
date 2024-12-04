@@ -4,6 +4,7 @@ import typing
 import discord
 import hashlib
 import copy
+import datetime
 from discord.ext import commands
 
 def smart_number(number: int) -> str:
@@ -273,6 +274,75 @@ def get_display_name(member: discord.Member) -> str:
     """Gets the display name of a discord.Member object."""
     return (member.global_name if (member.global_name is not None and member.name == member.display_name) else member.display_name)
 
+def gen_embed(
+        title: str, title_link: str = None,
+        color: str | tuple[int, int, int] = "#8790ff", # 8884479
+        description: str = None,
+        author_name: str = None, author_link: str = None, author_icon: str = None,
+        footer_text: str = None, footer_icon: str = None,
+        image_link: str = None,
+        thumbnail_link: str = None,
+        fields: list[tuple[str, str, bool]] = None,
+        timestamp: datetime.datetime = None
+    ) -> discord.Embed:
+    """Function for easy creation of embeds. The color can be provided as a hex code (with or without the hash symbol) or as RGB values.
+    # Fields:
+    Each field is a 3 item tuple as follows:
+    1. Field name (256 characters)
+    2. Field text (1024 characters)
+    3. Whether the field should be inline (bool)
+    The fields should be provided in the order you want to display them.
+    # For adding images:
+    https://discordpy.readthedocs.io/en/stable/faq.html#local-image"""
+
+    if isinstance(color, str):
+        color = int(color.replace("#", ""), 16)
+    elif isinstance(color, tuple):
+        color = int(f"{color[0]:02x}{color[1]:02x}{color[2]:02x}", 16)
+    else:
+        raise TypeError("Provided color must be a hex code or set of RBG values in a tuple.")
+    
+    embed = discord.Embed(
+        color = color,
+        title = title,
+        url = title_link,
+        description = description,
+        timestamp = timestamp
+    )
+
+    if author_name is not None:
+        embed.set_author(
+            name = author_name,
+            url = author_link,
+            icon_url = author_icon
+        )
+    
+    if footer_text is not None:
+        embed.set_footer(
+            text = footer_text,
+            icon_url = footer_icon
+        )
+    
+    if image_link is not None:
+        embed.set_image(
+            url = image_link
+        )
+    
+    if thumbnail_link is not None:
+        embed.set_thumbnail(
+            url = thumbnail_link
+        )
+    
+    if fields is not None:
+        for field_title, field_text, field_inline in fields:
+            embed.add_field(
+                name = field_title,
+                value = field_text,
+                inline = field_inline
+            )
+    
+    return embed
+
 #################################################################################################################
 #################################################################################################################
 #################################################################################################################
@@ -322,6 +392,60 @@ class CustomContext(commands.Context):
                 return await self.send(f"{self.author.mention},\n\n{content}", **kwargs)
             else:
                 return await self.send(f"{sanitize_ping(self.author.display_name)},\n\n{content}", **kwargs)
+    
+    async def send_help(
+            self: typing.Self,
+            *args: typing.Any
+        ) -> typing.Any:
+        """Slightly modified version of base Context send_help to pass ctx to the send_group_help method."""
+        bot = self.bot
+        cmd = bot.help_command
+
+        if cmd is None:
+            return None
+
+        cmd = cmd.copy()
+        cmd.context = self
+
+        if len(args) == 0:
+            await cmd.prepare_help_command(self, None)
+            mapping = cmd.get_bot_mapping()
+            injected = commands.core.wrap_callback(cmd.send_bot_help)
+            try:
+                return await injected(mapping)
+            except commands.errors.CommandError as e:
+                await cmd.on_help_command_error(self, e)
+                return None
+
+        entity = args[0]
+        if isinstance(entity, str):
+            entity = bot.get_cog(entity) or bot.get_command(entity)
+
+        if entity is None:
+            return None
+
+        try:
+            entity.qualified_name
+        except AttributeError:
+            # if we're here then it's not a cog, group, or command.
+            return None
+
+        await cmd.prepare_help_command(self, entity.qualified_name)
+
+        try:
+            if commands.context.is_cog(entity):
+                injected = commands.core.wrap_callback(cmd.send_cog_help)
+                return await injected(entity)
+            elif isinstance(entity, commands.Group):
+                injected = commands.core.wrap_callback(cmd.send_group_help)
+                return await injected(entity, self)
+            elif isinstance(entity, commands.Command):
+                injected = commands.core.wrap_callback(cmd.send_command_help)
+                return await injected(entity)
+            else:
+                return None
+        except commands.errors.CommandError as e:
+            await cmd.on_help_command_error(self, e)
 
 class CustomBot(commands.Bot):
     # THIS CAN ONLY BE RELOADED BY RESTARTING THE ENTIRE BOT.
@@ -332,3 +456,288 @@ class CustomBot(commands.Bot):
             *,
             cls=CustomContext):
         return await super().get_context(message, cls=cls)
+
+class CustomHelpCommand(commands.DefaultHelpCommand):
+    # THIS CAN ONLY BE RELOADED BY RESTARTING THE ENTIRE BOT.
+
+    def get_ending_note(self: typing.Self) -> str:
+        command_name = self.invoked_with
+
+        return f'Type `{self.context.clean_prefix}{command_name} <command>` for more info on a command.\nYou can also type `{self.context.clean_prefix}{command_name} <category>` for more info on a category.'
+
+    def get_opening_note(self: typing.Self) -> str:
+        return self.get_ending_note()
+
+    async def command_not_found(
+            self: typing.Self,
+            string: str
+        ) -> None:
+        embed_send = gen_embed(
+            title = "Machine-Mind help",
+            description = f"Command `{string}` not found."
+        )
+        return await self.context.reply(embed=embed_send)
+    
+    async def subcommand_not_found(
+            self: typing.Self,
+            command: commands.Command,
+            string: str
+        ) -> None:
+        embed_send = gen_embed(
+            title = "Machine-Mind help",
+            description = f"Command `{command.qualified_name}` has no subcommand called `{string}`."
+        )
+        return await self.context.reply(embed=embed_send)
+
+    async def send_cog_help(
+            self: typing.Self,
+            cog: commands.Cog | CustomBot
+        ) -> None:
+            
+        command_lines = []
+        all_commands = await self.filter_commands(cog.get_commands(), sort=self.sort_commands)
+
+        for command in all_commands:
+            try:
+
+                command_description = command.brief
+
+                if command_description is None:
+                    command_description = command.help
+                    if command_description is None:
+                        command_description = ""
+
+                if len(command_description) > 120:
+                    command_description = f"{command_description[:120]}..."
+                
+                command_lines.append(f"- `{command.name}` -- {command_description}")
+            except commands.CommandError:
+                continue
+        
+        if len(command_lines) == 0:
+            command_lines.append("*Nothing to list.*")
+        
+        embed = gen_embed(
+            title = "Machine-Mind help",
+            description = "{}\n\n**Commands:**\n{}\n\n{}".format(
+                cog.description,
+                "\n".join(command_lines),
+                self.get_opening_note()
+            )
+        )
+        await self.context.reply(embed=embed)
+    
+    async def send_bot_help(self: typing.Self) -> None:
+        all_commands = await self.filter_commands(self.context.bot.commands, sort=self.sort_commands)
+        all_commands = [(c.name, c) for c in all_commands]
+        all_commands: dict[str, commands.Command] = dict(sorted(all_commands, key=lambda c: c[0]))
+
+        command_data = {}
+        listed = []
+        for name, command in all_commands.items():
+            try:
+                if len(command.parents) != 0:
+                    continue
+
+                if command in listed:
+                    continue
+
+                listed.append(command)
+
+                if command.cog not in command_data:
+                    command_data[command.cog] = []
+
+                brief = command.short_doc
+                
+                if len(brief) > 120:
+                    brief = f"{brief[120]}..."
+
+                command_data[command.cog].append(f"- `{name}` -- {brief}")
+
+            except commands.CommandError:
+                continue
+        
+        command_data = dict(sorted(command_data.items(), key=lambda c: "No Category" if c[0] is None else c[0].qualified_name))
+
+        lines = []
+
+        if self.context.bot.description is not None:
+            lines.append(f"{self.context.bot.description}\n")
+        
+        for cog, command_list in command_data.items():
+            if cog is None:
+                lines.append(f"**No Category:**")
+            else:
+                lines.append(f"**{cog.qualified_name}:**")
+            for cmd in command_list:
+                lines.append(cmd)
+        
+        lines.append("")
+        lines.append(self.get_ending_note())
+        
+        embed = gen_embed(
+            title = "Machine-Mind help",
+            description = "\n".join(lines)
+        )
+        await self.context.reply(embed=embed)
+
+    async def send_command_help(
+            self: typing.Self,
+            command: commands.Command
+        ) -> None:
+        command_lines = []
+
+        breadcrumbs = []
+        for parent in reversed(command.parents):
+            breadcrumbs.append(parent.name)
+        
+        if len(breadcrumbs) != 0:
+            breadcrumbs.append(command.name)
+
+            command_lines.append("*{}*".format(" -> ".join(breadcrumbs)))
+
+        ####
+
+        command_name = f"{command.full_parent_name} {command.name}".strip()
+        command_lines.append(f"## **{self.context.clean_prefix}{command_name}**")
+        command_lines.append(command.description)
+        command_lines.append("")
+
+        usage = f"{self.context.clean_prefix}{command_name} {command.signature}".strip()
+        command_lines.append(f"Syntax: `{usage}`")
+        if len(command.aliases) > 0:
+            command_lines.append("Aliases: {}".format(', '.join([f"`{a}`" for a in command.aliases])))
+
+        
+        arguments = command.clean_params.values()
+        if len(arguments) > 0:
+            command_lines.append("\n**Arguments:**")
+            for argument in arguments:
+                name = argument.displayed_name or argument.name
+                description = argument.description or self.default_argument_description
+                command_lines.append(f"- `{name}`-- {description}")
+
+        ####
+        
+        command_lines.append("")
+        command_lines.append(self.get_ending_note())
+        
+        embed = gen_embed(
+            title = "Machine-Mind help",
+            description = "\n".join(command_lines)
+        )
+        await self.context.reply(embed=embed)
+        
+    async def send_group_help(
+            self: typing.Self,
+            command: commands.Group,
+            ctx: commands.Context | CustomContext
+        ) -> None:
+        command_lines = []
+
+        breadcrumbs = []
+        for parent in reversed(command.parents):
+            breadcrumbs.append(parent.name)
+        
+        if len(breadcrumbs) != 0:
+            breadcrumbs.append(command.name)
+
+            command_lines.append("*{}*".format(" -> ".join(breadcrumbs)))
+
+        ####
+
+        command_name = f"{command.full_parent_name} {command.name}".strip()
+        command_lines.append(f"## **{self.context.clean_prefix}{command_name}**")
+        command_lines.append(command.description)
+        command_lines.append("")
+
+        usage = f"{self.context.clean_prefix}{command_name} {command.signature}".strip()
+        command_lines.append(f"Syntax: `{usage}`")
+        if len(command.aliases) > 0:
+            command_lines.append("Aliases: {}".format(', '.join([f"`{a}`" for a in command.aliases])))
+
+        
+        arguments = command.clean_params.values()
+        if len(arguments) > 0:
+            command_lines.append("\n**Arguments:**")
+            for argument in arguments:
+                name = argument.displayed_name or argument.name
+                description = argument.description or self.default_argument_description
+                command_lines.append(f"- `{name}` -- {description}")
+
+        subcommands = command.commands
+        if len(subcommands) > 0:
+            command_lines.append("\n**Subcommands:**")
+
+            # Probably a bad way of doing this, but it does prevent the toggle
+            # check from sending a message if a subcommand here is disabled.
+            old_invoked = ctx.invoked_with
+            ctx.invoked_with = "help"
+            
+            for subcommand in sorted(subcommands, key=lambda c: c.name):
+                try:
+                    if not await subcommand.can_run(ctx):
+                        continue
+                except commands.CommandError:
+                    continue
+
+                name = subcommand.name
+                description = subcommand.short_doc
+                command_lines.append(f"- `{name}` -- {description}")
+
+            ctx.invoked_with = old_invoked
+        ####
+        
+        command_lines.append("")
+        command_lines.append(self.get_ending_note())
+        
+        embed = gen_embed(
+            title = "Machine-Mind help",
+            description = "\n".join(command_lines)
+        )
+        await self.context.reply(embed=embed)
+
+    async def command_callback(
+            self: typing.Self,
+            ctx: commands.Context | CustomContext,
+            /, *,
+            command: typing.Optional[str] = None
+        ) -> None:
+
+        bot = ctx.bot
+
+        if command is None:
+            return await self.send_bot_help()
+
+        # Check if it's a cog
+        cog = bot.get_cog(command)
+        if cog is not None:
+            return await self.send_cog_help(cog)
+
+        keys = command.split(' ')
+        cmd = bot.all_commands.get(keys[0])
+        if cmd is None:
+            return await self.command_not_found(keys[0])
+            
+
+        for key in keys[1:]:
+            try:
+                found = cmd.all_commands.get(key)  # type: ignore
+            except AttributeError:
+                return await self.subcommand_not_found(cmd, self.remove_mentions(key))
+            else:
+                if found is None:
+                    return await self.subcommand_not_found(cmd, self.remove_mentions(key))
+                cmd = found
+
+        if isinstance(cmd, commands.Group):
+            return await self.send_group_help(cmd, ctx)
+        else:
+            return await self.send_command_help(cmd)
+    
+    async def on_help_command_error(
+            self: typing.Self,
+            ctx: commands.Context | CustomContext,
+            error: Exception, /
+        ) -> None:
+        raise error

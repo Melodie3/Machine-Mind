@@ -35,7 +35,12 @@ intents.messages = True
 intents.guilds = True
 intents.message_content = True
 
-bot = utility.CustomBot(command_prefix=COMMAND_PREFIX, intents=intents, owner_id=OWNER_ID)
+bot = utility.CustomBot(
+    command_prefix=COMMAND_PREFIX,
+    intents=intents,
+    owner_id=OWNER_ID,
+    help_command = utility.CustomHelpCommand()
+)
 # bot = commands.Bot(command_prefix=COMMAND_PREFIX, intents=intents, owner_id=OWNER_ID)
 
 
