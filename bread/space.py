@@ -400,11 +400,15 @@ class SystemTradeHub(SystemTile):
             system_xpos: int,
             system_ypos: int,
 
-            trade_hub_level: int = None
+            trade_hub_level: int = None,
+            upgrades: dict[str, int] = None
         ) -> None:
         super().__init__(galaxy_seed, galaxy_xpos, galaxy_ypos, system_xpos, system_ypos)
+        if upgrades is None:
+            upgrades = {}
 
         self.trade_hub_level = trade_hub_level
+        self.upgrades = upgrades
         self.project_count = store.trade_hub_projects[trade_hub_level]
         self.type = "trade_hub"
     
@@ -418,11 +422,59 @@ class SystemTradeHub(SystemTile):
             user_account: account.Bread_Account,
             detailed: bool = False
         ) -> list[str]:
+        day_seed = json_interface.get_day_seed(guild=guild)
+
         return [
-                "Object type: Trade Hub",
-                f"Trade Hub level: {self.trade_hub_level}",
-                "Use '$bread space hub' while over the trade hub to interact with it."
-            ]
+            "Object type: Trade Hub",
+            f"Trade Hub level: {self.trade_hub_level}",
+            f"Purchased upgrades: {sum(1 for upgrade in projects.all_trade_hub_upgrades if self.get_upgrade_level(upgrade))}",
+            f"Available upgrades: {len(self.get_available_upgrades(day_seed))}",
+            "Use '$bread space hub' while over the trade hub to interact with it."
+        ]
+
+    def get_upgrade_level(
+            self: typing.Self,
+            upgrade: str | projects.Trade_Hub_Upgrade,
+            default: int | None = 0
+        ) -> int:
+        """Gets the level this trade hub has of the given upgrade."""
+        return self.get_upgrade_data(upgrade, dict()).get('level', default)
+
+    def get_upgrade_data(
+            self: typing.Self,
+            upgrade: str | projects.Trade_Hub_Upgrade,
+            default: int | None = 0
+        ) -> dict:
+        """Gets the data for the given trade hub upgrade."""
+        if not isinstance(upgrade, str):
+            upgrade = upgrade.internal
+        
+        return self.upgrades.get(upgrade, default)
+
+    def get_available_upgrades(
+            self: typing.Self,
+            day_seed: str
+        ) -> list[projects.Trade_Hub_Upgrade]:
+        """Gives a list of available upgrades for this Trade Hub, factoring in things like required hub tiers and max upgrade levels."""
+        return [upgrade for upgrade in projects.all_trade_hub_upgrades if upgrade.is_available(day_seed, self)]
+
+    def get_purchased_upgrades(
+            self: typing.Self
+        ) -> list[projects.Trade_Hub_Upgrade]:
+        return [upgrade for upgrade in projects.all_trade_hub_upgrades if self.get_upgrade_level(upgrade) > 0]
+    
+    def to_dict(
+            self: typing.Self,
+            project_data: dict,
+            level_progress: dict
+        ) -> dict:
+        return {
+            "location": [self.system_xpos, self.system_ypos],
+            "level": self.trade_hub_level,
+            "project_progress": project_data,
+            "level_progress": level_progress,
+            "upgrades": self.upgrades
+        }
     
 ########################################################
 
@@ -784,6 +836,9 @@ class GalaxyTile:
             galaxy_xpos = self.xpos,
             galaxy_ypos = self.ypos
         )
+
+        if self.trade_hub is not None:
+            self.trade_hub.galaxy_tile = self
         
         if raw_data.get("wormhole", {}).get("exists", False):
             wormhole_data = raw_data.get("wormhole", {})
@@ -1813,10 +1868,17 @@ def get_planet_modifiers(
         if galaxy_tile.star.star_type == "black_hole":
             # If it's a black hole, make it a little crazier by dividing the denominator by 5.
             denominator /= 5
+        
+        raw_seed = tile.tile_seed()
+
+        # Handle the Nebula Refinery trade hub upgrade.
+        mod = 0
+        if galaxy_tile.trade_hub is not None:
+            if galaxy_tile.trade_hub.get_upgrade_level(projects.Nebula_Refinery) > 0:
+                mod = abs(random.Random(f"{raw_seed}_nebularefinery").gauss(mu=math.pi / 100, sigma=0.01)) * 2
 
         deviation = (1 - tile.planet_deviation) / denominator
 
-        raw_seed = tile.tile_seed()
         tile_seed = tile.tile_seed() + day_seed
 
         sqrt_phi = math.sqrt((1 + math.sqrt(5)) / 2)
@@ -1824,7 +1886,7 @@ def get_planet_modifiers(
         # Get the planet seed for each category.
         # These do not change per day.
         for key in odds.copy():
-            odds[key] = random.Random(f"{raw_seed}{key}").gauss(mu=1, sigma=deviation)
+            odds[key] = random.Random(f"{raw_seed}{key}").gauss(mu=1 + mod, sigma=deviation)
 
             if key == priority:
                 odds[key] = (abs(odds[key] - 1) + 1) * sqrt_phi
@@ -1924,7 +1986,8 @@ def get_trade_hub(
             galaxy_ypos = galaxy_ypos,
             system_xpos = xpos,
             system_ypos = ypos,
-            trade_hub_level = trade_hub.get("level", 1)
+            trade_hub_level = trade_hub.get("level", 1),
+            upgrades = trade_hub.get("upgrades", dict())
         )
     
     generated = generation.generate_system(
@@ -1945,7 +2008,8 @@ def get_trade_hub(
         galaxy_ypos = galaxy_ypos,
         system_xpos = generated["trade_hub"]["xpos"],
         system_ypos = generated["trade_hub"]["ypos"],
-        trade_hub_level = generated["trade_hub"]["level"]
+        trade_hub_level = generated["trade_hub"]["level"],
+        upgrades = {}
     )
 
             
@@ -2175,6 +2239,39 @@ def get_move_cost_system(
     }
 
 
+def get_hyperlane_registrar_bonus(
+        json_interface: bread_cog.JSON_interface,
+        user_account: account.Bread_Account
+    ) -> float:
+    """Gets the active multiplier for Hyperlane Registrar for the given player."""
+    space_data = json_interface.get_space_data(user_account.get("guild_id"))
+    ascension_data = space_data.get(f"ascension_{user_account.get_prestige_level()}", {})
+    trade_hub_data = ascension_data.get("trade_hubs", {})
+
+    player_x, player_y = user_account.get_galaxy_location(json_interface)
+
+    max_found = 0
+
+    for key, data in trade_hub_data.items():
+        try:
+            split = key.split(" ", 1)
+            hub_x = int(split[0])
+            hub_y = int(split[1])
+            level = data.get("level", 1)
+        except:
+            continue
+            
+        max_distance = store.trade_hub_squared[level]
+        distance = (hub_x - player_x) ** 2 + (hub_y - player_y) ** 2
+
+        if distance <= max_distance:
+            upgrades = data.get("upgrades", {})
+            registrar = upgrades.get(projects.Hyperlane_Registrar.internal, {}).get("level", 0)
+            
+            if registrar > max_found:
+                max_found = registrar
+    
+    return projects.Hyperlane_Registrar.cost_multipliers[max_found]
             
 
         

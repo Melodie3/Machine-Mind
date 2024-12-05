@@ -5958,7 +5958,144 @@ anarchy - 1000% of your wager.
 
         await ctx.reply(message_lines)
         return
+
+    ##############################################################################################################
+    
+    async def trade_hub_upgrade_purchase(
+            self: typing.Self,
+            ctx: commands.Context,
+            user_account: account.Bread_Account,
+            day_seed: str,
+            hub: space.SystemTradeHub,
+            upgrade: projects.Trade_Hub_Upgrade
+        ) -> None:
+        if upgrade not in hub.get_available_upgrades(day_seed):
+            await ctx.reply("Sorry, this Trade Hub already has as many of that upgrade as it can.")
+            return
+
+        if not upgrade.is_affordable_for(
+            day_seed = day_seed,
+            system_tile = hub,
+            user_account = user_account
+        ):
+            await ctx.reply("Sorry, but you can't afford to buy that.")
+            return
         
+        upgrade.do_purchase(
+            day_seed = day_seed,
+            system_tile = hub,
+            user_account = user_account
+        )
+
+        trade_hub_data = self.json_interface.get_trade_hub_data(
+            guild = ctx.guild,
+            ascension = user_account.get_prestige_level(),
+            galaxy_x = hub.galaxy_xpos,
+            galaxy_y = hub.galaxy_ypos
+        )
+
+        cost_types = upgrade.get_cost_types(
+            day_seed = day_seed,
+            system_tile = hub
+        )
+
+        all_upgrade_data = trade_hub_data.get("upgrades", {})
+        upgrade_data = all_upgrade_data.get(upgrade.internal, {})
+
+        if "level" in upgrade_data:
+            upgrade_data["level"] += 1
+        else:
+            upgrade_data["level"] = 1
+
+        new_level = upgrade_data["level"]
+        
+        all_upgrade_data[upgrade.internal] = upgrade_data
+        trade_hub_data["upgrades"] = all_upgrade_data
+
+        self.json_interface.update_trade_hub_data(
+            guild = ctx.guild,
+            ascension = user_account.get_prestige_level(),
+            galaxy_x = hub.galaxy_xpos,
+            galaxy_y = hub.galaxy_ypos,
+            new_data = trade_hub_data
+        )
+
+        self.json_interface.set_account(
+            user = ctx.author,
+            user_account = user_account,
+            guild = ctx.guild
+        )
+
+        completion = upgrade.completion(
+            day_seed = day_seed,
+            system_tile = hub
+        )
+
+        await ctx.reply(f"The Trade Hub now has a level {utility.smart_number(new_level)} {upgrade.name(day_seed, hub)}!\n{completion}\n\nYou now have {', '.join([f'**{utility.smart_number(user_account.get(item))}** {item}' for item in cost_types])} remaining.")
+
+
+    
+    async def trade_hub_upgrades(
+            self: typing.Self,
+            ctx: commands.Context,
+            user_account: account.Bread_Account,
+            day_seed: str,
+            hub_projects: list[dict],
+            hub: space.SystemTradeHub,
+            actions: tuple[str]
+        ) -> None:
+        """Lists all available upgrades to the given Trade Hub."""
+
+        # Check if the user is trying to purchase an upgrade.
+        potential_name = " ".join(actions[1:]).lower()
+
+        for upgrade in projects.all_trade_hub_upgrades:
+            if upgrade.name(day_seed, hub).lower() == potential_name or upgrade.internal.lower() == potential_name:
+                await self.trade_hub_upgrade_purchase(
+                    ctx = ctx,
+                    user_account = user_account,
+                    day_seed = day_seed,
+                    hub = hub,
+                    upgrade = upgrade
+                )
+                return
+        
+        ###############
+        # If no upgrades were found, list available upgrades.
+
+        name = generation.get_trade_hub_name(
+            galaxy_seed = self.json_interface.get_ascension_seed(user_account.get_prestige_level(), guild=user_account.get("guild_id")),
+            galaxy_x = hub.galaxy_xpos,
+            galaxy_y = hub.galaxy_ypos
+        )
+
+        message_lines = f"Available upgrades for Trade Hub {name}:\nAll upgrades are for the Trade Hub, and anyone can use them.\n\n"
+
+        listed = 0
+
+        for upgrade in hub.get_available_upgrades(day_seed):
+            message_lines += f"\t**{upgrade.name(day_seed, hub)}** - {upgrade.get_price_description(day_seed, hub)}\n"
+            message_lines += upgrade.description(day_seed, hub) + "\n\n"
+            listed += 1
+        
+        if listed == 0:
+            message_lines += "*Nothing is available.*\n\n"
+        
+        message_lines += "Use '$bread space hub upgrade <upgrade name>` to purchase that upgrade."
+
+        purchased = hub.get_purchased_upgrades()
+
+        if len(purchased) > 0:
+            message_lines += "\n\nAlready purchased upgrades:"
+            for upgrade in purchased:
+                message_lines += "\n- {} level {}: {}".format(
+                    upgrade.name(day_seed, hub),
+                    hub.get_upgrade_level(upgrade),
+                    upgrade.purchased_description(day_seed, hub).replace('\n',' ') # .format is needed here due to the `\n`.
+                )
+
+        await ctx.reply(message_lines)
+
     ########################################################################################################################
     #####      BREAD SPACE HUB
 
@@ -6011,9 +6148,12 @@ anarchy - 1000% of your wager.
         
         system.load_system_data(json_interface=self.json_interface, guild=ctx.guild.id, get_wormholes=False)
 
-        if not (abs(system_x) <= 1 and abs(system_y) <= 1):
-            await ctx.reply("You are not close enough to a star to create a Trade Hub.")
-            return
+        hub = system.trade_hub
+
+        if hub.get_upgrade_level(projects.Listening_Post) == 0:
+            if not (abs(system_x) <= 1 and abs(system_y) <= 1):
+                await ctx.reply("You are not close enough to a star to create a Trade Hub.")
+                return
         
         if action is not None:
             actions = action.split(" ")
@@ -6021,6 +6161,10 @@ anarchy - 1000% of your wager.
             
         day_seed = self.json_interface.get_day_seed(guild=ctx.guild.id)
 
+
+        hub = system.trade_hub
+        
+        
         hub = system.trade_hub
         
         if system.trade_hub is None:            
@@ -6079,9 +6223,10 @@ anarchy - 1000% of your wager.
             await ctx.reply("There is already a Trade Hub in this system.")
             return
         
-        if not (system_x == system.trade_hub.system_xpos and system_y == system.trade_hub.system_ypos):
-            await ctx.reply("You must be on the Trade Hub to use it.")
-            return
+        if hub.get_upgrade_level(projects.Listening_Post) == 0:
+            if not (system_x == system.trade_hub.system_xpos and system_y == system.trade_hub.system_ypos):
+                await ctx.reply("You must be on the Trade Hub to use it.")
+                return
         
         # Make sure the Trade Hub data exists.
         discovered_trade_hub = False
@@ -6153,6 +6298,18 @@ anarchy - 1000% of your wager.
                 actions = actions
             )
             return
+        ##############################################################################################################
+
+        if action == "upgrades" or action == "upgrade":
+            await self.trade_hub_upgrades(
+                ctx = ctx,
+                user_account = user_account,
+                day_seed = day_seed,
+                hub_projects = hub_projects,
+                hub = hub,
+                actions = actions
+            )
+            return
 
         ##############################################################################################################
 
@@ -6175,6 +6332,15 @@ anarchy - 1000% of your wager.
         message_lines += f"\nGalaxy location: ({hub.galaxy_xpos}, {hub.galaxy_ypos})"
         message_lines += f"\nSystem location: ({hub.system_xpos}, {hub.system_ypos})"
 
+        available_upgrades = hub.get_available_upgrades(day_seed)
+        if len(available_upgrades) > 0:
+            message_lines += f"\n\nAvailable upgrades:"
+            for upgrade in available_upgrades:
+                message_lines += f"\n- {upgrade.name(day_seed, hub)}"
+        
+        if len(available_upgrades) > 0 or len(hub.get_purchased_upgrades()) > 0:
+            message_lines += f"\nUse '$bread space hub upgrades' to get more information on available and purchased upgrades."
+
         if hub.trade_hub_level != max_level:
             message_lines += f"\n\nUse '$bread space hub level' to view the progress to level {hub.trade_hub_level + 1}"
         
@@ -6183,6 +6349,8 @@ anarchy - 1000% of your wager.
         message_lines += "\n\n**# -- Projects --**"
 
         for project_id, data in enumerate(hub_projects[:hub.project_count]):
+            old = message_lines
+
             contributions = data.get('contributions')
 
             message_lines += f"#{project_id + 1}: "
@@ -6194,6 +6362,10 @@ anarchy - 1000% of your wager.
                 item_information = contributions
             )
             message_lines += "\n\n"
+
+            if len(message_lines) >= 2000:
+                await ctx.reply(old)
+                message_lines = f"Continued:\n{message_lines[len(old):]}"
         
         message_lines += "To contribute to a project, use '$bread space hub contribute [project number] [amount] [item]'\nYou can get more information about a project with '$bread space hub info [project number]'"
 
@@ -6229,7 +6401,8 @@ anarchy - 1000% of your wager.
     async def space_move(self, ctx,
             move_map: typing.Optional[str] = commands.parameter(description = "Which map to move on."),
             move_location: typing.Optional[str] = commands.parameter(description = "The location to move to."),
-            confirm: typing.Optional[str] = commands.parameter(description = "Whether to confirm automatically.")
+            confirm: typing.Optional[str] = commands.parameter(description = "Whether to confirm automatically."),
+            other: typing.Optional[str] = commands.parameter(description = "Other arguments specific to how you're moving.")
         ):
         # Check if the player is in the interacting list.
         if ctx.author.id in self.currently_interacting:
@@ -6291,7 +6464,8 @@ anarchy - 1000% of your wager.
         acceptable_maps = [
             "system", "s",
             "galaxy", "g",
-            "wormhole", "w"
+            "wormhole", "w",
+            "catapult", "c"
         ]
 
         if move_map in acceptable_maps:
@@ -6301,6 +6475,8 @@ anarchy - 1000% of your wager.
                 move_map = "galaxy"
             elif move_map == "w":
                 move_map = "wormhole"
+            elif move_map == "c":
+                move_map = "catapult"
         elif confirm is None:
             confirm = move_location
             move_location = move_map
@@ -6319,6 +6495,154 @@ anarchy - 1000% of your wager.
         ###################################
 
         autopilot_level = user_account.get(store.Upgraded_Autopilot.name)
+
+        if move_map == "catapult":
+            if autopilot_level < 1:
+                await ctx.reply(f"Autopilot error:\nGalaxy travel not possible with existing autopilot system.\nAutopilot level: {autopilot_level}, expected 1 or higher.")
+                self.remove_from_interacting(ctx.author.id)
+                return
+            
+            hub_tile = user_account.get_system_tile(json_interface=self.json_interface) # type: space.SystemTradeHub
+
+            if hub_tile.type != "trade_hub":
+                await ctx.reply("Autopilot error:\nNo Trade Hub found on current tile.")
+                self.remove_from_interacting(ctx.author.id)
+                return
+            
+            level = hub_tile.get_upgrade_level(projects.Quantum_Catapult)
+            
+            if level == 0:
+                await ctx.reply("Autopilot error:\nNo catapult found.")
+                self.remove_from_interacting(ctx.author.id)
+                return
+            
+            try:
+                ending_xpos = parse_int(move_location)
+                ending_ypos = parse_int(confirm)
+            except ValueError:
+                await ctx.reply("Autopilot error:\nNo catapult coordinates provided.")
+                self.remove_from_interacting(ctx.author.id)
+                return
+            
+            if ending_xpos == hub_tile.galaxy_xpos and ending_ypos == hub_tile.galaxy_ypos:
+                await ctx.reply(f"Autopilot error:\nDistance too short to catapult.")
+                self.remove_from_interacting(ctx.author.id)
+                return
+
+            distance = math.hypot(ending_xpos - hub_tile.galaxy_xpos, ending_ypos - hub_tile.galaxy_ypos)
+
+            if distance > projects.Quantum_Catapult.max_distance:
+                await ctx.reply(f"Autopilot error:\nToo far to launch. Distance: {utility.smart_number(round(distance, 2))}. Maximum distance: {projects.Quantum_Catapult.max_distance}")
+                self.remove_from_interacting(ctx.author.id)
+                return
+            
+            galaxy_seed = self.json_interface.get_ascension_seed(
+                ascension_id = user_account.get_prestige_level(),
+                guild = ctx.guild.id
+            )
+
+            ending_coordinate = space.get_galaxy_coordinate(
+                json_interface = self.json_interface,
+                guild = ctx.guild,
+                galaxy_seed = galaxy_seed,
+                ascension = user_account.get_prestige_level(),
+                xpos = ending_xpos,
+                ypos = ending_ypos
+            )
+
+            if ending_coordinate.in_nebula and autopilot_level < 2:
+                await ctx.reply(f"Autopilot error:\nUnsafe landing point for current autopilot level.\nAutopilot level: {autopilot_level}, 2 or higher is required to land there.")
+                self.remove_from_interacting(ctx.author.id)
+                return
+            
+            move_cost = space.get_move_cost_galaxy(
+                galaxy_seed = galaxy_seed,
+                start_position = (hub_tile.galaxy_xpos, hub_tile.galaxy_ypos),
+                end_position = (ending_xpos, ending_ypos)
+            )["cost"]
+
+            move_cost = int(move_cost * user_account.get_engine_efficiency_multiplier())
+
+            hub_multiplier = projects.Quantum_Catapult.cost_multipliers[level]
+
+            move_cost = int(move_cost * hub_multiplier)
+
+            if other not in confirm_text:
+                current_fuel = user_account.get(values.fuel.text)
+                daily_fuel = user_account.get("daily_fuel")
+                
+                await ctx.reply(f"You are trying to use the Trade Hub's Quantum Catapult to move to {ending_xpos, ending_ypos} on the galaxy map.\nThis will require **{utility.smart_number(move_cost)}** {values.fuel.text}.\nYou have {utility.smart_number(current_fuel)} {values.fuel.text} and {utility.smart_number(daily_fuel)} {values.daily_fuel.text}.\nAre you sure you want to move? Yes or No.")
+            
+                def check(m: discord.Message):
+                    return m.author.id == ctx.author.id and m.channel.id == ctx.channel.id 
+
+                try:
+                    msg = await self.bot.wait_for('message', check = check, timeout = 60.0)
+                except asyncio.TimeoutError: 
+                    await ctx.reply(f"Autopilot error:\nConfirmation timeout, aborting.")
+                    self.remove_from_interacting(ctx.author.id)
+                    return
+                
+                if msg.content.lower() in cancel_text:
+                    await ctx.reply("Autopilot error:\nCancelled.")
+
+                    self.remove_from_interacting(ctx.author.id)
+                    return
+                elif msg.content.lower() not in confirm_text:
+                    await ctx.reply("Autopilot error:\nUnrecognized confirmation response, aborting.")
+
+                    self.remove_from_interacting(ctx.author.id)
+                    return
+        
+            fuel_item = user_account.get(values.fuel.text)
+            daily_fuel = user_account.get("daily_fuel")
+            player_fuel = fuel_item + daily_fuel
+
+            if player_fuel < move_cost:
+                await ctx.reply("Autopilot error:\nLacking required fuel, aborting.")
+
+                self.remove_from_interacting(ctx.author.id)
+                return
+            
+            # Remove the fuel.
+            # Daily fuel is prioritized over regular fuel.
+            if move_cost > daily_fuel:
+                user_account.set("daily_fuel", 0)
+                user_account.increment(values.fuel.text, -(move_cost - daily_fuel))
+            else:
+                user_account.increment("daily_fuel", -move_cost)
+            
+            user_account.set("galaxy_xpos", ending_xpos)
+            user_account.set("galaxy_ypos", ending_ypos)
+            user_account.set("system_xpos", 0)
+            user_account.set("system_ypos", 0)
+
+            # Save the player account.
+            self.json_interface.set_account(ctx.author.id, user_account, guild = ctx.guild.id)
+
+            item_left = user_account.get(values.fuel.text)
+            daily_fuel = user_account.get("daily_fuel")
+
+            message_content = f"Autopilot success:\nSucessfully used the catapult to move to {ending_xpos, ending_ypos} on the galaxy map.\n\nYou have **{utility.smart_number(item_left)} {values.fuel.text}** and **{utility.smart_number(daily_fuel)} {values.daily_fuel.text}** remaining."
+            
+            auto_map = user_account.get("auto_move_map", False)
+
+            if auto_map:
+                await self.handle_map(
+                    ctx = ctx,
+                    map_type = "galaxy",
+                    user_account = user_account,
+                    content = message_content,
+                    reduced_info = True
+                )
+            else:
+                await ctx.reply(message_content)
+
+            self.remove_from_interacting(ctx.author.id)
+            return
+
+            
+
 
         if move_map == "wormhole":
             if autopilot_level < 3:
@@ -6403,7 +6727,7 @@ anarchy - 1000% of your wager.
             item_left = user_account.get(values.fuel.text)
             daily_fuel = user_account.get("daily_fuel")
 
-            message_content = f"Autopilot success:\nSucessfully travelled through the wormhole..\n\nYou have **{utility.smart_number(item_left)} {values.fuel.text}** and **{utility.smart_number(daily_fuel)} {values.daily_fuel.text}** remaining."
+            message_content = f"Autopilot success:\nSucessfully travelled through the wormhole.\n\nYou have **{utility.smart_number(item_left)} {values.fuel.text}** and **{utility.smart_number(daily_fuel)} {values.daily_fuel.text}** remaining."
             
             auto_map = user_account.get("auto_move_map", False)
 
@@ -6413,7 +6737,7 @@ anarchy - 1000% of your wager.
                     map_type = "system", # This is a weird scenario since wormholes move on both maps.
                     user_account = user_account,
                     content = message_content,
-                reduced_info = True
+                    reduced_info = True
                 )
             else:
                 await ctx.reply(message_content)
@@ -6517,7 +6841,7 @@ anarchy - 1000% of your wager.
                 end_position = end_location
             )
 
-            move_cost = int(cost_data.get("cost", 500) * user_account.get_engine_efficiency_multiplier())
+            move_cost = int(cost_data.get("cost", 500) * user_account.get_engine_efficiency_multiplier() * space.get_hyperlane_registrar_bonus(self.json_interface, user_account))
         else:
             if autopilot_level < 1:
                 await ctx.reply(f"Autopilot error:\nGalaxy travel not possible with existing autopilot system.\nAutopilot level: {autopilot_level}, expected 1 or higher.")
@@ -6542,7 +6866,7 @@ anarchy - 1000% of your wager.
                 self.remove_from_interacting(ctx.author.id)
                 return
 
-            move_cost = int(cost_data.get("cost", 500) * user_account.get_engine_efficiency_multiplier())
+            move_cost = int(cost_data.get("cost", 500) * user_account.get_engine_efficiency_multiplier() * space.get_hyperlane_registrar_bonus(self.json_interface, user_account))
 
         if confirm not in confirm_text:
             current_fuel = user_account.get(values.fuel.text)
@@ -7518,6 +7842,9 @@ anarchy - 1000% of your wager.
             account.set(emote.text, 50000000000)
         
         for shop_item in store.all_store_items:
+            if shop_item.max_level(account) is None:
+                continue
+            
             account.set(shop_item.name, shop_item.max_level(account))
 
         account.set("fuel_tank", 40000)

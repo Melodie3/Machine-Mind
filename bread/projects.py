@@ -106,6 +106,16 @@ class Project:
     
     # Required for subclasses.
     @classmethod
+    def get_cost_types(
+            cls: typing.Type[typing.Self],
+            day_seed: str,
+            system_tile: space.SystemTradeHub
+        ) -> list[str]:
+        """Gets the individual items required for the entirety of this project."""
+        return list(dict(cls.get_cost(day_seed, system_tile)).keys())
+    
+    # Required for subclasses.
+    @classmethod
     def get_reward(
             cls: typing.Type[typing.Self],
             day_seed: str,
@@ -122,7 +132,7 @@ class Project:
             system_tile: space.SystemTradeHub,
             user_account: account.Bread_Account
         ) -> None:
-        """This subtracts all the cost items from a single user account."""
+        """This subtracts all the cost items from a single user account. This isn't used in the projects themselves due to the collaborative aspect, but is used by the Trade Hub upgrades."""
         cost = cls.get_cost(day_seed, system_tile)
 
         for pair in cost:
@@ -390,7 +400,256 @@ class Trade_Hub(Project):
             system_tile: space.SystemTradeHub
         ) -> list[tuple[str, int]]:
         return [("total_dough", 2000000)] # Award 2 million dough on completion.
+
+#######################################################################################################
+##### Trade hub upgrades. #############################################################################
+#######################################################################################################
+
+class Trade_Hub_Upgrade(Project):
+    max_level = 1 # The maximum level of this upgrade.
+    unlock_level = 1 # The Trade Hub tier at which this is unlocked.
+
+    # Optional for subclasses.
+    @classmethod
+    def is_available(
+            cls: typing.Type[typing.Self],
+            day_seed: str,
+            system_tile: space.SystemTradeHub
+        ) -> bool:
+        """Determines whether this Trade Hub can have this upgrade available. This handles things like the max level and unlock level."""
+        current = system_tile.get_upgrade_level(cls)
+
+        if current >= cls.max_level:
+            return False
         
+        if system_tile.trade_hub_level < cls.unlock_level:
+            return False
+        
+        return True
+    
+    # Required for subclasses.
+    @classmethod
+    def purchased_description(
+            cls: typing.Type[typing.Self],
+            day_seed: str,
+            system_tile: space.SystemTradeHub
+        ) -> str:
+        """The description that is shown in the Trade Hub after this has been purchased. It should explain what the upgrade does."""
+        return "Generic excuse"
+
+class Listening_Post(Trade_Hub_Upgrade):
+    internal = "listening_post"
+    max_level = 1
+    unlock_level = 3
+    
+    @classmethod
+    def name(
+            cls,
+            day_seed: str,
+            system_tile: space.SystemTradeHub
+        ) -> str:
+        return "Listening Post"
+
+    @classmethod
+    def description(
+            cls,
+            day_seed: str,
+            system_tile: space.SystemTradeHub
+        ) -> str:
+        return "An advanced listening post for the Trade Hub allowing the use of it from any location within the system."
+    
+    @classmethod
+    def completion(
+            cls: typing.Type[typing.Self],
+            day_seed: str,
+            system_tile: space.SystemTradeHub
+        ) -> str:
+        return "Success! The new listening post has been installed and ships anywhere in the system can now access the Trade Hub!"
+    
+    @classmethod
+    def get_cost(
+            cls,
+            day_seed: str,
+            system_tile: space.SystemTradeHub
+        ) -> list[tuple[str, int]]:
+        return [
+            (values.anarchy_chess.text, 10), (values.anarchy_chessatron.text, 1), (values.gem_gold.text, 512)
+        ]
+    
+    @classmethod
+    def purchased_description(
+            cls: typing.Type[typing.Self],
+            day_seed: str,
+            system_tile: space.SystemTradeHub
+        ) -> str:
+        return "A listening post in the Trade Hub allowing the access to the Trade Hub from anywhere in the system."
+
+class Nebula_Refinery(Trade_Hub_Upgrade):
+    internal = "nebula_refinery"
+    max_level = 1
+    unlock_level = 4
+    
+    @classmethod
+    def name(
+            cls,
+            day_seed: str,
+            system_tile: space.SystemTradeHub
+        ) -> str:
+        return "Nebula Refinery"
+
+    @classmethod
+    def description(
+            cls,
+            day_seed: str,
+            system_tile: space.SystemTradeHub
+        ) -> str:
+        return "Weird technology that harnesses the power of nebulae to make the system's planets slightly better."
+    
+    @classmethod
+    def completion(
+            cls: typing.Type[typing.Self],
+            day_seed: str,
+            system_tile: space.SystemTradeHub
+        ) -> str:
+        return "Amazing! The new technology has been setup and planet odds are now slightly better than before."
+    
+    @classmethod
+    def get_cost(
+            cls,
+            day_seed: str,
+            system_tile: space.SystemTradeHub
+        ) -> list[tuple[str, int]]:
+        return [
+            (values.anarchy_chess.text, 10), (values.anarchy_chessatron.text, 1), (values.gem_gold.text, 256)
+        ]
+
+    @classmethod
+    def is_available(
+            cls: typing.Type[typing.Self],
+            day_seed: str,
+            system_tile: space.SystemTradeHub
+        ) -> bool:
+        if not super().is_available(day_seed, system_tile):
+            return False
+        
+        # This one is only purchasable in a nebula.
+        return system_tile.galaxy_tile.in_nebula
+    
+    @classmethod
+    def purchased_description(
+            cls: typing.Type[typing.Self],
+            day_seed: str,
+            system_tile: space.SystemTradeHub
+        ) -> str:
+        return "Strange technology that uses the nearby nebula to make this system's planets better."
+
+class Quantum_Catapult(Trade_Hub_Upgrade):
+    internal = "quantum_catapult"
+    max_level = 3
+    unlock_level = 5
+
+    cost_multipliers = [1, 1, 0.75, 0.5]
+    max_distance = 64
+    
+    @classmethod
+    def name(
+            cls,
+            day_seed: str,
+            system_tile: space.SystemTradeHub
+        ) -> str:
+        return "Quantum Catapult"
+
+    @classmethod
+    def description(
+            cls,
+            day_seed: str,
+            system_tile: space.SystemTradeHub
+        ) -> str:
+        tier = system_tile.get_upgrade_level(cls)
+        return f"A large catapult situated on top of the Trade Hub that can launch rockets anywhere within {cls.max_distance} tiles for {round(cls.cost_multipliers[tier + 1] * 100)}% the regular cost in a single launch!"
+    
+    @classmethod
+    def completion(
+            cls: typing.Type[typing.Self],
+            day_seed: str,
+            system_tile: space.SystemTradeHub
+        ) -> str:
+        return "zoop\n*Use '$bread space move catapult <x coordinate> <y coordinate>' while on the Trade Hub to use the catapult.*"
+    
+    @classmethod
+    def get_cost(
+            cls,
+            day_seed: str,
+            system_tile: space.SystemTradeHub
+        ) -> list[tuple[str, int]]:
+        tier = system_tile.get_upgrade_level(cls) + 1
+        return [
+            (values.anarchy_chess.text, 10 * tier), (values.anarchy_chessatron.text, tier), (values.gem_gold.text, 512 * tier)
+        ]
+    
+    @classmethod
+    def purchased_description(
+            cls: typing.Type[typing.Self],
+            day_seed: str,
+            system_tile: space.SystemTradeHub
+        ) -> str:
+        tier = system_tile.get_upgrade_level(cls)
+        return f"A catapult able to launch ships up to {cls.max_distance} tiles away for {round(cls.cost_multipliers[tier] * 100)}% the regular cost. *Type '$bread move catapult' to use.*"
+
+class Hyperlane_Registrar(Trade_Hub_Upgrade):
+    internal = "hyperlane_registrar"
+    max_level = 3
+    unlock_level = 2
+
+    cost_multipliers = [1, 0.75, 0.5, 0.25]
+    
+    @classmethod
+    def name(
+            cls,
+            day_seed: str,
+            system_tile: space.SystemTradeHub
+        ) -> str:
+        return "Hyperlane Registrar"
+
+    @classmethod
+    def description(
+            cls,
+            day_seed: str,
+            system_tile: space.SystemTradeHub
+        ) -> str:
+        tier = system_tile.get_upgrade_level(cls)
+        return f"A powerful supercomputer aboard the Trade Hub that's able to crunch the numbers required to find more efficient ways to use your fuel.\nThis results in a {round(cls.cost_multipliers[tier + 1] * 100)}% fuel consumption reduction for anyone moving, if they start somewhere within this Trade Hub's radius.\n*If one player is within radius of multiple Trade Hubs only the best one is used, the effect does not stack."
+    
+    @classmethod
+    def completion(
+            cls: typing.Type[typing.Self],
+            day_seed: str,
+            system_tile: space.SystemTradeHub
+        ) -> str:
+        return "Yippee! Your ships are now able to move around for a reduced cost!"
+    
+    @classmethod
+    def get_cost(
+            cls,
+            day_seed: str,
+            system_tile: space.SystemTradeHub
+        ) -> list[tuple[str, int]]:
+        tier = system_tile.get_upgrade_level(cls) + 1
+        return [
+            (values.anarchy_chess.text, 10 * tier), (values.anarchy_chessatron.text, tier), (values.gem_gold.text, 256 * tier)
+        ]
+    
+    @classmethod
+    def purchased_description(
+            cls: typing.Type[typing.Self],
+            day_seed: str,
+            system_tile: space.SystemTradeHub
+        ) -> str:
+        tier = system_tile.get_upgrade_level(cls)
+        return f"A supercomputer on board allowing those within the Trade Hub's radius to only use {round(cls.cost_multipliers[tier] * 100)}% the regular cost of fuel when moving."
+
+all_trade_hub_upgrades = [Listening_Post, Nebula_Refinery, Quantum_Catapult, Hyperlane_Registrar] # type: list[Trade_Hub_Upgrade]
+
 #######################################################################################################
 ##### Base project. ###################################################################################
 #######################################################################################################
