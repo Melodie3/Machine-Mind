@@ -32,6 +32,11 @@ MOVE_FUEL_GALAXY = 175
 MOVE_FUEL_GALAXY_NEBULA = 350
 MOVE_FUEL_WORMHOLE = 325
 
+# Alternate center points:
+# These are the points that are the same as (MAP_RADIUS, MAP_RADIUS), due to the 2x2 system at the center of the galaxy.
+ALTERNATE_CENTER = [(MAP_RADIUS - 1, MAP_RADIUS - 1), (MAP_RADIUS, MAP_RADIUS - 1), (MAP_RADIUS - 1, MAP_RADIUS)]
+ALL_CENTER = ALTERNATE_CENTER + [(MAP_RADIUS, MAP_RADIUS)]
+
 ## Emojis:
 
 MAP_EMOJIS = {
@@ -125,10 +130,17 @@ EMOJI_PATHS = {
     "star2": "images/star2.png",
     "star3": "images/star3.png",
     "black_hole": "images/black_hole.png",
+    "supermassive_black_hole": "images/black_hole.png", # Glaciers melting in the dead of night.
     "wormhole": "images/wormhole.png",
     "trade_hub": "images/trade_hub.png",
     "asteroid": "images/asteroid.png",
     "bread": "images/bread.png",
+
+    # 2x2 black hole.
+    "black_hole_top_left": "images/black_hole_top_left.png",
+    "black_hole_top_right": "images/black_hole_top_right.png",
+    "black_hole_bottom_left": "images/black_hole_bottom_left.png",
+    "black_hole_bottom_right": "images/black_hole_bottom_right.png",
 
     # Special breads.
     "croissant": "images/croissant.png",
@@ -158,6 +170,22 @@ EMOJI_PATHS = {
     "Wqueen": "images/wqueen.png",
     "Wking": "images/wking.png",
 
+    # Black anarchy pieces.
+    "Bpawnanarchy": "images/bpawn_anarchy.png",
+    "Bknightanarchy": "images/bknight_anarchy.png",
+    "Bbishopanarchy": "images/bbishop_anarchy.png",
+    "Brookanarchy": "images/brook_anarchy.png",
+    "Bqueenanarchy": "images/bqueen_anarchy.png",
+    "Bkinganarchy": "images/bking_anarchy.png",
+
+    # White anarchy pieces.
+    "Wpawnanarchy": "images/wpawn_anarchy.png",
+    "Wknightanarchy": "images/wknight_anarchy.png",
+    "Wbishopanarchy": "images/wbishop_anarchy.png",
+    "Wrookanarchy": "images/wrook_anarchy.png",
+    "Wqueenanarchy": "images/wqueen_anarchy.png",
+    "Wkinganarchy": "images/wking_anarchy.png",
+
     # Gems.
     "gem_red": "images/gem_red.png",
     "gem_blue": "images/gem_blue.png",
@@ -179,7 +207,7 @@ for key, path in EMOJI_PATHS.items():
     except FileNotFoundError:
         print(f"Bread Space: Map image loading failed for {key} ({path}) as the file does not exist.")
 
-print("Bread Space: Map image loading complete.")
+print(f"Bread Space: Map image loading complete. Loaded images: {len(EMOJI_IMAGES)}/{len(EMOJI_PATHS)}.")
 
 
 ########################################################################################
@@ -349,6 +377,11 @@ class SystemStar(SystemTile):
         if self.star_type == "black_hole" and detailed:
             out.append("Sensors read more interference and")
             out.append("more dynamic deviations than normal.")
+
+        if self.star_type == "supermassive_black_hole" and detailed:
+            out.append("Sensors read extremely strong interference")
+            out.append("compared to the norm and therefore ")
+            out.append("incredibly more dynamic deviations.")
 
         return out
     
@@ -602,6 +635,9 @@ class SystemPlanet(SystemTile):
     
     def get_priority_item(self: typing.Self) -> typing.Union[values.Emote, str, None]:
         """Returns the item or category that is prioritized by this planet."""
+        if self.planet_type in values.all_anarchy_pieces:
+            return "anarchy_piece"
+        
         if self.planet_type.text == values.anarchy_chess.text:
             return self.planet_type.name
         
@@ -881,6 +917,32 @@ class GalaxyTile:
                 asteroid_added.append((asteroid_x, asteroid_y))
             
             self.asteroids = asteroids
+        elif len(raw_data.get("asteroid_belts", [])) > 0:
+            asteroids = []
+
+            for distance in raw_data.get("asteroid_belts", []):
+                asteroid_added = []
+
+                for angle in range(360):
+                    asteroid_x = distance * math.cos(math.radians(angle))
+                    asteroid_y = distance * math.sin(math.radians(angle))
+
+                    # Make sure it hasn't added an asteroid at this point yet.
+                    if (asteroid_x, asteroid_y) in asteroid_added:
+                        continue
+                    
+                    asteroids.append(SystemAsteroid(
+                        galaxy_seed = self.galaxy_seed,
+
+                        galaxy_xpos = self.xpos,
+                        galaxy_ypos = self.ypos,
+                        system_xpos = int(asteroid_x),
+                        system_ypos = int(asteroid_y)
+                    ))
+
+                    asteroid_added.append((asteroid_x, asteroid_y))
+            
+            self.asteroids = asteroids
         else:
             self.asteroids = list()
         
@@ -942,6 +1004,17 @@ class GalaxyTile:
 
         # If this tile has a system, then get whatever
         if self.system:
+            # Handle the 2x2 system:
+            if (self.xpos, self.ypos) in ALTERNATE_CENTER or (self.xpos == MAP_RADIUS and self.ypos == MAP_RADIUS):
+                if self.xpos == MAP_RADIUS and self.ypos == MAP_RADIUS: # Bottom right.
+                    return "black_hole_bottom_right"
+                elif self.xpos == MAP_RADIUS - 1 and self.ypos == MAP_RADIUS: # Bottom left.
+                    return "black_hole_bottom_left"
+                elif self.xpos == MAP_RADIUS and self.ypos == MAP_RADIUS - 1: # Top right.
+                    return "black_hole_top_right"
+                else:
+                    return "black_hole_top_left"
+            
             # Load the system data if it has not already been loaded.
             self.smart_load(json_interface=json_interface, guild=self.guild, get_wormholes=False)
             
@@ -1425,7 +1498,7 @@ def system_map(
                 
                 if math.hypot(tile_x + top_left[0], tile_y + top_left[1]) >= system_radius + 2:
                     grid[tile_y + 2][tile_x + 2] = blocker
-
+        
         # Star
         star_x = system_data.star.system_xpos
         star_y = system_data.star.system_ypos
@@ -1643,6 +1716,10 @@ def get_system_raw_data(
     Returns:
         dict: The raw data for the system.
     """
+    if (xpos, ypos) in ALTERNATE_CENTER:
+        xpos = MAP_RADIUS
+        ypos = MAP_RADIUS
+
     if map_data is None:
         map_data = json_interface.get_space_map_data(
             ascension_id = ascension,
@@ -1699,6 +1776,19 @@ def get_galaxy_coordinate(
             in_nebula = False
         )
     
+    # To handle the 2x2 system at the center of the map.
+    # The map data only exists at (MAP_RADIUS, MAP_RADIUS),
+    # so if the coordinate being called is any of the other
+    # three tiles, change it to where the data is.
+    old_x = None
+    old_y = None
+    if (xpos, ypos) in ALTERNATE_CENTER:
+        old_x = xpos
+        old_y = ypos
+
+        xpos = MAP_RADIUS
+        ypos = MAP_RADIUS
+    
     map_data = json_interface.get_space_map_data(
         ascension_id = ascension,
         guild = guild
@@ -1740,6 +1830,10 @@ def get_galaxy_coordinate(
         if load_data:
             out.load_system_data(json_interface, guild, True)
         
+        if old_x is not None:
+            out.xpos = old_x
+            out.ypos = old_y
+        
         return out
 
 
@@ -1774,6 +1868,10 @@ def get_galaxy_coordinate(
 
     if load_data:
         out.load_system_data(json_interface=json_interface, guild=guild, get_wormholes=True)
+        
+    if old_x is not None:
+        out.xpos = old_x
+        out.ypos = old_y
 
     return out
 
@@ -1868,6 +1966,9 @@ def get_planet_modifiers(
         if galaxy_tile.star.star_type == "black_hole":
             # If it's a black hole, make it a little crazier by dividing the denominator by 5.
             denominator /= 5
+        elif galaxy_tile.star.star_type == "supermassive_black_hole":
+            # If it's the supermassive black hole at the center of the galaxy, chaos.
+            denominator /= 10
         
         raw_seed = tile.tile_seed()
 
@@ -1955,6 +2056,10 @@ def get_trade_hub(
     Returns:
         typing.Union[SystemTradeHub, None]: The SystemTradeHub object for the trade hub, or None if there is no trade hub.
     """
+    if (galaxy_xpos, galaxy_ypos) in ALTERNATE_CENTER:
+        galaxy_xpos = MAP_RADIUS
+        galaxy_ypos = MAP_RADIUS
+
     space_data = json_interface.get_custom_file("space", guild=guild)
 
     ascension_data = space_data.get(f"ascension_{ascension}", dict())
@@ -2029,7 +2134,8 @@ def create_trade_hub(
         galaxy_x: int,
         galaxy_y: int,
         system_x: int,
-        system_y: int
+        system_y: int,
+        level: int = 1
     ) -> None:
     """Creates a new trade hub in the given system."""
     guild_id = user_account.get("guild_id")
@@ -2040,7 +2146,7 @@ def create_trade_hub(
 
     trade_hub_data[f"{galaxy_x} {galaxy_y}"] = {
         "location": [system_x, system_y],
-        "level": 1,
+        "level": level,
         "project_progress": {
             "project_1": {},
             "project_2": {},
@@ -2185,7 +2291,9 @@ def get_spawn_location(
     return location
 
 def get_move_cost_galaxy(
-        galaxy_seed: str,
+        json_interface: bread_cog.JSON_interface,
+        guild: typing.Union[discord.Guild, int, str],
+        ascension: int,
         start_position: tuple[int, int],
         end_position: tuple[int, int]
     ) -> dict:
@@ -2202,14 +2310,22 @@ def get_move_cost_galaxy(
 
     through_nebula = False
 
+    map_data = json_interface.get_space_map_data(
+        ascension_id = ascension,
+        guild = guild
+    )
+    
     for x, y in points:
-        tile_data = generation.galaxy_single(
-            galaxy_seed = galaxy_seed,
-            x = x,
-            y = y
+        nebula = in_nebula_database(
+            json_interface = json_interface,
+            guild = guild,
+            ascension = ascension,
+            xpos = x,
+            ypos = y,
+            map_data = map_data
         )
 
-        if tile_data.get("in_nebula", False):
+        if nebula:
             through_nebula = True
             cost_sum += MOVE_FUEL_GALAXY_NEBULA
         else:
@@ -2217,7 +2333,8 @@ def get_move_cost_galaxy(
     
     return {
         "cost": cost_sum,
-        "nebula": through_nebula
+        "nebula": through_nebula,
+        "points": points
     }
 
 

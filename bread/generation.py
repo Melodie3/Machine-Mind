@@ -316,6 +316,10 @@ def get_spot(
     
     if not position_check(x, y):
         return 0
+    
+    if x == 0 and y == 0: # The center of the map.
+        # Journey to the Center of the Map.
+        return 2
 
     rng = core_spot(
         galaxy_seed = galaxy_seed,
@@ -614,6 +618,9 @@ def generate_system(
     if system_type == 0:
         return None
     
+    if galaxy_xpos == MAP_RADIUS and galaxy_ypos == MAP_RADIUS:
+        return generate_center_system(galaxy_seed)
+    
     rng = random.Random(hashlib.sha256(str(galaxy_seed + str(galaxy_ypos) + str(galaxy_xpos)).encode()).digest())
 
     has_trade_hub = system_type == 2
@@ -783,6 +790,157 @@ def generate_system(
         "asteroid_belt": asteroid_belt,
         "asteroid_belt_distance": asteroid_belt_distance,
         "planets": planets
+    }
+
+def generate_center_system(galaxy_seed: str) -> dict:
+    return {
+        "trade_hub": {
+            "exists": True,
+            "xpos": 1,
+            "ypos": 1,
+            "level": 2
+        },
+        "wormhole": {
+            "exists": False,
+            "xpos": None,
+            "ypos": None,
+            "link_galaxy": None
+        },
+        "radius": 12,
+        "star_type": "supermassive_black_hole",
+        "asteroid_belts": [5.3, 10],
+        # "asteroid_belt": True,
+        # "asteroid_belt_distance": 5.3,
+        "planets": [
+            { # Outer right.
+                "xpos": 7,
+                "ypos": 0,
+                "distance": 7,
+                "angle": 0,
+                "type": random.Random(galaxy_seed + "_planet_0_category").choice(values.all_anarchy_pieces_biased).text,
+                "deviation": random.Random(galaxy_seed + "_planet_0").normalvariate(mu = 1, sigma = 0.25)
+            },
+            { # Outer down.
+                "xpos": -7,
+                "ypos": 0,
+                "distance": 7,
+                "angle": 180,
+                "type": random.Random(galaxy_seed + "_planet_1_category").choice(values.all_anarchy_pieces_biased).text,
+                "deviation": random.Random(galaxy_seed + "_planet_1").normalvariate(mu = 1, sigma = 0.25)
+            },
+            { # Outer left.
+                "xpos": 0,
+                "ypos": -7,
+                "distance": 7,
+                "angle": 270,
+                "type": random.Random(galaxy_seed + "_planet_2_category").choice(values.all_anarchy_pieces_biased).text,
+                "deviation": random.Random(galaxy_seed + "_planet_2").normalvariate(mu = 1, sigma = 0.25)
+            },
+            { # Outer up.
+                "xpos": 0,
+                "ypos": 7,
+                "distance": 7,
+                "angle": 90,
+                "type": random.Random(galaxy_seed + "_planet_3_category").choice(values.all_anarchy_pieces_biased).text,
+                "deviation": random.Random(galaxy_seed + "_planet_3").normalvariate(mu = 1, sigma = 0.25)
+            },
+            {
+                "xpos": 5,
+                "ypos": 5,
+                "distance": 7,
+                "angle": 45,
+                "type": random.Random(galaxy_seed + "_planet_4_item").choice(PLANET_OPTIONS[random.Random(galaxy_seed + "_planet_4_category").choices(population = list(PLANET_WEIGHTS.keys()), weights = list(PLANET_WEIGHTS.values()))[0]]).text,
+                "deviation": random.Random(galaxy_seed + "_planet_4").normalvariate(mu = 1, sigma = 0.25)
+            },
+            {
+                "xpos": 5,
+                "ypos": -5,
+                "distance": 7,
+                "angle": 135,
+                "type": random.Random(galaxy_seed + "_planet_5_item").choice(PLANET_OPTIONS[random.Random(galaxy_seed + "_planet_5_category").choices(population = list(PLANET_WEIGHTS.keys()), weights = list(PLANET_WEIGHTS.values()))[0]]).text,
+                "deviation": random.Random(galaxy_seed + "_planet_5").normalvariate(mu = 1, sigma = 0.25)
+            },
+            {
+                "xpos": -5,
+                "ypos": -5,
+                "distance": 7,
+                "angle": 225,
+                "type": random.Random(galaxy_seed + "_planet_6_item").choice(PLANET_OPTIONS[random.Random(galaxy_seed + "_planet_6_category").choices(population = list(PLANET_WEIGHTS.keys()), weights = list(PLANET_WEIGHTS.values()))[0]]).text,
+                "deviation": random.Random(galaxy_seed + "_planet_6").normalvariate(mu = 1, sigma = 0.25)
+            },
+            {
+                "xpos": -5,
+                "ypos": 5,
+                "distance": 7,
+                "angle": 315,
+                "type": random.Random(galaxy_seed + "_planet_7_item").choice(PLANET_OPTIONS[random.Random(galaxy_seed + "_planet_7_category").choices(population = list(PLANET_WEIGHTS.keys()), weights = list(PLANET_WEIGHTS.values()))[0]]).text,
+                "deviation": random.Random(galaxy_seed + "_planet_7").normalvariate(mu = 1, sigma = 0.25)
+            },
+            {
+                "xpos": 3,
+                "ypos": 0,
+                "distance": 3,
+                "angle": 0,
+                "type": random.Random(galaxy_seed + "_planet_8_item").choice(PLANET_OPTIONS[random.Random(galaxy_seed + "_planet_8_category").choices(population = list(PLANET_WEIGHTS.keys()), weights = list(PLANET_WEIGHTS.values()))[0]]).text,
+                "deviation": random.Random(galaxy_seed + "_planet_8").normalvariate(mu = 1, sigma = 0.25)
+            },
+            {
+                "xpos": -3,
+                "ypos": 0,
+                "distance": 3,
+                "angle": 180,
+                "type": random.Random(galaxy_seed + "_planet_9_item").choice(PLANET_OPTIONS[random.Random(galaxy_seed + "_planet_9_category").choices(population = list(PLANET_WEIGHTS.keys()), weights = list(PLANET_WEIGHTS.values()))[0]]).text,
+                "deviation": random.Random(galaxy_seed + "_planet_9").normalvariate(mu = 1, sigma = 0.25)
+            },
+            {
+                "xpos": 0,
+                "ypos": -3,
+                "distance": 3,
+                "angle": 270,
+                "type": random.Random(galaxy_seed + "_planet_a_item").choice(PLANET_OPTIONS[random.Random(galaxy_seed + "_planet_a_category").choices(population = list(PLANET_WEIGHTS.keys()), weights = list(PLANET_WEIGHTS.values()))[0]]).text,
+                "deviation": random.Random(galaxy_seed + "_planet_a").normalvariate(mu = 1, sigma = 0.25)
+            },
+            {
+                "xpos": 0,
+                "ypos": 3,
+                "distance": 3,
+                "angle": 90,
+                "type": random.Random(galaxy_seed + "_planet_b_item").choice(PLANET_OPTIONS[random.Random(galaxy_seed + "_planet_b_category").choices(population = list(PLANET_WEIGHTS.keys()), weights = list(PLANET_WEIGHTS.values()))[0]]).text,
+                "deviation": random.Random(galaxy_seed + "_planet_b").normalvariate(mu = 1, sigma = 0.25)
+            },
+            {
+                "xpos": 2.121320343559643,
+                "ypos": 2.121320343559643,
+                "distance": 3,
+                "angle": 45,
+                "type": random.Random(galaxy_seed + "_planet_c_item").choice(PLANET_OPTIONS[random.Random(galaxy_seed + "_planet_c_category").choices(population = list(PLANET_WEIGHTS.keys()), weights = list(PLANET_WEIGHTS.values()))[0]]).text,
+                "deviation": random.Random(galaxy_seed + "_planet_c").normalvariate(mu = 1, sigma = 0.25)
+            },
+            {
+                "xpos": 2.121320343559643,
+                "ypos": -2.121320343559643,
+                "distance": 3,
+                "angle": 135,
+                "type": random.Random(galaxy_seed + "_planet_d_item").choice(PLANET_OPTIONS[random.Random(galaxy_seed + "_planet_d_category").choices(population = list(PLANET_WEIGHTS.keys()), weights = list(PLANET_WEIGHTS.values()))[0]]).text,
+                "deviation": random.Random(galaxy_seed + "_planet_d").normalvariate(mu = 1, sigma = 0.25)
+            },
+            {
+                "xpos": -2.121320343559643,
+                "ypos": -2.121320343559643,
+                "distance": 3,
+                "angle": 225,
+                "type": random.Random(galaxy_seed + "_planet_e_item").choice(PLANET_OPTIONS[random.Random(galaxy_seed + "_planet_e_category").choices(population = list(PLANET_WEIGHTS.keys()), weights = list(PLANET_WEIGHTS.values()))[0]]).text,
+                "deviation": random.Random(galaxy_seed + "_planet_e").normalvariate(mu = 1, sigma = 0.25)
+            },
+            {
+                "xpos": -2.121320343559643,
+                "ypos": 2.121320343559643,
+                "distance": 3,
+                "angle": 315,
+                "type": random.Random(galaxy_seed + "_planet_f_item").choice(PLANET_OPTIONS[random.Random(galaxy_seed + "_planet_f_category").choices(population = list(PLANET_WEIGHTS.keys()), weights = list(PLANET_WEIGHTS.values()))[0]]).text,
+                "deviation": random.Random(galaxy_seed + "_planet_f").normalvariate(mu = 1, sigma = 0.25)
+            },
+        ]
     }
 
 def get_trade_hub_name(

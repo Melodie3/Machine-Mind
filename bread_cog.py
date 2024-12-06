@@ -482,6 +482,11 @@ class JSON_interface:
         output = []
         for index in self.data[guild_id]:
             if is_digit(index):
+                # Mysterious "0" key account appeared, this should protect it from the daily reset.
+                # If it is allowed in the daily reset it'll mess up existing account data to whatever is in it.
+                if index == "0":
+                    continue
+
                 output.append(self.get_account(index, guild_id))
             # yield account.Bread_Account.from_dict(index, self.data["bread"][index])
         return output
@@ -6256,7 +6261,8 @@ anarchy - 1000% of your wager.
                 galaxy_x = galaxy_x,
                 galaxy_y = galaxy_y,
                 system_x = system_x,
-                system_y = system_y
+                system_y = system_y,
+                level = hub.trade_hub_level
             )
 
         
@@ -6566,7 +6572,9 @@ anarchy - 1000% of your wager.
                 return
             
             move_cost = space.get_move_cost_galaxy(
-                galaxy_seed = galaxy_seed,
+                json_interface = self.json_interface,
+                guild = ctx.guild,
+                ascension = user_account.get_prestige_level(),
                 start_position = (hub_tile.galaxy_xpos, hub_tile.galaxy_ypos),
                 end_position = (ending_xpos, ending_ypos)
             )["cost"]
@@ -6864,10 +6872,18 @@ anarchy - 1000% of your wager.
             )
 
             cost_data = space.get_move_cost_galaxy(
-                galaxy_seed = galaxy_seed,
+                json_interface = self.json_interface,
+                guild = ctx.guild,
+                ascension = user_account.get_prestige_level(),
                 start_position = start_location,
                 end_position = end_location
             )
+
+            # If we're moving between parts of the 2x2 system, the cost is 0 as we're not actually being moved..
+            if (end_location in space.ALL_CENTER) and start_location in space.ALL_CENTER:
+                cost_data["cost"] = 0
+            if start_location in space.ALL_CENTER and any(point in cost_data["points"] for point in space.ALL_CENTER):
+                cost_data["cost"] -= space.MOVE_FUEL_GALAXY
 
             if autopilot_level < 2 and cost_data.get("nebula", False):
                 await ctx.reply(f"Autopilot error:\nNebula travel not possible with existing autopilot system.\nAutopilot level: {autopilot_level}, expected 2 or higher.")
@@ -6950,28 +6966,30 @@ anarchy - 1000% of your wager.
                 user_account.set("system_xpos", 0)
                 user_account.set("system_ypos", 0)
             else:
-                # If the location is a system, then determine the size of the system and the angle of attack.
-                x_diff = end_location[0] - start_location[0]
-                y_diff = end_location[1] - start_location[1]
+                # If we're moving between parts of the 2x2 system, do nothing.
+                if not ((end_location in space.ALL_CENTER) and start_location in space.ALL_CENTER):
+                    # If the location is a system, then determine the size of the system and the angle of attack.
+                    x_diff = end_location[0] - start_location[0]
+                    y_diff = end_location[1] - start_location[1]
 
-                if x_diff == 0:
-                    if y_diff < 0:
-                        angle = math.pi / 2
+                    if x_diff == 0:
+                        if y_diff < 0:
+                            angle = math.pi / 2
+                        else:
+                            angle = math.pi * 1.5
                     else:
-                        angle = math.pi * 1.5
-                else:
-                    angle = math.atan(y_diff / x_diff)
+                        angle = math.atan(y_diff / x_diff)
 
-                    if x_diff > 0:
-                        angle -= math.pi
-                
-                system_radius = end_data.system_radius
+                        if x_diff > 0:
+                            angle -= math.pi
+                    
+                    system_radius = end_data.system_radius
 
-                out_x = int(math.cos(angle) * system_radius)
-                out_y = int(math.sin(angle) * system_radius)
+                    out_x = int(math.cos(angle) * system_radius)
+                    out_y = int(math.sin(angle) * system_radius)
 
-                user_account.set("system_xpos", out_x)
-                user_account.set("system_ypos", out_y)
+                    user_account.set("system_xpos", out_x)
+                    user_account.set("system_ypos", out_y)
 
 
 
