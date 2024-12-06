@@ -1118,8 +1118,17 @@ class Bread_cog(commands.Cog, name="Bread"):
     @bread.command(
         hidden=True,
     )
-    async def help(self, ctx):
-        await ctx.send_help(Bread_cog.bread)
+    async def help(self, ctx, *, subcommand: typing.Optional[str] = commands.parameter(description = "A subcommand to get the help for.")):
+        if subcommand is None:
+            subcommand = ""
+
+        command = bot_ref.get_command(f"bread {subcommand}")
+
+        if command is None:
+            await ctx.reply("I can't find that command.")
+            return
+
+        await ctx.send_help(command)
 
     ########################################################################################################################
     #####      BREAD WIKI
@@ -2787,17 +2796,17 @@ loaf_converter""",
             # now we get the list of items
             items = self.get_buyable_items(user_account, store.prestige_store_items)
     
+            displayed_items = 0
             output = ""
             output += f"Welcome to the hidden bakery! All upgrades in this shop are permanent, and persist through ascensions. You have **{utility.smart_number(user_account.get(values.ascension_token.text))} {values.ascension_token.text}**.\n\*Prices subject to change.\nHere are the items available for purchase:\n\n"
             for item in items:
                 output += f"\t**{item.display_name}** - {item.get_price_description(user_account)}\n{item.description(user_account)}\n\n"
+                displayed_items += 1
 
             # Add lines for non-purchasable items that have a requirement if the item isn't at the max level.
             purchasable_set = set(items)
             item_set = set(store.prestige_store_items)
             non_purchasable_items = item_set - purchasable_set # type: set[store.Prestige_Store_Item]
-
-            displayed_items = 0
 
             for item in list(non_purchasable_items):
                 if user_account.get(item.name) >= item.max_level(user_account):
@@ -2809,7 +2818,6 @@ loaf_converter""",
                     continue
 
                 output += f"*{item.display_name}: {requirement}*\n\n"
-                displayed_items += 1
             
             if displayed_items == 0:
                 output += "**It looks like you've bought everything here. Well done.**"
@@ -3422,6 +3430,7 @@ For example, "$bread gift Melodie all chess_pieces" would gift all your chess pi
                 amount = leftover
             if sender_account.has(item, amount):
                 receiver_account.increment("daily_gifts", amount)
+                self.json_interface.set_account(target, receiver_account, guild = ctx.guild.id)
             else:
                 await ctx.reply("Except you don't have that much dough to give. Too bad.")
                 return
@@ -5085,9 +5094,9 @@ anarchy - 1000% of your wager.
             return
         
         # Temporarily lock all of space to a9 or higher. When a9 ends this should be removed.
-        if user_account.get_prestige_level() < 9:
-            await ctx.reply("Currently the Space Shop is only available on the 9th ascension. When that ascension ends it will be available from the first ascension onwards.")
-            return
+        # if user_account.get_prestige_level() < 9:
+        #     await ctx.reply("Currently the Space Shop is only available on the 9th ascension. When that ascension ends it will be available from the first ascension onwards.")
+        #     return
 
         # now we get the list of items
         items = self.get_buyable_items(user_account, store.space_shop_items)
@@ -5796,7 +5805,7 @@ anarchy - 1000% of your wager.
             items_added = []
 
             for win_item, win_amount in reward:
-                amount = math.ceil(win_amount * percent_cut)
+                amount = math.ceil(win_amount * (percent_cut - 0.2))
                 player_account.increment(win_item, amount)
 
                 items_added.append(f"{utility.smart_number(amount)} {win_item}")
@@ -7220,7 +7229,7 @@ anarchy - 1000% of your wager.
         brief="Sets the max prestige level.",
         help = "Usage: bread admin set_max_prestige_level [value]"
     )
-    @commands.is_owner()
+    @commands.check(verification.is_admin_check)
     async def set_max_prestige_level(self, ctx,
             value: typing.Optional[parse_int]
         ):
@@ -7508,7 +7517,7 @@ anarchy - 1000% of your wager.
         for emote in items:
             account.set(emote.text, 50000000000)
         
-        for shop_item in store.space_shop_items:
+        for shop_item in store.all_store_items:
             account.set(shop_item.name, shop_item.max_level(account))
 
         account.set("fuel_tank", 40000)
@@ -7563,6 +7572,37 @@ anarchy - 1000% of your wager.
         self.json_interface.internal_save()
         
         await ctx.send("Done.")
+
+    ########################################################################################################################
+    #####      ADMIN BEQUEATH_CHERRY
+    
+    @admin.command(
+        brief="Remove the cherry.",
+        help = "Usage: bread admin bequeath_cherry"
+    )
+    @commands.check(verification.is_admin_check)
+    async def bequeath_cherry(self, ctx):
+        if not await self.await_confirmation(ctx):
+            return
+        
+        all_accounts = self.json_interface.get_all_user_accounts(ctx.guild)
+
+        removed = [] # type: list[account.Bread_Account]
+
+        for account in all_accounts:
+            if account.has(values.cherry.text):
+                account.set(values.cherry.text, 0)
+                removed.append(account)
+
+                self.json_interface.set_account(account.get("id"), account, ctx.guild)
+        
+        await ctx.reply("Done.\n{} affected:\n{}".format(
+            utility.write_count(len(removed), 'account'),
+            "\n".join([
+                f"- {account.get_display_name()} ({account.get('id')})"
+                for account in removed
+            ])
+        ))
 
     ########################################################################################################################
     #####      ADMIN DO_OPERATION

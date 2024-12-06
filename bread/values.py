@@ -897,7 +897,15 @@ shadowmega_chessatron = Emote(
     giftable = False
 )
 
-shadow_emotes = [shadow_gem_gold, shadow_moak, shadowmega_chessatron]
+anarchy_shadowmega = Emote(
+    text="<:anarchy_shadowmega:1312486058541187246>",
+    name="anarchy_shadowmega",
+    attributes=["shadow"],
+    giftable = False,
+    alternate_names = ["shadow_anarchy_omega", "shadow_anarchy_omega_tron", "shadowmega_anarchy_chessatron", "ashadowmega", "anarchy_shadowmega_chessatron"]
+)
+
+shadow_emotes = [shadow_gem_gold, shadow_moak, shadowmega_chessatron, anarchy_shadowmega]
 
 ##################### MISC
 

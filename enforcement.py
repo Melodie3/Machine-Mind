@@ -246,7 +246,10 @@ async def timeout(ctx: commands.Context, member: typing.Optional[discord.Member]
 
 brick_list = set()
 
-@commands.command()
+@commands.command(
+        brief = "The fabled unbrick.",
+        help = "Instructions read: only use in dire situations."
+)
 async def unbrick(ctx, member: typing.Optional[discord.Member]):
     if verification.has_role(ctx.author, "moderator") or verification.has_role(ctx.author, "deputized"):
         if member is None:
@@ -272,7 +275,7 @@ async def brick(ctx, member: typing.Optional[discord.Member], *args):
     forever = False
     authorized_user = False
 
-    if verification.has_role(ctx.author, "moderator") or verification.has_role(ctx.author, "deputized") or verification.is_owner(ctx.author):
+    if verification.has_role(ctx.author, "moderator") or verification.has_role(ctx.author, "deputized") or verification.has_role(ctx.author, "admin") or verification.is_owner(ctx.author):
         authorized_user = True
 
     if len(args) == 0:

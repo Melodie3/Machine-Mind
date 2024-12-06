@@ -129,6 +129,7 @@ class Bread_Account:
         emotes_to_remove.append(values.normal_bread)
         emotes_to_remove.append(values.anarchy_chess)
         emotes_to_remove.append(values.fuel)
+        emotes_to_remove.append(values.corrupted_bread)
         # we're keeping OoaKs
 
         entries_to_remove = [   "total_dough",
@@ -160,6 +161,9 @@ class Bread_Account:
         # convert moaks to shadows
         if self.get(values.anarchy_chess.text) > 0:
             self.increment(values.shadow_moak.text, self.get(values.anarchy_chess.text))
+        # convert anarchy omegas to shadows
+        if self.get(values.anarchy_omega_chessatron.text) > 0:
+            self.increment(values.anarchy_shadowmega.text, self.get(values.anarchy_omega_chessatron.text))
 
         for stat in lifetime_stats:
             if stat in self.values.keys():
@@ -437,8 +441,8 @@ class Bread_Account:
         ) -> float:
         """Returns the luck of anarchy pieces. `roll_luck` is assumed to be `(loaf_converter + 1) * recipe_refinement_multiplier`"""
         return min(
-            round(1 + (store.Advanced_Exploration.per_level * self.get(store.Advanced_Exploration.name)) * (roll_luck - self.get_recipe_refinement_multiplier()), 5),
-            128 # 128 is the cap.
+            round(1 + store.Advanced_Exploration.get_contribution(self) * (roll_luck - self.get_recipe_refinement_multiplier()), 5),
+            64 # 64 is the cap.
         )
     
     def get_projects_credits_cap(self: typing.Self) -> int:
@@ -465,7 +469,7 @@ class Bread_Account:
 
     def get_shadowmega_boost_amount(self: typing.Self) -> int:
         """Returns the multiplier applied to omegas this player gets per chessatron from Chessatron Contraption and shadowmega chessatrons."""
-        return 1.05 ** self.get_shadowmega_boost_count()
+        return 1 + 0.02 * self.get_shadowmega_boost_count()
 
     def get_shadow_gold_gem_boost_count(self: typing.Self) -> int:
         """Returns the amount of shadow gold gems that this player can use to increase their odds of finding gems. Essentially, this is the number of active shadow gold gems."""

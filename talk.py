@@ -532,6 +532,41 @@ async def verify(ctx, user: typing.Optional[discord.Member]):
         
         await ctx.send(output + random.choice(descriptors))
 
+@commands.command(
+    brief = "Change ping reply settings",
+    help =  "Change your ping reply setting. 'on' to enable ping replies, 'off' to disable."
+)
+async def ping(
+        ctx: commands.Context,
+        setting: typing.Optional[str]
+    ):
+    try:
+        json_cog = ctx.bot.json_cog
+    except AttributeError:
+        await ctx.reply("Unable to change setting, please try again later.")
+        return
+    
+    new = None
+    if setting is not None:
+        if setting.lower() in ["on", "y", "yes", "enable"]:
+            new = True
+        elif setting.lower() in ["off", "n", "no", "disable"]:
+            new = False
+    
+    data = json_cog.get_filing_cabinet(name="ping_settings", guild=ctx.guild, create_if_nonexistent=True)
+
+    if new is None:
+        new = not data.get(str(ctx.author.id), True)
+
+    data[str(ctx.author.id)] = new
+
+    json_cog.set_filing_cabinet(name="ping_settings", guild=ctx.guild, cabinet=data)
+
+    if new:
+        await ctx.reply("You will now be pinged in replies.")
+    else:
+        await ctx.reply("You will no longer be pinged in replies.")
+
 async def setup(bot: commands.Bot):
     importlib.reload(verification)
     importlib.reload(emoji)
@@ -548,5 +583,6 @@ async def setup(bot: commands.Bot):
     bot.add_command(our)
     bot.add_command(dayum)
     bot.add_command(bingo)
+    bot.add_command(ping)
 
     return bot
