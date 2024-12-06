@@ -5128,14 +5128,24 @@ anarchy - 1000% of your wager.
                 
 
             if item in purchasable_set or requirement_given:
-                output += f"\t**{item.display_name}** - {item.get_price_description(user_account)}\n{item.description(user_account)}\n"
+                old_output = output
+
+                add = ""
+
+                add += f"\t**{item.display_name}** - {item.get_price_description(user_account)}\n{item.description(user_account)}\n"
 
                 if requirement_given:
-                    output += f"*Not purchasable right now. {requirement}*\n"
+                    add += f"*Not purchasable right now. {requirement}*\n"
                     
-                output += "\n"
+                add += "\n"
 
                 displayed_items += 1
+
+                output += add
+
+                if len(output) > 1900:
+                    await ctx.reply(old_output)
+                    output = f"Continued shop:\n\n{add}"
         
         if displayed_items == 0:
             output += "**It looks like you've bought everything here. Well done.**"
