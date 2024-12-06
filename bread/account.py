@@ -532,7 +532,7 @@ class Bread_Account:
             include_prestige_boost: bool = True
         ) -> int:
         """Calulcates the amount of dough this player gets for each anarchy chessatron."""
-        multiplier = 350 + (self.get(values.anarchy_omega_chessatron.text) * 25) * self.get_shadowmega_boost_amount()
+        multiplier = 350 + (self.get(values.anarchy_omega_chessatron.text) * 25)
         amount = self.get_chessatron_dough_amount(include_prestige_boost=False) * multiplier
         
         if include_prestige_boost:
