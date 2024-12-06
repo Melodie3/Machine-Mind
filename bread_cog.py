@@ -6815,31 +6815,29 @@ anarchy - 1000% of your wager.
             # If it is, great! If it isn't, the player shouldn't be moving on the system map.
             galaxy_location = user_account.get_galaxy_location(json_interface=self.json_interface)
 
-            current_data = generation.galaxy_single(
+            current_data = space.get_galaxy_coordinate(
+                json_interface = self.json_interface,
+                guild = ctx.guild,
                 galaxy_seed = galaxy_seed,
-                x = galaxy_location[0],
-                y = galaxy_location[1]
+                ascension = user_account.get_prestige_level(),
+                xpos = galaxy_location[0],
+                ypos = galaxy_location[1],
+                load_data = True
             )
 
-            if not current_data.get("system", False):
+            # if not current_data.get("system", False):
+            if not current_data.system:
                 await ctx.reply("Autopilot error:\nNo matter found in current system location, cannot move.")
 
                 self.remove_from_interacting(ctx.author.id)
                 return
-
-            # Ensure the location the player is moving to is a part of this system.   
-            system_data = generation.generate_system(
-                galaxy_seed = galaxy_seed,
-                galaxy_xpos = galaxy_location[0],
-                galaxy_ypos = galaxy_location[1]
-            )
         
             end_location = (
                 start_location[0] + x_modifier - radius,
                 start_location[1] + y_modifier - radius
             )
 
-            if math.hypot(*end_location) >= system_data.get("radius") + 2:
+            if math.hypot(*end_location) >= current_data.system_radius + 2:
                 await ctx.reply("Autopilot error:\nProvided location outside of system bounds.")
 
                 self.remove_from_interacting(ctx.author.id)
@@ -6937,13 +6935,17 @@ anarchy - 1000% of your wager.
             # Time to figure out what to set the system position to.
             # This is based on the angle the player is moving at.
             # However, if the target location isn't a system then we can just set it to (0, 0)
-            end_data = generation.galaxy_single(
+            end_data = space.get_galaxy_coordinate(
+                json_interface = self.json_interface,
+                guild = ctx.guild,
                 galaxy_seed = galaxy_seed,
-                x = end_location[0],
-                y = end_location[1]
+                ascension = user_account.get_prestige_level(),
+                xpos = end_location[0],
+                ypos = end_location[1],
+                load_data = True
             )
 
-            if not end_data.get("system", False):
+            if not end_data.system:
                 # If the end location is not a system, then set the system x and y to 0.
                 user_account.set("system_xpos", 0)
                 user_account.set("system_ypos", 0)
@@ -6963,13 +6965,7 @@ anarchy - 1000% of your wager.
                     if x_diff > 0:
                         angle -= math.pi
                 
-                system_data = generation.generate_system(
-                    galaxy_seed = galaxy_seed,
-                    galaxy_xpos = end_location[0],
-                    galaxy_ypos = end_location[1]
-                )
-
-                system_radius = system_data.get("radius")
+                system_radius = end_data.system_radius
 
                 out_x = int(math.cos(angle) * system_radius)
                 out_y = int(math.sin(angle) * system_radius)
