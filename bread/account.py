@@ -8,6 +8,7 @@ import bread.utility as utility
 import bread.values as values
 import bread.space as space
 import bread.store as store # Mel if this causes a circular import please DM me (Duck)
+import bread.projects as projects
 import bread_cog
 bread_cog_ref = None
 
@@ -608,6 +609,11 @@ class Bread_Account:
 
         multiplier = self.get_corruption_negation_multiplier()
 
+        galaxy_tile = self.get_galaxy_tile(json_interface, load_data=True)
+
+        if galaxy_tile.trade_hub is not None:
+            multiplier *= projects.Storm_Repulsion_Array.corruption_multipliers[galaxy_tile.trade_hub.get_upgrade_level(projects.Storm_Repulsion_Array)]
+
         return base_chance * multiplier
     
     def get_anarchy_corruption_chance(
@@ -628,7 +634,8 @@ class Bread_Account:
 
     def get_galaxy_tile(
             self: typing.Self,
-            json_interface: bread_cog.JSON_interface
+            json_interface: bread_cog.JSON_interface,
+            load_data: bool = False
         ) -> space.GalaxyTile:
         """Returns a GalaxyTile object for the tile within the galaxy this account is currently on."""
         xpos, ypos = self.get_galaxy_location(json_interface=json_interface)
@@ -639,7 +646,8 @@ class Bread_Account:
             galaxy_seed = self.get_galaxy_seed(json_interface),
             ascension = self.get_prestige_level(),
             xpos = xpos,
-            ypos = ypos
+            ypos = ypos,
+            load_data = load_data
         )
     
     def get_system_tile(

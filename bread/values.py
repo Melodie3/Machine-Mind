@@ -355,7 +355,7 @@ anarchy_omega_chessatron = Emote(
 # "<:holy_hell:961184782253948938>"]     
 # "<:anarchy:960771114819264533>"
 
-all_one_of_a_kind = [anarchy, anarchy_chess, horsey, holy_hell]
+all_one_of_a_kind = [anarchy, horsey, holy_hell]
 all_uniques =       [anarchy, anarchy_chess, horsey, holy_hell, chessatron, omega_chessatron, anarchy_chessatron, anarchy_omega_chessatron]
 
 ##################### CHESS

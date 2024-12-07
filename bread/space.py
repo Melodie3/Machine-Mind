@@ -1986,11 +1986,17 @@ def get_planet_modifiers(
         
         raw_seed = tile.tile_seed()
 
-        # Handle the Nebula Refinery trade hub upgrade.
+        # Handle the Nebula Refinery, Black Hole Observatory, and some of the Dark Matter Resonance Chamber trade hub upgrades.
+        chamber_level = 0
         mod = 0
         if galaxy_tile.trade_hub is not None:
             if galaxy_tile.trade_hub.get_upgrade_level(projects.Nebula_Refinery) > 0:
-                mod = abs(random.Random(f"{raw_seed}_nebularefinery").gauss(mu=math.pi / 100, sigma=0.01)) * 2
+                mod += abs(random.Random(f"{raw_seed}_nebularefinery").gauss(mu=math.pi / 100, sigma=0.01)) * 2
+
+            if galaxy_tile.trade_hub.get_upgrade_level(projects.Black_Hole_Observatory) > 0:
+                mod += abs(random.Random(f"{raw_seed}_blackholeobservatory").gauss(mu=math.pi / 100, sigma=0.01)) * 2
+
+            chamber_level = galaxy_tile.trade_hub.get_upgrade_level(projects.Dark_Matter_Resonance_Chamber)
 
         deviation = (1 - tile.planet_deviation) / denominator
 
@@ -2001,7 +2007,12 @@ def get_planet_modifiers(
         # Get the planet seed for each category.
         # These do not change per day.
         for key in odds.copy():
-            odds[key] = random.Random(f"{raw_seed}{key}").gauss(mu=1 + mod, sigma=deviation)
+            key_mod = 0
+
+            if chamber_level > 0 and key == "anarchy_piece":
+                key_mod += abs(random.Random(f"{raw_seed}_darkmatterresonancechamber").gauss(mu=math.pi / 100, sigma=0.01)) * 2 * chamber_level
+
+            odds[key] = random.Random(f"{raw_seed}{key}").gauss(mu=1 + mod + key_mod, sigma=deviation)
 
             if key == priority:
                 odds[key] = (abs(odds[key] - 1) + 1) * sqrt_phi

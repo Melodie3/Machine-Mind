@@ -6118,8 +6118,16 @@ anarchy - 1000% of your wager.
         listed = 0
 
         for upgrade in hub.get_available_upgrades(day_seed):
-            message_lines += f"\t**{upgrade.name(day_seed, hub)}** - {upgrade.get_price_description(day_seed, hub)}\n"
-            message_lines += upgrade.description(day_seed, hub) + "\n\n"
+            old_message = message_lines
+
+            add = f"\t**{upgrade.name(day_seed, hub)}** - {upgrade.get_price_description(day_seed, hub)}\n{upgrade.description(day_seed, hub)}\n\n"
+
+            message_lines += add
+
+            if len(message_lines) > 1900:
+                await ctx.reply(old_message)
+                message_lines = f"Continued:\n\n{add}"
+            
             listed += 1
         
         if listed == 0:
@@ -6132,11 +6140,19 @@ anarchy - 1000% of your wager.
         if len(purchased) > 0:
             message_lines += "\n\nAlready purchased upgrades:"
             for upgrade in purchased:
-                message_lines += "\n- {} level {}: {}".format(
+                old_message = message_lines
+
+                add = "\n- {} level {}: {}".format(
                     upgrade.name(day_seed, hub),
                     hub.get_upgrade_level(upgrade),
                     upgrade.purchased_description(day_seed, hub).replace('\n',' ') # .format is needed here due to the `\n`.
                 )
+
+                message_lines += add
+
+                if len(message_lines) > 1900:
+                    await ctx.reply(old_message)
+                    message_lines = f"Continued:\n\n{add}"
 
         await ctx.reply(message_lines)
 
@@ -6250,7 +6266,7 @@ anarchy - 1000% of your wager.
 
         hub = system.trade_hub
 
-        if hub.get_upgrade_level(projects.Listening_Post) == 0:
+        if hub is not None and hub.get_upgrade_level(projects.Listening_Post) == 0:
             if not (abs(system_x) <= 1 and abs(system_y) <= 1):
                 await ctx.reply("You are not close enough to a star to create a Trade Hub.")
                 return
