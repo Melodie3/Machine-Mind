@@ -148,7 +148,7 @@ class Bread_Account:
                                 "special_bread", "rare_bread", "unique", "chess_pieces", "shiny",
                                 "full_chess_set", "many_of_a_kind", 
                                 "lottery_win",
-                                "projects_completed", "trade_hubs_created",
+                                "projects_completed", "trade_hubs_created", "full_anarchy_set"
 
         ]
 

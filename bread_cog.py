@@ -3173,10 +3173,15 @@ For example, "$bread gift Melodie all chess_pieces" would gift all your chess pi
     async def gift(self, ctx, target: typing.Optional[discord.Member] = commands.parameter(description = "The person to gift to."), 
                     arg1: typing.Optional[typing.Union[parse_int, str]] = commands.parameter(description = "The amount you want to gift.", displayed_name = "amount"), 
                     arg2: typing.Optional[typing.Union[parse_int, str]] = commands.parameter(description = "The item you're gifting.", displayed_name = "item")):
+
+        if ctx.author.id in self.currently_interacting:
+            return
+        self.currently_interacting.append(ctx.author.id)
         # await ctx.reply("This function isn't ready yet.")
 
         if target is None: #then it's empty and we'll tell them how to use it.
             await ctx.reply(self.bread_gift_text)
+            self.remove_from_interacting(ctx.author.id)
             return
 
         sender_account = self.json_interface.get_account(ctx.author, guild = ctx.guild.id)
@@ -3186,6 +3191,7 @@ For example, "$bread gift Melodie all chess_pieces" would gift all your chess pi
         if "allowed" in sender_account.values.keys():
             if sender_account.values["allowed"] == False:
                 await ctx.reply("Sorry, you are not allowed to gift bread.")
+                self.remove_from_interacting(ctx.author.id)
                 return
                 
         bot_list = [ # These can always be gifted to.
@@ -3199,14 +3205,17 @@ For example, "$bread gift Melodie all chess_pieces" would gift all your chess pi
         if receiver_account.get_prestige_level() > sender_account.get_prestige_level():
             if receiver_account.get("id") not in bot_list: # can always gift to bots
                 await ctx.reply("Sorry, you can't gift to someone who has a higher ascension level than you.")
+                self.remove_from_interacting(ctx.author.id)
                 return
             
         if receiver_account.get("gifts_disabled") == True:
             await ctx.reply("Sorry, you can't gift to that person.")
+            self.remove_from_interacting(ctx.author.id)
             return
         
         if sender_account.get("gifts_disabled") == True:
             await ctx.reply("Sorry, you can't gift right now. Please reenable gifting with \"$bread disable_gifts off\".")
+            self.remove_from_interacting(ctx.author.id)
             return
         
         # Space gifting checks.
@@ -3219,6 +3228,7 @@ For example, "$bread gift Melodie all chess_pieces" would gift all your chess pi
                 )
                 if not send_check:
                     await ctx.reply("You aren't able to access the Trade Hub network from where you are.")
+                    self.remove_from_interacting(ctx.author.id)
                     return
                 
                 receiver_check = space.gifting_check_user(
@@ -3227,10 +3237,12 @@ For example, "$bread gift Melodie all chess_pieces" would gift all your chess pi
                 )
                 if not receiver_check:
                     await ctx.reply("You have access to the Trade Hub network, but you can't seem to reach that person.")
+                    self.remove_from_interacting(ctx.author.id)
                     return
         
         if arg1 is None: # If arg1 is None, then arg2 is None as well.
             await ctx.reply("Needs an amount and what to gift.")
+            self.remove_from_interacting(ctx.author.id)
             return
         
         do_fraction = False
@@ -3284,14 +3296,17 @@ For example, "$bread gift Melodie all chess_pieces" would gift all your chess pi
                 fraction_denominator = 3
         else:
             await ctx.reply("Needs an amount and what to gift.")
+            self.remove_from_interacting(ctx.author.id)
             return
         
         if do_fraction:
             if fraction_numerator > fraction_denominator:
                 await ctx.reply("You can't gift more than what you have.")
+                self.remove_from_interacting(ctx.author.id)
                 return
             elif fraction_numerator == 0:
                 await ctx.reply("That's not much of a gift.")
+                self.remove_from_interacting(ctx.author.id)
                 return
 
         def gift(
@@ -3321,6 +3336,7 @@ For example, "$bread gift Melodie all chess_pieces" would gift all your chess pi
 
             if maximum_possible == 0:
                 await ctx.reply("Sorry, you don't have any chess sets to gift.")
+                self.remove_from_interacting(ctx.author.id)
                 return
             
             item_amount = min(maximum_possible, amount)
@@ -3342,6 +3358,7 @@ For example, "$bread gift Melodie all chess_pieces" would gift all your chess pi
                 await asyncio.sleep(1)
                 
             await ctx.reply(f"Gifted {utility.write_count(item_amount, 'chess set')} to {receiver_account.get_display_name()}.")
+            self.remove_from_interacting(ctx.author.id)
             return
 
         if sender_account.has_category(emoji):
@@ -3370,7 +3387,8 @@ For example, "$bread gift Melodie all chess_pieces" would gift all your chess pi
                 await ctx.reply(f"Gifted {utility.smart_number(gifted_count)} {emoji} to {receiver_account.get_display_name()}.")
             else:
                 await ctx.reply(f"Sorry, you don't have any {emoji} to gift.")
-
+            
+            self.remove_from_interacting(ctx.author.id)
             return        
 
         emote = None
@@ -3386,6 +3404,7 @@ For example, "$bread gift Melodie all chess_pieces" would gift all your chess pi
             if (emote is None) or (emote.can_be_gifted() == False):
                 # print("failed to find emote")
                 await ctx.reply("Sorry, that's not a giftable item.")
+                self.remove_from_interacting(ctx.author.id)
                 return
             
             item = emote.text
@@ -3405,6 +3424,7 @@ For example, "$bread gift Melodie all chess_pieces" would gift all your chess pi
         if ctx.author.id == target.id:
             await ctx.reply("You can't gift bread to yourself, silly.")
             print(f"rejecting self gift request from {target.display_name} for amount {amount}.")
+            self.remove_from_interacting(ctx.author.id)
             
             return
 
@@ -3412,11 +3432,13 @@ For example, "$bread gift Melodie all chess_pieces" would gift all your chess pi
             print(f"Rejecting steal request from {ctx.author.display_name}")
             await ctx.reply("Trying to steal bread? Mum won't be very happy about that.")
             await ctx.invoke(self.bot.get_command('brick'), member=ctx.author)
+            self.remove_from_interacting(ctx.author.id)
             return
         
         if (amount == 0):
             print(f"Rejecting 0 bread request from {ctx.author.display_name}")
             await ctx.reply("That's not much of a gift.")
+            self.remove_from_interacting(ctx.author.id)
             return
 
 
@@ -3429,6 +3451,7 @@ For example, "$bread gift Melodie all chess_pieces" would gift all your chess pi
             leftover = max_gift - already_gifted
             if leftover <= 0:
                 await ctx.reply("Sorry, they've already received as much dough as they can today.")
+                self.remove_from_interacting(ctx.author.id)
                 return
             if amount > leftover:
                 await ctx.reply(f"Sorry, they can only recieve {leftover} more dough today. I will gift them that much.")
@@ -3438,6 +3461,7 @@ For example, "$bread gift Melodie all chess_pieces" would gift all your chess pi
                 self.json_interface.set_account(target, receiver_account, guild = ctx.guild.id)
             else:
                 await ctx.reply("Except you don't have that much dough to give. Too bad.")
+                self.remove_from_interacting(ctx.author.id)
                 return
 
         # no gifting stonks to people of lower prestige level
@@ -3446,6 +3470,7 @@ For example, "$bread gift Melodie all chess_pieces" would gift all your chess pi
             receiver_account.get("id") not in bot_list: # can always gift to bots
             if emote.text in all_stonks:
                 await ctx.reply("Sorry, you can't gift stonks to people of lower prestige level.")
+                self.remove_from_interacting(ctx.author.id)
                 return
 
         # sender_account = self.json_interface.get_account(ctx.author)
@@ -3467,6 +3492,8 @@ For example, "$bread gift Melodie all chess_pieces" would gift all your chess pi
                 await ctx.send(f"{utility.smart_number(amount)} {item} has been gifted to {target.mention}.")
             else:
                 await ctx.reply("You don't have enough of that to gift.")
+
+        self.remove_from_interacting(ctx.author.id)
             #  we will not gift attributes after all, those will be trophies for the roller
             # for atrribute in emote.attributes:
             #     if sender_account.has(atrribute, amount):
@@ -4718,7 +4745,7 @@ anarchy - 1000% of your wager.
 
                 # show how much of each ingredient is posessed
                 for ingredient in ingredients:
-                    recipes_description += f"{ingredient.text}: {user_account.get(ingredient.text)}\n"
+                    recipes_description += f"{ingredient.text}: {utility.smart_number(user_account.get(ingredient.text))}\n"
             
                 recipes_description += "\nPlease reply with either the number of the recipe you would like to use, or \"cancel\"."
                 await ctx.reply(recipes_description)
@@ -4773,10 +4800,10 @@ anarchy - 1000% of your wager.
                 if "result" in recipe:
                     multiplier_text = f"**({item_multiplier}x recipe)** "
 
-                question_text = f"You have chosen to create {count * item_multiplier} {target_emote.text} {multiplier_text}from the following recipe:\n{alchemy.describe_individual_recipe(recipe)}\n\n"
+                question_text = f"You have chosen to create {utility.smart_number(count * item_multiplier)} {target_emote.text} {multiplier_text}from the following recipe:\n{alchemy.describe_individual_recipe(recipe)}\n\n"
                 question_text += f"You have the following ingredients:\n"
                 for pair in recipe["cost"]:
-                    question_text += f"{pair[0].text}: {user_account.get(pair[0].text)} of {pair[1] * count}\n"
+                    question_text += f"{pair[0].text}: {utility.smart_number(user_account.get(pair[0].text))} of {pair[1] * count}\n"
                         
                 question_text += "\nWould you like to proceed? Yes or No."
                 await ctx.reply(question_text)
@@ -4813,7 +4840,7 @@ anarchy - 1000% of your wager.
                 # print(f"{ctx.author.display_name} is attempting to alchemize {count} {target_emote.name}")
                 # print(f"cost is {cost} and posessions is {posessions}")
                 if posessions < cost:
-                    await ctx.reply(f"You do not have enough {pair[0].text} to create {count} {target_emote.text}. This offering is rejected.")
+                    await ctx.reply(f"You do not have enough {pair[0].text} to create {utility.smart_number(count)} {target_emote.text}. This offering is rejected.")
                     self.remove_from_interacting(ctx.author.id)
                     return
             
@@ -4842,7 +4869,7 @@ anarchy - 1000% of your wager.
             # finally, we save the account
             self.json_interface.set_account(ctx.author, user_account, guild = ctx.guild.id)
 
-            output = f"Well done. You have created {count * output_amount} {target_emote.text}. You now have {user_account.get(target_emote.text)} of them."
+            output = f"Well done. You have created {utility.smart_number(count * output_amount)} {target_emote.text}. You now have {utility.smart_number(user_account.get(target_emote.text))} of them."
             if target_emote.gives_alchemy_award() and not override_dough:
                 output += f"\nYou have also been awarded **{utility.smart_number(value)} dough** for your efforts."
 
@@ -7111,6 +7138,9 @@ anarchy - 1000% of your wager.
             return
         
         if amount is not None:
+            if amount < 0:
+                amount = None
+
             await self.anarchy_chessatron_completion(
                 ctx = ctx,
                 force = True,
