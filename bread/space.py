@@ -434,14 +434,18 @@ class SystemTradeHub(SystemTile):
             system_ypos: int,
 
             trade_hub_level: int = None,
-            upgrades: dict[str, int] = None
+            upgrades: dict[str, int] = None,
+            settings: dict[str, typing.Any] = None
         ) -> None:
         super().__init__(galaxy_seed, galaxy_xpos, galaxy_ypos, system_xpos, system_ypos)
         if upgrades is None:
             upgrades = {}
+        if settings is None:
+            settings = {}
 
         self.trade_hub_level = trade_hub_level
         self.upgrades = upgrades
+        self.settings = settings
         self.project_count = store.trade_hub_projects[trade_hub_level]
         self.type = "trade_hub"
     
@@ -456,6 +460,8 @@ class SystemTradeHub(SystemTile):
             detailed: bool = False
         ) -> list[str]:
         day_seed = json_interface.get_day_seed(guild=guild)
+
+        print(get_trade_hub_project_weights(day_seed, self, user_account))
 
         return [
             "Object type: Trade Hub",
@@ -496,6 +502,13 @@ class SystemTradeHub(SystemTile):
         ) -> list[projects.Trade_Hub_Upgrade]:
         return [upgrade for upgrade in projects.all_trade_hub_upgrades if self.get_upgrade_level(upgrade) > 0]
     
+    def get_setting(
+            self: typing.Self,
+            key: str,
+            default: typing.Any = None
+        ) -> typing.Any:
+        return self.settings.get(key, default)
+        
     def to_dict(
             self: typing.Self,
             project_data: dict,
@@ -506,7 +519,8 @@ class SystemTradeHub(SystemTile):
             "level": self.trade_hub_level,
             "project_progress": project_data,
             "level_progress": level_progress,
-            "upgrades": self.upgrades
+            "upgrades": self.upgrades,
+            "settings": self.settings
         }
     
 ########################################################
@@ -2092,7 +2106,8 @@ def get_trade_hub(
             system_xpos = xpos,
             system_ypos = ypos,
             trade_hub_level = trade_hub.get("level", 1),
-            upgrades = trade_hub.get("upgrades", dict())
+            upgrades = trade_hub.get("upgrades", dict()),
+            settings = trade_hub.get("settings", dict()),
         )
     
     generated = generation.generate_system(
@@ -2114,7 +2129,8 @@ def get_trade_hub(
         system_xpos = generated["trade_hub"]["xpos"],
         system_ypos = generated["trade_hub"]["ypos"],
         trade_hub_level = generated["trade_hub"]["level"],
-        upgrades = {}
+        upgrades = {},
+        settings = {}
     )
 
             
@@ -2164,11 +2180,94 @@ def create_trade_hub(
 
     json_interface.set_custom_file("space", space_data, guild=guild_id)
 
+def get_trade_hub_project_categories(
+        day_seed: str,
+        hub_tile: SystemTradeHub
+    ) -> dict[str, list[projects.Project]]:
+    category_bindings = {
+        values.black_pawn.text: "pawn",
+        values.white_pawn.text: "pawn",
+        values.anarchy_black_pawn.text: "pawn",
+        values.anarchy_white_pawn.text: "pawn",
+        values.black_knight.text: "knight",
+        values.white_knight.text: "knight",
+        values.anarchy_black_knight.text: "knight",
+        values.anarchy_white_knight.text: "knight",
+        values.black_bishop.text: "bishop",
+        values.white_bishop.text: "bishop",
+        values.anarchy_black_bishop.text: "bishop",
+        values.anarchy_white_bishop.text: "bishop",
+        values.black_rook.text: "rook",
+        values.white_rook.text: "rook",
+        values.anarchy_black_rook.text: "rook",
+        values.anarchy_white_rook.text: "rook",
+        values.black_queen.text: "queen",
+        values.white_queen.text: "queen",
+        values.anarchy_black_queen.text: "queen",
+        values.anarchy_white_queen.text: "queen",
+        values.black_king.text: "king",
+        values.white_king.text: "king",
+        values.anarchy_black_king.text: "king",
+        values.anarchy_white_king.text: "king",
+        values.gem_gold.text: "gems",
+        values.gem_green.text: "gems",
+        values.gem_purple.text: "gems",
+        values.gem_blue.text: "gems",
+        values.gem_red.text: "gems",
+        # Misc items are not included so new items automatically get added to it.
+    }
+
+    categories = {
+        "pawn": [],
+        "knight": [],
+        "bishop": [],
+        "rook": [],
+        "queen": [],
+        "king": [],
+        "gems": [],
+        "misc": []
+    }
+
+    for project in projects.all_projects:
+        costs = project.get_reward(
+            day_seed = day_seed,
+            system_tile = hub_tile
+        )
+
+        for item, amount in costs:
+            category = category_bindings.get(item)
+            if category is None:
+                categories["misc"].append(project)
+                continue
+
+            if project in categories[category]:
+                continue
+
+            categories[category].append(project)
+    
+    return categories
+
+def get_trade_hub_project_weights(
+        day_seed: str,
+        hub_tile: SystemTradeHub
+    ) -> dict[projects.Project, int]:
+    setting = hub_tile.get_setting("shroud_beacon_setting")
+    if setting is None:
+        return {project: 1 for project in projects.all_projects}
+    
+    beacon_level = hub_tile.get_upgrade_level(projects.Shroud_Beacon)
+    
+    categories = get_trade_hub_project_categories(day_seed, hub_tile)
+
+    return {
+        project: 1 + (5 * beacon_level * (project in categories[setting]))
+        for project in projects.all_projects
+    }
+
 def get_trade_hub_projects(
         json_interface: bread_cog.JSON_interface,
         user_account: account.Bread_Account,
-        galaxy_x: int,
-        galaxy_y: int
+        system_tile: SystemTradeHub
     ) -> list[dict[str, typing.Union[projects.Project, int, str, bool]]]:
     """Returns a list of dictionaries, where each dictionary is a project on the given galaxy tile."""
     prestige_level = user_account.get_prestige_level()
@@ -2178,6 +2277,9 @@ def get_trade_hub_projects(
 
     out_projects = []
 
+    galaxy_x = system_tile.galaxy_xpos
+    galaxy_y = system_tile.galaxy_ypos
+
     trade_hub_data = json_interface.get_space_ascension(prestige_level, guild_id)
     trade_hub_data = trade_hub_data.get("trade_hubs", {})
     trade_hub_data = trade_hub_data.get(f"{galaxy_x} {galaxy_y}", {})
@@ -2186,6 +2288,11 @@ def get_trade_hub_projects(
 
     used_names = []
 
+    weights = get_trade_hub_project_weights(
+        day_seed = daily_seed,
+        hub_tile = system_tile
+    )
+
     project_id = -1
     while len(out_projects) < 5:
         project_id += 1
@@ -2193,22 +2300,24 @@ def get_trade_hub_projects(
         key = f"project_{len(out_projects) + 1}"
         rng = random.Random(utility.hash_args(seed, daily_seed, galaxy_x, galaxy_y, project_id))
         
-        project = projects.all_projects.copy()
+        project = None
 
-        while isinstance(project, list):
-            if isinstance(project, list):
-                if len(project) == 0:
-                    break
-            
-            project = rng.choice(project)
+        if project_data.get(key, {}).get("internal") is not None:
+            project = projects.get_project(project_data.get(key, {}).get("internal"))
         
-        # If it broke out of the while loop then `project` will be a list, in which case we need to skip to the next iteration.
-        if isinstance(project, list):
-            continue
+        if project is None:
+            project = rng.choices(
+                population = list(weights.keys()),
+                weights = list(weights.values())
+            )[0]
+            
+            # If it broke out of the while loop then `project` will be a list, in which case we need to skip to the next iteration.
+            if isinstance(project, list):
+                continue
 
-        # Prevent duplicates.
-        if project.internal in used_names:
-            continue
+            # Prevent duplicates.
+            if project.internal in used_names:
+                continue
 
         project_progress = project_data.get(key, {}).get("contributions", {})
         completed = project_data.get(key, {}).get("completed", False)
@@ -2219,7 +2328,8 @@ def get_trade_hub_projects(
             {
                 "project": project,
                 "contributions": project_progress,
-                "completed": completed
+                "completed": completed,
+                "internal": project.internal
             }
         )
     

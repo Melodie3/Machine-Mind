@@ -322,12 +322,18 @@ class Bread_Account:
     
     def get_galaxy_location(
             self: typing.Self,
-            json_interface: bread_cog.JSON_interface
+            json_interface: bread_cog.JSON_interface,
+            correct_center: bool = False
         ) -> tuple[int, int]:
         """Returns this account's galaxy location in a 2D tuple. This will return the galaxy's spawn location if the player has not moved on the galaxy map."""
         # If the player has moved before, then return their position.
         if self.get("galaxy_move_count") > 0:
-            return (self.get("galaxy_xpos"), self.get("galaxy_ypos"))
+            out = (self.get("galaxy_xpos"), self.get("galaxy_ypos"))
+
+            if correct_center and out in space.ALTERNATE_CENTER:
+                out = (space.MAP_RADIUS, space.MAP_RADIUS)
+
+            return out
         
         # If the player hasn't moved, then return the spawn point.
         return space.get_spawn_location(

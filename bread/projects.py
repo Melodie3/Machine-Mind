@@ -568,8 +568,9 @@ class Quantum_Catapult(Trade_Hub_Upgrade):
             day_seed: str,
             system_tile: space.SystemTradeHub
         ) -> str:
-        tier = system_tile.get_upgrade_level(cls)
-        return f"A large catapult situated on top of the Trade Hub that can launch rockets anywhere within {cls.max_distance} tiles for {round(cls.cost_multipliers[tier + 1] * 100)}% the regular cost in a single launch!"
+        tier = system_tile.get_upgrade_level(cls) + 1
+        cost_message = f" for {round(cls.cost_multipliers[tier] * 100)}% the regular cost" if tier >= 2 else ""
+        return f"A large catapult situated on top of the Trade Hub that can launch rockets anywhere within {cls.max_distance} tiles{cost_message} in a single launch!"
     
     @classmethod
     def completion(
@@ -587,7 +588,7 @@ class Quantum_Catapult(Trade_Hub_Upgrade):
         ) -> list[tuple[str, int]]:
         tier = system_tile.get_upgrade_level(cls) + 1
         return [
-            (values.anarchy_chess.text, 10 * tier), (values.anarchy_chessatron.text, tier), (values.gem_gold.text, 512 * tier)
+            (values.anarchy_chess.text, 10 * tier), (values.anarchy_chessatron.text, 1), (values.gem_gold.text, 512 * tier)
         ]
     
     @classmethod
@@ -621,7 +622,7 @@ class Hyperlane_Registrar(Trade_Hub_Upgrade):
             system_tile: space.SystemTradeHub
         ) -> str:
         tier = system_tile.get_upgrade_level(cls)
-        return f"A powerful supercomputer aboard the Trade Hub that's able to crunch the numbers required to find more efficient ways to use your fuel.\nThis results in a {round(cls.cost_multipliers[tier + 1] * 100)}% fuel consumption reduction for anyone moving, if they start somewhere within this Trade Hub's radius.\n*If one player is within radius of multiple Trade Hubs only the best one is used, the effect does not stack."
+        return f"A powerful supercomputer aboard the Trade Hub that's able to crunch the numbers required to find more efficient ways to use your fuel.\nThis results in a {round(cls.cost_multipliers[tier + 1] * 100)}% fuel consumption reduction for anyone moving, if they start somewhere within this Trade Hub's radius.\n*If one player is within radius of multiple Trade Hubs only the best one is used, the effect does not stack.*"
     
     @classmethod
     def completion(
@@ -639,7 +640,7 @@ class Hyperlane_Registrar(Trade_Hub_Upgrade):
         ) -> list[tuple[str, int]]:
         tier = system_tile.get_upgrade_level(cls) + 1
         return [
-            (values.anarchy_chess.text, 10 * tier), (values.anarchy_chessatron.text, tier), (values.gem_gold.text, 256 * tier)
+            (values.anarchy_chess.text, 10 * tier), (values.anarchy_chessatron.text, 1), (values.gem_gold.text, 256 * tier)
         ]
     
     @classmethod
@@ -651,7 +652,68 @@ class Hyperlane_Registrar(Trade_Hub_Upgrade):
         tier = system_tile.get_upgrade_level(cls)
         return f"A supercomputer on board allowing those within the Trade Hub's radius to only use {round(cls.cost_multipliers[tier] * 100)}% the regular cost of fuel when moving."
 
-all_trade_hub_upgrades = [Listening_Post, Nebula_Refinery, Quantum_Catapult, Hyperlane_Registrar] # type: list[Trade_Hub_Upgrade]
+class Shroud_Beacon(Trade_Hub_Upgrade):
+    internal = "shroud_beacon"
+    max_level = 3
+    unlock_level = 3
+    
+    @classmethod
+    def name(
+            cls,
+            day_seed: str,
+            system_tile: space.SystemTradeHub
+        ) -> str:
+        return "Shroud Beacon"
+
+    @classmethod
+    def description(
+            cls,
+            day_seed: str,
+            system_tile: space.SystemTradeHub
+        ) -> str:
+        tier = system_tile.get_upgrade_level(cls) + 1
+        if tier >= 2:
+            return "An upgraded and more powerful psionic beacon used to lure in specific projects from the abyss."
+        
+        return "A psionic beacon used to lure in specific projects from the abyss."
+    
+    @classmethod
+    def completion(
+            cls: typing.Type[typing.Self],
+            day_seed: str,
+            system_tile: space.SystemTradeHub
+        ) -> str:
+        tier = system_tile.get_upgrade_level(cls) + 1
+        if tier >= 2:
+            return "The psionic beacon is now more powerful and is better at luring in specific projects.\n*Configure the beacon with '$bread space hub configure'.*"
+        
+        return "Incredible! The new psionic beacon has been installed and can be configured with '$bread space hub configure'!"
+    
+    @classmethod
+    def get_cost(
+            cls,
+            day_seed: str,
+            system_tile: space.SystemTradeHub
+        ) -> list[tuple[str, int]]:
+        tier = system_tile.get_upgrade_level(cls) + 1
+        return [
+            (values.anarchy_chess.text, 10 * tier), (values.anarchy_chessatron.text, 1), (values.gem_gold.text, 256 * tier)
+        ]
+    
+    @classmethod
+    def purchased_description(
+            cls: typing.Type[typing.Self],
+            day_seed: str,
+            system_tile: space.SystemTradeHub
+        ) -> str:
+        setting = system_tile.get_setting("shroud_beacon_setting")
+
+        if setting is None:
+            return f"A psionic beacon used to lure in specific projects from the abyss, currently not configured."
+        
+        return f"A psionic beacon used to lure in specific projects from the abyss, currently configured to prioritize {setting} projects."
+
+all_trade_hub_upgrades = [Listening_Post, Nebula_Refinery, Quantum_Catapult, Hyperlane_Registrar, Shroud_Beacon] # type: list[Trade_Hub_Upgrade]
 
 #######################################################################################################
 ##### Base project. ###################################################################################
@@ -4728,4 +4790,17 @@ item_project_lists = [take_item_project_lists, give_item_project_lists]
 
 all_projects = story_projects + \
             take_special_bread_projects + take_rare_bread_projects + take_black_chess_piece_projects + take_white_chess_piece_projects + take_gem_projects + take_misc_item_projects + \
-            give_special_bread_projects + give_rare_bread_projects + give_black_chess_piece_projects + give_white_chess_piece_projects + give_gem_projects + give_misc_item_projects
+            give_special_bread_projects + give_rare_bread_projects + give_black_chess_piece_projects + give_white_chess_piece_projects + give_gem_projects + give_misc_item_projects # type: list[Project]
+
+######################################################################
+
+def get_project(text: str) -> Project | None:
+    if not text:
+        return None
+    
+    text = text.lower()
+    for project in all_projects:
+        if project.name == text or project.internal == text:
+            return project
+    
+    return None

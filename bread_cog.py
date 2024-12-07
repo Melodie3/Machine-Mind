@@ -3212,7 +3212,7 @@ For example, "$bread gift Melodie all chess_pieces" would gift all your chess pi
         # Space gifting checks.
         if (sender_account.get_space_level() != 0 or receiver_account.get_space_level() != 0) and \
             (sender_account.get_prestige_level() == receiver_account.get_prestige_level()): # Space related checks should only run if the two accounts are on the same ascension.
-            if sender_account.get_galaxy_location(self.json_interface) != receiver_account.get_galaxy_location(self.json_interface):
+            if sender_account.get_galaxy_location(self.json_interface, correct_center=True) != receiver_account.get_galaxy_location(self.json_interface, correct_center=True):
                 send_check = space.gifting_check_user(
                     json_interface = self.json_interface,
                     user = sender_account
@@ -5573,7 +5573,7 @@ anarchy - 1000% of your wager.
             actions: tuple[str]
         ) -> None:
         """Contributes items to a trade hub project, or the trade hub level."""
-        galaxy_x, galaxy_y = user_account.get_galaxy_location(json_interface=self.json_interface)
+        galaxy_x, galaxy_y = user_account.get_galaxy_location(json_interface=self.json_interface, correct_center=True)
 
         actions += [" ", " ", " ", " "]
         
@@ -5654,6 +5654,7 @@ anarchy - 1000% of your wager.
 
         if len(remaining) == 0:
             out_data = {
+                "internal": project.internal,
                 "completed": True,
                 "contributions": project_data.get("contributions")
             }
@@ -5760,6 +5761,7 @@ anarchy - 1000% of your wager.
         contribution_data[str(ctx.author.id)] = player_data
 
         out_data = {
+            "internal": project.internal,
             "completed": False,
             "contributions": contribution_data
         }
@@ -5912,7 +5914,7 @@ anarchy - 1000% of your wager.
             actions: tuple[str]
         ) -> None:
         """Gets information about the trade hub levelling and sends it."""
-        galaxy_x, galaxy_y = user_account.get_galaxy_location(json_interface=self.json_interface)
+        galaxy_x, galaxy_y = user_account.get_galaxy_location(json_interface=self.json_interface, correct_center=True)
         level_project = projects.Trade_Hub
         max_level = len(level_project.all_costs())
 
@@ -6111,6 +6113,63 @@ anarchy - 1000% of your wager.
 
         await ctx.reply(message_lines)
 
+
+    
+    async def trade_hub_configure(
+            self: typing.Self,
+            ctx: commands.Context,
+            user_account: account.Bread_Account,
+            day_seed: str,
+            hub_projects: list[dict],
+            hub: space.SystemTradeHub,
+            actions: tuple[str]
+        ) -> None:
+        """Configuration for the Trade Hub's upgrades."""
+        if hub.get_upgrade_level(projects.Shroud_Beacon) < 1:
+            await ctx.reply("There is nothing to configure.")
+            return
+        
+        all_configuration = space.get_trade_hub_project_categories(day_seed, hub)
+
+        if len(actions) >= 2:
+            if actions[1].lower() in all_configuration or actions[1].lower() == "none":
+                new_state = actions[1].lower()
+
+                if new_state == "none":
+                    new_state = None
+
+                # Configure this setting.
+                trade_hub_data = self.json_interface.get_trade_hub_data(
+                    guild = ctx.guild,
+                    ascension = user_account.get_prestige_level(),
+                    galaxy_x = hub.galaxy_xpos,
+                    galaxy_y = hub.galaxy_ypos
+                )
+
+                settings = trade_hub_data.get("settings", {})
+                settings["shroud_beacon_queue"] = new_state
+
+                trade_hub_data["settings"] = settings
+
+                self.json_interface.update_trade_hub_data(
+                    guild = ctx.guild,
+                    ascension = user_account.get_prestige_level(),
+                    galaxy_x = hub.galaxy_xpos,
+                    galaxy_y = hub.galaxy_ypos,
+                    new_data = trade_hub_data
+                )
+
+                if new_state is None:
+                    new_state = "no"
+
+                await ctx.reply(f"The Shroud Beacon has been configured to prioritize {new_state} projects.\nThe beacon takes some time to charge up, though, so it will only take effect the next time projects change.")
+                return
+        
+        await ctx.reply("To configure the Shroud Beacon use '$bread space hub configure <setting>'\nCurrent configuration: {}\nAvailable settings are as follows: '{}' or 'none' to disable it.".format(
+            str(hub.get_setting("shroud_beacon_setting", None)).title(),
+            '\', \''.join(all_configuration.keys())
+        ))
+
     ########################################################################################################################
     #####      BREAD SPACE HUB
 
@@ -6142,8 +6201,7 @@ anarchy - 1000% of your wager.
             await ctx.reply("You do not yet have a rocket that can access Trade Hubs. You can purchase a Bread Rocket from the Space Shop.")
             return
         
-        galaxy_x, galaxy_y = user_account.get_galaxy_location(json_interface=self.json_interface)
-
+        galaxy_x, galaxy_y = user_account.get_galaxy_location(json_interface=self.json_interface, correct_center=True)
         
         system = space.get_galaxy_coordinate(
             json_interface = self.json_interface,
@@ -6176,10 +6234,6 @@ anarchy - 1000% of your wager.
             
         day_seed = self.json_interface.get_day_seed(guild=ctx.guild.id)
 
-
-        hub = system.trade_hub
-        
-        
         hub = system.trade_hub
         
         if system.trade_hub is None:            
@@ -6272,8 +6326,7 @@ anarchy - 1000% of your wager.
         hub_projects = space.get_trade_hub_projects(
             json_interface = self.json_interface,
             user_account = user_account,
-            galaxy_x = galaxy_x,
-            galaxy_y = galaxy_y
+            system_tile = hub
         )
         
         ##############################################################################################################
@@ -6314,10 +6367,24 @@ anarchy - 1000% of your wager.
                 actions = actions
             )
             return
+        
         ##############################################################################################################
 
         if action == "upgrades" or action == "upgrade":
             await self.trade_hub_upgrades(
+                ctx = ctx,
+                user_account = user_account,
+                day_seed = day_seed,
+                hub_projects = hub_projects,
+                hub = hub,
+                actions = actions
+            )
+            return
+        
+        ##############################################################################################################
+
+        if action == "configure" or action == "configuration":
+            await self.trade_hub_configure(
                 ctx = ctx,
                 user_account = user_account,
                 day_seed = day_seed,
@@ -7687,6 +7754,11 @@ anarchy - 1000% of your wager.
 
             for trade_hub_key in ascension_data.get("trade_hubs", {}):
                 ascension_data["trade_hubs"][trade_hub_key]["project_progress"] = blank_projects.copy()
+
+                if "shroud_beacon_queue" in ascension_data["trade_hubs"][trade_hub_key].get("settings", {}):
+                    settings = ascension_data["trade_hubs"][trade_hub_key].get("settings", {})
+                    settings["shroud_beacon_setting"] = ascension_data["trade_hubs"][trade_hub_key].get("settings", {}).get("shroud_beacon_queue")
+                    settings.pop("shroud_beacon_queue")
             
             space_data[ascension_key] = ascension_data
 
