@@ -32,6 +32,11 @@ MOVE_FUEL_GALAXY = 175
 MOVE_FUEL_GALAXY_NEBULA = 350
 MOVE_FUEL_WORMHOLE = 325
 
+# Alternate center points:
+# These are the points that are the same as (MAP_RADIUS, MAP_RADIUS), due to the 2x2 system at the center of the galaxy.
+ALTERNATE_CENTER = [(MAP_RADIUS - 1, MAP_RADIUS - 1), (MAP_RADIUS, MAP_RADIUS - 1), (MAP_RADIUS - 1, MAP_RADIUS)]
+ALL_CENTER = ALTERNATE_CENTER + [(MAP_RADIUS, MAP_RADIUS)]
+
 ## Emojis:
 
 MAP_EMOJIS = {
@@ -125,10 +130,17 @@ EMOJI_PATHS = {
     "star2": "images/star2.png",
     "star3": "images/star3.png",
     "black_hole": "images/black_hole.png",
+    "supermassive_black_hole": "images/black_hole.png", # Glaciers melting in the dead of night.
     "wormhole": "images/wormhole.png",
     "trade_hub": "images/trade_hub.png",
     "asteroid": "images/asteroid.png",
     "bread": "images/bread.png",
+
+    # 2x2 black hole.
+    "black_hole_top_left": "images/black_hole_top_left.png",
+    "black_hole_top_right": "images/black_hole_top_right.png",
+    "black_hole_bottom_left": "images/black_hole_bottom_left.png",
+    "black_hole_bottom_right": "images/black_hole_bottom_right.png",
 
     # Special breads.
     "croissant": "images/croissant.png",
@@ -158,6 +170,22 @@ EMOJI_PATHS = {
     "Wqueen": "images/wqueen.png",
     "Wking": "images/wking.png",
 
+    # Black anarchy pieces.
+    "Bpawnanarchy": "images/bpawn_anarchy.png",
+    "Bknightanarchy": "images/bknight_anarchy.png",
+    "Bbishopanarchy": "images/bbishop_anarchy.png",
+    "Brookanarchy": "images/brook_anarchy.png",
+    "Bqueenanarchy": "images/bqueen_anarchy.png",
+    "Bkinganarchy": "images/bking_anarchy.png",
+
+    # White anarchy pieces.
+    "Wpawnanarchy": "images/wpawn_anarchy.png",
+    "Wknightanarchy": "images/wknight_anarchy.png",
+    "Wbishopanarchy": "images/wbishop_anarchy.png",
+    "Wrookanarchy": "images/wrook_anarchy.png",
+    "Wqueenanarchy": "images/wqueen_anarchy.png",
+    "Wkinganarchy": "images/wking_anarchy.png",
+
     # Gems.
     "gem_red": "images/gem_red.png",
     "gem_blue": "images/gem_blue.png",
@@ -179,7 +207,7 @@ for key, path in EMOJI_PATHS.items():
     except FileNotFoundError:
         print(f"Bread Space: Map image loading failed for {key} ({path}) as the file does not exist.")
 
-print("Bread Space: Map image loading complete.")
+print(f"Bread Space: Map image loading complete. Loaded images: {len(EMOJI_IMAGES)}/{len(EMOJI_PATHS)}.")
 
 
 ########################################################################################
@@ -350,6 +378,11 @@ class SystemStar(SystemTile):
             out.append("Sensors read more interference and")
             out.append("more dynamic deviations than normal.")
 
+        if self.star_type == "supermassive_black_hole" and detailed:
+            out.append("Sensors read extremely strong interference")
+            out.append("compared to the norm and therefore ")
+            out.append("incredibly more dynamic deviations.")
+
         return out
     
 ########################################################
@@ -400,11 +433,19 @@ class SystemTradeHub(SystemTile):
             system_xpos: int,
             system_ypos: int,
 
-            trade_hub_level: int = None
+            trade_hub_level: int = None,
+            upgrades: dict[str, int] = None,
+            settings: dict[str, typing.Any] = None
         ) -> None:
         super().__init__(galaxy_seed, galaxy_xpos, galaxy_ypos, system_xpos, system_ypos)
+        if upgrades is None:
+            upgrades = {}
+        if settings is None:
+            settings = {}
 
         self.trade_hub_level = trade_hub_level
+        self.upgrades = upgrades
+        self.settings = settings
         self.project_count = store.trade_hub_projects[trade_hub_level]
         self.type = "trade_hub"
     
@@ -418,11 +459,69 @@ class SystemTradeHub(SystemTile):
             user_account: account.Bread_Account,
             detailed: bool = False
         ) -> list[str]:
+        day_seed = json_interface.get_day_seed(guild=guild)
+
+        print(get_trade_hub_project_weights(day_seed, self, user_account))
+
         return [
-                "Object type: Trade Hub",
-                f"Trade Hub level: {self.trade_hub_level}",
-                "Use '$bread space hub' while over the trade hub to interact with it."
-            ]
+            "Object type: Trade Hub",
+            f"Trade Hub level: {self.trade_hub_level}",
+            f"Purchased upgrades: {sum(1 for upgrade in projects.all_trade_hub_upgrades if self.get_upgrade_level(upgrade))}",
+            f"Available upgrades: {len(self.get_available_upgrades(day_seed))}",
+            "Use '$bread space hub' while over the trade hub to interact with it."
+        ]
+
+    def get_upgrade_level(
+            self: typing.Self,
+            upgrade: str | projects.Trade_Hub_Upgrade,
+            default: int | None = 0
+        ) -> int:
+        """Gets the level this trade hub has of the given upgrade."""
+        return self.get_upgrade_data(upgrade, dict()).get('level', default)
+
+    def get_upgrade_data(
+            self: typing.Self,
+            upgrade: str | projects.Trade_Hub_Upgrade,
+            default: int | None = 0
+        ) -> dict:
+        """Gets the data for the given trade hub upgrade."""
+        if not isinstance(upgrade, str):
+            upgrade = upgrade.internal
+        
+        return self.upgrades.get(upgrade, default)
+
+    def get_available_upgrades(
+            self: typing.Self,
+            day_seed: str
+        ) -> list[projects.Trade_Hub_Upgrade]:
+        """Gives a list of available upgrades for this Trade Hub, factoring in things like required hub tiers and max upgrade levels."""
+        return [upgrade for upgrade in projects.all_trade_hub_upgrades if upgrade.is_available(day_seed, self)]
+
+    def get_purchased_upgrades(
+            self: typing.Self
+        ) -> list[projects.Trade_Hub_Upgrade]:
+        return [upgrade for upgrade in projects.all_trade_hub_upgrades if self.get_upgrade_level(upgrade) > 0]
+    
+    def get_setting(
+            self: typing.Self,
+            key: str,
+            default: typing.Any = None
+        ) -> typing.Any:
+        return self.settings.get(key, default)
+        
+    def to_dict(
+            self: typing.Self,
+            project_data: dict,
+            level_progress: dict
+        ) -> dict:
+        return {
+            "location": [self.system_xpos, self.system_ypos],
+            "level": self.trade_hub_level,
+            "project_progress": project_data,
+            "level_progress": level_progress,
+            "upgrades": self.upgrades,
+            "settings": self.settings
+        }
     
 ########################################################
 
@@ -550,6 +649,9 @@ class SystemPlanet(SystemTile):
     
     def get_priority_item(self: typing.Self) -> typing.Union[values.Emote, str, None]:
         """Returns the item or category that is prioritized by this planet."""
+        if self.planet_type in values.all_anarchy_pieces:
+            return "anarchy_piece"
+        
         if self.planet_type.text == values.anarchy_chess.text:
             return self.planet_type.name
         
@@ -784,6 +886,9 @@ class GalaxyTile:
             galaxy_xpos = self.xpos,
             galaxy_ypos = self.ypos
         )
+
+        if self.trade_hub is not None:
+            self.trade_hub.galaxy_tile = self
         
         if raw_data.get("wormhole", {}).get("exists", False):
             wormhole_data = raw_data.get("wormhole", {})
@@ -824,6 +929,32 @@ class GalaxyTile:
                 ))
 
                 asteroid_added.append((asteroid_x, asteroid_y))
+            
+            self.asteroids = asteroids
+        elif len(raw_data.get("asteroid_belts", [])) > 0:
+            asteroids = []
+
+            for distance in raw_data.get("asteroid_belts", []):
+                asteroid_added = []
+
+                for angle in range(360):
+                    asteroid_x = distance * math.cos(math.radians(angle))
+                    asteroid_y = distance * math.sin(math.radians(angle))
+
+                    # Make sure it hasn't added an asteroid at this point yet.
+                    if (asteroid_x, asteroid_y) in asteroid_added:
+                        continue
+                    
+                    asteroids.append(SystemAsteroid(
+                        galaxy_seed = self.galaxy_seed,
+
+                        galaxy_xpos = self.xpos,
+                        galaxy_ypos = self.ypos,
+                        system_xpos = int(asteroid_x),
+                        system_ypos = int(asteroid_y)
+                    ))
+
+                    asteroid_added.append((asteroid_x, asteroid_y))
             
             self.asteroids = asteroids
         else:
@@ -887,6 +1018,17 @@ class GalaxyTile:
 
         # If this tile has a system, then get whatever
         if self.system:
+            # Handle the 2x2 system:
+            if (self.xpos, self.ypos) in ALTERNATE_CENTER or (self.xpos == MAP_RADIUS and self.ypos == MAP_RADIUS):
+                if self.xpos == MAP_RADIUS and self.ypos == MAP_RADIUS: # Bottom right.
+                    return "black_hole_bottom_right"
+                elif self.xpos == MAP_RADIUS - 1 and self.ypos == MAP_RADIUS: # Bottom left.
+                    return "black_hole_bottom_left"
+                elif self.xpos == MAP_RADIUS and self.ypos == MAP_RADIUS - 1: # Top right.
+                    return "black_hole_top_right"
+                else:
+                    return "black_hole_top_left"
+            
             # Load the system data if it has not already been loaded.
             self.smart_load(json_interface=json_interface, guild=self.guild, get_wormholes=False)
             
@@ -1370,7 +1512,7 @@ def system_map(
                 
                 if math.hypot(tile_x + top_left[0], tile_y + top_left[1]) >= system_radius + 2:
                     grid[tile_y + 2][tile_x + 2] = blocker
-
+        
         # Star
         star_x = system_data.star.system_xpos
         star_y = system_data.star.system_ypos
@@ -1588,6 +1730,10 @@ def get_system_raw_data(
     Returns:
         dict: The raw data for the system.
     """
+    if (xpos, ypos) in ALTERNATE_CENTER:
+        xpos = MAP_RADIUS
+        ypos = MAP_RADIUS
+
     if map_data is None:
         map_data = json_interface.get_space_map_data(
             ascension_id = ascension,
@@ -1644,6 +1790,19 @@ def get_galaxy_coordinate(
             in_nebula = False
         )
     
+    # To handle the 2x2 system at the center of the map.
+    # The map data only exists at (MAP_RADIUS, MAP_RADIUS),
+    # so if the coordinate being called is any of the other
+    # three tiles, change it to where the data is.
+    old_x = None
+    old_y = None
+    if (xpos, ypos) in ALTERNATE_CENTER:
+        old_x = xpos
+        old_y = ypos
+
+        xpos = MAP_RADIUS
+        ypos = MAP_RADIUS
+    
     map_data = json_interface.get_space_map_data(
         ascension_id = ascension,
         guild = guild
@@ -1685,6 +1844,10 @@ def get_galaxy_coordinate(
         if load_data:
             out.load_system_data(json_interface, guild, True)
         
+        if old_x is not None:
+            out.xpos = old_x
+            out.ypos = old_y
+        
         return out
 
 
@@ -1719,6 +1882,10 @@ def get_galaxy_coordinate(
 
     if load_data:
         out.load_system_data(json_interface=json_interface, guild=guild, get_wormholes=True)
+        
+    if old_x is not None:
+        out.xpos = old_x
+        out.ypos = old_y
 
     return out
 
@@ -1813,10 +1980,26 @@ def get_planet_modifiers(
         if galaxy_tile.star.star_type == "black_hole":
             # If it's a black hole, make it a little crazier by dividing the denominator by 5.
             denominator /= 5
+        elif galaxy_tile.star.star_type == "supermassive_black_hole":
+            # If it's the supermassive black hole at the center of the galaxy, chaos.
+            denominator /= 10
+        
+        raw_seed = tile.tile_seed()
+
+        # Handle the Nebula Refinery, Black Hole Observatory, and some of the Dark Matter Resonance Chamber trade hub upgrades.
+        chamber_level = 0
+        mod = 0
+        if galaxy_tile.trade_hub is not None:
+            if galaxy_tile.trade_hub.get_upgrade_level(projects.Nebula_Refinery) > 0:
+                mod += abs(random.Random(f"{raw_seed}_nebularefinery").gauss(mu=math.pi / 100, sigma=0.01)) * 2
+
+            if galaxy_tile.trade_hub.get_upgrade_level(projects.Black_Hole_Observatory) > 0:
+                mod += abs(random.Random(f"{raw_seed}_blackholeobservatory").gauss(mu=math.pi / 100, sigma=0.01)) * 2
+
+            chamber_level = galaxy_tile.trade_hub.get_upgrade_level(projects.Dark_Matter_Resonance_Chamber)
 
         deviation = (1 - tile.planet_deviation) / denominator
 
-        raw_seed = tile.tile_seed()
         tile_seed = tile.tile_seed() + day_seed
 
         sqrt_phi = math.sqrt((1 + math.sqrt(5)) / 2)
@@ -1824,7 +2007,12 @@ def get_planet_modifiers(
         # Get the planet seed for each category.
         # These do not change per day.
         for key in odds.copy():
-            odds[key] = random.Random(f"{raw_seed}{key}").gauss(mu=1, sigma=deviation)
+            key_mod = 0
+
+            if chamber_level > 0 and key == "anarchy_piece":
+                key_mod += abs(random.Random(f"{raw_seed}_darkmatterresonancechamber").gauss(mu=math.pi / 100, sigma=0.01)) * 2 * chamber_level
+
+            odds[key] = random.Random(f"{raw_seed}{key}").gauss(mu=1 + mod + key_mod, sigma=deviation)
 
             if key == priority:
                 odds[key] = (abs(odds[key] - 1) + 1) * sqrt_phi
@@ -1893,6 +2081,10 @@ def get_trade_hub(
     Returns:
         typing.Union[SystemTradeHub, None]: The SystemTradeHub object for the trade hub, or None if there is no trade hub.
     """
+    if (galaxy_xpos, galaxy_ypos) in ALTERNATE_CENTER:
+        galaxy_xpos = MAP_RADIUS
+        galaxy_ypos = MAP_RADIUS
+
     space_data = json_interface.get_custom_file("space", guild=guild)
 
     ascension_data = space_data.get(f"ascension_{ascension}", dict())
@@ -1924,7 +2116,9 @@ def get_trade_hub(
             galaxy_ypos = galaxy_ypos,
             system_xpos = xpos,
             system_ypos = ypos,
-            trade_hub_level = trade_hub.get("level", 1)
+            trade_hub_level = trade_hub.get("level", 1),
+            upgrades = trade_hub.get("upgrades", dict()),
+            settings = trade_hub.get("settings", dict()),
         )
     
     generated = generation.generate_system(
@@ -1945,7 +2139,9 @@ def get_trade_hub(
         galaxy_ypos = galaxy_ypos,
         system_xpos = generated["trade_hub"]["xpos"],
         system_ypos = generated["trade_hub"]["ypos"],
-        trade_hub_level = generated["trade_hub"]["level"]
+        trade_hub_level = generated["trade_hub"]["level"],
+        upgrades = {},
+        settings = {}
     )
 
             
@@ -1965,7 +2161,8 @@ def create_trade_hub(
         galaxy_x: int,
         galaxy_y: int,
         system_x: int,
-        system_y: int
+        system_y: int,
+        level: int = 1
     ) -> None:
     """Creates a new trade hub in the given system."""
     guild_id = user_account.get("guild_id")
@@ -1976,7 +2173,7 @@ def create_trade_hub(
 
     trade_hub_data[f"{galaxy_x} {galaxy_y}"] = {
         "location": [system_x, system_y],
-        "level": 1,
+        "level": level,
         "project_progress": {
             "project_1": {},
             "project_2": {},
@@ -1994,11 +2191,94 @@ def create_trade_hub(
 
     json_interface.set_custom_file("space", space_data, guild=guild_id)
 
+def get_trade_hub_project_categories(
+        day_seed: str,
+        hub_tile: SystemTradeHub
+    ) -> dict[str, list[projects.Project]]:
+    category_bindings = {
+        values.black_pawn.text: "pawn",
+        values.white_pawn.text: "pawn",
+        values.anarchy_black_pawn.text: "pawn",
+        values.anarchy_white_pawn.text: "pawn",
+        values.black_knight.text: "knight",
+        values.white_knight.text: "knight",
+        values.anarchy_black_knight.text: "knight",
+        values.anarchy_white_knight.text: "knight",
+        values.black_bishop.text: "bishop",
+        values.white_bishop.text: "bishop",
+        values.anarchy_black_bishop.text: "bishop",
+        values.anarchy_white_bishop.text: "bishop",
+        values.black_rook.text: "rook",
+        values.white_rook.text: "rook",
+        values.anarchy_black_rook.text: "rook",
+        values.anarchy_white_rook.text: "rook",
+        values.black_queen.text: "queen",
+        values.white_queen.text: "queen",
+        values.anarchy_black_queen.text: "queen",
+        values.anarchy_white_queen.text: "queen",
+        values.black_king.text: "king",
+        values.white_king.text: "king",
+        values.anarchy_black_king.text: "king",
+        values.anarchy_white_king.text: "king",
+        values.gem_gold.text: "gems",
+        values.gem_green.text: "gems",
+        values.gem_purple.text: "gems",
+        values.gem_blue.text: "gems",
+        values.gem_red.text: "gems",
+        # Misc items are not included so new items automatically get added to it.
+    }
+
+    categories = {
+        "pawn": [],
+        "knight": [],
+        "bishop": [],
+        "rook": [],
+        "queen": [],
+        "king": [],
+        "gems": [],
+        "misc": []
+    }
+
+    for project in projects.all_projects:
+        costs = project.get_reward(
+            day_seed = day_seed,
+            system_tile = hub_tile
+        )
+
+        for item, amount in costs:
+            category = category_bindings.get(item)
+            if category is None:
+                categories["misc"].append(project)
+                continue
+
+            if project in categories[category]:
+                continue
+
+            categories[category].append(project)
+    
+    return categories
+
+def get_trade_hub_project_weights(
+        day_seed: str,
+        hub_tile: SystemTradeHub
+    ) -> dict[projects.Project, int]:
+    setting = hub_tile.get_setting("shroud_beacon_setting")
+    if setting is None:
+        return {project: 1 for project in projects.all_projects}
+    
+    beacon_level = hub_tile.get_upgrade_level(projects.Shroud_Beacon)
+    
+    categories = get_trade_hub_project_categories(day_seed, hub_tile)
+
+    return {
+        project: 1 + (5 * beacon_level * (project in categories[setting]))
+        for project in projects.all_projects
+    }
+
 def get_trade_hub_projects(
         json_interface: bread_cog.JSON_interface,
         user_account: account.Bread_Account,
-        galaxy_x: int,
-        galaxy_y: int
+        system_tile: SystemTradeHub
     ) -> list[dict[str, typing.Union[projects.Project, int, str, bool]]]:
     """Returns a list of dictionaries, where each dictionary is a project on the given galaxy tile."""
     prestige_level = user_account.get_prestige_level()
@@ -2008,6 +2288,9 @@ def get_trade_hub_projects(
 
     out_projects = []
 
+    galaxy_x = system_tile.galaxy_xpos
+    galaxy_y = system_tile.galaxy_ypos
+
     trade_hub_data = json_interface.get_space_ascension(prestige_level, guild_id)
     trade_hub_data = trade_hub_data.get("trade_hubs", {})
     trade_hub_data = trade_hub_data.get(f"{galaxy_x} {galaxy_y}", {})
@@ -2016,6 +2299,11 @@ def get_trade_hub_projects(
 
     used_names = []
 
+    weights = get_trade_hub_project_weights(
+        day_seed = daily_seed,
+        hub_tile = system_tile
+    )
+
     project_id = -1
     while len(out_projects) < 5:
         project_id += 1
@@ -2023,22 +2311,24 @@ def get_trade_hub_projects(
         key = f"project_{len(out_projects) + 1}"
         rng = random.Random(utility.hash_args(seed, daily_seed, galaxy_x, galaxy_y, project_id))
         
-        project = projects.all_projects.copy()
+        project = None
 
-        while isinstance(project, list):
-            if isinstance(project, list):
-                if len(project) == 0:
-                    break
-            
-            project = rng.choice(project)
+        if project_data.get(key, {}).get("internal") is not None:
+            project = projects.get_project(project_data.get(key, {}).get("internal"))
         
-        # If it broke out of the while loop then `project` will be a list, in which case we need to skip to the next iteration.
-        if isinstance(project, list):
-            continue
+        if project is None:
+            project = rng.choices(
+                population = list(weights.keys()),
+                weights = list(weights.values())
+            )[0]
+            
+            # If it broke out of the while loop then `project` will be a list, in which case we need to skip to the next iteration.
+            if isinstance(project, list):
+                continue
 
-        # Prevent duplicates.
-        if project.internal in used_names:
-            continue
+            # Prevent duplicates.
+            if project.internal in used_names:
+                continue
 
         project_progress = project_data.get(key, {}).get("contributions", {})
         completed = project_data.get(key, {}).get("completed", False)
@@ -2049,7 +2339,8 @@ def get_trade_hub_projects(
             {
                 "project": project,
                 "contributions": project_progress,
-                "completed": completed
+                "completed": completed,
+                "internal": project.internal
             }
         )
     
@@ -2121,7 +2412,9 @@ def get_spawn_location(
     return location
 
 def get_move_cost_galaxy(
-        galaxy_seed: str,
+        json_interface: bread_cog.JSON_interface,
+        guild: typing.Union[discord.Guild, int, str],
+        ascension: int,
         start_position: tuple[int, int],
         end_position: tuple[int, int]
     ) -> dict:
@@ -2138,14 +2431,22 @@ def get_move_cost_galaxy(
 
     through_nebula = False
 
+    map_data = json_interface.get_space_map_data(
+        ascension_id = ascension,
+        guild = guild
+    )
+    
     for x, y in points:
-        tile_data = generation.galaxy_single(
-            galaxy_seed = galaxy_seed,
-            x = x,
-            y = y
+        nebula = in_nebula_database(
+            json_interface = json_interface,
+            guild = guild,
+            ascension = ascension,
+            xpos = x,
+            ypos = y,
+            map_data = map_data
         )
 
-        if tile_data.get("in_nebula", False):
+        if nebula:
             through_nebula = True
             cost_sum += MOVE_FUEL_GALAXY_NEBULA
         else:
@@ -2153,7 +2454,8 @@ def get_move_cost_galaxy(
     
     return {
         "cost": cost_sum,
-        "nebula": through_nebula
+        "nebula": through_nebula,
+        "points": points
     }
 
 
@@ -2175,6 +2477,39 @@ def get_move_cost_system(
     }
 
 
+def get_hyperlane_registrar_bonus(
+        json_interface: bread_cog.JSON_interface,
+        user_account: account.Bread_Account
+    ) -> float:
+    """Gets the active multiplier for Hyperlane Registrar for the given player."""
+    space_data = json_interface.get_space_data(user_account.get("guild_id"))
+    ascension_data = space_data.get(f"ascension_{user_account.get_prestige_level()}", {})
+    trade_hub_data = ascension_data.get("trade_hubs", {})
+
+    player_x, player_y = user_account.get_galaxy_location(json_interface)
+
+    max_found = 0
+
+    for key, data in trade_hub_data.items():
+        try:
+            split = key.split(" ", 1)
+            hub_x = int(split[0])
+            hub_y = int(split[1])
+            level = data.get("level", 1)
+        except:
+            continue
+            
+        max_distance = store.trade_hub_squared[level]
+        distance = (hub_x - player_x) ** 2 + (hub_y - player_y) ** 2
+
+        if distance <= max_distance:
+            upgrades = data.get("upgrades", {})
+            registrar = upgrades.get(projects.Hyperlane_Registrar.internal, {}).get("level", 0)
+            
+            if registrar > max_found:
+                max_found = registrar
+    
+    return projects.Hyperlane_Registrar.cost_multipliers[max_found]
             
 
         

@@ -106,6 +106,16 @@ class Project:
     
     # Required for subclasses.
     @classmethod
+    def get_cost_types(
+            cls: typing.Type[typing.Self],
+            day_seed: str,
+            system_tile: space.SystemTradeHub
+        ) -> list[str]:
+        """Gets the individual items required for the entirety of this project."""
+        return list(dict(cls.get_cost(day_seed, system_tile)).keys())
+    
+    # Required for subclasses.
+    @classmethod
     def get_reward(
             cls: typing.Type[typing.Self],
             day_seed: str,
@@ -122,7 +132,7 @@ class Project:
             system_tile: space.SystemTradeHub,
             user_account: account.Bread_Account
         ) -> None:
-        """This subtracts all the cost items from a single user account."""
+        """This subtracts all the cost items from a single user account. This isn't used in the projects themselves due to the collaborative aspect, but is used by the Trade Hub upgrades."""
         cost = cls.get_cost(day_seed, system_tile)
 
         for pair in cost:
@@ -279,8 +289,6 @@ class Project:
             output.append(f"{utility.smart_number(amount)} {item}")
 
         return " ,  ".join(output)
-        
-
 
 #######################################################################################################
 ##### Trade hub levelling. ############################################################################
@@ -362,8 +370,11 @@ class Trade_Hub(Project):
             f"The Trade Hub has had a sudden influx of tourism after the sunlight, reflecting off of one of the system's moons, came together to form a glowing outline of {values.anarchy_chess.text} at the center of the Trade Hub. The Trade Hub scientists are unsure what was directing the light to do this, but the Guiding Moonlight quickly became a large tourism attraction.",
             "A large Chess tournament event has been coordinated in the Trade Hub's cafeteria. The tournament, however, is not a regular Chess tournament as it has the modification where neither player starts with any rooks, but promoting to a rook is stil allowed. A competition was held among the Trade Hub staff to name the event, and in the end the name 'EmptyRook' won.",
             "A weird creature recently visited the Trade Hub. People were suspicious of it at first but quickly became friends with him as he got more and more well known in the Trade Hub. When he arrived he didn't say he had a name, so someone gave him the name Dave, but people typically refer to him as DaveTheImp.",
-            "After a scientist on board the Trade Hub calculated how many times you would need to run around the Trade Hub in order to run a marathon, an event was setup to see who could run it the fastest. Inspired by the legendary runner Javson the event coordinators decided to name the event Javran.",
-            "It was recently discovered by Trade Hub officials that an individual by the name of Meta had the permissions required to access many of the internal Trade Hub rooms, including very high security rooms, despite being a regular Trade Hub employee."
+            "After a scientist on board the Trade Hub calculated how many times you would need to run around the Trade Hub in order to run a marathon, an event was setup to see who could run it the fastest. Inspired by the legendary runner Javear the event coordinators decided to name the event Javran.",
+            "It was recently discovered by Trade Hub officials that an individual by the name of Meta had the permissions required to access many of the internal Trade Hub rooms, including very high security rooms, despite being a regular Trade Hub employee.",
+            "The Trade Hub's power recently cut for a few minutes, causing widespread panic. After a minute, engineers discovered a critical flaw in a supply and demand calculation, which was somehow getting this weird number '60' after calculating 59 + 1.",
+            "A fight broke out in the Trade Hub cafeteria in the early hours of the day after one member of the Trade Hub staff got tricked. The incident report stated 'Juno was mad, he knew he'd been had.'",
+            "Reports of a mysterious Timothy \"Cheater Cheater Lightbulb Eater\" Sands fellow appearing at random times around the Trade Hub is very concerning, but local LED consumption experts are confident that it's a good omen."
         ]
 
         out = "\n"
@@ -390,7 +401,478 @@ class Trade_Hub(Project):
             system_tile: space.SystemTradeHub
         ) -> list[tuple[str, int]]:
         return [("total_dough", 2000000)] # Award 2 million dough on completion.
+
+#######################################################################################################
+##### Trade hub upgrades. #############################################################################
+#######################################################################################################
+
+class Trade_Hub_Upgrade(Project):
+    max_level = 1 # The maximum level of this upgrade.
+    unlock_level = 1 # The Trade Hub tier at which this is unlocked.
+
+    # Optional for subclasses.
+    @classmethod
+    def is_available(
+            cls: typing.Type[typing.Self],
+            day_seed: str,
+            system_tile: space.SystemTradeHub
+        ) -> bool:
+        """Determines whether this Trade Hub can have this upgrade available. This handles things like the max level and unlock level."""
+        current = system_tile.get_upgrade_level(cls)
+
+        if current >= cls.max_level:
+            return False
         
+        if system_tile.trade_hub_level < cls.unlock_level:
+            return False
+        
+        return True
+    
+    # Required for subclasses.
+    @classmethod
+    def purchased_description(
+            cls: typing.Type[typing.Self],
+            day_seed: str,
+            system_tile: space.SystemTradeHub
+        ) -> str:
+        """The description that is shown in the Trade Hub after this has been purchased. It should explain what the upgrade does."""
+        return "Generic excuse"
+
+class Listening_Post(Trade_Hub_Upgrade):
+    internal = "listening_post"
+    max_level = 1
+    unlock_level = 3
+    
+    @classmethod
+    def name(
+            cls,
+            day_seed: str,
+            system_tile: space.SystemTradeHub
+        ) -> str:
+        return "Listening Post"
+
+    @classmethod
+    def description(
+            cls,
+            day_seed: str,
+            system_tile: space.SystemTradeHub
+        ) -> str:
+        return "An advanced listening post for the Trade Hub allowing the use of it from any location within the system."
+    
+    @classmethod
+    def completion(
+            cls: typing.Type[typing.Self],
+            day_seed: str,
+            system_tile: space.SystemTradeHub
+        ) -> str:
+        return "Success! The new listening post has been installed and ships anywhere in the system can now access the Trade Hub!"
+    
+    @classmethod
+    def get_cost(
+            cls,
+            day_seed: str,
+            system_tile: space.SystemTradeHub
+        ) -> list[tuple[str, int]]:
+        return [
+            (values.anarchy_chess.text, 10), (values.anarchy_chessatron.text, 1), (values.gem_gold.text, 512)
+        ]
+    
+    @classmethod
+    def purchased_description(
+            cls: typing.Type[typing.Self],
+            day_seed: str,
+            system_tile: space.SystemTradeHub
+        ) -> str:
+        return "A listening post in the Trade Hub allowing the access to the Trade Hub from anywhere in the system."
+
+class Nebula_Refinery(Trade_Hub_Upgrade):
+    internal = "nebula_refinery"
+    max_level = 1
+    unlock_level = 4
+    
+    @classmethod
+    def name(
+            cls,
+            day_seed: str,
+            system_tile: space.SystemTradeHub
+        ) -> str:
+        return "Nebula Refinery"
+
+    @classmethod
+    def description(
+            cls,
+            day_seed: str,
+            system_tile: space.SystemTradeHub
+        ) -> str:
+        return "Weird technology that harnesses the power of nebulae to make the system's planets slightly better."
+    
+    @classmethod
+    def completion(
+            cls: typing.Type[typing.Self],
+            day_seed: str,
+            system_tile: space.SystemTradeHub
+        ) -> str:
+        return "Amazing! The new technology has been setup and planet odds are now slightly better than before."
+    
+    @classmethod
+    def get_cost(
+            cls,
+            day_seed: str,
+            system_tile: space.SystemTradeHub
+        ) -> list[tuple[str, int]]:
+        return [
+            (values.anarchy_chess.text, 10), (values.anarchy_chessatron.text, 1), (values.gem_gold.text, 256)
+        ]
+
+    @classmethod
+    def is_available(
+            cls: typing.Type[typing.Self],
+            day_seed: str,
+            system_tile: space.SystemTradeHub
+        ) -> bool:
+        if not super().is_available(day_seed, system_tile):
+            return False
+        
+        # This one is only purchasable in a nebula.
+        return system_tile.galaxy_tile.in_nebula
+    
+    @classmethod
+    def purchased_description(
+            cls: typing.Type[typing.Self],
+            day_seed: str,
+            system_tile: space.SystemTradeHub
+        ) -> str:
+        return "Strange technology that uses the nearby nebula to make this system's planets better."
+
+class Quantum_Catapult(Trade_Hub_Upgrade):
+    internal = "quantum_catapult"
+    max_level = 3
+    unlock_level = 5
+
+    cost_multipliers = [1, 1, 0.75, 0.5]
+    max_distance = 64
+    
+    @classmethod
+    def name(
+            cls,
+            day_seed: str,
+            system_tile: space.SystemTradeHub
+        ) -> str:
+        return "Quantum Catapult"
+
+    @classmethod
+    def description(
+            cls,
+            day_seed: str,
+            system_tile: space.SystemTradeHub
+        ) -> str:
+        tier = system_tile.get_upgrade_level(cls) + 1
+        cost_message = f" for {round(cls.cost_multipliers[tier] * 100)}% the regular cost" if tier >= 2 else ""
+        return f"A large catapult situated on top of the Trade Hub that can launch rockets anywhere within {cls.max_distance} tiles{cost_message} in a single launch!"
+    
+    @classmethod
+    def completion(
+            cls: typing.Type[typing.Self],
+            day_seed: str,
+            system_tile: space.SystemTradeHub
+        ) -> str:
+        return "zoop\n*Use '$bread space move catapult <x coordinate> <y coordinate>' while on the Trade Hub to use the catapult.*"
+    
+    @classmethod
+    def get_cost(
+            cls,
+            day_seed: str,
+            system_tile: space.SystemTradeHub
+        ) -> list[tuple[str, int]]:
+        tier = system_tile.get_upgrade_level(cls) + 1
+        return [
+            (values.anarchy_chess.text, 10 * tier), (values.anarchy_chessatron.text, 1), (values.gem_gold.text, 512 * tier)
+        ]
+    
+    @classmethod
+    def purchased_description(
+            cls: typing.Type[typing.Self],
+            day_seed: str,
+            system_tile: space.SystemTradeHub
+        ) -> str:
+        tier = system_tile.get_upgrade_level(cls)
+        return f"A catapult able to launch ships up to {cls.max_distance} tiles away for {round(cls.cost_multipliers[tier] * 100)}% the regular cost. *Type '$bread move catapult' to use.*"
+
+class Hyperlane_Registrar(Trade_Hub_Upgrade):
+    internal = "hyperlane_registrar"
+    max_level = 3
+    unlock_level = 2
+
+    cost_multipliers = [1, 0.75, 0.5, 0.25]
+    
+    @classmethod
+    def name(
+            cls,
+            day_seed: str,
+            system_tile: space.SystemTradeHub
+        ) -> str:
+        return "Hyperlane Registrar"
+
+    @classmethod
+    def description(
+            cls,
+            day_seed: str,
+            system_tile: space.SystemTradeHub
+        ) -> str:
+        tier = system_tile.get_upgrade_level(cls)
+        return f"A powerful supercomputer aboard the Trade Hub that's able to crunch the numbers required to find more efficient ways to use your fuel.\nThis results in a {round(cls.cost_multipliers[tier + 1] * 100)}% fuel consumption reduction for anyone moving, if they start somewhere within this Trade Hub's radius.\n*If one player is within radius of multiple Trade Hubs only the best one is used, the effect does not stack.*"
+    
+    @classmethod
+    def completion(
+            cls: typing.Type[typing.Self],
+            day_seed: str,
+            system_tile: space.SystemTradeHub
+        ) -> str:
+        return "Yippee! Your ships are now able to move around for a reduced cost!"
+    
+    @classmethod
+    def get_cost(
+            cls,
+            day_seed: str,
+            system_tile: space.SystemTradeHub
+        ) -> list[tuple[str, int]]:
+        tier = system_tile.get_upgrade_level(cls) + 1
+        return [
+            (values.anarchy_chess.text, 10 * tier), (values.anarchy_chessatron.text, 1), (values.gem_gold.text, 256 * tier)
+        ]
+    
+    @classmethod
+    def purchased_description(
+            cls: typing.Type[typing.Self],
+            day_seed: str,
+            system_tile: space.SystemTradeHub
+        ) -> str:
+        tier = system_tile.get_upgrade_level(cls)
+        return f"A supercomputer on board allowing those within the Trade Hub's radius to only use {round(cls.cost_multipliers[tier] * 100)}% the regular cost of fuel when moving."
+
+class Shroud_Beacon(Trade_Hub_Upgrade):
+    internal = "shroud_beacon"
+    max_level = 3
+    unlock_level = 3
+    
+    @classmethod
+    def name(
+            cls,
+            day_seed: str,
+            system_tile: space.SystemTradeHub
+        ) -> str:
+        return "Shroud Beacon"
+
+    @classmethod
+    def description(
+            cls,
+            day_seed: str,
+            system_tile: space.SystemTradeHub
+        ) -> str:
+        tier = system_tile.get_upgrade_level(cls) + 1
+        if tier >= 2:
+            return "An upgraded and more powerful psionic beacon used to lure in specific projects from the abyss."
+        
+        return "A psionic beacon used to lure in specific projects from the abyss."
+    
+    @classmethod
+    def completion(
+            cls: typing.Type[typing.Self],
+            day_seed: str,
+            system_tile: space.SystemTradeHub
+        ) -> str:
+        tier = system_tile.get_upgrade_level(cls) + 1
+        if tier >= 2:
+            return "The psionic beacon is now more powerful and is better at luring in specific projects.\n*Configure the beacon with '$bread space hub configure'.*"
+        
+        return "Incredible! The new psionic beacon has been installed and can be configured with '$bread space hub configure'!"
+    
+    @classmethod
+    def get_cost(
+            cls,
+            day_seed: str,
+            system_tile: space.SystemTradeHub
+        ) -> list[tuple[str, int]]:
+        tier = system_tile.get_upgrade_level(cls) + 1
+        return [
+            (values.anarchy_chess.text, 10 * tier), (values.anarchy_chessatron.text, 1), (values.gem_gold.text, 256 * tier)
+        ]
+    
+    @classmethod
+    def purchased_description(
+            cls: typing.Type[typing.Self],
+            day_seed: str,
+            system_tile: space.SystemTradeHub
+        ) -> str:
+        setting = system_tile.get_setting("shroud_beacon_setting")
+
+        if setting is None:
+            return f"A psionic beacon used to lure in specific projects from the abyss, currently not configured."
+        
+        return f"A psionic beacon used to lure in specific projects from the abyss, currently configured to prioritize {setting} projects."
+
+class Dark_Matter_Resonance_Chamber(Trade_Hub_Upgrade):
+    internal = "dark_matter_resonance_chamber"
+    max_level = 1
+    unlock_level = 4
+    
+    @classmethod
+    def name(
+            cls,
+            day_seed: str,
+            system_tile: space.SystemTradeHub
+        ) -> str:
+        return "Dark Matter Resonance Chamber"
+
+    @classmethod
+    def description(
+            cls,
+            day_seed: str,
+            system_tile: space.SystemTradeHub
+        ) -> str:
+        return "An internal chamber able to harness the power of dark matter to increase the chance of finding Anarchy Pieces on planets."
+    
+    @classmethod
+    def completion(
+            cls: typing.Type[typing.Self],
+            day_seed: str,
+            system_tile: space.SystemTradeHub
+        ) -> str:        
+        return "The chamber has been installed and Anarchy Pieces are now more common on planets in this system!"
+    
+    @classmethod
+    def get_cost(
+            cls,
+            day_seed: str,
+            system_tile: space.SystemTradeHub
+        ) -> list[tuple[str, int]]:
+        return [
+            (values.anarchy_chess.text, 10), (values.anarchy_chessatron.text, 1), (values.gem_gold.text, 512)
+        ]
+    
+    @classmethod
+    def purchased_description(
+            cls: typing.Type[typing.Self],
+            day_seed: str,
+            system_tile: space.SystemTradeHub
+        ) -> str:        
+        return "An internal chamber able to harness the power of dark matter to increase the chance of finding Anarchy Pieces while on planets."
+
+class Black_Hole_Observatory(Trade_Hub_Upgrade):
+    internal = "black_hole_observatory"
+    max_level = 1
+    unlock_level = 4
+    
+    @classmethod
+    def name(
+            cls,
+            day_seed: str,
+            system_tile: space.SystemTradeHub
+        ) -> str:
+        return "Black Hole Observatory"
+
+    @classmethod
+    def description(
+            cls,
+            day_seed: str,
+            system_tile: space.SystemTradeHub
+        ) -> str:
+        return "An observatory overlooking and doing science related to the nearby black hole, that's able to use the energy in the black hole to make the system's planets slightly better."
+    
+    @classmethod
+    def completion(
+            cls: typing.Type[typing.Self],
+            day_seed: str,
+            system_tile: space.SystemTradeHub
+        ) -> str:        
+        return "The new observatory is up and running and planets are slightly better than before!"
+    
+    @classmethod
+    def get_cost(
+            cls,
+            day_seed: str,
+            system_tile: space.SystemTradeHub
+        ) -> list[tuple[str, int]]:
+        return [
+            (values.anarchy_chess.text, 10), (values.anarchy_chessatron.text, 1), (values.gem_gold.text, 256)
+        ]
+
+    @classmethod
+    def is_available(
+            cls: typing.Type[typing.Self],
+            day_seed: str,
+            system_tile: space.SystemTradeHub
+        ) -> bool:
+        if not super().is_available(day_seed, system_tile):
+            return False
+        
+        # This one is only purchasable in a black hole system.
+        return system_tile.galaxy_tile.star.star_type in ["black_hole", "supermassive_black_hole"]
+    
+    @classmethod
+    def purchased_description(
+            cls: typing.Type[typing.Self],
+            day_seed: str,
+            system_tile: space.SystemTradeHub
+        ) -> str:        
+        return "An observatory studying the black hole to enrich the nearby planets."
+
+class Storm_Repulsion_Array(Trade_Hub_Upgrade):
+    internal = "storm_repulsion_array"
+    max_level = 3
+    unlock_level = 5
+
+    corruption_multipliers = [1, 0.9, 0.825, 0.75]
+    
+    @classmethod
+    def name(
+            cls,
+            day_seed: str,
+            system_tile: space.SystemTradeHub
+        ) -> str:
+        return "Storm Repulsion Array"
+
+    @classmethod
+    def description(
+            cls,
+            day_seed: str,
+            system_tile: space.SystemTradeHub
+        ) -> str:
+        tier = system_tile.get_upgrade_level(cls) + 1
+        return f"An array of powerful lasers able to create pockets of highly charged magnetic particles, creating a natural enhancement of stability, decreasing corruption by {round((1 - cls.corruption_multipliers[tier]) * 100, 1)}%."
+    
+    @classmethod
+    def completion(
+            cls: typing.Type[typing.Self],
+            day_seed: str,
+            system_tile: space.SystemTradeHub
+        ) -> str:        
+        return "The laser array is now up and running, decreasing corruption while in this system!"
+    
+    @classmethod
+    def get_cost(
+            cls,
+            day_seed: str,
+            system_tile: space.SystemTradeHub
+        ) -> list[tuple[str, int]]:
+        tier = system_tile.get_upgrade_level(cls) + 1
+        return [
+            (values.anarchy_chess.text, 10 * tier), (values.anarchy_chessatron.text, 1), (values.gem_gold.text, 512 * tier)
+        ]
+    
+    @classmethod
+    def purchased_description(
+            cls: typing.Type[typing.Self],
+            day_seed: str,
+            system_tile: space.SystemTradeHub
+        ) -> str:        
+        tier = system_tile.get_upgrade_level(cls)
+        return f"An array of lasers enhancing the stability of rolls, decreasing corruption by {round((1 - cls.corruption_multipliers[tier]) * 100, 1)}%."
+
+all_trade_hub_upgrades = [Listening_Post, Nebula_Refinery, Quantum_Catapult, Hyperlane_Registrar, Shroud_Beacon,
+    Dark_Matter_Resonance_Chamber, Black_Hole_Observatory, Storm_Repulsion_Array
+] # type: list[Trade_Hub_Upgrade]
+
 #######################################################################################################
 ##### Base project. ###################################################################################
 #######################################################################################################
@@ -469,7 +951,6 @@ class Base_Project(Project):
             system_tile: space.SystemTradeHub
         ) -> list[tuple[str, int]]:
         return []
-
 
 #######################################################################################################
 ##### Story projects. #################################################################################
@@ -686,7 +1167,6 @@ class Bingobango(Project):
         amount = rng.randint(10, 20) * 2000
 
         return [(values.normal_bread.text, amount)]
-
 
 #######################################################################################################
 ##### Take item projects. #############################################################################
@@ -4422,7 +4902,6 @@ class Chessatron_Repair(Project):
 
         return [(item.text, amount)]
 
-
 #######################################################################################################
 ##### Item projects. ##################################################################################
 #######################################################################################################
@@ -4466,4 +4945,17 @@ item_project_lists = [take_item_project_lists, give_item_project_lists]
 
 all_projects = story_projects + \
             take_special_bread_projects + take_rare_bread_projects + take_black_chess_piece_projects + take_white_chess_piece_projects + take_gem_projects + take_misc_item_projects + \
-            give_special_bread_projects + give_rare_bread_projects + give_black_chess_piece_projects + give_white_chess_piece_projects + give_gem_projects + give_misc_item_projects
+            give_special_bread_projects + give_rare_bread_projects + give_black_chess_piece_projects + give_white_chess_piece_projects + give_gem_projects + give_misc_item_projects # type: list[Project]
+
+######################################################################
+
+def get_project(text: str) -> Project | None:
+    if not text:
+        return None
+    
+    text = text.lower()
+    for project in all_projects:
+        if project.name == text or project.internal == text:
+            return project
+    
+    return None

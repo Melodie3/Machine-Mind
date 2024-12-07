@@ -8,6 +8,7 @@ import bread.utility as utility
 import bread.values as values
 import bread.space as space
 import bread.store as store # Mel if this causes a circular import please DM me (Duck)
+import bread.projects as projects
 import bread_cog
 bread_cog_ref = None
 
@@ -148,7 +149,7 @@ class Bread_Account:
                                 "special_bread", "rare_bread", "unique", "chess_pieces", "shiny",
                                 "full_chess_set", "many_of_a_kind", 
                                 "lottery_win",
-                                "projects_completed", "trade_hubs_created",
+                                "projects_completed", "trade_hubs_created", "full_anarchy_set"
 
         ]
 
@@ -322,12 +323,18 @@ class Bread_Account:
     
     def get_galaxy_location(
             self: typing.Self,
-            json_interface: bread_cog.JSON_interface
+            json_interface: bread_cog.JSON_interface,
+            correct_center: bool = False
         ) -> tuple[int, int]:
         """Returns this account's galaxy location in a 2D tuple. This will return the galaxy's spawn location if the player has not moved on the galaxy map."""
         # If the player has moved before, then return their position.
         if self.get("galaxy_move_count") > 0:
-            return (self.get("galaxy_xpos"), self.get("galaxy_ypos"))
+            out = (self.get("galaxy_xpos"), self.get("galaxy_ypos"))
+
+            if correct_center and out in space.ALTERNATE_CENTER:
+                out = (space.MAP_RADIUS, space.MAP_RADIUS)
+
+            return out
         
         # If the player hasn't moved, then return the spawn point.
         return space.get_spawn_location(
@@ -532,7 +539,7 @@ class Bread_Account:
             include_prestige_boost: bool = True
         ) -> int:
         """Calulcates the amount of dough this player gets for each anarchy chessatron."""
-        multiplier = 350 + (self.get(values.anarchy_omega_chessatron.text) * 25) * self.get_shadowmega_boost_amount()
+        multiplier = 350 + (self.get(values.anarchy_omega_chessatron.text) * 25)
         amount = self.get_chessatron_dough_amount(include_prestige_boost=False) * multiplier
         
         if include_prestige_boost:
@@ -602,6 +609,11 @@ class Bread_Account:
 
         multiplier = self.get_corruption_negation_multiplier()
 
+        galaxy_tile = self.get_galaxy_tile(json_interface, load_data=True)
+
+        if galaxy_tile.trade_hub is not None:
+            multiplier *= projects.Storm_Repulsion_Array.corruption_multipliers[galaxy_tile.trade_hub.get_upgrade_level(projects.Storm_Repulsion_Array)]
+
         return base_chance * multiplier
     
     def get_anarchy_corruption_chance(
@@ -622,7 +634,8 @@ class Bread_Account:
 
     def get_galaxy_tile(
             self: typing.Self,
-            json_interface: bread_cog.JSON_interface
+            json_interface: bread_cog.JSON_interface,
+            load_data: bool = False
         ) -> space.GalaxyTile:
         """Returns a GalaxyTile object for the tile within the galaxy this account is currently on."""
         xpos, ypos = self.get_galaxy_location(json_interface=json_interface)
@@ -633,7 +646,8 @@ class Bread_Account:
             galaxy_seed = self.get_galaxy_seed(json_interface),
             ascension = self.get_prestige_level(),
             xpos = xpos,
-            ypos = ypos
+            ypos = ypos,
+            load_data = load_data
         )
     
     def get_system_tile(

@@ -355,7 +355,7 @@ anarchy_omega_chessatron = Emote(
 # "<:holy_hell:961184782253948938>"]     
 # "<:anarchy:960771114819264533>"
 
-all_one_of_a_kind = [anarchy, anarchy_chess, horsey, holy_hell]
+all_one_of_a_kind = [anarchy, horsey, holy_hell]
 all_uniques =       [anarchy, anarchy_chess, horsey, holy_hell, chessatron, omega_chessatron, anarchy_chessatron, anarchy_omega_chessatron]
 
 ##################### CHESS
@@ -678,6 +678,7 @@ anarchy_pieces_white_biased = [
 ]
 anarchy_pieces_black = [anarchy_black_pawn, anarchy_black_rook, anarchy_black_bishop, anarchy_black_knight, anarchy_black_queen, anarchy_black_king]
 anarchy_pieces_white = [anarchy_white_pawn, anarchy_white_rook, anarchy_white_bishop, anarchy_white_knight, anarchy_white_queen, anarchy_white_king]
+all_anarchy_pieces_biased = anarchy_pieces_black_biased + anarchy_pieces_white_biased
 
 ##################### SHINIES
 

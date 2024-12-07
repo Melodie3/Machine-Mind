@@ -1,4 +1,5 @@
 import bread.values as values
+import bread.utility as utility
 import typing
 
 #recipes = {}
@@ -896,7 +897,7 @@ def describe_individual_recipe(recipe: dict) -> str:
         pair = recipe["cost"][i]
         item = pair[0]
         amount = pair[1]
-        output += f"{amount} {item.text}"
+        output += f"{utility.smart_number(amount)} {item.text}"
         if i < len(recipe["cost"]) - 1:
             output += ",  "
     return output

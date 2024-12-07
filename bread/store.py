@@ -1314,7 +1314,7 @@ class Chessatron_Contraption(Prestige_Store_Item):
     def description(cls, user_account: account.Bread_Account) -> str:
         level = user_account.get(cls.name) + 1
         count = level * 5
-        return f"Boosts your Omega Chessatrons by 5% for each shadowmega chessatron you own. Works for up to {count} shadowmega chessatrons."
+        return f"Increases the amount of dough your Omega Chessatrons boost Chessatrons by 2% per shadowmega chessatron you own. It's additive, so 2 shadowmegas would be 4%, 4 shadowmegas would be 8%. Works for up to {count} shadowmega chessatrons."
 
     @classmethod
     def max_level(cls, user_account: account.Bread_Account = None) -> typing.Optional[int]:
