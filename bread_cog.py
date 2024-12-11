@@ -6474,6 +6474,8 @@ anarchy - 1000% of your wager.
         
         message_lines += "\n\n**# -- Projects --**"
 
+        suffix = "To contribute to a project, use '$bread space hub contribute [project number] [amount] [item]'\nYou can get more information about a project with '$bread space hub info [project number]'"
+
         for project_id, data in enumerate(hub_projects[:hub.project_count]):
             old = message_lines
 
@@ -6489,11 +6491,11 @@ anarchy - 1000% of your wager.
             )
             message_lines += "\n\n"
 
-            if len(message_lines) >= 2000:
+            if len(message_lines) >= (1900 - len(suffix)):
                 await ctx.reply(old)
                 message_lines = f"Continued:\n{message_lines[len(old):]}"
         
-        message_lines += "To contribute to a project, use '$bread space hub contribute [project number] [amount] [item]'\nYou can get more information about a project with '$bread space hub info [project number]'"
+        message_lines += suffix
 
         await ctx.reply(message_lines)
 

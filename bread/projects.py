@@ -1168,6 +1168,149 @@ class Bingobango(Project):
 
         return [(values.normal_bread.text, amount)]
 
+class Anarchy_Trading(Project):
+    """Written by Duck."""
+    internal = "anarchy_trading"
+
+    @classmethod
+    def name(
+            cls,
+            day_seed: str,
+            system_tile: space.SystemTradeHub
+         ) -> str:
+        rng = random.Random(utility.hash_args(day_seed, system_tile.tile_seed()))
+
+        options = [
+            "Anarchy Trading",
+            "Omega Trading",
+            "Trading Charter"
+        ]
+
+
+        return rng.choice(options)
+
+    @classmethod
+    def description(
+            cls,
+            day_seed: str,
+            system_tile: space.SystemTradeHub
+        ) -> str:
+        rng = random.Random(utility.hash_args(day_seed, system_tile.tile_seed()))
+
+        cost = cls.get_price_description(day_seed, system_tile)
+        reward = cls.get_reward_description(day_seed, system_tile)
+
+        part_1 = [
+            "There's a problem.",
+            "We've encountered an issue.",
+            "This is bad."
+        ]
+
+
+        part_2 = [
+            "So, the local Anarchy Trading charter that",
+            "The local charter of the Anarchy Trading corporation that",
+            "Alright, so the Anarchy Trading company has a local charter that"
+        ]
+
+
+        part_3 = [
+            "handles the trading of many high rarity items",
+            "manages trades of specific rare items",
+            "oversees and coordinates trades of some rare items"
+        ]
+
+
+        part_4 = [
+            f"like {values.anarchy_chessatron.text}, {values.anarchy_omega_chessatron.text}, {values.omega_chessatron.text}, etc.",
+            f", for example, {values.anarchy_omega_chessatron.text}, {values.anarchy_chessatron.text}, and {values.omega_chessatron.text}.",
+            f"such as {values.omega_chessatron.text}, {values.anarchy_omega_chessatron.text}, and {values.anarchy_chessatron.text}."
+        ]
+
+
+        part_5 = [
+            "Now, normally they're good about paying their taxes,",
+            "Typically they always pay their taxes on time,",
+            "Most of the time, though, they do pay their taxes,"
+        ]
+
+
+        part_6 = [
+            f"for some reason, though, they're short on {values.anarchy_chessatron.text} this year.",
+            f"for whatever reason they don't have enough {values.anarchy_chessatron.text} to pay this year.",
+            f"this year, though, they're running low on {values.anarchy_chessatron.text} due to a lack of trades and are unable to pay."
+        ]
+
+
+        part_7 = [
+            f"So they're looking to sell their own {values.anarchy_omega_chessatron.text} for {values.anarchy_chessatron.text} in order to settle their debt.",
+            f"They're willing to buy some {values.anarchy_chessatron.text} from people in order to fix the issue, and are paying {values.anarchy_omega_chessatron.text}.",
+            f"They're trying to sell some {values.anarchy_omega_chessatron.text} they have stockpiled up in order to buy {values.anarchy_chessatron.text} from people."
+        ]
+
+
+        part_8 = [
+            f"Their calculations say that {cost} should be enough to get them in good standings, with {reward} as the payment.",
+            f"According to their press release {cost} is enough to cover their debt, and they're paying {reward} for anyone able to help.",
+            f"They're stating that they'll pay {reward} to purchase {cost} from someone."
+        ]
+
+        return " ".join([
+            rng.choice(part_1),
+            rng.choice(part_2),
+            rng.choice(part_3),
+            rng.choice(part_4),
+            rng.choice(part_5),
+            rng.choice(part_6),
+            rng.choice(part_7),
+            rng.choice(part_8),
+        ])
+
+    @classmethod
+    def completion(
+            cls: typing.Type[typing.Self],
+            day_seed: str,
+            system_tile: space.SystemTradeHub
+        ) -> str:
+        rng = random.Random(utility.hash_args(day_seed, system_tile.tile_seed()))
+        reward = cls.get_reward_description(day_seed, system_tile)
+
+        options = [
+            "It works! Anarchy Trading is back in the green and are able to continue functioning for another year.",
+            "Nice! Anarchy Trading paid their taxes and is able to run for another year.",
+            "They did it, they paid their taxes! We'll see if they need help next year..."
+        ]
+
+        return rng.choice(options)
+    
+    @classmethod
+    def get_cost(
+            cls,
+            day_seed: str,
+            system_tile: space.SystemTradeHub
+        ) -> list[tuple[str, int]]:
+        rng = random.Random(utility.hash_args(day_seed, system_tile.tile_seed()))
+
+        amount_1 = rng.randint(1, 3)
+
+        return [
+            (values.anarchy_chessatron.text, 2 * amount_1)
+        ]
+    
+    @classmethod
+    def get_reward(
+            cls,
+            day_seed: str,
+            system_tile: space.SystemTradeHub
+        ) -> list[tuple[str, int]]:
+        rng = random.Random(utility.hash_args(day_seed, system_tile.tile_seed()))
+
+        amount_1 = rng.randint(1, 3)
+
+        return [
+            (values.anarchy_omega_chessatron.text, amount_1)
+        ] 
+
 #######################################################################################################
 ##### Take item projects. #############################################################################
 #######################################################################################################
@@ -4906,7 +5049,7 @@ class Chessatron_Repair(Project):
 ##### Item projects. ##################################################################################
 #######################################################################################################
 
-story_projects = [Essential_Oils, Bingobango]
+story_projects = [Essential_Oils, Bingobango, Anarchy_Trading]
 
 take_special_bread_projects = [Too_Much_Stuffing, Flatbread_Shortage, Appease_The_French, Croissant_Cravings, Beach_Disappearance]
 take_rare_bread_projects = [Ecosystem_Problem, Stolen_Donuts, Waffle_Machine]
