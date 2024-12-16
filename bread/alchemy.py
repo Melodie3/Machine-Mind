@@ -217,6 +217,10 @@ recipes = {
         {
 			"cost": [(values.gem_blue, 4)]
 		},
+        {
+            "cost": [(values.gem_pink, 1), (values.gem_orange, 1), (values.gem_cyan, 1)],
+            "result": 4
+        }
     ],
 
     "gem_purple": [
@@ -264,6 +268,24 @@ recipes = {
         {
             "cost": [(values.gem_gold, 1)],
             "result": 4
+        }
+    ],
+
+    "gem_pink": [
+        {
+            "cost": [(values.gem_orange, 2), (values.gem_cyan, 2)]
+        }
+    ],
+
+    "gem_orange": [
+        {
+            "cost": [(values.gem_pink, 2), (values.gem_cyan, 2)]
+        }
+    ],
+
+    "gem_cyan": [
+        {
+            "cost": [(values.gem_pink, 2), (values.gem_orange, 2)]
         }
     ],
 
@@ -523,6 +545,10 @@ recipes = {
         {
             "cost": [(values.white_pawn, 1000), (values.gem_green, 10)],
             "requirement": [("space_level", 1)]
+        },
+        {
+            "cost": [(values.anarchy_black_pawn, 2), (values.white_pawn, 25), (values.gem_pink, 2), (values.gem_cyan, 2)],
+            "requirement": [("space_level", 1)]
         }
     ],
 
@@ -545,6 +571,10 @@ recipes = {
         },
         {
             "cost": [(values.white_knight, 1000), (values.gem_green, 10)],
+            "requirement": [("space_level", 1)]
+        },
+        {
+            "cost": [(values.anarchy_black_knight, 1), (values.white_knight, 25), (values.gem_pink, 2), (values.gem_orange, 2)],
             "requirement": [("space_level", 1)]
         }
     ],
@@ -569,6 +599,10 @@ recipes = {
         {
             "cost": [(values.white_bishop, 1000), (values.gem_green, 10)],
             "requirement": [("space_level", 1)]
+        },
+        {
+            "cost": [(values.anarchy_black_bishop, 1), (values.white_bishop, 25), (values.gem_orange, 2), (values.gem_cyan, 2)],
+            "requirement": [("space_level", 1)]
         }
     ],
 
@@ -591,6 +625,10 @@ recipes = {
         },
         {
             "cost": [(values.white_rook, 1000), (values.gem_green, 10)],
+            "requirement": [("space_level", 1)]
+        },
+        {
+            "cost": [(values.anarchy_black_rook, 1), (values.white_rook, 25), (values.gem_pink, 2), (values.gem_cyan, 2)],
             "requirement": [("space_level", 1)]
         }
     ],
@@ -615,6 +653,10 @@ recipes = {
         {
             "cost": [(values.white_queen, 1000), (values.gem_green, 10)],
             "requirement": [("space_level", 1)]
+        },
+        {
+            "cost": [(values.anarchy_black_queen, 1), (values.white_queen, 25), (values.gem_pink, 2), (values.gem_orange, 2)],
+            "requirement": [("space_level", 1)]
         }
     ],
 
@@ -637,6 +679,10 @@ recipes = {
         },
         {
             "cost": [(values.white_king, 1000), (values.gem_green, 10)],
+            "requirement": [("space_level", 1)]
+        },
+        {
+            "cost": [(values.anarchy_black_king, 1), (values.white_king, 25), (values.gem_orange, 2), (values.gem_cyan, 2)],
             "requirement": [("space_level", 1)]
         }
     ],

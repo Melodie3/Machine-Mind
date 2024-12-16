@@ -452,6 +452,16 @@ class Bread_Account:
             64 # 64 is the cap.
         )
     
+    def get_space_gem_luck(
+            self: typing.Self,
+            roll_luck: int
+        ) -> float:
+        """Returns the luck of space gems. `roll_luck` is assumed to be `(loaf_converter + 1) * recipe_refinement_multiplier`"""
+        return min(
+            round(1 + store.Advanced_Exploration.get_contribution(self) * (roll_luck - self.get_recipe_refinement_multiplier()), 5),
+            16384 # 16384 is the cap.
+        )
+    
     def get_projects_credits_cap(self: typing.Self) -> int:
         """Returns the maximum amount of Trade Hub credits this account can have."""
         return 2000 + self.get(store.Payment_Bonus.name) * 100

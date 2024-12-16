@@ -192,6 +192,10 @@ EMOJI_PATHS = {
     "gem_purple": "images/gem_purple.png",
     "gem_green": "images/gem_green.png",
     "gem_gold": "images/gem_gold.png",
+    "gem_pink": "images/gem_pink.png",
+    "gem_orange": "images/gem_orange.png",
+    "gem_cyan": "images/gem_cyan.png",
+    "gem_white": "images/gem_white.png",
 
     # MoaK.
     "anarchy_chess": "images/anarchy_chess.png",
@@ -579,7 +583,8 @@ class SystemPlanet(SystemTile):
             "Green Gems": values.gem_green,
             "Gold Gems": values.gem_gold,
             "Many of a Kind": values.anarchy_chess,
-            "Anarchy Piece": values.anarchy_black_pawn
+            "Anarchy Piece": values.anarchy_black_pawn,
+            "Space gem": values.gem_pink
         }
         deviation = self.planet_deviation
         
@@ -649,6 +654,9 @@ class SystemPlanet(SystemTile):
     
     def get_priority_item(self: typing.Self) -> typing.Union[values.Emote, str, None]:
         """Returns the item or category that is prioritized by this planet."""
+        if self.planet_type in values.all_very_shinies:
+            return "space_gem"
+        
         if self.planet_type in values.all_anarchy_pieces:
             return "anarchy_piece"
         
@@ -1180,6 +1188,8 @@ def get_corruption_chance(
         return 0.0
     
     # f\left(x\right)=\left\{x\le2:99,2\le x\le80:\left(\frac{\cos\left(\left(x-2\right)\frac{\pi}{78}\right)}{2}+0.5\right)99,80<x<87:0,87\le x\le241.81799:\left(\frac{\cos\left(\frac{\left(x-87\right)\pi}{154.8179858682464038403596020291203352621852869144970764695290884}\right)}{-2}+0.5\right)99,x>241.81799:99\right\}
+    # f\left(x\right)=\left\{x\le2:99,2\le x\le80:\left(\frac{\cos\left(\left(x-2\right)\frac{\pi}{78}\right)}{2}+0.5\right)99,80<x<87:0,87\le x\le241.81799:\left(\frac{\cos\left(\frac{70055\left(x-87\right)\pi}{10845774}\right)}{-2}+0.5\right)99,x>241.81799:99\right\}
+    # These two are roughly the same, but the second one doesn't have a random number in the middle.
     # Where `x` is the distance to (0, 0)
     # lmao
 
@@ -1191,7 +1201,8 @@ def get_corruption_chance(
     elif dist <= 87:
         chance = 0
     elif dist <= 241.81799:
-        chance = (math.cos(((dist - 87) * math.pi) / 154.8179858682464038403596020291203352621852869144970764695290884) / -2 + 0.5) * 99
+        # chance = (math.cos(((dist - 87) * math.pi) / 154.8179858682464038403596020291203352621852869144970764695290884) / -2 + 0.5) * 99
+        chance = (math.cos((70055 * (dist - 87) * math.pi) / 10845774) / -2 + 0.5) * 99 # Functionally the same.
     else:
         chance = 99
 
@@ -1955,7 +1966,8 @@ def get_planet_modifiers(
         "gem_green": 1,
         "gem_gold": 1,
         "anarchy_chess": 1,
-        "anarchy_piece": 1
+        "anarchy_piece": 1,
+        "space_gem": 1
     }
 
     # If it isn't a planet, then use the defaults of 1.
@@ -2059,6 +2071,9 @@ def get_planet_modifiers(
     
     for wpiece in values.anarchy_pieces_white:
         result[wpiece] = odds.get("anarchy_piece", 1)
+    
+    for gem in values.all_very_shinies:
+        result[gem] = odds.get("space_gem", 1)
 
     return result
     
@@ -2225,6 +2240,9 @@ def get_trade_hub_project_categories(
         values.gem_purple.text: "gems",
         values.gem_blue.text: "gems",
         values.gem_red.text: "gems",
+        values.gem_pink.text: "gems",
+        values.gem_orange.text: "gems",
+        values.gem_cyan.text: "gems",
         # Misc items are not included so new items automatically get added to it.
     }
 
@@ -2329,6 +2347,9 @@ def get_trade_hub_projects(
             # Prevent duplicates.
             if project.internal in used_names:
                 continue
+
+        # if project_id == 0: # For testing new projects.
+        #     project = projects.Cafeteria_Kerfuffle
 
         project_progress = project_data.get(key, {}).get("contributions", {})
         completed = project_data.get(key, {}).get("completed", False)

@@ -849,7 +849,7 @@ def generate_center_system(galaxy_seed: str) -> dict:
                 "ypos": 5,
                 "distance": 7,
                 "angle": 45,
-                "type": random.Random(galaxy_seed + "_planet_4_item").choice(PLANET_OPTIONS[random.Random(galaxy_seed + "_planet_4_category").choices(population = list(PLANET_WEIGHTS.keys()), weights = list(PLANET_WEIGHTS.values()))[0]]).text,
+                "type": random.Random(galaxy_seed + "_planet_4_item").choice(values.all_very_shinies).text,
                 "deviation": random.Random(galaxy_seed + "_planet_4").normalvariate(mu = 1, sigma = 0.25)
             },
             {
@@ -865,7 +865,7 @@ def generate_center_system(galaxy_seed: str) -> dict:
                 "ypos": -5,
                 "distance": 7,
                 "angle": 225,
-                "type": random.Random(galaxy_seed + "_planet_6_item").choice(PLANET_OPTIONS[random.Random(galaxy_seed + "_planet_6_category").choices(population = list(PLANET_WEIGHTS.keys()), weights = list(PLANET_WEIGHTS.values()))[0]]).text,
+                "type": random.Random(galaxy_seed + "_planet_6_item").choice(values.all_very_shinies).text,
                 "deviation": random.Random(galaxy_seed + "_planet_6").normalvariate(mu = 1, sigma = 0.25)
             },
             {

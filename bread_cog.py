@@ -5043,8 +5043,9 @@ anarchy - 1000% of your wager.
         if account.has("advanced_exploration"):
             rr = account.get_recipe_refinement_multiplier()
             lcs = account.get(store.Loaf_Converter.name)
-            amount = account.get_anarchy_piece_luck((lcs + 1) * rr) - 1
-            output.append(f"With {account.write_count('advanced_exploration', 'level')} of Advanced Exploration, {round(amount)} of your Loaf Converters are used to find anarchy chess pieces.")
+            amount_pieces = account.get_anarchy_piece_luck((lcs + 1) * rr) - 1
+            amount_gems = account.get_space_gem_luck((lcs + 1) * rr) - 1
+            output.append(f"With {account.write_count('advanced_exploration', 'level')} of Advanced Exploration, {round(amount_pieces)} of your Loaf Converters are used to find anarchy chess pieces and {utility.smart_number(round(amount_gems))} for space gems.")
 
         if account.has("engine_efficiency"):
             level = account.get('engine_efficiency')
@@ -5058,7 +5059,7 @@ anarchy - 1000% of your wager.
         output.append(f"Throughout your time in space you've created {utility.write_count(account.get('trade_hubs_created'), 'Trade Hub')} and helped contribute to {utility.write_count(account.get('projects_completed'), 'completed project')}.")
 
         # Add item amount information.
-        item_list = [values.corrupted_bread, values.anarchy_chessatron, values.anarchy_omega_chessatron]
+        item_list = [values.corrupted_bread, values.anarchy_chessatron, values.anarchy_omega_chessatron] + values.all_very_shinies
 
         item_line = []
         for item in item_list:
@@ -5849,7 +5850,7 @@ anarchy - 1000% of your wager.
             items_added = []
 
             for win_item, win_amount in reward:
-                amount = math.ceil(win_amount * (percent_cut - 0.2))
+                amount = math.ceil(win_amount * percent_cut)
                 player_account.increment(win_item, amount)
 
                 items_added.append(f"{utility.smart_number(amount)} {win_item}")

@@ -754,7 +754,44 @@ gem_green = Shiny_Emote(
 
 all_shinies = [gem_red, gem_blue, gem_purple, gem_gold, gem_green]
 
+### Space gems.
 
+class Very_Shiny_Emote(Emote):
+    def __init__(self, text, value = 0, name = None, emoji = None, attributes = [], awards_value = False, alchemy_value = None, giftable = True, alternate_names = []):
+        super().__init__(text, value, name, emoji, attributes, awards_value, alchemy_value, giftable, alternate_names)
+        self.attributes = ["very_shiny", "shiny"]
+
+gem_pink = Very_Shiny_Emote(
+    name = "gem_pink",
+    text = "<:gem_pink:1318338567424184341>",
+    value = 64_000,
+    alternate_names = ["pink_gem"]
+)
+
+gem_orange = Very_Shiny_Emote(
+    name = "gem_orange",
+    text = "<:gem_orange:1318338578497142814>",
+    value = 64_000,
+    alternate_names = ["orange_gem"]
+)
+
+gem_cyan = Very_Shiny_Emote(
+    name = "gem_cyan",
+    text = "<:gem_cyan:1318338586210205738>",
+    value = 64_000,
+    alternate_names = ["cyan_gem"]
+)
+
+gem_white = Very_Shiny_Emote(
+    name = "gem_white",
+    text = "<:gem_white:1318338593399246898>",
+    value = 64_000,
+    alternate_names = ["white_gem"]
+)
+
+all_very_shinies = [gem_pink, gem_orange, gem_cyan]
+
+overall_all_shinies = all_shinies + all_very_shinies
                             
 ##################### MISC BREADS
 
@@ -1011,7 +1048,7 @@ project_credits = Emote(
 
 all_bricks = [brick, brick_gold, fide_brick, brick_fide]
 all_bricks_weighted = [brick] * 10 + [brick_gold] * 1 + [fide_brick] * 5 + [brick_fide] * 5
-misc_emotes = [ascension_token, middle_finger, cherry, brick, brick_gold, fide_brick, brick_fide, lemon, grapes, rigged, bcapy, wcapy, corrupted_bread, fuel]
+misc_emotes = [ascension_token, middle_finger, cherry, brick, brick_gold, fide_brick, brick_fide, lemon, grapes, rigged, bcapy, wcapy, corrupted_bread, fuel, gem_white] # gem_white is here so it won't get included in projects
 
 ##################### CODE
 
@@ -1019,7 +1056,7 @@ all_emotes = [normal_bread,
     flatbread, stuffed_flatbread, french_bread, croissant, sandwich, 
     doughnut, bagel, waffle, 
     lottery_win,
-    ] + all_chess_pieces + all_anarchy_pieces + misc_emotes + misc_bread_emotes + all_uniques + all_shinies + shadow_emotes
+    ] + all_chess_pieces + all_anarchy_pieces + misc_emotes + misc_bread_emotes + all_uniques + all_shinies + shadow_emotes + all_very_shinies
 
 def get_emote(text: str) -> typing.Optional[Emote]:
     """Returns an Emote object if the given text represents that emote, or None if no emote matches."""

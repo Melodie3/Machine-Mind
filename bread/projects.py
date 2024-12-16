@@ -1311,6 +1311,1066 @@ class Anarchy_Trading(Project):
             (values.anarchy_omega_chessatron.text, amount_1)
         ] 
 
+class Beta_Minus(Project):
+    """Written by Duck."""
+    internal = "beta_minus"
+
+    @classmethod
+    def name(
+            cls,
+            day_seed: str,
+            system_tile: space.SystemTradeHub
+         ) -> str:
+        rng = random.Random(utility.hash_args(day_seed, system_tile.tile_seed()))
+
+        options = [
+            "Beta Minus",
+            "Minus Decay",
+            "Beta Minus Decay"
+        ]
+
+
+        return rng.choice(options)
+
+    @classmethod
+    def description(
+            cls,
+            day_seed: str,
+            system_tile: space.SystemTradeHub
+        ) -> str:
+        rng = random.Random(utility.hash_args(day_seed, system_tile.tile_seed()))
+
+        cost = cls.get_price_description(day_seed, system_tile)
+        reward = cls.get_reward_description(day_seed, system_tile)
+
+        part_1 = [
+            "Alright.",
+            "Look over here!",
+            "Hey there!"
+        ]
+
+
+        part_2 = [
+            "So, the local item research lab onboard the Trade Hub",
+            "So, the item research lab on this Trade Hub",
+            "The onboard item research lab"
+        ]
+
+
+        part_3 = [
+            "has been looking for some specific resources.",
+            "is looking for people to sell some of their stuff.",
+            "is in need of some specific things."
+        ]
+
+
+        part_4 = [
+            "They've recently been investigating new types of gems,",
+            "They've recently been trying to make new gems,",
+            "They've been attempting to create new gems recently,"
+        ]
+
+
+        part_5 = [
+            f"and they have made a plan for how they're gonna make {reward}.",
+            f"and have managed to create a plan for creating {reward}.",
+            f"and have come up with a decent plan to create {reward}."
+        ]
+
+
+        part_6 = [
+            "The only problem, however,",
+            "The main issue, though,",
+            "The problem they've encountered, though,"
+        ]
+
+
+        part_7 = [
+            "is that they don't seem to have the required items in order to try their idea!",
+            "is that they seem to lack what they need to attempt their recipe.",
+            "is that they're lacking the needed ingredients to attempt to make new gems."
+        ]
+
+
+        part_8 = [
+            f"Luckily, though, they're willing to give any gems they create to anyone able to provide the {cost} required.",
+            f"However, they've stated they will give any new gems to whoever can give them the {cost} they need.",
+            f"They've announced that they've somehow gotten permission to give the gems they create to the person able to get them the {cost} they're requesting."
+        ]
+
+        return " ".join([
+            rng.choice(part_1),
+            rng.choice(part_2),
+            rng.choice(part_3),
+            rng.choice(part_4),
+            rng.choice(part_5),
+            rng.choice(part_6),
+            rng.choice(part_7),
+            rng.choice(part_8),
+        ])
+
+    @classmethod
+    def completion(
+            cls: typing.Type[typing.Self],
+            day_seed: str,
+            system_tile: space.SystemTradeHub
+        ) -> str:
+        rng = random.Random(utility.hash_args(day_seed, system_tile.tile_seed()))
+        reward = cls.get_reward_description(day_seed, system_tile)
+
+        options = [
+            "Incredible! The lab was able to make new gems and is attracting some tourism.",
+            "Woah! The new gems are very shiny and are probably radioactive. Please take them.",
+            "Awesome! They were able to make new gems! The leader of the lab, a Mr. Ninov, is a little skeptical about some weird multi-color rainbow gem on the output conveyor belt, and says he will \"Inquire about this further with his supervisor post-haste!!\""
+        ]
+
+        return rng.choice(options)
+    
+    @classmethod
+    def get_cost(
+            cls,
+            day_seed: str,
+            system_tile: space.SystemTradeHub
+        ) -> list[tuple[str, int]]:
+        rng = random.Random(utility.hash_args(day_seed, system_tile.tile_seed()))
+
+        amount_1 = rng.randint(6, 15)
+
+        return [
+            (values.gem_gold.text, amount_1 * 20),
+            (values.base_bread.text, amount_1 * 200)
+        ]
+    
+    @classmethod
+    def get_reward(
+            cls,
+            day_seed: str,
+            system_tile: space.SystemTradeHub
+        ) -> list[tuple[str, int]]:
+        rng = random.Random(utility.hash_args(day_seed, system_tile.tile_seed()))
+
+        amount_1 = rng.randint(6, 15)
+
+        return [
+            (rng.choice(values.all_very_shinies).text, amount_1 * 10)
+        ]
+
+class Anarchy_Tax_Evasion(Project):
+    """Written by Duck."""
+    internal = "anarchy_tax_evasion"
+
+    @classmethod
+    def name(
+            cls,
+            day_seed: str,
+            system_tile: space.SystemTradeHub
+         ) -> str:
+        rng = random.Random(utility.hash_args(day_seed, system_tile.tile_seed()))
+
+        options = [
+            "Anarchy Tax Evasion",
+            "Anarchy Taxes",
+            "Tax Evasion"
+        ]
+
+
+        return rng.choice(options)
+
+    @classmethod
+    def description(
+            cls,
+            day_seed: str,
+            system_tile: space.SystemTradeHub
+        ) -> str:
+        rng = random.Random(utility.hash_args(day_seed, system_tile.tile_seed()))
+
+        cost = cls.get_price_description(day_seed, system_tile)
+        reward = cls.get_reward_description(day_seed, system_tile)
+
+        part_1 = [
+            "After barely being able to pay their taxes last year,",
+            "They managed to pay their taxes last year, but",
+            "So, after somehow paying their taxes last year,"
+        ]
+
+
+        part_2 = [
+            "Anarchy Trading is running into a few issues this time.",
+            "the Anarchy Trading corporation is back in hot water.",
+            "Anarchy Trading is once again in trouble."
+        ]
+
+
+        part_3 = [
+            "Don't worry, though,",
+            "Worry not,",
+            "This time it's different,"
+        ]
+
+
+        part_4 = [
+            "instead of not having enough items to pay their taxes,",
+            "rather than lacking the required items to pay their taxes like last year,",
+            "instead of failing to have what they need to pay their taxes,"
+        ]
+
+
+        part_5 = [
+            "they've gone for full on tax evasion!",
+            "they've decided to evade their taxes entirely!",
+            "Anarchy Trading has decided to just not pay their taxes at all."
+        ]
+
+
+        part_6 = [
+            "As can probably be expected,",
+            "As you can probably guess,",
+            "Not surprisingly,"
+        ]
+
+
+        part_7 = [
+            "they got caught.",
+            "the government found out.",
+            "the government was not happy."
+        ]
+
+
+        part_8 = [
+            "So, Anarchy Trading got fined.",
+            "As a result, Anarchy Trading got fined by the government.",
+            "So a fine was sent Anarchy Trading's way from the government."
+        ]
+
+
+        part_9 = [
+            "Anarchy Trading was, as expected, unable to pay their fine.",
+            "Anarchy Trading, however, did not have what they needed to pay their fine.",
+            "If they had enough to pay their taxes, they would have enough to pay the fine, so Anarchy Trading was unable to pay the fine."
+        ]
+
+
+        part_10 = [
+            "Being a lousy company,",
+            "As is the norm with bad companies,",
+            "As can be expected,"
+        ]
+
+
+        part_11 = [
+            "Anarchy Trading is looking for random people to help pay their fine.",
+            "Anarchy Trading is trying to find people to help them pay the fine.",
+            "they're trying to get random people to pay the fine."
+        ]
+
+
+        part_12 = [
+            f"They've already gotten most of what is needed from other Trade Hubs, but are just {cost} short of what they need.",
+            f"Despite getting a lot from the Trade Hubs in the area, Anarchy Trading still needs {cost} to pay their debt.",
+            f"Even though they've gotten most of what they need, Anarchy Trading is still looking for {cost} to settle with the government."
+        ]
+
+
+        part_13 = [
+            f"They have, however, said that they're willing to give {reward} to anyone that helps.",
+            f"They're quite desperate at this point, so they're giving {reward} to those that give them items.",
+            f"Unlike most companies, though, they're actually giving a reward for helping in the form of {reward}."
+        ]
+
+        return " ".join([
+            rng.choice(part_1),
+            rng.choice(part_2),
+            rng.choice(part_3),
+            rng.choice(part_4),
+            rng.choice(part_5),
+            rng.choice(part_6),
+            rng.choice(part_7),
+            rng.choice(part_8),
+            rng.choice(part_9),
+            rng.choice(part_10),
+            rng.choice(part_11),
+            rng.choice(part_12),
+            rng.choice(part_13),
+        ])
+
+    @classmethod
+    def completion(
+            cls: typing.Type[typing.Self],
+            day_seed: str,
+            system_tile: space.SystemTradeHub
+        ) -> str:
+        rng = random.Random(utility.hash_args(day_seed, system_tile.tile_seed()))
+        reward = cls.get_reward_description(day_seed, system_tile)
+
+        options = [
+            f"They're out of the hot water this year, as that was enough to pay their fine. Next year, though... Your {reward} should be arriving soon, they did still manage to sent it while being audited.",
+            f"Once again they kind of got away with it, but who knows what Anarchy Trading will try and do next year... They're giving out the {reward} right now, so at least you got something out of it.",
+            f"That was enough, and Anarchy Trading is in good standing with the government this year, but who knows about next year... Luckily for you, though, they're still going through with giving the {reward}."
+        ]
+
+        return rng.choice(options)
+    
+    @classmethod
+    def get_cost(
+            cls,
+            day_seed: str,
+            system_tile: space.SystemTradeHub
+        ) -> list[tuple[str, int]]:
+        rng = random.Random(utility.hash_args(day_seed, system_tile.tile_seed()))
+
+        amount_1 = rng.randint(3, 6)
+
+        return [
+            (values.omega_chessatron.text, amount_1 * 16)
+        ]
+    
+    @classmethod
+    def get_reward(
+            cls,
+            day_seed: str,
+            system_tile: space.SystemTradeHub
+        ) -> list[tuple[str, int]]:
+        rng = random.Random(utility.hash_args(day_seed, system_tile.tile_seed()))
+
+        amount_1 = rng.randint(3, 6)
+
+        return [
+            (values.anarchy_chessatron.text, amount_1)
+        ]
+
+class Gem_Extraction(Project):
+    """Written by Duck."""
+    internal = "gem_extraction"
+
+    @classmethod
+    def name(
+            cls,
+            day_seed: str,
+            system_tile: space.SystemTradeHub
+         ) -> str:
+        rng = random.Random(utility.hash_args(day_seed, system_tile.tile_seed()))
+
+        options = [
+            "Gem Extraction",
+            "Extraction Lab",
+            "Gem Science"
+        ]
+
+
+        return rng.choice(options)
+
+    @classmethod
+    def description(
+            cls,
+            day_seed: str,
+            system_tile: space.SystemTradeHub
+        ) -> str:
+        rng = random.Random(utility.hash_args(day_seed, system_tile.tile_seed()))
+
+        cost = cls.get_price_description(day_seed, system_tile)
+        reward = cls.get_reward_description(day_seed, system_tile)
+
+        part_1 = [
+            "As you may know, there is a research lab on the Trade Hub.",
+            "You might know about the research lab on each Trade Hub.",
+            "Alright, so you might be aware of this Trade Hub's research lab."
+        ]
+
+
+        part_2 = [
+            "They're known for having some crazy ideas that always seem to need random people giving their items.",
+            "They have a reputation for requesting random items from the public and having some wild ideas.",
+            "They're slightly infamous for their odd requests and weird ideas."
+        ]
+
+
+        part_3 = [
+            "And today is no different!",
+            "And, as is the norm, this one is no different.",
+            "And, as predictable as it is, it's happened again."
+        ]
+
+
+        part_4 = [
+            "The research lab on this Trade Hub has announced their intentions",
+            "The lab onboard this Trade Hub has stated their idea",
+            "Recently they've announced their plans"
+        ]
+
+
+        part_5 = [
+            f"to try and somehow extract the raw gems from an {values.anarchy_omega_chessatron.text}.",
+            f"to attempt extracting pure gems from an {values.anarchy_omega_chessatron.text}.",
+            f"to attempt the extraction of pure gems from an {values.anarchy_omega_chessatron.text}."
+        ]
+
+
+        part_6 = [
+            "Unfortunately, though,",
+            "The catch,",
+            "One problem,"
+        ]
+
+
+        part_7 = [
+            "this is an extremely expensive concept.",
+            "it's extraordinarily expensive to do something like this.",
+            "it's very expensive to attempt this."
+        ]
+
+
+        part_8 = [
+            "Not only do they need to get the machinery required,",
+            "Other than the machinery they need,",
+            "Aside from any required machinery,"
+        ]
+
+
+        part_9 = [
+            "which they already have,",
+            "which they've managed to acquire already,",
+            "which they've gotten already,"
+        ]
+
+
+        part_10 = [
+            f"{values.anarchy_omega_chessatron.text} are very expensive to get,",
+            f"{values.anarchy_omega_chessatron.text} are some of the most expensive items,",
+            f"{values.anarchy_omega_chessatron.text} are extremely expensive around these parts,"
+        ]
+
+
+        part_11 = [
+            f"and they're saying they're gonna need {cost} to do this.",
+            f"and the lab is saying that {cost} is what they're gonna need.",
+            f"and the research team has said they're gonna need {cost} to do this."
+        ]
+
+
+        part_12 = [
+            "On the bright side,",
+            "If it makes it worth it,",
+            "Luckily, though,"
+        ]
+
+
+        part_13 = [
+            "they're saying they'll give whatever they extract to anyone that helped with the required items,",
+            "they've stated that they'll give the extracted gems to those who helped,",
+            "the lab has said they're planning on giving whatever gems they get to the people that helped along the way,"
+        ]
+
+
+        part_14 = [
+            f"which their estimates say are going to be {reward}.",
+            f"which they're saying is going to be around {reward}.",
+            f"which they've said is going to be in the realm of {reward}."
+        ]
+
+        return " ".join([
+            rng.choice(part_1),
+            rng.choice(part_2),
+            rng.choice(part_3),
+            rng.choice(part_4),
+            rng.choice(part_5),
+            rng.choice(part_6),
+            rng.choice(part_7),
+            rng.choice(part_8),
+            rng.choice(part_9),
+            rng.choice(part_10),
+            rng.choice(part_11),
+            rng.choice(part_12),
+            rng.choice(part_13),
+            rng.choice(part_14),
+        ])
+
+    @classmethod
+    def completion(
+            cls: typing.Type[typing.Self],
+            day_seed: str,
+            system_tile: space.SystemTradeHub
+        ) -> str:
+        rng = random.Random(utility.hash_args(day_seed, system_tile.tile_seed()))
+        reward = cls.get_reward_description(day_seed, system_tile)
+        cost = cls.get_price_description(day_seed, system_tile)
+
+        options = [
+            f"Okay, it worked! They managed to extract {reward} from the {cost} and are now distributing it to those who contributed.",
+            f"It works! Despite all odds, the lab successfully extracted the multitude of gems from the {cost} and are now in the process of giving the {reward} to those who helped.",
+            f"They managed to do it! The lab was surprisingly able to get all the gems out of the {cost}, much to the surprise of Jem Ourple II who works in the green quadrant."
+        ]
+
+        return rng.choice(options)
+    
+    @classmethod
+    def get_cost(
+            cls,
+            day_seed: str,
+            system_tile: space.SystemTradeHub
+        ) -> list[tuple[str, int]]:
+        rng = random.Random(utility.hash_args(day_seed, system_tile.tile_seed()))
+
+        amount_1 = rng.randint(1, 3)
+
+        return [
+            (values.anarchy_omega_chessatron.text, amount_1)
+        ]
+    
+    @classmethod
+    def get_reward(
+            cls,
+            day_seed: str,
+            system_tile: space.SystemTradeHub
+        ) -> list[tuple[str, int]]:
+        rng = random.Random(utility.hash_args(day_seed, system_tile.tile_seed()))
+
+        amount_1 = rng.randint(1, 3)
+
+        return [
+            (values.gem_red.text, amount_1 * 30000),
+            (values.gem_blue.text, amount_1 * 15000),
+            (values.gem_purple.text, amount_1 * 7500),
+            (values.gem_green.text, amount_1 * 3750),
+            (values.gem_gold.text, amount_1 * 1875),
+            (values.gem_pink.text, amount_1 * 150),
+            (values.gem_orange.text, amount_1 * 150),
+            (values.gem_cyan.text, amount_1 * 150)
+        ]
+
+class Bakery_Encounter(Project):
+    """Written by Ret."""
+    internal = "bakery_encounter"
+
+    @classmethod
+    def name(
+            cls,
+            day_seed: str,
+            system_tile: space.SystemTradeHub
+         ) -> str:
+        rng = random.Random(utility.hash_args(day_seed, system_tile.tile_seed()))
+
+        options = [
+            "Bakery Encounter",
+            "Baguette Bakery",
+            "Baguette Craving"
+        ]
+
+
+        return rng.choice(options)
+
+    @classmethod
+    def description(
+            cls,
+            day_seed: str,
+            system_tile: space.SystemTradeHub
+        ) -> str:
+        rng = random.Random(utility.hash_args(day_seed, system_tile.tile_seed()))
+
+        cost = cls.get_price_description(day_seed, system_tile)
+        reward = cls.get_reward_description(day_seed, system_tile)
+
+        part_1 = [
+            "Mmm…what’s that? ",
+            "You are drawn to a building in the distance…",
+            "Gosh, something is making me hungry…"
+        ]
+
+        part_2 = [
+            "\n\nAs your eyes adjust, the smell hits your nose",
+            "\n\nA scent so lovely, and a beautiful glow",
+            "\n\nThe room is dark, you smell something though"
+        ]
+
+
+        part_3 = [
+            "\nOf something so tasty, enticing, and fine",
+            "\nOf something so sweet, splendiferous, divine",
+            "\nOf something mouth-watering, best of its kind"
+        ]
+
+
+        part_4 = [
+            "\nA bakery! You’re hungry, a roughened traveler so",
+            "\nA room of baked goods, and without them you’d woe",
+            "\nA bakery! You’ve come a long way, you’re hungry, you know"
+        ]
+
+
+        part_5 = [
+            "\nIf you can get just enough, it will be what a dine!",
+            "\nYou think “if I can just pay it, it all could be mine!”",
+            "\nWith dough you’ll eat everything, Even the sign!"
+        ]
+
+
+        part_6 = [
+            "\nYou reach in your pockets, to see what you got",
+            "\nYou pat yourself down, you find change, not a lot",
+            "\nYou know you have change, but where? you forgot"
+        ]
+
+
+        part_7 = [
+            "\nSee steaming fresh bread, baguettes, and bagels: all hot!",
+            "\nAnd of waffles, baguettes, buns, and bagels, you plot!",
+            "\nBut a slice of fresh bread, would hit just the spot!"
+        ]
+
+
+        part_8 = [
+            "\nYou pause for a minute, and find your resolve.\nIn fact it is not a hard issue to solve!",
+            "\nYou think to yourself as your face fills with grit.\nI’ll get it somehow. I’ll work hard bit by bit.",
+            "\nYou pause, and you fill with determination.\nYou know you can do it, you’ll take no vacation!"
+        ]
+
+
+        part_9 = [
+            "\nI’ll work and I’ll work, you’ll see quite the show.\nAnd when I am finished, I’ll caw like a crow!",
+            "\nI’ll do it little by little, I’ll search high and low.\nI’ll work through sun and the rain and the snow!",
+            "\nYou’ll scrounge, and you’ll scurry, but there’s one thing you know- no matter the feat you’ll stop at no foe!"
+        ]
+
+
+        part_10 = [
+            f"\n\nThe bakery’s prices are high because of inflation. It will cost you {cost} to buy the whole stock of {reward}, but you know it will be worth it.",
+            f"\n\nDue to inflation the prices here are higher than normal. As such, it’ll cost you {cost} to purchase the whole stock of {reward}, but it'll be worth it for sure!",
+            f"\n\nUnfortunately because of inflation the bakery’s prices are pretty high. Therefore, it’ll cost {cost} to buy out the entire stock of {reward}, but it'll be worth the cost!",
+        ]
+
+        return " ".join([
+            rng.choice(part_1),
+            rng.choice(part_2),
+            rng.choice(part_3),
+            rng.choice(part_4),
+            rng.choice(part_5),
+            rng.choice(part_6),
+            rng.choice(part_7),
+            rng.choice(part_8),
+            rng.choice(part_9),
+            rng.choice(part_10),
+        ])
+
+    @classmethod
+    def completion(
+            cls: typing.Type[typing.Self],
+            day_seed: str,
+            system_tile: space.SystemTradeHub
+        ) -> str:
+        rng = random.Random(utility.hash_args(day_seed, system_tile.tile_seed()))
+        reward = cls.get_reward_description(day_seed, system_tile)
+
+        options = [
+            "You did it just like you knew you could!",
+            "You spend the next 4 hours sitting on the floor of the bakery eating croissants.",
+            "You take as many baguettes as you can fit in your pack with you."
+        ]
+
+        return rng.choice(options)
+    
+    @classmethod
+    def get_cost(
+            cls,
+            day_seed: str,
+            system_tile: space.SystemTradeHub
+        ) -> list[tuple[str, int]]:
+        rng = random.Random(utility.hash_args(day_seed, system_tile.tile_seed()))
+
+        amount_1 = rng.randint(5, 10)
+
+        return [
+            (values.gem_red.text, amount_1 * 10),
+            (values.gem_blue.text, amount_1 * 10),
+            (values.gem_green.text, amount_1 * 10)
+        ]
+    
+    @classmethod
+    def get_reward(
+            cls,
+            day_seed: str,
+            system_tile: space.SystemTradeHub
+        ) -> list[tuple[str, int]]:
+        rng = random.Random(utility.hash_args(day_seed, system_tile.tile_seed()))
+
+        amount_1 = rng.randint(10, 50)
+
+        return [
+            (values.croissant.text, amount_1 * 10000),
+            (values.french_bread.text, amount_1 * 5000),
+            (rng.choice(values.all_rare_breads).text, amount_1 * 2500)
+        ]
+
+class Corruption_Lab(Project):
+    """Written by Duck."""
+    internal = "corruption_lab"
+
+    @classmethod
+    def name(
+            cls,
+            day_seed: str,
+            system_tile: space.SystemTradeHub
+         ) -> str:
+        rng = random.Random(utility.hash_args(day_seed, system_tile.tile_seed()))
+
+        options = [
+            "Corruption Lab",
+            "Research Lab",
+            "Bread Science"
+        ]
+
+
+        return rng.choice(options)
+
+    @classmethod
+    def description(
+            cls,
+            day_seed: str,
+            system_tile: space.SystemTradeHub
+        ) -> str:
+        rng = random.Random(utility.hash_args(day_seed, system_tile.tile_seed()))
+
+        cost = cls.get_price_description(day_seed, system_tile)
+        reward = cls.get_reward_description(day_seed, system_tile)
+
+        part_1 = [
+            "The Trade Hub here has a science lab.",
+            "Here on the Trade Hub there's a science lab.",
+            "There's a science lab on this Trade Hub."
+        ]
+
+
+        part_2 = [
+            "Their research is typically in the realm of gems and explosions,",
+            "Normally they research things like gems and anarchy chessatrons,",
+            "In the past they've done a lot of research into the inner workings of gems and anarchy chessatrons,"
+        ]
+
+
+        part_3 = [
+            "but they've decided to go crazy and announce their intentions to",
+            "but recently they've said they're going to",
+            "however they've announced that they're attempting to"
+        ]
+
+
+        part_4 = [
+            "try and figure out how corruption works.",
+            "try and figure out the science behind corruption.",
+            "figure out the mathematics involved in corruption."
+        ]
+
+
+        part_5 = [
+            "This process, though, requires some items to get going.",
+            "They're going to need some items in order to start working on the problem.",
+            "The problem is that they need some stuff to start the process."
+        ]
+
+
+        part_6 = [
+            f"The lab has said that they're going to need {cost} to do this.",
+            f"They've announced that they're in need of {cost}.",
+            f"Luckily, though, they've said they only need {cost} to start doing science!"
+        ]
+
+
+        part_7 = [
+            "They originally did not announce a reward,",
+            "When they first announced the plan and what they needed they didn't say there was a reward,",
+            "Initially they didn't announce some sort of reward,"
+        ]
+
+
+        part_8 = [
+            "but after people avoided contributing for no reason they announced a reward.",
+            "but after push back from people who didn't want to help if there was no reward the lab setup a reward for those who helped.",
+            "however after some people got annoyed and didn't want to help due to a lack of reward the lab caved and announced a reward."
+        ]
+
+
+        part_9 = [
+            f"The reward they ended up making was {reward}.",
+            f"It may not be worth it in the end, but you will get {reward} if you help.",
+            f"If you contribute to what they need you'll get {reward} in exchange."
+        ]
+
+        return " ".join([
+            rng.choice(part_1),
+            rng.choice(part_2),
+            rng.choice(part_3),
+            rng.choice(part_4),
+            rng.choice(part_5),
+            rng.choice(part_6),
+            rng.choice(part_7),
+            rng.choice(part_8),
+            rng.choice(part_9),
+        ])
+
+    @classmethod
+    def completion(
+            cls: typing.Type[typing.Self],
+            day_seed: str,
+            system_tile: space.SystemTradeHub
+        ) -> str:
+        rng = random.Random(utility.hash_args(day_seed, system_tile.tile_seed()))
+        reward = cls.get_reward_description(day_seed, system_tile)
+
+        options = [
+            "Surprisingly, they did science! The lab doesn't exactly have the best reputation around these parts, but they did make a big breakthrough in figuring out how corruption works:",
+            "They actually did it. The lab is a little infamous for being not great, but they did manage to get a lot of info on the inner workings of corruption:",
+            "Alright, it worked. The lab, despite being a little disliked, was able to determine something on how corruption works:",
+            "Even though most people don't like the lab all that much, they managed to do science! From all their tests, they managed to figure out part of how corruption works:",
+            "Despite being unliked by some people, the lab did succeed and figured out part of how corruption works:"
+        ]
+
+        out = rng.choice(options)
+
+        distance = math.hypot(system_tile.galaxy_xpos - space.MAP_RADIUS, system_tile.galaxy_ypos - space.MAP_RADIUS)
+        
+        if distance <= 2:
+            out += " `0.99`"
+        elif distance <= 80:
+            out += " `\left(\frac{\cos\left(\left(x-2\right)\frac{\pi}{78}\right)}{2}+0.5\right)0.99`"
+        elif distance <= 87:
+            out += " `0`"
+        elif distance <= 241.81799:
+            out += " `\left(\frac{\cos\left(\frac{70055\left(x-87\right)\pi}{10845774}\right)}{-2}+0.5\right)0.99`"
+        else:
+            out += " `0.99`"
+
+        return out
+    
+    @classmethod
+    def get_cost(
+            cls,
+            day_seed: str,
+            system_tile: space.SystemTradeHub
+        ) -> list[tuple[str, int]]:
+        rng = random.Random(utility.hash_args(day_seed, system_tile.tile_seed()))
+
+        amount_1 = rng.randint(3, 5)
+
+        return [
+            (values.normal_bread.text, amount_1 * 2000),
+            (values.corrupted_bread.text, amount_1 * 1000)
+        ]
+    
+    @classmethod
+    def get_reward(
+            cls,
+            day_seed: str,
+            system_tile: space.SystemTradeHub
+        ) -> list[tuple[str, int]]:
+        rng = random.Random(utility.hash_args(day_seed, system_tile.tile_seed()))
+
+        amount_1 = rng.randint(3, 5)
+
+        return [
+            (values.gem_gold.text, (amount_1 - 2) * 500)
+        ]
+
+class Cafeteria_Kerfuffle(Project):
+    """Written by Duck."""
+    internal = "cafeteria_kerfuffle"
+
+    @classmethod
+    def name(
+            cls,
+            day_seed: str,
+            system_tile: space.SystemTradeHub
+         ) -> str:
+        rng = random.Random(utility.hash_args(day_seed, system_tile.tile_seed()))
+
+        options = [
+            "Cafeteria Kerfuffle",
+            "Endless Debate",
+            "Hotdog Conflict"
+        ]
+
+
+        return rng.choice(options)
+
+    @classmethod
+    def description(
+            cls,
+            day_seed: str,
+            system_tile: space.SystemTradeHub
+        ) -> str:
+        rng = random.Random(utility.hash_args(day_seed, system_tile.tile_seed()))
+
+        cost = cls.get_price_description(day_seed, system_tile)
+        reward = cls.get_reward_description(day_seed, system_tile)
+
+        part_1 = [
+            "They just can't stop arguing!",
+            "The conflict never ends!",
+            "The arguing is eternal."
+        ]
+
+
+        part_2 = [
+            "Okay, so,",
+            "Alright, so,",
+            "Let me explain,"
+        ]
+
+
+        part_3 = [
+            "a few days ago in this Trade Hub's cafeteria",
+            "in the Trade Hub's cafeteria area a few days ago",
+            "a couple days ago in the Trade Hub's cafeteria"
+        ]
+
+
+        part_4 = [
+            "Pina Colada",
+            "Bagu Ette",
+            "a sand witch"
+        ]
+
+
+        part_5 = [
+            "got into an argument with",
+            "started arguing with",
+            "got into a heated debate with"
+        ]
+
+
+        part_6 = [
+            "Waff Le",
+            "Bay Gell",
+            "Prett Zells"
+        ]
+
+
+        part_7 = [
+            "over whether a hot dog is a sandwich.",
+            "about whether you would say a hot dog is a sandwich.",
+            "on the topic of is a hot dog a sandwich."
+        ]
+
+
+        part_8 = [
+            "Eventually the Trade Hub security had to step in",
+            "After half an hour the Trade Hub's security arrived",
+            "Half an hour after the arguing began someone called security"
+        ]
+
+
+        part_9 = [
+            "and they broke apart the argument pretty quickly.",
+            "and after that the argument stopped fast.",
+            "and the argument quickly subsided."
+        ]
+
+
+        part_10 = [
+            "But that wasn't the end of it.",
+            "But it didn't end there.",
+            "But that was not the end."
+        ]
+
+
+        part_11 = [
+            "Earlier today the arguing resumed,",
+            "A little bit ago the argument started up again,",
+            "Just a few minutes ago they started arguing again,"
+        ]
+
+
+        part_12 = [
+            "this time with even more people than before.",
+            "this time with a lot more people on each side.",
+            "with a ton of people on both sides of the argument."
+        ]
+
+
+        part_13 = [
+            "The original argument was just a 1 vs 1, but this time it's a",
+            "The first one was 1 person vs 1 person, but now it's a",
+            "The one a few days ago was 1 vs 1, but things are worse now as it's a"
+        ]
+
+
+        part_14 = [
+            "5 vs 5!",
+            "10 vs 10!",
+            "54 vs 54!"
+        ]
+
+
+        part_15 = [
+            "Can you please help us?",
+            "We really need help resolving this, can you help?",
+            "We're in desperate need of help, can you assist?"
+        ]
+
+
+        part_16 = [
+            f"If you can give us {cost} to have something else to argue about we'll give you the {reward} in question.",
+            f"We'll give you the {reward} in question if you can get us something else to argue about, like {cost}!",
+            f"We're willing to give you the {reward} people have been arguing over today if you can get us {cost} to argue about instead!"
+        ]
+
+        return " ".join([
+            rng.choice(part_1),
+            rng.choice(part_2),
+            rng.choice(part_3),
+            rng.choice(part_4),
+            rng.choice(part_5),
+            rng.choice(part_6),
+            rng.choice(part_7),
+            rng.choice(part_8),
+            rng.choice(part_9),
+            rng.choice(part_10),
+            rng.choice(part_11),
+            rng.choice(part_12),
+            rng.choice(part_13),
+            rng.choice(part_14),
+            rng.choice(part_15),
+            rng.choice(part_16),
+        ])
+
+    @classmethod
+    def completion(
+            cls: typing.Type[typing.Self],
+            day_seed: str,
+            system_tile: space.SystemTradeHub
+        ) -> str:
+        rng = random.Random(utility.hash_args(day_seed, system_tile.tile_seed()))
+        reward = cls.get_reward_description(day_seed, system_tile)
+
+        options = [
+            "Okay, that worked. They're no longer arguing about whether a hot dog is a sandwich. We're saved.",
+            "Phew, they're no longer arguing about whether a hot dog is a sandwich. They're instead arguing over whether a human is ravioli, oh god.",
+            "Thank you so much! They've stopped arguing over whether a hot dog is a sandwich!"
+        ]
+
+        return rng.choice(options)
+    
+    @classmethod
+    def get_cost(
+            cls,
+            day_seed: str,
+            system_tile: space.SystemTradeHub
+        ) -> list[tuple[str, int]]:
+        rng = random.Random(utility.hash_args(day_seed, system_tile.tile_seed()))
+
+        return [
+            (values.anarchy_chessatron.text, 1)
+        ]
+    
+    @classmethod
+    def get_reward(
+            cls,
+            day_seed: str,
+            system_tile: space.SystemTradeHub
+        ) -> list[tuple[str, int]]:
+        rng = random.Random(utility.hash_args(day_seed, system_tile.tile_seed()))
+
+        return [
+            (values.hotdog.text, 1)
+        ]
+
 #######################################################################################################
 ##### Take item projects. #############################################################################
 #######################################################################################################
@@ -2191,7 +3251,7 @@ class Waffle_Machine(Project):
         return [(values.gem_red.text, amount)]
 
 class Stolen_Donuts(Project):
-    """Written by Kapola."""
+    """Written by Duck."""
     internal = "Stolen_Donuts"
     
     @classmethod
@@ -5049,7 +6109,7 @@ class Chessatron_Repair(Project):
 ##### Item projects. ##################################################################################
 #######################################################################################################
 
-story_projects = [Essential_Oils, Bingobango, Anarchy_Trading]
+story_projects = [Essential_Oils, Bingobango, Anarchy_Trading, Beta_Minus, Anarchy_Tax_Evasion, Gem_Extraction, Bakery_Encounter, Corruption_Lab, Cafeteria_Kerfuffle]
 
 take_special_bread_projects = [Too_Much_Stuffing, Flatbread_Shortage, Appease_The_French, Croissant_Cravings, Beach_Disappearance]
 take_rare_bread_projects = [Ecosystem_Problem, Stolen_Donuts, Waffle_Machine]
