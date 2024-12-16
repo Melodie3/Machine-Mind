@@ -536,7 +536,10 @@ class Random_Chess_Piece(Store_Item):
 
     @classmethod
     def description(cls, user_account: account.Bread_Account) -> str:
-        return "Purchase a random chess piece which you do not currently have."
+        limit = user_account.get("max_random_chess_pieces_per_day")
+        purchased = user_account.get("random_chess_piece_bought")
+        
+        return f"Purchase a random chess piece which you do not currently have.\n{utility.smart_number(limit - purchased)} remaining today."
     
     @classmethod
     def find_max_purchasable_count(cls, user_account: account.Bread_Account) -> int:
@@ -606,6 +609,7 @@ class Random_Chess_Piece(Store_Item):
             else:
                 # now we have all our missing pieces, so buy random chess pieces
                 piece = random.choice(full_chess_set)
+                piece_text = piece.text
                 user_account.add_item_attributes(piece)
                 purchased_pieces[piece.text] += 1
                 amount -= 1
@@ -620,6 +624,11 @@ class Random_Chess_Piece(Store_Item):
                     out_str += f'{piece}: {purchased_pieces[piece]} \n'
 
         user_account.increment("random_chess_piece_bought", original_amount)
+
+        limit = user_account.get("max_random_chess_pieces_per_day")
+        purchased = user_account.get("random_chess_piece_bought")
+
+        out_str += f"\nYou can purchase {utility.smart_number(limit - purchased)} more today."
         
         return out_str
             
@@ -734,7 +743,10 @@ class Special_Bread_Pack(Store_Item):
 
     @classmethod
     def description(cls, user_account: account.Bread_Account) -> str:
-        return "A pack of 100 random special and rare breads."
+        limit = user_account.get("max_special_bread_packs_per_day")
+        purchased = user_account.get("special_bread_pack_bought")
+
+        return f"A pack of 100 random special and rare breads.\n{utility.smart_number(limit - purchased)} remaining today."
 
     @classmethod
     def find_max_purchasable_count(cls, user_account: account.Bread_Account) -> int:
@@ -812,6 +824,11 @@ class Special_Bread_Pack(Store_Item):
         
         user_account.increment("special_bread_pack_bought", amount)
             
+        limit = user_account.get("max_special_bread_packs_per_day")
+        purchased = user_account.get("special_bread_pack_bought")
+
+        output += f"\nYou can purchase {utility.smart_number(limit - purchased)} more today."
+        
         return output
 
 class Extra_Gamble(Store_Item):

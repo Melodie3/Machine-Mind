@@ -1121,7 +1121,8 @@ class Bread_cog(commands.Cog, name="Bread"):
         pass
     
     @bread.command(
-        hidden=True,
+        hidden = True,
+        brief = "Shows this message."
     )
     async def help(self, ctx, *, subcommand: typing.Optional[str] = commands.parameter(description = "A subcommand to get the help for.")):
         if subcommand is None:
