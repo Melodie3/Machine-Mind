@@ -2092,21 +2092,27 @@ loaf_converter""",
 
             # save the stats
             for key in result.keys():
-                if key not in ["commentary", "emote_text", "highest_roll", "roll_messages", "value", "individual_values"]:
+                if key not in ["commentary", "emote_text", "highest_roll", "roll_messages", "value", "individual_values", "first_catch_found"]:
                     # this will increase lifetime dough, total dough, and any special values
                     user_account.increment(key,result[key])
 
-                    #first catch boost
-                    if first_catch_remaining > 0 and key != values.normal_bread.text and key != values.corrupted_bread.text:
-                        emote = values.get_emote(key)
-                        if emote is not None:
-                            new_value = (emote.value + user_account.get_dough_boost_for_item(emote)) * 3
-                            if result.get("gambit_shop_bonus", 0) > 0:
-                                result["gambit_shop_bonus"] += user_account.get_dough_boost_for_item(emote) * 3
-                            # new_value = min(new_value, 100)
-                            result["value"] += user_account.add_dough_intelligent(new_value)
-                            first_catch_remaining -= 1
-                            print(f"first catch remaining: {first_catch_remaining}, emote: {emote.name}")
+                    # #first catch boost
+                    # if first_catch_remaining > 0 and key != values.normal_bread.text and key != values.corrupted_bread.text:
+                    #     emote = values.get_emote(key)
+                    #     if emote is not None:
+                    #         new_value = (emote.value + user_account.get_dough_boost_for_item(emote)) * 3
+                    #         if result.get("gambit_shop_bonus", 0) > 0:
+                    #             result["gambit_shop_bonus"] += user_account.get_dough_boost_for_item(emote) * 3
+                    #         # new_value = min(new_value, 100)
+                    #         result["value"] += user_account.add_dough_intelligent(new_value)
+                    #         first_catch_remaining -= 1
+                    #         print(f"first catch remaining: {first_catch_remaining}, emote: {emote.name}")
+            
+            for item, value in result.get("first_catch_found", []):
+                result["value"] += user_account.add_dough_intelligent(value)
+                first_catch_remaining -= 1
+
+                print(f"first catch remaining: {first_catch_remaining}, emote: {item.name}")
                             
             user_account.set("first_catch_remaining", first_catch_remaining)
             

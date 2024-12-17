@@ -18,6 +18,8 @@ def bread_roll(
     ) -> dict:
     """Calculates an entire set of bread rolls."""
 
+    first_catch_remaining = user_account.get("first_catch_remaining")
+
     output = dict()
 
     output_count_commentary = ""
@@ -34,6 +36,7 @@ def bread_roll(
     gambit_shop_bonus = 0
 
     output["individual_values"] = list()
+    output["first_catch_found"] = list()
 
     ##### Static values.
     # These are values that are static across all rolls in a multiroll.
@@ -265,8 +268,13 @@ def bread_roll(
             ############################################################
             ######
 
-
             value = roll["emote"].value + roll["extra_profit"] + roll["gambit_bonus"]
+
+            if first_catch_remaining > 0:
+                if roll["emote"] != values.normal_bread and roll["emote"] != values.corrupted_bread:
+                    output["first_catch_found"].append((roll["emote"], value))
+                    first_catch_remaining -= 1
+            
             gambit_shop_bonus += roll["gambit_bonus"]
             # emote_text = roll["emote"].get_representation(None)
             emote_text = roll["emote"].text
@@ -676,7 +684,7 @@ def summarize_roll(
 
     last_header = True
     for key in result.keys():
-        if key not in ["commentary", "emote_text",  "roll_messages", "total_dough", "lifetime_dough", "value", "earned_dough", "individual_values"] + removals:
+        if key not in ["commentary", "emote_text",  "roll_messages", "total_dough", "lifetime_dough", "value", "earned_dough", "individual_values", "first_catch_found"] + removals:
             if result[key] == 0:
                 continue
 
