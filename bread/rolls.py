@@ -272,7 +272,7 @@ def bread_roll(
 
             if first_catch_remaining > 0:
                 if roll["emote"] != values.normal_bread and roll["emote"] != values.corrupted_bread:
-                    output["first_catch_found"].append((roll["emote"], value))
+                    output["first_catch_found"].append((roll["emote"], value * 3)) # This is added to the regular amount, so 3 means it'll be 4x.
                     first_catch_remaining -= 1
             
             gambit_shop_bonus += roll["gambit_bonus"]
@@ -452,7 +452,7 @@ def loaf_roll(
         output["emote"] = values.corrupted_bread
 
     # MoaKs
-    elif random.randint(1, moak_rarity_multiplier * 2**15) <= (moak_luck * moak_multiplier):
+    elif random.randint(1, moak_rarity_multiplier * 2**15) <= (moak_luck * moak_multiplier) and False:
         # one-of-a-kind
         # output["emote"] = random.choice([
         #                                     #values.holy_hell, 
