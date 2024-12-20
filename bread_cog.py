@@ -7990,14 +7990,19 @@ anarchy - 1000% of your wager.
         items.append(values.anarchy_omega_chessatron)
         items.append(values.fuel)
 
-        for emote in items:
-            account.set(emote.text, 50000000000)
-        
         for shop_item in store.all_store_items:
             if shop_item.max_level(account) is None:
                 continue
             
-            account.set(shop_item.name, shop_item.max_level(account))
+            if issubclass(shop_item, store.Gambit_shop_Item):
+                shop_item.do_purchase(account)
+            else:
+                account.set(shop_item.name, shop_item.max_level(account))
+
+
+        for emote in items:
+            account.set(emote.text, 50000000000)
+        
 
         account.set("fuel_tank", 40000)
 

@@ -2223,7 +2223,7 @@ class Gambit_shop_Item(Custom_price_item):
 
     @classmethod
     def description(cls, user_account: account.Bread_Account) -> str:
-        return f"Boosts the dough you gain from a {cls.boost_item.text} by {cls.boost_amount}."
+        return f"Boosts the dough you gain from a {cls.boost_item.text} by {utility.smart_number(cls.boost_amount)}."
     
     @classmethod
     def get_cost_types(cls, user_account: account.Bread_Account, level: int = None):
@@ -2494,6 +2494,81 @@ class Gambit_Shop_Gem_Gold(Gambit_shop_Item):
     boost_amount = 5000
     raw_cost = [(values.gem_red.text, 160), (values.gem_blue.text, 80), (values.gem_purple.text, 40), (values.gem_green.text, 20), (values.gem_gold.text, 10)]
 
+# Space gems.
+
+class Gambit_Shop_Gem_Pink(Gambit_shop_Item):
+    name = "gambit_shop_gem_pink"
+    display_name = "Rose Quartz Crown"
+    level_required = 4
+    boost_item = values.gem_pink
+    boost_amount = 6_400_000
+    raw_cost = [(values.gem_red.text, 320), (values.gem_blue.text, 160), (values.gem_purple.text, 80), (values.gem_green.text, 40), (values.gem_gold.text, 20), (values.gem_pink.text, 5)]
+
+    @classmethod
+    def can_be_purchased(cls, user_account):
+        if not super().can_be_purchased(user_account):
+            return False
+        
+        if user_account.get_space_level() < 1:
+            return False
+        
+        return True
+
+class Gambit_Shop_Gem_Orange(Gambit_shop_Item):
+    name = "gambit_shop_gem_orange"
+    display_name = "Topaz Pendant"
+    level_required = 4
+    boost_item = values.gem_orange
+    boost_amount = 6_400_000
+    raw_cost = [(values.gem_red.text, 640), (values.gem_blue.text, 320), (values.gem_purple.text, 160), (values.gem_green.text, 80), (values.gem_gold.text, 40), (values.gem_pink.text, 10), (values.gem_orange.text, 5)]
+
+    @classmethod
+    def can_be_purchased(cls, user_account):
+        if not super().can_be_purchased(user_account):
+            return False
+        
+        if user_account.get_space_level() < 1:
+            return False
+        
+        return True
+
+class Gambit_Shop_Gem_Cyan(Gambit_shop_Item):
+    name = "gambit_shop_gem_cyan"
+    display_name = "Aquamarine Locket"
+    level_required = 4
+    boost_item = values.gem_cyan
+    boost_amount = 6_400_000
+    raw_cost = [(values.gem_red.text, 1280), (values.gem_blue.text, 640), (values.gem_purple.text, 320), (values.gem_green.text, 160), (values.gem_gold.text, 80), (values.gem_pink.text, 20), (values.gem_orange.text, 10), (values.gem_cyan.text, 5)]
+
+    @classmethod
+    def can_be_purchased(cls, user_account):
+        if not super().can_be_purchased(user_account):
+            return False
+        
+        if user_account.get_space_level() < 1:
+            return False
+        
+        return True
+
+class Gambit_Shop_Gem_White(Gambit_shop_Item):
+    name = "gambit_shop_gem_white"
+    display_name = "Quartz Bracelet"
+    level_required = 4
+    boost_item = values.gem_white
+    boost_amount = 6_400_000
+    raw_cost = [(values.gem_red.text, 2560), (values.gem_blue.text, 1280), (values.gem_purple.text, 640), (values.gem_green.text, 320), (values.gem_gold.text, 160), (values.gem_pink.text, 40), (values.gem_orange.text, 20), (values.gem_cyan.text, 10), (values.gem_white.text, 5)]
+
+    @classmethod
+    def can_be_purchased(cls, user_account):
+        if not super().can_be_purchased(user_account):
+            return False
+        
+        if user_account.get_space_level() < 1:
+            return False
+        
+        return True
+
+
 ##########################################################################################
 
 class Gambit_Shop_Anarchy_Black_Pawn(Gambit_shop_Item):
@@ -2606,7 +2681,7 @@ gambit_shop_items = [
     Gambit_Shop_Bagel, Gambit_Shop_Doughnut, Gambit_Shop_Waffle, # Rare bread (level 1)
     Gambit_Shop_Black_Pawn, Gambit_Shop_Black_Knight, Gambit_Shop_Black_Bishop, Gambit_Shop_Black_Rook, Gambit_Shop_Black_Queen, Gambit_Shop_Black_King, # Black chess pieces (level 2)
     Gambit_Shop_White_Pawn, Gambit_Shop_White_Knight, Gambit_Shop_White_Bishop, Gambit_Shop_White_Rook, Gambit_Shop_White_Queen, Gambit_Shop_White_King, # White chess pieces (level 3)
-    Gambit_Shop_Gem_Red, Gambit_Shop_Gem_Blue, Gambit_Shop_Gem_Purple, Gambit_Shop_Gem_Green, Gambit_Shop_Gem_Gold, # Gems (level 4)
+    Gambit_Shop_Gem_Red, Gambit_Shop_Gem_Blue, Gambit_Shop_Gem_Purple, Gambit_Shop_Gem_Green, Gambit_Shop_Gem_Gold, Gambit_Shop_Gem_Pink, Gambit_Shop_Gem_Orange, Gambit_Shop_Gem_Cyan, # Gems (level 4)
     Gambit_Shop_Anarchy_Black_Pawn, Gambit_Shop_Anarchy_Black_Knight, Gambit_Shop_Anarchy_Black_Bishop, Gambit_Shop_Anarchy_Black_Rook, Gambit_Shop_Anarchy_Black_Queen, Gambit_Shop_Anarchy_Black_King, # Black anarchy pieces (level 5)
     Gambit_Shop_Anarchy_White_Pawn, Gambit_Shop_Anarchy_White_Knight, Gambit_Shop_Anarchy_White_Bishop, Gambit_Shop_Anarchy_White_Rook, Gambit_Shop_Anarchy_White_Queen, Gambit_Shop_Anarchy_White_King, # White anarchy pieces (level 6)
 ]
