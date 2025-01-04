@@ -452,7 +452,7 @@ def loaf_roll(
         output["emote"] = values.corrupted_bread
 
     # MoaKs
-    elif random.randint(1, moak_rarity_multiplier * 2**15) <= (moak_luck * moak_multiplier) and False:
+    elif random.randint(1, moak_rarity_multiplier * 2**15) <= (moak_luck * moak_multiplier):
         # one-of-a-kind
         # output["emote"] = random.choice([
         #                                     #values.holy_hell, 
