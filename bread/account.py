@@ -146,7 +146,7 @@ class Bread_Account:
         lifetime_stats = [      "total_rolls", "earned_dough", "loaf_converter",
                                 "natural_1", "ten_breads",  
                                 "eleven_breads", "twelve_breads", "thirteen_breads", "fourteen_or_higher",
-                                "special_bread", "rare_bread", "unique", "chess_pieces", "shiny",
+                                "special_bread", "rare_bread", "unique", "chess_pieces", "shiny", "anarchy_pieces",
                                 "full_chess_set", "many_of_a_kind", 
                                 "lottery_win",
                                 "projects_completed", "trade_hubs_created", "full_anarchy_set"
