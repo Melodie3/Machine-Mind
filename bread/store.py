@@ -1087,6 +1087,37 @@ class LC_booster(Custom_price_item):
         level = user_account.get(cls.name)
         return f"You are now at Recipe Refinement level {level}!"
 
+class Multiroller_Terminal(Custom_price_item):
+    name = "multiroller_terminal"
+    display_name = "Multiroller Terminal"
+
+    @classmethod
+    def get_costs(cls):
+        return [
+            [],
+            [(values.gem_green.text, 10)]
+        ]
+    
+    @classmethod
+    def description(cls, user_account: account.Bread_Account) -> str:
+        return "A handy little terminal that allows you to change the number of multirollers to use when rolling."
+    
+    @classmethod
+    def can_be_purchased(cls, user_account: account.Bread_Account) -> bool:
+        if not super().can_be_purchased(user_account): # If can_be_purchased from the parent class returns False.
+            return False
+        
+        # If the player has max multirollers.
+        if 2 ** user_account.get("multiroller") >= user_account.get_maximum_daily_rolls():
+            return True
+        
+        return False
+
+    @classmethod
+    def do_purchase(cls, user_account: account.Bread_Account):
+        super().do_purchase(user_account)
+        return "You have acquired the Multiroller Terminal, you can configure it with '$bread multiroller`."
+
 
 
 
@@ -1108,7 +1139,7 @@ class Test_Strategy_Item(Custom_price_item):
     
     
 
-normal_store_items = [Welcome_Packet, Daily_rolls, Loaf_Converter, Multiroller, Compound_Roller, Extra_Gamble, Random_Chess_Piece, Special_Bread_Pack, Roll_Summarizer, Black_Hole_Technology, Bling, LC_booster, ]
+normal_store_items = [Welcome_Packet, Daily_rolls, Loaf_Converter, Multiroller, Compound_Roller, Extra_Gamble, Random_Chess_Piece, Special_Bread_Pack, Roll_Summarizer, Black_Hole_Technology, Bling, LC_booster, Multiroller_Terminal]
 
 
 
@@ -1895,37 +1926,6 @@ class Upgraded_Telescopes(Space_Shop_Item):
         
         return True
 
-class Multiroller_Terminal(Space_Shop_Item):
-    name = "multiroller_terminal"
-    display_name = "Multiroller Terminal"
-
-    @classmethod
-    def get_costs(cls):
-        return [
-            [],
-            [(values.gem_green.text, 10)]
-        ]
-    
-    @classmethod
-    def description(cls, user_account: account.Bread_Account) -> str:
-        return "A handy little terminal that allows you to change the number of multirollers to use when rolling."
-    
-    @classmethod
-    def can_be_purchased(cls, user_account: account.Bread_Account) -> bool:
-        if not super().can_be_purchased(user_account): # If can_be_purchased from the parent class returns False.
-            return False
-        
-        # If the player has max multirollers.
-        if 2 ** user_account.get("multiroller") >= 1000 + user_account.get_prestige_level() * 100:
-            return True
-        
-        return False
-
-    @classmethod
-    def do_purchase(cls, user_account: account.Bread_Account):
-        super().do_purchase(user_account)
-        return "You have acquired the Multiroller Terminal, you can configure it with '$bread multiroller`."
-
 class Advanced_Exploration(Space_Shop_Item):
     name = "advanced_exploration"
     display_name = "Advanced Exploration"
@@ -2119,7 +2119,7 @@ class Payment_Bonus(Space_Shop_Item):
         super().do_purchase(user_account)
         return f"Through some shady business practices you have gotten another {values.project_credits.text} bonus!\nThis is bonus number {user_account.get(cls.name)} for you, your {values.project_credits.text} will be available tomorrow."
 
-space_shop_items = [Bread_Rocket, Upgraded_Autopilot, Fuel_Tank, Fuel_Research, Upgraded_Telescopes, Multiroller_Terminal, Advanced_Exploration, Engine_Efficiency, Payment_Bonus]
+space_shop_items = [Bread_Rocket, Upgraded_Autopilot, Fuel_Tank, Fuel_Research, Upgraded_Telescopes, Advanced_Exploration, Engine_Efficiency, Payment_Bonus]
 
 
 
