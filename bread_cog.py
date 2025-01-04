@@ -7152,7 +7152,7 @@ anarchy - 1000% of your wager.
 
     @bread.command(
         name="anarchy_chessatron", 
-        aliases=["anarchy_tron"],
+        aliases=["anarchy_tron", "atron"],
         help="Create Anarchy Chessatrons.\n\nAnarchy Chessatrons are affected by auto chessatron, which can be toggled with '$bread chessatron [on/off]'.",
         brief="Create Anarchy Chessatrons."
     )
