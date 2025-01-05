@@ -1985,16 +1985,16 @@ def get_planet_modifiers(
         ) # type: GalaxyTile
 
         if galaxy_tile.in_nebula:
-            denominator = 1
+            denominator = 0.2
         else:
-            denominator = math.tau
+            denominator = 1
 
         if galaxy_tile.star.star_type == "black_hole":
             # If it's a black hole, make it a little crazier by dividing the denominator by 5.
-            denominator /= 5
+            denominator /= 2.5
         elif galaxy_tile.star.star_type == "supermassive_black_hole":
             # If it's the supermassive black hole at the center of the galaxy, chaos.
-            denominator /= 10
+            denominator /= 5
         
         raw_seed = tile.tile_seed()
 
@@ -2003,18 +2003,18 @@ def get_planet_modifiers(
         mod = 0
         if galaxy_tile.trade_hub is not None:
             if galaxy_tile.trade_hub.get_upgrade_level(projects.Nebula_Refinery) > 0:
-                mod += abs(random.Random(f"{raw_seed}_nebularefinery").gauss(mu=math.pi / 100, sigma=0.01)) * 2
+                mod += abs(random.Random(f"{raw_seed}_nebularefinery").gauss(mu=math.pi / 100, sigma=0.05)) * 2
 
             if galaxy_tile.trade_hub.get_upgrade_level(projects.Black_Hole_Observatory) > 0:
-                mod += abs(random.Random(f"{raw_seed}_blackholeobservatory").gauss(mu=math.pi / 100, sigma=0.01)) * 2
+                mod += abs(random.Random(f"{raw_seed}_blackholeobservatory").gauss(mu=math.pi / 100, sigma=0.05)) * 2
 
             chamber_level = galaxy_tile.trade_hub.get_upgrade_level(projects.Dark_Matter_Resonance_Chamber)
 
-        deviation = (1 - tile.planet_deviation) / denominator
+        deviation = (1 - tile.planet_deviation) / (denominator / 2)
 
         tile_seed = tile.tile_seed() + day_seed
 
-        sqrt_phi = math.sqrt((1 + math.sqrt(5)) / 2)
+        phi = (1 + math.sqrt(5)) / 2
 
         # Get the planet seed for each category.
         # These do not change per day.
@@ -2022,20 +2022,20 @@ def get_planet_modifiers(
             key_mod = 0
 
             if chamber_level > 0 and key == "anarchy_piece":
-                key_mod += abs(random.Random(f"{raw_seed}_darkmatterresonancechamber").gauss(mu=math.pi / 100, sigma=0.01)) * 2 * chamber_level
+                key_mod += abs(random.Random(f"{raw_seed}_darkmatterresonancechamber").gauss(mu=math.pi / 100, sigma=0.05)) * 2 * chamber_level
 
             odds[key] = random.Random(f"{raw_seed}{key}").gauss(mu=1 + mod + key_mod, sigma=deviation)
 
             if key == priority:
-                odds[key] = (abs(odds[key] - 1) + 1) * sqrt_phi
+                odds[key] = (abs(odds[key] - 1) + 1) * phi
 
         # Now to get the actual modifiers.
         # These do change per day, but tend to be around the default seeds calculated above.
         for key, value in odds.copy().items():
-            sigma = deviation / 2.5
+            sigma = deviation
 
             if key == priority:
-                sigma = deviation / 1.5
+                sigma = deviation * 1.1
 
             odds[key] = random.Random(f"{tile_seed}{key}").gauss(mu=value, sigma=sigma)
 
