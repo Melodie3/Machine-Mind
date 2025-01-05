@@ -40,18 +40,21 @@ STAR_WEIGHTS = {
     "black_hole": 6
 }
 
+# Weight sum: 454.
+# Chance of any gem planet: ~23.02%
+# Chance of any chess piece planet: ~42.08%
 PLANET_WEIGHTS = {
-    "normal_bread": 20,
-    "special_bread": 20,
-    "rare_bread": 50,
-    "piece_black": 55,
-    "piece_white": 45,
-    "gem_red": 20,
-    "bem_blue": 48,
-    "gem_purple": 24,
-    "gem_green": 12,
-    "gem_gold": 6,
-    "anarchy_chess": 3
+    "normal_bread": 50, # ~12.38%
+    "special_bread": 75, # ~18.56%
+    "rare_bread": 65, # ~16.09%
+    "piece_black": 90, # ~22.28%
+    "piece_white": 80, # ~19.80%
+    "gem_red": 48, # ~11.88%
+    "bem_blue": 24, # ~5.94%
+    "gem_purple": 12, # ~2.97%
+    "gem_green": 6, # ~1.49%
+    "gem_gold": 3, # ~0.74%
+    "anarchy_chess": 1 # ~0.25%
 }
 
 PLANET_OPTIONS = {
