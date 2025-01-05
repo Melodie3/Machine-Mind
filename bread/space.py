@@ -344,6 +344,19 @@ class SystemEmpty(SystemTile):
         ) -> list[str]:
         return ["There seems to be nothing here."]
     
+class SystemEdge(SystemEmpty):
+    def get_emoji(self: typing.Self) -> str:
+        return "blocker"
+    
+    def get_analysis(
+            self: typing.Self,
+            guild: typing.Union[discord.Guild, int, str],
+            json_interface: bread_cog.JSON_interface,
+            user_account: account.Bread_Account,
+            detailed: bool = False
+        ) -> list[str]:
+        return ["There seems to be nothing here.", "This is the edge of the system."]
+    
 ########################################################
 
 class SystemStar(SystemTile):
@@ -1101,6 +1114,16 @@ class GalaxyTile:
         for asteroid in self.asteroids:
             if asteroid.system_xpos == system_x and asteroid.system_ypos == system_y:
                 return asteroid
+        
+        # If it's the edge of a system return a SystemEdge object.
+        if math.hypot(system_x, system_y) >= self.system_radius + 2:
+            return SystemEdge(
+                galaxy_seed = self.galaxy_seed,
+                galaxy_xpos = self.xpos,
+                galaxy_ypos = self.ypos,
+                system_xpos = system_x,
+                system_ypos = system_y
+            )
         
         # If nothing else triggers, then this tile is empty.
         return self._empty_system_tile(
