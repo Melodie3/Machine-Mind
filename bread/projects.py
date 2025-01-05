@@ -2371,6 +2371,176 @@ class Cafeteria_Kerfuffle(Project):
             (values.hotdog.text, 1)
         ]
 
+class Health_Inspection(Project):
+    """Written by Citron."""
+    internal = "health_inspection"
+
+    @classmethod
+    def name(
+            cls,
+            day_seed: str,
+            system_tile: space.SystemTradeHub
+         ) -> str:
+        rng = random.Random(utility.hash_args(day_seed, system_tile.tile_seed()))
+
+        options = [
+            "Health Inspection",
+            "Sanitary Bread",
+            "Bread Sanitation"
+        ]
+
+
+        return rng.choice(options)
+    
+    @classmethod
+    def title(
+            cls,
+            day_seed: str,
+            system_tile: space.SystemTradeHub
+        ) -> str:
+        rng = random.Random(utility.hash_args(day_seed, system_tile.tile_seed()))
+        
+        options = [
+            "Cosmic Crumbs",
+            "Nebula Nibbles",
+            "Galactic Goodies"
+        ]
+        
+        return rng.choice(options)
+
+    @classmethod
+    def description(
+            cls,
+            day_seed: str,
+            system_tile: space.SystemTradeHub
+        ) -> str:
+        rng = random.Random(utility.hash_args(day_seed, system_tile.tile_seed()))
+
+        cost = cls.get_price_description(day_seed, system_tile)
+        reward = cls.get_reward_description(day_seed, system_tile)
+        title = cls.title(day_seed, system_tile)
+
+        part_1 = [
+            f"Uh oh! {title}, has run into a bit of an issue.",
+            f"Uh oh! {title} has a major problem.",
+            f"It turns out that the bakery you visit every weekend, {title}, is having a problem."
+        ]
+
+
+        part_2 = [
+            "Our bakery recently had a health inspection, and",
+            "During our bakery's sanitary inspection,",
+            "Health inspectors were recently doing a routine checkup of our bakery, and"
+        ]
+
+
+        part_3 = [
+            "they found severe corruption of the bread that was made here!",
+            "they found that the bread we baked was inedibly corrupted!",
+            "they realized that the bread was corrupted and a health hazard."
+        ]
+
+
+        part_4 = [
+            f"They've given {title} only 12 hours to provide good bread as proof that we're capable of keeping a sanitary and healthy bakery running!",
+            f"{title} only has 12 hours to provide proper bread as proof that we're capable of sanitary production!",
+            f"Within only 12 hours, {title} must provide good bread in order to be allowed to keep running!"
+        ]
+
+
+        part_5 = [
+            f"To anyone able to provide {cost} so we can keep running,",
+            f"If someone can give us {cost} to keep us running,",
+            f"For anyone who can come up with {cost},"
+        ]
+
+
+        part_6 = [
+            "we're promising all of our defective bread.",
+            "all of our corrupted bread is being offered as reward.",
+            "our corrupted bread is up for grabs."
+        ]
+
+
+        part_7 = [
+            f"We know {reward} isn't much of a reward, but it's all we have.",
+            f"Though it's not much, {reward} is all we can offer.",
+            f"Even though {reward} isn't worth much, we don't have anything else to give."
+        ]
+
+
+        part_8 = [
+            "Please help us out!",
+            "We need your help!",
+            "Please bail us out!"
+        ]
+
+
+        part_9 = [
+            f"It's the only way to keep our grandfathers' {title} (est. 2001) running!",
+            f"It's the only way to honor the livelihood of our forefathers, {title} (est. 2001)!",
+            f"{title} (est. 2001) needs to stay to honor the memory of our forefathers!"
+        ]
+
+        return " ".join([
+            rng.choice(part_1),
+            rng.choice(part_2),
+            rng.choice(part_3),
+            rng.choice(part_4),
+            rng.choice(part_5),
+            rng.choice(part_6),
+            rng.choice(part_7),
+            rng.choice(part_8),
+            rng.choice(part_9),
+        ])
+
+    @classmethod
+    def completion(
+            cls: typing.Type[typing.Self],
+            day_seed: str,
+            system_tile: space.SystemTradeHub
+        ) -> str:
+        rng = random.Random(utility.hash_args(day_seed, system_tile.tile_seed()))
+        cost = cls.get_price_description(day_seed, system_tile)
+        reward = cls.get_reward_description(day_seed, system_tile)
+        title = cls.title(day_seed, system_tile)
+
+        options = [
+            f"Thank you so much for the {cost}! As promised, take the {reward}. We regret that we couldn't offer more to our savior, but {title} is going to run another year!",
+            f"As promised, here is your {reward}. We're sorry we can't provide more to our benefactor, but maybe we got a little something on the house if you drop by sometime.",
+            f"Here's your {reward}. It doesn't look like much, but it's all we have- hopefully, we'll be able to put out some good quality bread soon with the time you bought us. Thanks!"
+        ]
+
+        return rng.choice(options)
+    
+    @classmethod
+    def get_cost(
+            cls,
+            day_seed: str,
+            system_tile: space.SystemTradeHub
+        ) -> list[tuple[str, int]]:
+        rng = random.Random(utility.hash_args(day_seed, system_tile.tile_seed()))
+
+        amount_1 = rng.randint(5, 20) * 100
+
+        return [
+            (values.normal_bread.text, amount_1)
+        ]
+    
+    @classmethod
+    def get_reward(
+            cls,
+            day_seed: str,
+            system_tile: space.SystemTradeHub
+        ) -> list[tuple[str, int]]:
+        rng = random.Random(utility.hash_args(day_seed, system_tile.tile_seed()))
+        
+        amount_1 = rng.randint(5, 20) * 100
+
+        return [
+            (values.corrupted_bread.text, amount_1)
+        ]
+
 #######################################################################################################
 ##### Take item projects. #############################################################################
 #######################################################################################################
@@ -6109,7 +6279,7 @@ class Chessatron_Repair(Project):
 ##### Item projects. ##################################################################################
 #######################################################################################################
 
-story_projects = [Essential_Oils, Bingobango, Anarchy_Trading, Beta_Minus, Anarchy_Tax_Evasion, Gem_Extraction, Bakery_Encounter, Corruption_Lab, Cafeteria_Kerfuffle]
+story_projects = [Essential_Oils, Bingobango, Anarchy_Trading, Beta_Minus, Anarchy_Tax_Evasion, Gem_Extraction, Bakery_Encounter, Corruption_Lab, Cafeteria_Kerfuffle, Health_Inspection]
 
 take_special_bread_projects = [Too_Much_Stuffing, Flatbread_Shortage, Appease_The_French, Croissant_Cravings, Beach_Disappearance]
 take_rare_bread_projects = [Ecosystem_Problem, Stolen_Donuts, Waffle_Machine]
