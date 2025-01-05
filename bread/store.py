@@ -2036,14 +2036,16 @@ class Engine_Efficiency(Space_Shop_Item):
 class Payment_Bonus(Space_Shop_Item):
     name = "payment_bonus"
     display_name = "Payment Bonus"
+    
+    per_level = 1000 / 6
 
     @classmethod
     def cost(cls, user_account: account.Bread_Account) -> list[tuple[values.Emote, int]]:
         level = user_account.get(cls.name)
 
         dough = int(1.75 ** (level + 27))
-        bread = 1000 + 100 * level
-        corrupted_bread = 500 + 50 * level
+        bread = 100 + 100 * level
+        corrupted_bread = 50 + 50 * level
         chessatrons = 150 + 75 * level
 
         gems = {
@@ -2068,7 +2070,7 @@ class Payment_Bonus(Space_Shop_Item):
     @classmethod
     def description(cls, user_account: account.Bread_Account) -> str:
         level = user_account.get(cls.name) + 1
-        return f"Sketchy methods to increase your Trade Hub credibility giving you {utility.smart_number(2000 + level * 100)} {values.project_credits.text} to use per day."
+        return f"Sketchy methods to increase your Trade Hub credibility giving you {utility.smart_number(int(2000 + level * cls.per_level))} {values.project_credits.text} to use per day."
     
     @classmethod
     def can_be_purchased(cls, user_account: account.Bread_Account) -> bool:
@@ -2089,11 +2091,24 @@ class Payment_Bonus(Space_Shop_Item):
 
     @classmethod
     def get_cost_types(cls, user_account: account.Bread_Account, level: int = None):
-        return ["total_dough", values.normal_bread.text, values.corrupted_bread.text, values.chessatron.text, values.gem_blue.text]
+        user_level = user_account.get(cls.name) - 1 # This is run after it's bought, so subtract 1.
+        
+        gems = {
+            values.gem_green.text: 1,
+            values.gem_purple.text: 2,
+            values.gem_blue.text: 4,
+            values.gem_red.text: 8,
+        }
+
+        specific_gem = random.Random(f"{user_account.get_prestige_level()}-{user_level}").choice(list(gems.keys()))
+        
+        print(specific_gem)
+        
+        return ["total_dough", values.normal_bread.text, values.corrupted_bread.text, values.chessatron.text, specific_gem]
     
     @classmethod
     def max_level(cls, user_account: account.Bread_Account = None) -> int | None:
-        return 20
+        return 12
 
     @classmethod
     def get_requirement(
