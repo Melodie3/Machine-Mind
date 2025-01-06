@@ -764,6 +764,7 @@ class GalaxyTile:
             xpos: int,
             ypos: int,
             system: bool,
+            json_interface: bread_cog.JSON_interface,
             in_nebula: bool = False,
 
             raw_system_data: dict | None = None,
@@ -797,6 +798,7 @@ class GalaxyTile:
         self.galaxy_seed = galaxy_seed
         self.ascension = ascension
         self.guild = guild
+        self.json_interface = json_interface
 
         self.xpos = xpos
         self.ypos = ypos
@@ -1821,7 +1823,8 @@ def get_galaxy_coordinate(
             xpos = xpos,
             ypos = ypos,
             system = False,
-            in_nebula = False
+            in_nebula = False,
+            json_interface = json_interface
         )
     
     # To handle the 2x2 system at the center of the map.
@@ -1872,7 +1875,8 @@ def get_galaxy_coordinate(
             xpos = xpos,
             ypos = ypos,
             system = system,
-            in_nebula = in_nebula
+            in_nebula = in_nebula,
+            json_interface = json_interface
         )
 
         if load_data:
@@ -1905,7 +1909,8 @@ def get_galaxy_coordinate(
         xpos = xpos,
         ypos = ypos,
         system = is_system,
-        in_nebula = in_nebula
+        in_nebula = in_nebula,
+        json_interface = json_interface
     )
     
     # Save the new data.

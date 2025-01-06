@@ -323,6 +323,8 @@ class JSON_interface:
     
     ####################################
     #####      SETUP
+    
+    bread_cog: Bread_cog = None
 
     file_path = "bread_data.json"
 
@@ -832,6 +834,7 @@ class Bread_cog(commands.Cog, name="Bread"):
         self.daily_task.start()
 
         bot.json_interface = self.json_interface
+        self.json_interface.bread_cog = self
 
     def cog_unload(self: typing.Self):
         self.daily_task.cancel()
@@ -7784,6 +7787,28 @@ anarchy - 1000% of your wager.
         # self.reset_internal(ctx.guild.id)
         self.reset_internal()
         await ctx.send("Done.")
+        
+    def get_highest_lifetime_dough(
+            self: typing.Self,
+            guild: typing.Union[discord.Guild, str, int]
+        ) -> dict[str, int]:
+        lifetime_results = {}
+        
+        all_accounts = self.json_interface.get_all_user_accounts(guild)
+        
+        for check_account in all_accounts:
+            prestige = check_account.get_prestige_level()
+            
+            account_sum = check_account.get("lifetime_dough") + check_account.get("earned_dough")
+            account_sum += check_account.get("gamble_winnings")
+            account_sum += self.get_portfolio_combined_value(check_account.user_id, guild)
+            
+            if str(prestige) not in lifetime_results:
+                lifetime_results[str(prestige)] = account_sum
+            elif account_sum > lifetime_results[str(prestige)]:
+                lifetime_results[str(prestige)] = account_sum
+            
+        return lifetime_results
 
     def reset_space_guild(
             self: typing.Self,
@@ -7795,6 +7820,9 @@ anarchy - 1000% of your wager.
         space_data = self.json_interface.get_space_data(guild=guild)
 
         space_data["day_seed"] = space.generate_galaxy_seed()
+        
+        # For the Stonk Exchange project it needs to have the highest lifetime_dough stat at the start of the tick for each ascension
+        space_data["lifetime_highest"] = self.get_highest_lifetime_dough(guild)
 
         # Reset project contributions.
         blank_projects = {

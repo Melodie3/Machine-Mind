@@ -2547,6 +2547,207 @@ class Health_Inspection(Project):
             (values.corrupted_bread.text, amount_1)
         ]
 
+class Stonk_Exchange(Project):
+    """Written by Duck."""
+    internal = "stonk_exchange"
+
+    @classmethod
+    def name(
+            cls,
+            day_seed: str,
+            system_tile: space.SystemTradeHub
+         ) -> str:
+        rng = random.Random(utility.hash_args(day_seed, system_tile.tile_seed()))
+
+        options = [
+            "Stonk Exchange",
+            "Stonk Shortage",
+            "Exchange Issues"
+        ]
+
+
+        return rng.choice(options)
+
+    @classmethod
+    def description(
+            cls,
+            day_seed: str,
+            system_tile: space.SystemTradeHub
+        ) -> str:
+        rng = random.Random(utility.hash_args(day_seed, system_tile.tile_seed()))
+
+        cost = cls.get_price_description(day_seed, system_tile)
+        reward = cls.get_reward_description(day_seed, system_tile)
+
+        part_1 = [
+            "Onboard the Trade Hub is a stonk exchange center",
+            "As is the case for many Trade Hubs, this one has a stonk exchange center onboard",
+            "The Trade Hub has, as is normally the case, a stonk exchange center on it"
+        ]
+
+
+        part_2 = [
+            "that is responsible for the fair buying and selling of stonks.",
+            "which is in charge of making sure everyone is able to trade the stonks they want.",
+            "that manages the trading of stonks in the local area."
+        ]
+
+
+        part_3 = [
+            "The stonk exchange, unfortunately, has",
+            "Unfortunately, though, they've",
+            "Unfortunately the stonk exchange has"
+        ]
+
+
+        part_4 = [
+            "run into an issue.",
+            "encountered a big problem.",
+            "hit a big road block."
+        ]
+
+
+        part_5 = [
+            "Their stock of a specific stonk is running low, ",
+            "While having physical stonks is good and all, they've realized they're going to run out of one stonk,",
+            "They've discovered to much distress that they don't have enough of a single type of stonk,"
+        ]
+
+
+        part_6 = [
+            f"and they're in need of {cost} to balance it out again.",
+            f"as a result they've begun asking people if they're able to provide {cost} to help.",
+            f"so they're looking for people to sell the {cost} they need."
+        ]
+
+
+        part_7 = [
+            "Based on their stonk prediction model Graphical that should be enough to have enough stock until more can arrive.",
+            "The prediction model they're using, ccv2, is saying that should cover the time until they can get more.",
+            "The very questionable algorithm they're using to make this prediction, binary_v2, is predicting that it should be enough to last until a shipment arrives from a nearby Trade Hub."
+        ]
+
+
+        part_8 = [
+            "It wouldn't be them purchasing from you if they don't give you something in return, though,",
+            "It would look very bad if they scammed you by not giving you anything, however,",
+            "They're clearly trying to scam the people helping, but that would really not paint them in a positive light,"
+        ]
+
+
+        part_9 = [
+            f"so they're giving {reward} to those who help.",
+            f"so they've decided to give {reward} to anyone who helps them.",
+            f"so they've announced that they'll give {reward} to those who help."
+        ]
+
+        return " ".join([
+            rng.choice(part_1),
+            rng.choice(part_2),
+            rng.choice(part_3),
+            rng.choice(part_4),
+            rng.choice(part_5),
+            rng.choice(part_6),
+            rng.choice(part_7),
+            rng.choice(part_8),
+            rng.choice(part_9),
+        ])
+
+    @classmethod
+    def completion(
+            cls: typing.Type[typing.Self],
+            day_seed: str,
+            system_tile: space.SystemTradeHub
+        ) -> str:
+        rng = random.Random(utility.hash_args(day_seed, system_tile.tile_seed()))
+        reward = cls.get_reward_description(day_seed, system_tile)
+
+        options = [
+            f"They managed to get the stonks they needed! Thank you! They once again thought about scamming you but ended up deciding that would be a PR nightmare, so they are giving you the {reward} you earned.",
+            f"That was a success! They did manage to hold out until the shipment arrived, and are giving you the {reward} they promised!",
+            f"The shipment they ordered arrived and everything is fine! They managed to have enough to trade to people because of you! Here's the {reward} they were giving!"
+        ]
+
+        return rng.choice(options)
+    
+    @classmethod
+    def get_highest_lifetime(
+            cls,
+            day_seed: str,
+            system_tile: space.SystemTradeHub
+        ) -> int:
+        ascension = str(system_tile.galaxy_tile.ascension)
+        guild = system_tile.galaxy_tile.guild
+        
+        json_interface = system_tile.galaxy_tile.json_interface
+        
+        space_data = json_interface.get_space_data(guild)
+        existing_data = space_data.get("lifetime_highest", {})
+        already = existing_data.get(ascension, None)
+        
+        if already is not None:
+            return already
+        
+        data = json_interface.bread_cog.get_highest_lifetime_dough(guild)
+        
+        space_data["lifetime_highest"] = data
+        json_interface.set_custom_file("space", space_data, guild=guild)
+            
+        return data.get(ascension, 10_000_000)
+        
+    @classmethod
+    def get_cost(
+            cls,
+            day_seed: str,
+            system_tile: space.SystemTradeHub
+        ) -> list[tuple[str, int]]:
+        rng = random.Random(utility.hash_args(day_seed, system_tile.tile_seed()))
+        json_interface = system_tile.galaxy_tile.json_interface
+        
+        reward = cls.get_reward(day_seed, system_tile)
+        stonk_file = json_interface.get_custom_file("stonks", guild=system_tile.galaxy_tile.guild)
+        
+        reward_amount = stonk_file.get(reward[0][0]) * reward[0][1]
+        
+        chosen_stonk = rng.choice([stonk for stonk in values.all_stonks if stonk.text != reward[0][0]])
+        
+        multiplier = 0.5
+        
+        amount = int((reward_amount * multiplier) // round(stonk_file.get(chosen_stonk.text)))
+
+        return [
+            (chosen_stonk.text, amount)
+        ]
+    
+    @classmethod
+    def get_reward(
+            cls,
+            day_seed: str,
+            system_tile: space.SystemTradeHub
+        ) -> list[tuple[str, int]]:
+        rng = random.Random(utility.hash_args(day_seed, system_tile.tile_seed()))
+        json = system_tile.galaxy_tile.json_interface
+        
+        weights = {
+            0.01: 4,
+            0.02: 3,
+            0.03: 2,
+            0.04: 1
+        }
+        
+        percentage = rng.choices(list(weights.keys()), list(weights.values()), k=1)[0]
+        
+        stonk = rng.choice(values.all_stonks)
+        stonk_file = json.get_custom_file("stonks", guild=system_tile.galaxy_tile.guild)
+        
+        highest_lifetime = cls.get_highest_lifetime(day_seed, system_tile)
+        
+        amount = int((highest_lifetime * percentage) // round(stonk_file.get(stonk.text)))
+
+        return [
+            (stonk.text, amount)
+        ]
+
 #######################################################################################################
 ##### Take item projects. #############################################################################
 #######################################################################################################
@@ -6285,7 +6486,7 @@ class Chessatron_Repair(Project):
 ##### Item projects. ##################################################################################
 #######################################################################################################
 
-story_projects = [Essential_Oils, Bingobango, Anarchy_Trading, Beta_Minus, Anarchy_Tax_Evasion, Gem_Extraction, Bakery_Encounter, Corruption_Lab, Cafeteria_Kerfuffle, Health_Inspection]
+story_projects = [Essential_Oils, Bingobango, Anarchy_Trading, Beta_Minus, Anarchy_Tax_Evasion, Gem_Extraction, Bakery_Encounter, Corruption_Lab, Cafeteria_Kerfuffle, Health_Inspection, Stonk_Exchange]
 
 take_special_bread_projects = [Too_Much_Stuffing, Flatbread_Shortage, Appease_The_French, Croissant_Cravings, Beach_Disappearance]
 take_rare_bread_projects = [Ecosystem_Problem, Stolen_Donuts, Waffle_Machine]

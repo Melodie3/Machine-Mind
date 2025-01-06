@@ -909,7 +909,7 @@ cupcake = Emote(
 )
 
 
-
+all_stonks = [pretzel, cookie, fortune_cookie, pancakes]
 misc_bread_emotes = [pretzel, birthday, cake, pancakes, hamburger, pizza, dumpling, fortune_cookie, pie, hotdog, taco, burrito, cupcake, cookie, bacon]
 
 ##################### SHADOW
