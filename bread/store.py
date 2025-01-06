@@ -1642,7 +1642,7 @@ class Bread_Rocket(Space_Shop_Item):
     def description(cls, user_account: account.Bread_Account) -> str:
         level = user_account.get(cls.name)
         
-        # (a1 locked) Tier 1: Access to space, Multiroller Terminal (all), Fuel Tank (all)
+        # (a1 locked) Tier 1: Access to space, Fuel Tank (all)
         #             Tier 2: Advanced Exploration (all), Fuel Research 1, Upgraded Telescopes 1, Engine Efficiency 1
         # (a2 locked) Tier 3: Upgraded Autopilot 1 (Galaxy travel), Fuel Research 2, Payment Bonus (all)
         #             Tier 4: Engine Efficiency 2, Fuel Research 3, Upgraded Telescopes 2
@@ -1708,7 +1708,7 @@ class Bread_Rocket(Space_Shop_Item):
             # Tier 0.
             "",
             # Tier 1.
-            "You can now view space via '$bread space map'.\nUse '$help bread space' to view a list of commands.\nIn addition, the Multiroller Terminal and Fuel Tank items have been added to the Space Shop.",
+            "You can now view space via '$bread space map'.\nUse '$help bread space' to view a list of commands.\nIn addition, the Fuel Tank item have been added to the Space Shop.",
             # Tier 2.
             "The Upgraded Telescopes, Advanced Exploration, Fuel Research, and Engine Efficiency shop items have been added to the Space Shop.",
             # Tier 3.
