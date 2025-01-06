@@ -192,6 +192,10 @@ EMOJI_PATHS = {
     "gem_purple": "images/gem_purple.png",
     "gem_green": "images/gem_green.png",
     "gem_gold": "images/gem_gold.png",
+    "gem_pink": "images/gem_pink.png",
+    "gem_orange": "images/gem_orange.png",
+    "gem_cyan": "images/gem_cyan.png",
+    "gem_white": "images/gem_white.png",
 
     # MoaK.
     "anarchy_chess": "images/anarchy_chess.png",
@@ -339,6 +343,19 @@ class SystemEmpty(SystemTile):
             detailed: bool = False
         ) -> list[str]:
         return ["There seems to be nothing here."]
+    
+class SystemEdge(SystemEmpty):
+    def get_emoji(self: typing.Self) -> str:
+        return "blocker"
+    
+    def get_analysis(
+            self: typing.Self,
+            guild: typing.Union[discord.Guild, int, str],
+            json_interface: bread_cog.JSON_interface,
+            user_account: account.Bread_Account,
+            detailed: bool = False
+        ) -> list[str]:
+        return ["There seems to be nothing here.", "This is the edge of the system."]
     
 ########################################################
 
@@ -579,7 +596,8 @@ class SystemPlanet(SystemTile):
             "Green Gems": values.gem_green,
             "Gold Gems": values.gem_gold,
             "Many of a Kind": values.anarchy_chess,
-            "Anarchy Piece": values.anarchy_black_pawn
+            "Anarchy Piece": values.anarchy_black_pawn,
+            "Space gem": values.gem_pink
         }
         deviation = self.planet_deviation
         
@@ -649,6 +667,9 @@ class SystemPlanet(SystemTile):
     
     def get_priority_item(self: typing.Self) -> typing.Union[values.Emote, str, None]:
         """Returns the item or category that is prioritized by this planet."""
+        if self.planet_type in values.all_very_shinies:
+            return "space_gem"
+        
         if self.planet_type in values.all_anarchy_pieces:
             return "anarchy_piece"
         
@@ -743,6 +764,7 @@ class GalaxyTile:
             xpos: int,
             ypos: int,
             system: bool,
+            json_interface: bread_cog.JSON_interface,
             in_nebula: bool = False,
 
             raw_system_data: dict | None = None,
@@ -776,6 +798,7 @@ class GalaxyTile:
         self.galaxy_seed = galaxy_seed
         self.ascension = ascension
         self.guild = guild
+        self.json_interface = json_interface
 
         self.xpos = xpos
         self.ypos = ypos
@@ -1094,6 +1117,16 @@ class GalaxyTile:
             if asteroid.system_xpos == system_x and asteroid.system_ypos == system_y:
                 return asteroid
         
+        # If it's the edge of a system return a SystemEdge object.
+        if math.hypot(system_x, system_y) >= self.system_radius + 2:
+            return SystemEdge(
+                galaxy_seed = self.galaxy_seed,
+                galaxy_xpos = self.xpos,
+                galaxy_ypos = self.ypos,
+                system_xpos = system_x,
+                system_ypos = system_y
+            )
+        
         # If nothing else triggers, then this tile is empty.
         return self._empty_system_tile(
             system_x = system_x,
@@ -1180,6 +1213,8 @@ def get_corruption_chance(
         return 0.0
     
     # f\left(x\right)=\left\{x\le2:99,2\le x\le80:\left(\frac{\cos\left(\left(x-2\right)\frac{\pi}{78}\right)}{2}+0.5\right)99,80<x<87:0,87\le x\le241.81799:\left(\frac{\cos\left(\frac{\left(x-87\right)\pi}{154.8179858682464038403596020291203352621852869144970764695290884}\right)}{-2}+0.5\right)99,x>241.81799:99\right\}
+    # f\left(x\right)=\left\{x\le2:99,2\le x\le80:\left(\frac{\cos\left(\left(x-2\right)\frac{\pi}{78}\right)}{2}+0.5\right)99,80<x<87:0,87\le x\le241.81799:\left(\frac{\cos\left(\frac{70055\left(x-87\right)\pi}{10845774}\right)}{-2}+0.5\right)99,x>241.81799:99\right\}
+    # These two are roughly the same, but the second one doesn't have a random number in the middle.
     # Where `x` is the distance to (0, 0)
     # lmao
 
@@ -1191,7 +1226,8 @@ def get_corruption_chance(
     elif dist <= 87:
         chance = 0
     elif dist <= 241.81799:
-        chance = (math.cos(((dist - 87) * math.pi) / 154.8179858682464038403596020291203352621852869144970764695290884) / -2 + 0.5) * 99
+        # chance = (math.cos(((dist - 87) * math.pi) / 154.8179858682464038403596020291203352621852869144970764695290884) / -2 + 0.5) * 99
+        chance = (math.cos((70055 * (dist - 87) * math.pi) / 10845774) / -2 + 0.5) * 99 # Functionally the same.
     else:
         chance = 99
 
@@ -1787,7 +1823,8 @@ def get_galaxy_coordinate(
             xpos = xpos,
             ypos = ypos,
             system = False,
-            in_nebula = False
+            in_nebula = False,
+            json_interface = json_interface
         )
     
     # To handle the 2x2 system at the center of the map.
@@ -1838,7 +1875,8 @@ def get_galaxy_coordinate(
             xpos = xpos,
             ypos = ypos,
             system = system,
-            in_nebula = in_nebula
+            in_nebula = in_nebula,
+            json_interface = json_interface
         )
 
         if load_data:
@@ -1871,7 +1909,8 @@ def get_galaxy_coordinate(
         xpos = xpos,
         ypos = ypos,
         system = is_system,
-        in_nebula = in_nebula
+        in_nebula = in_nebula,
+        json_interface = json_interface
     )
     
     # Save the new data.
@@ -1955,7 +1994,8 @@ def get_planet_modifiers(
         "gem_green": 1,
         "gem_gold": 1,
         "anarchy_chess": 1,
-        "anarchy_piece": 1
+        "anarchy_piece": 1,
+        "space_gem": 1
     }
 
     # If it isn't a planet, then use the defaults of 1.
@@ -1973,16 +2013,16 @@ def get_planet_modifiers(
         ) # type: GalaxyTile
 
         if galaxy_tile.in_nebula:
-            denominator = 1
+            denominator = 0.2
         else:
-            denominator = math.tau
+            denominator = 1
 
         if galaxy_tile.star.star_type == "black_hole":
             # If it's a black hole, make it a little crazier by dividing the denominator by 5.
-            denominator /= 5
+            denominator /= 2.5
         elif galaxy_tile.star.star_type == "supermassive_black_hole":
             # If it's the supermassive black hole at the center of the galaxy, chaos.
-            denominator /= 10
+            denominator /= 5
         
         raw_seed = tile.tile_seed()
 
@@ -1991,18 +2031,18 @@ def get_planet_modifiers(
         mod = 0
         if galaxy_tile.trade_hub is not None:
             if galaxy_tile.trade_hub.get_upgrade_level(projects.Nebula_Refinery) > 0:
-                mod += abs(random.Random(f"{raw_seed}_nebularefinery").gauss(mu=math.pi / 100, sigma=0.01)) * 2
+                mod += abs(random.Random(f"{raw_seed}_nebularefinery").gauss(mu=math.pi / 100, sigma=0.05)) * 2
 
             if galaxy_tile.trade_hub.get_upgrade_level(projects.Black_Hole_Observatory) > 0:
-                mod += abs(random.Random(f"{raw_seed}_blackholeobservatory").gauss(mu=math.pi / 100, sigma=0.01)) * 2
+                mod += abs(random.Random(f"{raw_seed}_blackholeobservatory").gauss(mu=math.pi / 100, sigma=0.05)) * 2
 
             chamber_level = galaxy_tile.trade_hub.get_upgrade_level(projects.Dark_Matter_Resonance_Chamber)
 
-        deviation = (1 - tile.planet_deviation) / denominator
+        deviation = (1 - tile.planet_deviation) / (denominator / 2)
 
         tile_seed = tile.tile_seed() + day_seed
 
-        sqrt_phi = math.sqrt((1 + math.sqrt(5)) / 2)
+        phi = (1 + math.sqrt(5)) / 2
 
         # Get the planet seed for each category.
         # These do not change per day.
@@ -2010,20 +2050,20 @@ def get_planet_modifiers(
             key_mod = 0
 
             if chamber_level > 0 and key == "anarchy_piece":
-                key_mod += abs(random.Random(f"{raw_seed}_darkmatterresonancechamber").gauss(mu=math.pi / 100, sigma=0.01)) * 2 * chamber_level
+                key_mod += abs(random.Random(f"{raw_seed}_darkmatterresonancechamber").gauss(mu=math.pi / 100, sigma=0.05)) * 2 * chamber_level
 
             odds[key] = random.Random(f"{raw_seed}{key}").gauss(mu=1 + mod + key_mod, sigma=deviation)
 
             if key == priority:
-                odds[key] = (abs(odds[key] - 1) + 1) * sqrt_phi
+                odds[key] = (abs(odds[key] - 1) + 1) * phi
 
         # Now to get the actual modifiers.
         # These do change per day, but tend to be around the default seeds calculated above.
         for key, value in odds.copy().items():
-            sigma = deviation / 2.5
+            sigma = deviation
 
             if key == priority:
-                sigma = deviation / 1.5
+                sigma = deviation * 1.1
 
             odds[key] = random.Random(f"{tile_seed}{key}").gauss(mu=value, sigma=sigma)
 
@@ -2059,6 +2099,9 @@ def get_planet_modifiers(
     
     for wpiece in values.anarchy_pieces_white:
         result[wpiece] = odds.get("anarchy_piece", 1)
+    
+    for gem in values.all_very_shinies:
+        result[gem] = odds.get("space_gem", 1)
 
     return result
     
@@ -2225,6 +2268,9 @@ def get_trade_hub_project_categories(
         values.gem_purple.text: "gems",
         values.gem_blue.text: "gems",
         values.gem_red.text: "gems",
+        values.gem_pink.text: "gems",
+        values.gem_orange.text: "gems",
+        values.gem_cyan.text: "gems",
         # Misc items are not included so new items automatically get added to it.
     }
 
@@ -2329,6 +2375,9 @@ def get_trade_hub_projects(
             # Prevent duplicates.
             if project.internal in used_names:
                 continue
+
+        # if project_id == 0: # For testing new projects.
+        #     project = projects.Cafeteria_Kerfuffle
 
         project_progress = project_data.get(key, {}).get("contributions", {})
         completed = project_data.get(key, {}).get("completed", False)

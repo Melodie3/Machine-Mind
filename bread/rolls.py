@@ -18,6 +18,8 @@ def bread_roll(
     ) -> dict:
     """Calculates an entire set of bread rolls."""
 
+    first_catch_remaining = user_account.get("first_catch_remaining")
+
     output = dict()
 
     output_count_commentary = ""
@@ -34,6 +36,7 @@ def bread_roll(
     gambit_shop_bonus = 0
 
     output["individual_values"] = list()
+    output["first_catch_found"] = list()
 
     ##### Static values.
     # These are values that are static across all rolls in a multiroll.
@@ -55,6 +58,7 @@ def bread_roll(
         # If the user has been to space, then check their current location and adjust the chance multipliers accordingly.
 
         anarchy_piece_luck = round(user_account.get_anarchy_piece_luck(roll_luck * lc_boost))
+        space_gem_luck = round(user_account.get_space_gem_luck(roll_luck * lc_boost))
 
         #### Planet-based roll modifiers.
 
@@ -69,6 +73,7 @@ def bread_roll(
             tile = system_tile
         )
 
+        space_gem_multiplier = rarity_modifiers.get(values.gem_pink)
         moak_multiplier = rarity_modifiers.get(values.anarchy_chess)
         gem_gold_multiplier = rarity_modifiers.get(values.gem_gold)
         gem_green_multiplier = rarity_modifiers.get(values.gem_green)
@@ -84,7 +89,9 @@ def bread_roll(
         # In addition, set the anarchy piece luck to -1 to make it impossible to roll.
 
         anarchy_piece_luck = -1 # With a negative number it's impossible to roll.
+        space_gem_luck = -1 # With a negative number it's impossible to roll.
 
+        space_gem_multiplier = 1
         moak_multiplier = 1
         gem_gold_multiplier = 1
         gem_green_multiplier = 1
@@ -243,7 +250,9 @@ def bread_roll(
                 corruption_chance = corruption_chance,
                 anarchy_corruption_chance = anarchy_corruption_chance,
                 anarchy_piece_luck = anarchy_piece_luck,
+                space_gem_luck = space_gem_luck,
 
+                space_gem_multiplier = space_gem_multiplier,
                 moak_multiplier = moak_multiplier,
                 gem_gold_multiplier = gem_gold_multiplier,
                 gem_green_multiplier = gem_green_multiplier,
@@ -259,8 +268,13 @@ def bread_roll(
             ############################################################
             ######
 
-
             value = roll["emote"].value + roll["extra_profit"] + roll["gambit_bonus"]
+
+            if first_catch_remaining > 0:
+                if roll["emote"] != values.normal_bread and roll["emote"] != values.corrupted_bread:
+                    output["first_catch_found"].append((roll["emote"], value * 3)) # This is added to the regular amount, so 3 means it'll be 4x.
+                    first_catch_remaining -= 1
+            
             gambit_shop_bonus += roll["gambit_bonus"]
             # emote_text = roll["emote"].get_representation(None)
             emote_text = roll["emote"].text
@@ -386,7 +400,9 @@ def loaf_roll(
         corruption_chance: float = 0.0,
         anarchy_corruption_chance: float = 0.0,
         anarchy_piece_luck: int = 0,
+        space_gem_luck: int = 0,
 
+        space_gem_multiplier: float = 1,
         moak_multiplier: float = 1,
         gem_gold_multiplier: float = 1,
         gem_green_multiplier: float = 1,
@@ -419,7 +435,18 @@ def loaf_roll(
                 # Black anarchy piece
                 output["emote"] = random.choice(values.anarchy_pieces_black_biased)
                 output["commentary"] = "Your Karma has been increased by 10 points."
-    
+
+    # Space Gems.
+    elif random.randint(1, 2**21) <= (space_gem_luck * space_gem_multiplier):
+        if random.random() < anarchy_corruption_chance:
+            output["commentary"] = ""
+            output["emote"] = values.corrupted_bread
+        else:
+            output["emote"] = random.choice(values.all_very_shinies)
+            output["commentary"] = "Extraordinarily shiny!"
+
+
+
     elif random.random() < corruption_chance: # Corrupted bread :|
         output["commentary"] = ""
         output["emote"] = values.corrupted_bread
@@ -657,7 +684,7 @@ def summarize_roll(
 
     last_header = True
     for key in result.keys():
-        if key not in ["commentary", "emote_text",  "roll_messages", "total_dough", "lifetime_dough", "value", "earned_dough", "individual_values"] + removals:
+        if key not in ["commentary", "emote_text",  "roll_messages", "total_dough", "lifetime_dough", "value", "earned_dough", "individual_values", "first_catch_found"] + removals:
             if result[key] == 0:
                 continue
 

@@ -146,7 +146,7 @@ class Bread_Account:
         lifetime_stats = [      "total_rolls", "earned_dough", "loaf_converter",
                                 "natural_1", "ten_breads",  
                                 "eleven_breads", "twelve_breads", "thirteen_breads", "fourteen_or_higher",
-                                "special_bread", "rare_bread", "unique", "chess_pieces", "shiny",
+                                "special_bread", "rare_bread", "unique", "chess_pieces", "shiny", "anarchy_pieces",
                                 "full_chess_set", "many_of_a_kind", 
                                 "lottery_win",
                                 "projects_completed", "trade_hubs_created", "full_anarchy_set"
@@ -452,9 +452,19 @@ class Bread_Account:
             64 # 64 is the cap.
         )
     
+    def get_space_gem_luck(
+            self: typing.Self,
+            roll_luck: int
+        ) -> float:
+        """Returns the luck of space gems. `roll_luck` is assumed to be `(loaf_converter + 1) * recipe_refinement_multiplier`"""
+        return min(
+            round(1 + store.Advanced_Exploration.get_contribution(self) * (roll_luck - self.get_recipe_refinement_multiplier()), 5),
+            16384 # 16384 is the cap.
+        )
+    
     def get_projects_credits_cap(self: typing.Self) -> int:
         """Returns the maximum amount of Trade Hub credits this account can have."""
-        return 2000 + self.get(store.Payment_Bonus.name) * 100
+        return int(2000 + self.get(store.Payment_Bonus.name) * store.Payment_Bonus.per_level)
     
     def get_daily_fuel_cap(self: typing.Self) -> int:
         """Returns the maximum amount of daily fuel this account can have. This is `350 * fuel_tank + 100` where `fuel_tank` is the fuel tank level."""

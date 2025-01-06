@@ -536,7 +536,10 @@ class Random_Chess_Piece(Store_Item):
 
     @classmethod
     def description(cls, user_account: account.Bread_Account) -> str:
-        return "Purchase a random chess piece which you do not currently have."
+        limit = user_account.get("max_random_chess_pieces_per_day")
+        purchased = user_account.get("random_chess_piece_bought")
+        
+        return f"Purchase a random chess piece which you do not currently have.\n{utility.smart_number(limit - purchased)} remaining today."
     
     @classmethod
     def find_max_purchasable_count(cls, user_account: account.Bread_Account) -> int:
@@ -606,6 +609,7 @@ class Random_Chess_Piece(Store_Item):
             else:
                 # now we have all our missing pieces, so buy random chess pieces
                 piece = random.choice(full_chess_set)
+                piece_text = piece.text
                 user_account.add_item_attributes(piece)
                 purchased_pieces[piece.text] += 1
                 amount -= 1
@@ -620,6 +624,11 @@ class Random_Chess_Piece(Store_Item):
                     out_str += f'{piece}: {purchased_pieces[piece]} \n'
 
         user_account.increment("random_chess_piece_bought", original_amount)
+
+        limit = user_account.get("max_random_chess_pieces_per_day")
+        purchased = user_account.get("random_chess_piece_bought")
+
+        out_str += f"\nYou can purchase {utility.smart_number(limit - purchased)} more today."
         
         return out_str
             
@@ -734,7 +743,10 @@ class Special_Bread_Pack(Store_Item):
 
     @classmethod
     def description(cls, user_account: account.Bread_Account) -> str:
-        return "A pack of 100 random special and rare breads."
+        limit = user_account.get("max_special_bread_packs_per_day")
+        purchased = user_account.get("special_bread_pack_bought")
+
+        return f"A pack of 100 random special and rare breads.\n{utility.smart_number(limit - purchased)} remaining today."
 
     @classmethod
     def find_max_purchasable_count(cls, user_account: account.Bread_Account) -> int:
@@ -812,6 +824,11 @@ class Special_Bread_Pack(Store_Item):
         
         user_account.increment("special_bread_pack_bought", amount)
             
+        limit = user_account.get("max_special_bread_packs_per_day")
+        purchased = user_account.get("special_bread_pack_bought")
+
+        output += f"\nYou can purchase {utility.smart_number(limit - purchased)} more today."
+        
         return output
 
 class Extra_Gamble(Store_Item):
@@ -1070,6 +1087,37 @@ class LC_booster(Custom_price_item):
         level = user_account.get(cls.name)
         return f"You are now at Recipe Refinement level {level}!"
 
+class Multiroller_Terminal(Custom_price_item):
+    name = "multiroller_terminal"
+    display_name = "Multiroller Terminal"
+
+    @classmethod
+    def get_costs(cls):
+        return [
+            [],
+            [(values.gem_green.text, 10)]
+        ]
+    
+    @classmethod
+    def description(cls, user_account: account.Bread_Account) -> str:
+        return "A handy little terminal that allows you to change the number of multirollers to use when rolling."
+    
+    @classmethod
+    def can_be_purchased(cls, user_account: account.Bread_Account) -> bool:
+        if not super().can_be_purchased(user_account): # If can_be_purchased from the parent class returns False.
+            return False
+        
+        # If the player has max multirollers.
+        if 2 ** user_account.get("multiroller") >= user_account.get_maximum_daily_rolls():
+            return True
+        
+        return False
+
+    @classmethod
+    def do_purchase(cls, user_account: account.Bread_Account):
+        super().do_purchase(user_account)
+        return "You have acquired the Multiroller Terminal, you can configure it with '$bread multiroller`."
+
 
 
 
@@ -1091,7 +1139,7 @@ class Test_Strategy_Item(Custom_price_item):
     
     
 
-normal_store_items = [Welcome_Packet, Daily_rolls, Loaf_Converter, Multiroller, Compound_Roller, Extra_Gamble, Random_Chess_Piece, Special_Bread_Pack, Roll_Summarizer, Black_Hole_Technology, Bling, LC_booster, ]
+normal_store_items = [Welcome_Packet, Daily_rolls, Loaf_Converter, Multiroller, Compound_Roller, Extra_Gamble, Random_Chess_Piece, Special_Bread_Pack, Roll_Summarizer, Black_Hole_Technology, Bling, LC_booster, Multiroller_Terminal]
 
 
 
@@ -1594,7 +1642,7 @@ class Bread_Rocket(Space_Shop_Item):
     def description(cls, user_account: account.Bread_Account) -> str:
         level = user_account.get(cls.name)
         
-        # (a1 locked) Tier 1: Access to space, Multiroller Terminal (all), Fuel Tank (all)
+        # (a1 locked) Tier 1: Access to space, Fuel Tank (all)
         #             Tier 2: Advanced Exploration (all), Fuel Research 1, Upgraded Telescopes 1, Engine Efficiency 1
         # (a2 locked) Tier 3: Upgraded Autopilot 1 (Galaxy travel), Fuel Research 2, Payment Bonus (all)
         #             Tier 4: Engine Efficiency 2, Fuel Research 3, Upgraded Telescopes 2
@@ -1660,7 +1708,7 @@ class Bread_Rocket(Space_Shop_Item):
             # Tier 0.
             "",
             # Tier 1.
-            "You can now view space via '$bread space map'.\nUse '$help bread space' to view a list of commands.\nIn addition, the Multiroller Terminal and Fuel Tank items have been added to the Space Shop.",
+            "You can now view space via '$bread space map'.\nUse '$help bread space' to view a list of commands.\nIn addition, the Fuel Tank item have been added to the Space Shop.",
             # Tier 2.
             "The Upgraded Telescopes, Advanced Exploration, Fuel Research, and Engine Efficiency shop items have been added to the Space Shop.",
             # Tier 3.
@@ -1772,7 +1820,7 @@ class Fuel_Tank(Space_Shop_Item):
     @classmethod
     def description(cls, user_account: account.Bread_Account) -> str:
         level = user_account.get(cls.name) + 1
-        return f"An upgraded fuel tank that increases your {values.daily_fuel.text} to {100 + cls.multiplier * level} {values.fuel.text}."
+        return f"An upgraded fuel tank that increases your {values.daily_fuel.text} to {utility.smart_number(100 + cls.multiplier * level)} {values.fuel.text}."
 
     @classmethod
     def get_cost_types(cls, user_account: account.Bread_Account, level: int = None) -> list[str | values.Emote]:
@@ -1878,37 +1926,6 @@ class Upgraded_Telescopes(Space_Shop_Item):
         
         return True
 
-class Multiroller_Terminal(Space_Shop_Item):
-    name = "multiroller_terminal"
-    display_name = "Multiroller Terminal"
-
-    @classmethod
-    def get_costs(cls):
-        return [
-            [],
-            [(values.gem_green.text, 10)]
-        ]
-    
-    @classmethod
-    def description(cls, user_account: account.Bread_Account) -> str:
-        return "A handy little terminal that allows you to change the number of multirollers to use when rolling."
-    
-    @classmethod
-    def can_be_purchased(cls, user_account: account.Bread_Account) -> bool:
-        if not super().can_be_purchased(user_account): # If can_be_purchased from the parent class returns False.
-            return False
-        
-        # If the player has max multirollers.
-        if 2 ** user_account.get("multiroller") >= 1000 + user_account.get_prestige_level() * 100:
-            return True
-        
-        return False
-
-    @classmethod
-    def do_purchase(cls, user_account: account.Bread_Account):
-        super().do_purchase(user_account)
-        return "You have acquired the Multiroller Terminal, you can configure it with '$bread multiroller`."
-
 class Advanced_Exploration(Space_Shop_Item):
     name = "advanced_exploration"
     display_name = "Advanced Exploration"
@@ -1954,7 +1971,7 @@ class Advanced_Exploration(Space_Shop_Item):
     @classmethod
     def description(cls, user_account: account.Bread_Account) -> str:
         level = user_account.get(cls.name) + 1
-        return f"Advanced exploration devices allowing the use of {round(cls.get_contribution(level) * 100, 4)}% of your Loaf Converters when rolling anarchy chess pieces, up to 63 Loaf Converters."
+        return f"Advanced exploration devices allowing the use of {round(cls.get_contribution(level) * 100, 4)}% of your Loaf Converters when rolling anarchy chess pieces and space gems. Up to 63 Loaf Converters for anarchy pieces and 16,383 for space gems."
 
     @classmethod
     def get_cost_types(cls, user_account: account.Bread_Account, level: int = None):
@@ -2019,14 +2036,16 @@ class Engine_Efficiency(Space_Shop_Item):
 class Payment_Bonus(Space_Shop_Item):
     name = "payment_bonus"
     display_name = "Payment Bonus"
+    
+    per_level = 1000 / 6
 
     @classmethod
     def cost(cls, user_account: account.Bread_Account) -> list[tuple[values.Emote, int]]:
         level = user_account.get(cls.name)
 
         dough = int(1.75 ** (level + 27))
-        bread = 1000 + 100 * level
-        corrupted_bread = 500 + 50 * level
+        bread = 100 + 100 * level
+        corrupted_bread = 50 + 50 * level
         chessatrons = 150 + 75 * level
 
         gems = {
@@ -2051,7 +2070,7 @@ class Payment_Bonus(Space_Shop_Item):
     @classmethod
     def description(cls, user_account: account.Bread_Account) -> str:
         level = user_account.get(cls.name) + 1
-        return f"Sketchy methods to increase your Trade Hub credibility giving you {utility.smart_number(2000 + level * 100)} {values.project_credits.text} to use per day."
+        return f"Sketchy methods to increase your Trade Hub credibility giving you {utility.smart_number(int(2000 + level * cls.per_level))} {values.project_credits.text} to use per day."
     
     @classmethod
     def can_be_purchased(cls, user_account: account.Bread_Account) -> bool:
@@ -2072,11 +2091,24 @@ class Payment_Bonus(Space_Shop_Item):
 
     @classmethod
     def get_cost_types(cls, user_account: account.Bread_Account, level: int = None):
-        return ["total_dough", values.normal_bread.text, values.corrupted_bread.text, values.chessatron.text, values.gem_blue.text]
+        user_level = user_account.get(cls.name) - 1 # This is run after it's bought, so subtract 1.
+        
+        gems = {
+            values.gem_green.text: 1,
+            values.gem_purple.text: 2,
+            values.gem_blue.text: 4,
+            values.gem_red.text: 8,
+        }
+
+        specific_gem = random.Random(f"{user_account.get_prestige_level()}-{user_level}").choice(list(gems.keys()))
+        
+        print(specific_gem)
+        
+        return ["total_dough", values.normal_bread.text, values.corrupted_bread.text, values.chessatron.text, specific_gem]
     
     @classmethod
     def max_level(cls, user_account: account.Bread_Account = None) -> int | None:
-        return 20
+        return 12
 
     @classmethod
     def get_requirement(
@@ -2102,7 +2134,7 @@ class Payment_Bonus(Space_Shop_Item):
         super().do_purchase(user_account)
         return f"Through some shady business practices you have gotten another {values.project_credits.text} bonus!\nThis is bonus number {user_account.get(cls.name)} for you, your {values.project_credits.text} will be available tomorrow."
 
-space_shop_items = [Bread_Rocket, Upgraded_Autopilot, Fuel_Tank, Fuel_Research, Upgraded_Telescopes, Multiroller_Terminal, Advanced_Exploration, Engine_Efficiency, Payment_Bonus]
+space_shop_items = [Bread_Rocket, Upgraded_Autopilot, Fuel_Tank, Fuel_Research, Upgraded_Telescopes, Advanced_Exploration, Engine_Efficiency, Payment_Bonus]
 
 
 
@@ -2206,7 +2238,7 @@ class Gambit_shop_Item(Custom_price_item):
 
     @classmethod
     def description(cls, user_account: account.Bread_Account) -> str:
-        return f"Boosts the dough you gain from a {cls.boost_item.text} by {cls.boost_amount}."
+        return f"Boosts the dough you gain from a {cls.boost_item.text} by {utility.smart_number(cls.boost_amount)}."
     
     @classmethod
     def get_cost_types(cls, user_account: account.Bread_Account, level: int = None):
@@ -2477,6 +2509,81 @@ class Gambit_Shop_Gem_Gold(Gambit_shop_Item):
     boost_amount = 5000
     raw_cost = [(values.gem_red.text, 160), (values.gem_blue.text, 80), (values.gem_purple.text, 40), (values.gem_green.text, 20), (values.gem_gold.text, 10)]
 
+# Space gems.
+
+class Gambit_Shop_Gem_Pink(Gambit_shop_Item):
+    name = "gambit_shop_gem_pink"
+    display_name = "Rose Quartz Crown"
+    level_required = 4
+    boost_item = values.gem_pink
+    boost_amount = 6_400_000
+    raw_cost = [(values.gem_red.text, 320), (values.gem_blue.text, 160), (values.gem_purple.text, 80), (values.gem_green.text, 40), (values.gem_gold.text, 20), (values.gem_pink.text, 5)]
+
+    @classmethod
+    def can_be_purchased(cls, user_account):
+        if not super().can_be_purchased(user_account):
+            return False
+        
+        if user_account.get_space_level() < 1:
+            return False
+        
+        return True
+
+class Gambit_Shop_Gem_Orange(Gambit_shop_Item):
+    name = "gambit_shop_gem_orange"
+    display_name = "Topaz Pendant"
+    level_required = 4
+    boost_item = values.gem_orange
+    boost_amount = 6_400_000
+    raw_cost = [(values.gem_red.text, 640), (values.gem_blue.text, 320), (values.gem_purple.text, 160), (values.gem_green.text, 80), (values.gem_gold.text, 40), (values.gem_pink.text, 10), (values.gem_orange.text, 5)]
+
+    @classmethod
+    def can_be_purchased(cls, user_account):
+        if not super().can_be_purchased(user_account):
+            return False
+        
+        if user_account.get_space_level() < 1:
+            return False
+        
+        return True
+
+class Gambit_Shop_Gem_Cyan(Gambit_shop_Item):
+    name = "gambit_shop_gem_cyan"
+    display_name = "Aquamarine Locket"
+    level_required = 4
+    boost_item = values.gem_cyan
+    boost_amount = 6_400_000
+    raw_cost = [(values.gem_red.text, 1280), (values.gem_blue.text, 640), (values.gem_purple.text, 320), (values.gem_green.text, 160), (values.gem_gold.text, 80), (values.gem_pink.text, 20), (values.gem_orange.text, 10), (values.gem_cyan.text, 5)]
+
+    @classmethod
+    def can_be_purchased(cls, user_account):
+        if not super().can_be_purchased(user_account):
+            return False
+        
+        if user_account.get_space_level() < 1:
+            return False
+        
+        return True
+
+class Gambit_Shop_Gem_White(Gambit_shop_Item):
+    name = "gambit_shop_gem_white"
+    display_name = "Quartz Bracelet"
+    level_required = 4
+    boost_item = values.gem_white
+    boost_amount = 6_400_000
+    raw_cost = [(values.gem_red.text, 2560), (values.gem_blue.text, 1280), (values.gem_purple.text, 640), (values.gem_green.text, 320), (values.gem_gold.text, 160), (values.gem_pink.text, 40), (values.gem_orange.text, 20), (values.gem_cyan.text, 10), (values.gem_white.text, 5)]
+
+    @classmethod
+    def can_be_purchased(cls, user_account):
+        if not super().can_be_purchased(user_account):
+            return False
+        
+        if user_account.get_space_level() < 1:
+            return False
+        
+        return True
+
+
 ##########################################################################################
 
 class Gambit_Shop_Anarchy_Black_Pawn(Gambit_shop_Item):
@@ -2589,7 +2696,7 @@ gambit_shop_items = [
     Gambit_Shop_Bagel, Gambit_Shop_Doughnut, Gambit_Shop_Waffle, # Rare bread (level 1)
     Gambit_Shop_Black_Pawn, Gambit_Shop_Black_Knight, Gambit_Shop_Black_Bishop, Gambit_Shop_Black_Rook, Gambit_Shop_Black_Queen, Gambit_Shop_Black_King, # Black chess pieces (level 2)
     Gambit_Shop_White_Pawn, Gambit_Shop_White_Knight, Gambit_Shop_White_Bishop, Gambit_Shop_White_Rook, Gambit_Shop_White_Queen, Gambit_Shop_White_King, # White chess pieces (level 3)
-    Gambit_Shop_Gem_Red, Gambit_Shop_Gem_Blue, Gambit_Shop_Gem_Purple, Gambit_Shop_Gem_Green, Gambit_Shop_Gem_Gold, # Gems (level 4)
+    Gambit_Shop_Gem_Red, Gambit_Shop_Gem_Blue, Gambit_Shop_Gem_Purple, Gambit_Shop_Gem_Green, Gambit_Shop_Gem_Gold, Gambit_Shop_Gem_Pink, Gambit_Shop_Gem_Orange, Gambit_Shop_Gem_Cyan, # Gems (level 4)
     Gambit_Shop_Anarchy_Black_Pawn, Gambit_Shop_Anarchy_Black_Knight, Gambit_Shop_Anarchy_Black_Bishop, Gambit_Shop_Anarchy_Black_Rook, Gambit_Shop_Anarchy_Black_Queen, Gambit_Shop_Anarchy_Black_King, # Black anarchy pieces (level 5)
     Gambit_Shop_Anarchy_White_Pawn, Gambit_Shop_Anarchy_White_Knight, Gambit_Shop_Anarchy_White_Bishop, Gambit_Shop_Anarchy_White_Rook, Gambit_Shop_Anarchy_White_Queen, Gambit_Shop_Anarchy_White_King, # White anarchy pieces (level 6)
 ]

@@ -323,6 +323,8 @@ class JSON_interface:
     
     ####################################
     #####      SETUP
+    
+    bread_cog: Bread_cog = None
 
     file_path = "bread_data.json"
 
@@ -832,6 +834,7 @@ class Bread_cog(commands.Cog, name="Bread"):
         self.daily_task.start()
 
         bot.json_interface = self.json_interface
+        self.json_interface.bread_cog = self
 
     def cog_unload(self: typing.Self):
         self.daily_task.cancel()
@@ -1121,7 +1124,8 @@ class Bread_cog(commands.Cog, name="Bread"):
         pass
     
     @bread.command(
-        hidden=True,
+        hidden = True,
+        brief = "Shows this message."
     )
     async def help(self, ctx, *, subcommand: typing.Optional[str] = commands.parameter(description = "A subcommand to get the help for.")):
         if subcommand is None:
@@ -2091,21 +2095,27 @@ loaf_converter""",
 
             # save the stats
             for key in result.keys():
-                if key not in ["commentary", "emote_text", "highest_roll", "roll_messages", "value", "individual_values"]:
+                if key not in ["commentary", "emote_text", "highest_roll", "roll_messages", "value", "individual_values", "first_catch_found"]:
                     # this will increase lifetime dough, total dough, and any special values
                     user_account.increment(key,result[key])
 
-                    #first catch boost
-                    if first_catch_remaining > 0 and key != values.normal_bread.text and key != values.corrupted_bread.text:
-                        emote = values.get_emote(key)
-                        if emote is not None:
-                            new_value = (emote.value + user_account.get_dough_boost_for_item(emote)) * 3
-                            if result.get("gambit_shop_bonus", 0) > 0:
-                                result["gambit_shop_bonus"] += user_account.get_dough_boost_for_item(emote) * 3
-                            # new_value = min(new_value, 100)
-                            result["value"] += user_account.add_dough_intelligent(new_value)
-                            first_catch_remaining -= 1
-                            print(f"first catch remaining: {first_catch_remaining}, emote: {emote.name}")
+                    # #first catch boost
+                    # if first_catch_remaining > 0 and key != values.normal_bread.text and key != values.corrupted_bread.text:
+                    #     emote = values.get_emote(key)
+                    #     if emote is not None:
+                    #         new_value = (emote.value + user_account.get_dough_boost_for_item(emote)) * 3
+                    #         if result.get("gambit_shop_bonus", 0) > 0:
+                    #             result["gambit_shop_bonus"] += user_account.get_dough_boost_for_item(emote) * 3
+                    #         # new_value = min(new_value, 100)
+                    #         result["value"] += user_account.add_dough_intelligent(new_value)
+                    #         first_catch_remaining -= 1
+                    #         print(f"first catch remaining: {first_catch_remaining}, emote: {emote.name}")
+            
+            for item, value in result.get("first_catch_found", []):
+                result["value"] += user_account.add_dough_intelligent(value)
+                first_catch_remaining -= 1
+
+                print(f"first catch remaining: {first_catch_remaining}, emote: {item.name}")
                             
             user_account.set("first_catch_remaining", first_catch_remaining)
             
@@ -5043,8 +5053,9 @@ anarchy - 1000% of your wager.
         if account.has("advanced_exploration"):
             rr = account.get_recipe_refinement_multiplier()
             lcs = account.get(store.Loaf_Converter.name)
-            amount = account.get_anarchy_piece_luck((lcs + 1) * rr) - 1
-            output.append(f"With {account.write_count('advanced_exploration', 'level')} of Advanced Exploration, {round(amount)} of your Loaf Converters are used to find anarchy chess pieces.")
+            amount_pieces = account.get_anarchy_piece_luck((lcs + 1) * rr) - 1
+            amount_gems = account.get_space_gem_luck((lcs + 1) * rr) - 1
+            output.append(f"{round(store.Advanced_Exploration.get_contribution(account.get(store.Advanced_Exploration.name)) * 100, 4)}% of your Loaf Converters can be used to find anarchy pieces and space gems due to having {account.write_count('advanced_exploration', 'level')} of Advanced Exploration. {round(amount_pieces)} of your Loaf Converters are used to find anarchy chess pieces and {utility.smart_number(round(amount_gems))} for space gems.")
 
         if account.has("engine_efficiency"):
             level = account.get('engine_efficiency')
@@ -5058,7 +5069,7 @@ anarchy - 1000% of your wager.
         output.append(f"Throughout your time in space you've created {utility.write_count(account.get('trade_hubs_created'), 'Trade Hub')} and helped contribute to {utility.write_count(account.get('projects_completed'), 'completed project')}.")
 
         # Add item amount information.
-        item_list = [values.corrupted_bread, values.anarchy_chessatron, values.anarchy_omega_chessatron]
+        item_list = [values.corrupted_bread, values.anarchy_chessatron, values.anarchy_omega_chessatron] + values.all_very_shinies
 
         item_line = []
         for item in item_list:
@@ -5849,7 +5860,7 @@ anarchy - 1000% of your wager.
             items_added = []
 
             for win_item, win_amount in reward:
-                amount = math.ceil(win_amount * (percent_cut - 0.2))
+                amount = math.ceil(win_amount * percent_cut)
                 player_account.increment(win_item, amount)
 
                 items_added.append(f"{utility.smart_number(amount)} {win_item}")
@@ -6474,6 +6485,8 @@ anarchy - 1000% of your wager.
         
         message_lines += "\n\n**# -- Projects --**"
 
+        suffix = "To contribute to a project, use '$bread space hub contribute [project number] [amount] [item]'\nYou can get more information about a project with '$bread space hub info [project number]'"
+
         for project_id, data in enumerate(hub_projects[:hub.project_count]):
             old = message_lines
 
@@ -6489,11 +6502,11 @@ anarchy - 1000% of your wager.
             )
             message_lines += "\n\n"
 
-            if len(message_lines) >= 2000:
+            if len(message_lines) >= (1900 - len(suffix)):
                 await ctx.reply(old)
                 message_lines = f"Continued:\n{message_lines[len(old):]}"
         
-        message_lines += "To contribute to a project, use '$bread space hub contribute [project number] [amount] [item]'\nYou can get more information about a project with '$bread space hub info [project number]'"
+        message_lines += suffix
 
         await ctx.reply(message_lines)
 
@@ -7142,7 +7155,7 @@ anarchy - 1000% of your wager.
 
     @bread.command(
         name="anarchy_chessatron", 
-        aliases=["anarchy_tron"],
+        aliases=["anarchy_tron", "atron"],
         help="Create Anarchy Chessatrons.\n\nAnarchy Chessatrons are affected by auto chessatron, which can be toggled with '$bread chessatron [on/off]'.",
         brief="Create Anarchy Chessatrons."
     )
@@ -7774,6 +7787,28 @@ anarchy - 1000% of your wager.
         # self.reset_internal(ctx.guild.id)
         self.reset_internal()
         await ctx.send("Done.")
+        
+    def get_highest_lifetime_dough(
+            self: typing.Self,
+            guild: typing.Union[discord.Guild, str, int]
+        ) -> dict[str, int]:
+        lifetime_results = {}
+        
+        all_accounts = self.json_interface.get_all_user_accounts(guild)
+        
+        for check_account in all_accounts:
+            prestige = check_account.get_prestige_level()
+            
+            account_sum = check_account.get("lifetime_dough") + check_account.get("earned_dough")
+            account_sum += check_account.get("gamble_winnings")
+            account_sum += self.get_portfolio_combined_value(check_account.user_id, guild)
+            
+            if str(prestige) not in lifetime_results:
+                lifetime_results[str(prestige)] = account_sum
+            elif account_sum > lifetime_results[str(prestige)]:
+                lifetime_results[str(prestige)] = account_sum
+            
+        return lifetime_results
 
     def reset_space_guild(
             self: typing.Self,
@@ -7785,6 +7820,9 @@ anarchy - 1000% of your wager.
         space_data = self.json_interface.get_space_data(guild=guild)
 
         space_data["day_seed"] = space.generate_galaxy_seed()
+        
+        # For the Stonk Exchange project it needs to have the highest lifetime_dough stat at the start of the tick for each ascension
+        space_data["lifetime_highest"] = self.get_highest_lifetime_dough(guild)
 
         # Reset project contributions.
         blank_projects = {
@@ -7980,14 +8018,19 @@ anarchy - 1000% of your wager.
         items.append(values.anarchy_omega_chessatron)
         items.append(values.fuel)
 
-        for emote in items:
-            account.set(emote.text, 50000000000)
-        
         for shop_item in store.all_store_items:
             if shop_item.max_level(account) is None:
                 continue
             
-            account.set(shop_item.name, shop_item.max_level(account))
+            if issubclass(shop_item, store.Gambit_shop_Item):
+                shop_item.do_purchase(account)
+            else:
+                account.set(shop_item.name, shop_item.max_level(account))
+
+
+        for emote in items:
+            account.set(emote.text, 50000000000)
+        
 
         account.set("fuel_tank", 40000)
 

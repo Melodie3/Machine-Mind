@@ -693,7 +693,9 @@ class Chess_bot(commands.Cog, name="Chess"):
         brief="Makes a chess move.",
         help="Takes Standard Algabraic Notation, such as 'e4'. Also accepts 'draw' and 'resign'."
     )
-    async def move(self, ctx, arg):
+    async def move(self, ctx, arg: typing.Optional[str]):
+        if arg is None:
+            arg = "generic move"
         #work_board = await self.get_board(ctx)
         current_game = self.get_game(ctx.channel)
         work_board = current_game.game_board
