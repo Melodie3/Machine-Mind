@@ -474,7 +474,7 @@ class Listening_Post(Trade_Hub_Upgrade):
             system_tile: space.SystemTradeHub
         ) -> list[tuple[str, int]]:
         return [
-            (values.anarchy_chess.text, 10), (values.anarchy_chessatron.text, 1), (values.gem_gold.text, 512)
+            (values.black_queen.text, 250), (values.white_queen.text, 250), (values.gem_gold.text, 250)
         ]
     
     @classmethod
@@ -521,7 +521,9 @@ class Nebula_Refinery(Trade_Hub_Upgrade):
             system_tile: space.SystemTradeHub
         ) -> list[tuple[str, int]]:
         return [
-            (values.anarchy_chess.text, 10), (values.anarchy_chessatron.text, 1), (values.gem_gold.text, 256)
+            (values.anarchy_chess.text, 25),
+            (values.gem_cyan.text, 20), (values.gem_orange.text, 20), (values.gem_pink.text, 20),
+            (values.gem_gold.text, 200), (values.gem_green.text, 400), (values.gem_purple.text, 800), (values.gem_blue.text, 1600), (values.gem_red.text, 3200)
         ]
 
     @classmethod
@@ -586,7 +588,8 @@ class Quantum_Catapult(Trade_Hub_Upgrade):
         ) -> list[tuple[str, int]]:
         tier = system_tile.get_upgrade_level(cls) + 1
         return [
-            (values.anarchy_chess.text, 10 * tier), (values.anarchy_chessatron.text, 1), (values.gem_gold.text, 512 * tier)
+            (values.anarchy_chess.text, 10 * tier), (values.anarchy_chessatron.text, 2), (values.gem_gold.text, 400 * tier), (values.chessatron.text, 300 * tier),
+            (values.black_knight.text, 500 * tier), (values.white_knight.text, 500 * tier)
         ]
     
     @classmethod
@@ -638,7 +641,7 @@ class Hyperlane_Registrar(Trade_Hub_Upgrade):
         ) -> list[tuple[str, int]]:
         tier = system_tile.get_upgrade_level(cls) + 1
         return [
-            (values.anarchy_chess.text, 10 * tier), (values.anarchy_chessatron.text, 1), (values.gem_gold.text, 256 * tier)
+            (values.gem_purple.text, 600 * tier), (values.chessatron.text, 250 * tier), (values.black_bishop.text, 100 * tier), (values.white_bishop.text, 100 * tier)
         ]
     
     @classmethod
@@ -695,7 +698,8 @@ class Shroud_Beacon(Trade_Hub_Upgrade):
         ) -> list[tuple[str, int]]:
         tier = system_tile.get_upgrade_level(cls) + 1
         return [
-            (values.anarchy_chess.text, 10 * tier), (values.anarchy_chessatron.text, 1), (values.gem_gold.text, 256 * tier)
+            (values.chessatron.text, 250 * tier), (values.gem_green.text, 250 * tier), (values.gem_red.text, 750 * tier),
+            (values.black_rook.text, 300 * tier), (values.white_rook.text, 300 * tier)
         ]
     
     @classmethod
@@ -747,7 +751,7 @@ class Dark_Matter_Resonance_Chamber(Trade_Hub_Upgrade):
             system_tile: space.SystemTradeHub
         ) -> list[tuple[str, int]]:
         return [
-            (values.anarchy_chess.text, 10), (values.anarchy_chessatron.text, 1), (values.gem_gold.text, 512)
+            (values.anarchy_chess.text, 20), (values.anarchy_chessatron.text, 1), (values.anarchy_black_pawn.text, 100), (values.anarchy_white_pawn.text, 100)
         ]
     
     @classmethod
@@ -794,7 +798,8 @@ class Black_Hole_Observatory(Trade_Hub_Upgrade):
             system_tile: space.SystemTradeHub
         ) -> list[tuple[str, int]]:
         return [
-            (values.anarchy_chess.text, 10), (values.anarchy_chessatron.text, 1), (values.gem_gold.text, 256)
+            (values.black_pawn.text, 400), (values.white_pawn.text, 400),
+            (values.gem_gold.text, 300), (values.gem_cyan.text, 30)
         ]
 
     @classmethod
@@ -857,7 +862,8 @@ class Storm_Repulsion_Array(Trade_Hub_Upgrade):
         ) -> list[tuple[str, int]]:
         tier = system_tile.get_upgrade_level(cls) + 1
         return [
-            (values.anarchy_chess.text, 10 * tier), (values.anarchy_chessatron.text, 1), (values.gem_gold.text, 512 * tier)
+            (values.black_king.text, 500 * tier), (values.white_king.text, 500 * tier),
+            (values.gem_pink.text, 50), (values.gem_orange.text, 50), (values.chessatron.text, 250 * tier)
         ]
     
     @classmethod
