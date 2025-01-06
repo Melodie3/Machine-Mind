@@ -464,7 +464,7 @@ class Bread_Account:
     
     def get_projects_credits_cap(self: typing.Self) -> int:
         """Returns the maximum amount of Trade Hub credits this account can have."""
-        return 2000 + self.get(store.Payment_Bonus.name) * 100
+        return int(2000 + self.get(store.Payment_Bonus.name) * store.Payment_Bonus.per_level)
     
     def get_daily_fuel_cap(self: typing.Self) -> int:
         """Returns the maximum amount of daily fuel this account can have. This is `350 * fuel_tank + 100` where `fuel_tank` is the fuel tank level."""
