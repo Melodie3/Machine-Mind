@@ -478,8 +478,6 @@ class SystemTradeHub(SystemTile):
         ) -> list[str]:
         day_seed = json_interface.get_day_seed(guild=guild)
 
-        print(get_trade_hub_project_weights(day_seed, self, user_account))
-
         return [
             "Object type: Trade Hub",
             f"Trade Hub level: {self.trade_hub_level}",

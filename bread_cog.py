@@ -8000,7 +8000,7 @@ anarchy - 1000% of your wager.
 
         account.set("prestige_level", 9)
 
-        items = values.all_shinies
+        items = values.overall_all_shinies
         
         items.extend(values.all_chess_pieces)
         items.extend(values.all_anarchy_pieces)
