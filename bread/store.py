@@ -1971,7 +1971,7 @@ class Advanced_Exploration(Space_Shop_Item):
     @classmethod
     def description(cls, user_account: account.Bread_Account) -> str:
         level = user_account.get(cls.name) + 1
-        return f"Advanced exploration devices allowing the use of {round(cls.get_contribution(level) * 100, 4)}% of your Loaf Converters when rolling anarchy chess pieces and space gems. Up to 63 Loaf Converters for anarchy pieces and 16,383 for space gems."
+        return f"Advanced exploration devices allowing the use of {round(cls.get_contribution(level) * 100, 4)}% of your Loaf Converters when rolling anarchy chess pieces and {round(cls.get_contribution(level) * 2500, 4)}% for space gems. Up to 63 Loaf Converters for anarchy pieces and 16,383 for space gems."
 
     @classmethod
     def get_cost_types(cls, user_account: account.Bread_Account, level: int = None):

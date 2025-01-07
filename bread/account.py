@@ -458,7 +458,7 @@ class Bread_Account:
         ) -> float:
         """Returns the luck of space gems. `roll_luck` is assumed to be `(loaf_converter + 1) * recipe_refinement_multiplier`"""
         return min(
-            round(1 + store.Advanced_Exploration.get_contribution(self) * (roll_luck - self.get_recipe_refinement_multiplier()), 5),
+            round(1 + 25 * store.Advanced_Exploration.get_contribution(self) * (roll_luck - self.get_recipe_refinement_multiplier()), 5),
             16384 # 16384 is the cap.
         )
     
