@@ -5057,8 +5057,8 @@ anarchy - 1000% of your wager.
             amount_pieces = account.get_anarchy_piece_luck((lcs + 1) * rr) - 1
             amount_gems = account.get_space_gem_luck((lcs + 1) * rr) - 1
             output.append(f"With {account.write_count('advanced_exploration', 'level')} of Advanced Exploration you have the following:")
-            output.append(f"   {amount_pieces} ({amount_pieces}, {round(multiplier * 100, 4)}%) of your Loaf Converters are used to find anarchy pieces.")
-            output.append(f"   {utility.smart_number(round(amount_gems))} ({utility.smart_number(amount_gems)}, {round(multiplier * 2500, 4)}%) of your Loaf Converters are used to find space gems.")
+            output.append(f"   {round(amount_pieces)} ({round(amount_pieces, 5)}, {round(multiplier * 100, 4)}%) of your Loaf Converters are used to find anarchy pieces.")
+            output.append(f"   {utility.smart_number(round(amount_gems))} ({utility.smart_number(round(amount_gems, 5))}, {round(multiplier * 2500, 4)}%) of your Loaf Converters are used to find space gems.")
 
         if account.has("engine_efficiency"):
             level = account.get('engine_efficiency')
