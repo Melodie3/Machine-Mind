@@ -1444,7 +1444,7 @@ class Beta_Minus(Project):
 
         return [
             (values.gem_gold.text, amount_1 * 20),
-            (values.base_bread.text, amount_1 * 200)
+            (values.normal_bread.text, amount_1 * 200)
         ]
     
     @classmethod
