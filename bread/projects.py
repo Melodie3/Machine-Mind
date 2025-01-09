@@ -1458,7 +1458,7 @@ class Beta_Minus(Project):
         amount_1 = rng.randint(6, 15)
 
         return [
-            (rng.choice(values.all_very_shinies).text, amount_1 * 10)
+            (rng.choice(values.all_very_shinies).text, amount_1 * 5)
         ]
 
 class Anarchy_Tax_Evasion(Project):
