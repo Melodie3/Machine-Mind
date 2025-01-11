@@ -5110,8 +5110,7 @@ anarchy - 1000% of your wager.
         output.append(f"Out of your {sn(daily_fuel_cap)} {values.daily_fuel.text} you have {sn(account.get('daily_fuel'))} remaining.")
         output.append(f"From your {sn(project_credits_cap)} daily {values.project_credits.text} you have {sn(account.get('hub_credits'))} remaining.")
 
-        if account.has(values.anarchy_omega_chessatron.text):
-            output.append(f"With {utility.write_count(account.get(values.anarchy_omega_chessatron.text), 'Anarchy Omega Chessatron')} you get {sn(account.get_anarchy_chessatron_dough_amount(True))} for each new anarchy chessatron.")
+        output.append(f"With {utility.write_count(account.get(values.anarchy_omega_chessatron.text), 'Anarchy Omega Chessatron')} you get {sn(account.get_anarchy_chessatron_dough_amount(True))} for each new anarchy chessatron.")
 
 
         output.append("")
