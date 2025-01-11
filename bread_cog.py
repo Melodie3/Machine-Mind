@@ -876,6 +876,86 @@ class Bread_cog(commands.Cog, name="Bread"):
             self.currently_interacting.remove(user_id)
         except ValueError:
             pass
+    
+    def describe_added_shop_items(
+            self: typing.Self,
+            before: list | set,
+            after: list | set
+        ) -> str:
+        """Gives a description of added shop items based on a list of available shop items prior to something happening and a list for after it happened."""
+        difference = list(set(after) - set(before)) # What's in the end but not the start.
+        
+        added = ""
+        
+        if difference: # If it has any contents.
+            added = "\n\n*The "
+            
+            shop_data = {
+                "Bread Shop": [],
+                "Hidden Bakery": [],
+                "Gambit Shop": [],
+                "Space Shop": []
+            }
+            
+            for item in difference:
+                if item in store.normal_store_items:
+                    shop_data["Bread Shop"].append(item)
+                elif item in store.prestige_store_items:
+                    shop_data["Hidden Bakery"].append(item)
+                elif item in store.gambit_shop_items:
+                    shop_data["Gambit Shop"].append(item)
+                elif item in store.space_shop_items:
+                    shop_data["Space Shop"].append(item)
+            
+            def list_items(items: list) -> str:
+                joined = ", ".join([item.display_name for item in items])
+                
+                last_comma = joined.rsplit(",", 1)
+                
+                # Include the Oxford comma if the amount of items is not 2.
+                if len(items) == 2:
+                    return " and".join(last_comma)
+                else:
+                    return ", and".join(last_comma)
+
+            filtered = {name: contents for name, contents in shop_data.items() if contents}
+
+            # The goal is to have something that looks like this:
+            # The __, __, and __ shop items have been added to the Bread Shop, the __ and __ items to the Hidden Bakery, and the __ shop item to the Space Shop.
+            
+            for shop_index, data in enumerate(filtered.items()):
+                shop_name, items = data
+                
+                if shop_index != 0:
+                    if shop_index == len(filtered) - 1:
+                        added += ", and the "
+                    else:
+                        added += ", the "
+                
+                added += list_items(items)
+                
+                if shop_index == 0:
+                    added += " shop"
+                
+                added += " item"
+                
+                if len(items) > 1:
+                    added += "s"
+                
+                if shop_index == 0:
+                    if len(items) == 1:
+                        added += " has"
+                    else:
+                        added += " have"
+                    
+                    added += f" been added to the {shop_name}"
+                else:
+                    added += f" to the {shop_name}"
+            
+            added += ".*"
+        
+        return added
+    
 
     ########################################################################################################################
     #####      TASKS
@@ -2002,6 +2082,8 @@ loaf_converter""",
         if stored_rolls_remaining < 0:
             stored_rolls_remaining = 0
         
+        before_buyable = self.get_buyable_items(user_account, store.all_store_items)
+        
         ######
         ############################################################
 
@@ -2218,6 +2300,9 @@ loaf_converter""",
 
         if summarizer_commentary is not None:
             output_commentary += "\n\n" + summarizer_commentary
+        
+        after_buyable = self.get_buyable_items(user_account, store.all_store_items)
+        output_commentary += self.describe_added_shop_items(before_buyable, after_buyable)
 
         try:
             if output_commentary != "" and not output_commentary.isspace():
@@ -3057,10 +3142,6 @@ loaf_converter""",
 
                 #text += f"\n\nYou now have **{user_account.get('total_dough')} dough** remaining."
 
-            text += "\n\n" + cost_text
-
-            await ctx.reply(text)
-
         else: # item count above 1
 
             # why make a new reference to store.all_store_items? all_items is already set to that.
@@ -3122,10 +3203,20 @@ loaf_converter""",
             all_cost_types = item.get_cost_types(user_account)
             cost_text = describe_cost_list(all_cost_types)
 
-            text += "\n\n" + cost_text
+            # text += "\n\n" + cost_text
 
-            await ctx.reply(text)
+        ending_buyable = self.get_buyable_items(user_account, store.all_store_items)
+        
+        # If the item is set to not show what is now available, this variable will be False.
+        if item.show_available_when_bought:
+            text += self.describe_added_shop_items(
+                before = buyable_items,
+                after = ending_buyable
+            )
+            
+        text += "\n\n" + cost_text
 
+        await ctx.reply(text)
 
         # complete chessatron on this command
         if ctx.author.id in self.currently_interacting:
@@ -3652,6 +3743,8 @@ anarchy - 1000% of your wager.
         #     await ctx.reply("You don't have that much dough. I'll enter in the maximum amount for you.")
         #     await asyncio.sleep(1)
         #     amount = user_account.get("total_dough")
+        
+        before_buyable = self.get_buyable_items(user_account, store.all_store_items)
 
         user_account.increment("total_dough", -amount) 
         user_account.increment("daily_gambles", 1)
@@ -3732,29 +3825,34 @@ anarchy - 1000% of your wager.
                 
         except: 
             pass
+        
+        after_buyable = self.get_buyable_items(user_account, store.all_store_items)
+        append = self.describe_added_shop_items(before_buyable, after_buyable)
+        
         try: #try block because of potential messsage deletion.
             if result['result'].name == "horsey":
-                await ctx.reply("Sorry, you didn't win anything. Better luck next time.")
+                await ctx.reply("Sorry, you didn't win anything. Better luck next time." + append)
             elif result['result'].name in ["brick", "fide_brick", "brick_fide", "brick_gold"]:
                 try: # brick avoidance deterrant
                     response = "You found a brick. Please hold, delivering reward at high speed."
                     if result['result'].name == "brick_gold":
                         response += f" Looks like you'll be able to sell this one for {utility.smart_number(winnings)} dough."
+                    response += append
                     await ctx.reply(response)
                     await asyncio.sleep(2)
                 except:
                     pass 
                 await ctx.invoke(self.bot.get_command('brick'), member=ctx.author)
             else:
-                await ctx.reply(f"With a {winning_text}, you won {utility.smart_number(winnings)} dough.")
+                await ctx.reply(f"With a {winning_text}, you won {utility.smart_number(winnings)} dough." + append)
         
             daily_gambles = user_account.get_value_strict("daily_gambles")
             if daily_gambles == max_gambles:
-                await ctx.reply("That was all the gambling you can do today.")
+                await ctx.reply("That was all the gambling you can do today." + append)
 
             elif daily_gambles >= max_gambles-3:
                 #await ctx.reply("You can gamble one more time today.")
-                text= "You can gamble "+Bread_cog.write_number_of_times(max_gambles-daily_gambles)+" more today."
+                text= "You can gamble "+Bread_cog.write_number_of_times(max_gambles-daily_gambles)+" more today." + append
                 await ctx.reply(text)
         except:
             pass #only happens if original message was deleted.

@@ -42,6 +42,10 @@ class Store_Item:
     name = "generic_item"
     display_name = "Generic Item" # did you just say "generic excuse"??
     aliases = []
+    
+    show_available_when_bought = True
+    """Whether to show the "The __ shop item is now available." message when this item is bought.
+    This can be used to disable it on shop items that have their own version, and shop items where it isn't needed or would be kind of a mess."""
 
     @classmethod
     def cost(
@@ -1588,6 +1592,7 @@ class Space_Shop_Item(Custom_price_item):
 class Bread_Rocket(Space_Shop_Item):
     name = "space_level"
     display_name = "Bread Rocket"
+    show_available_when_bought = False
 
     @classmethod
     def get_costs(cls):
@@ -2163,6 +2168,7 @@ space_shop_items = [Bread_Rocket, Upgraded_Autopilot, Fuel_Tank, Fuel_Research, 
 class Gambit_Shop_Level(Custom_price_item):
     name = "gambit_shop_level"
     display_name = "Gambit Shop Level"
+    show_available_when_bought = False
 
     @classmethod
     def get_costs(cls):
