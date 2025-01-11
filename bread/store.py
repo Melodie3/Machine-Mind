@@ -1118,6 +1118,10 @@ class Multiroller_Terminal(Custom_price_item):
         super().do_purchase(user_account)
         return "You have acquired the Multiroller Terminal, you can configure it with '$bread multiroller`."
 
+    @classmethod
+    def get_cost_types(cls, user_account: account.Bread_Account, level: int = None):
+        return [values.gem_green.text]
+
 
 
 
