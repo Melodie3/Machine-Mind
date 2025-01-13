@@ -6434,7 +6434,7 @@ anarchy - 1000% of your wager.
                     system_y = create_y
                 )
 
-                await ctx.reply(f"Well done, you have created a Trade Hub at ({create_x}, {create_y})!")
+                await ctx.reply(f"Well done, you have created a Trade Hub at ({create_x}, {create_y}) in ({galaxy_x}, {galaxy_y})!")
                 return
 
             cost = projects.Trade_Hub.get_price_description(day_seed, hub)
