@@ -5312,6 +5312,71 @@ anarchy - 1000% of your wager.
 
         if content is None:
             content = ""
+        if map_type is None:
+            map_type = "system"
+            
+        dict_settings = {}
+        
+        other_settings = ctx.message.content.split(" " + map_type + " ", 1)[-1].split(" ")
+            
+        # Check to make sure the player is able to get the full map.
+        if map_type == "full" or map_type == "f":
+            hub_tile = user_account.get_system_tile(json_interface=self.json_interface) # type: space.SystemTradeHub
+
+            if hub_tile.type != "trade_hub":
+                return await ctx.reply("You currently do not have the ability to read and analyze map data from the communication network.\nBeing on a Trade Hub with the Offspring Outlook upgrade will allow you to read and analyze the data.")
+            
+            if hub_tile.get_upgrade_level(projects.Offspring_Outlook) < 1:
+                return await ctx.reply("This Trade Hub doesn't have the required upgrades to be able to read and analyze the map data from the communication network.")
+
+            full_x = None
+            full_y = None
+            
+            try:
+                full_x = parse_int(other_settings[0])
+                full_y = parse_int(other_settings[1])
+            except (ValueError, KeyError):
+                pass # It failed to parse, so it's probably intended to be something.
+            
+            bubble_data = space.generate_trade_hub_bubbles(
+                json_interface = self.json_interface,
+                ascension = user_account.get_prestige_level(),
+                guild = ctx.guild
+            )
+            
+            if full_x is not None and full_y is not None:
+                galaxy_x, galaxy_y = user_account.get_galaxy_location(json_interface=self.json_interface)
+                
+                full_point = 1 << (full_x + space.MAP_SIZE * full_y)
+                current_point = 1 << (galaxy_x + space.MAP_SIZE * galaxy_y)
+                
+                group = None
+                
+                for index, group_check in enumerate(bubble_data):
+                    if group_check & current_point:
+                        group = index
+                        break
+                
+                if group is None:
+                    # This should never be able to occur, but if it does then something has seriously gone wrong.
+                    # If this somehow does happen, send a (hopefully) funny message and raise an exception to be looked at later.
+                    await ctx.reply("You are nowhere.")
+                    raise TypeError(f"Hub bubble group is None for {galaxy_x, galaxy_y} when it shouldn't be.")
+                
+                if not bool(bubble_data[group] & full_point):
+                    return await ctx.reply("That point is not available in the current range of the communication network.")
+            
+                if not space.has_seen_tile(
+                        json_interface = self.json_interface,
+                        guild = ctx.guild,
+                        ascension = user_account.get_prestige_level(),
+                        xpos = full_x,
+                        ypos = full_y
+                    ):
+                    return await ctx.reply("That is in range of the communication network, however nobody has seen what is there and the communication network does not have the missing information.")
+            
+            # If we're going through with doing the map, set the dictionary data.    
+            dict_settings["bubble_data"] = bubble_data
 
         ###############################
         before = time.time()
@@ -5319,7 +5384,9 @@ anarchy - 1000% of your wager.
         map_data = space.space_map(
             account = user_account,
             json_interface = self.json_interface,
-            mode = map_type
+            mode = map_type,
+            other_settings = other_settings,
+            dict_settings = dict_settings
         )
 
         after = time.time()
@@ -5335,6 +5402,69 @@ anarchy - 1000% of your wager.
 
             if not reduced_info:
                 suffix = "You can use '$bread space map' to view the map for the system you're in.\n\nUse '$bread space move galaxy' to move around on this map."
+        elif map_type == "full" or map_type == "f":
+            analyze_x = None
+            analyze_y = None
+            
+            if len(other_settings) >= 4:
+                try:
+                    analyze_x = parse_int(other_settings[2])
+                    analyze_y = parse_int(other_settings[3])
+                except ValueError:
+                    pass # It failed to parse, so it's probably intended to be something.
+            
+            if full_x is not None and full_y is not None:
+                if analyze_x is not None and analyze_y is not None:
+                    galaxy_seed = self.json_interface.get_ascension_seed(
+                        ascension_id = user_account.get_prestige_level(),
+                        guild = ctx.guild
+                    )
+                    
+                    galaxy_tile = space.get_galaxy_coordinate(
+                        json_interface = self.json_interface,
+                        guild = ctx.guild,
+                        galaxy_seed = galaxy_seed,
+                        ascension = user_account.get_prestige_level(),
+                        xpos = full_x,
+                        ypos = full_y,
+                        load_data = True
+                    )
+                    
+                    if galaxy_tile.system:
+                        analyze_point = galaxy_tile.get_system_tile(
+                            json_interface = self.json_interface,
+                            system_x = analyze_x,
+                            system_y = analyze_y
+                        )
+                        
+                        analysis_lines = analyze_point.get_analysis(
+                            guild = ctx.guild,
+                            json_interface = self.json_interface,
+                            user_account = user_account,
+                            detailed = True # Full analysis is always detailed.
+                        )
+                    else:
+                        analysis_lines = ["There is nothing here."]
+                        
+                    line_emoji = ":arrow_forward:"
+
+                    for index, item in enumerate(analysis_lines):
+                        analysis_lines[index] = f"{line_emoji} {item}"
+                        
+                    prefix = "Full system analysis:"
+                    middle = f"Your current galaxy location: {user_account.get_galaxy_location(json_interface=self.json_interface)}.\nCorruption chance: {corruption_chance}%.\nHighlighted system: ({full_x}, {full_y})\nHighlighted point: ({analyze_x}, {analyze_y})"
+                    
+                    suffix = "Analysis:\n" + "\n".join(analysis_lines)
+                else:
+                    prefix = "Full system map:"
+                    middle = f"Your current galaxy location: {user_account.get_galaxy_location(json_interface=self.json_interface)}.\nCorruption chance: {corruption_chance}%.\nHighlighted system: ({full_x}, {full_y})"
+                    
+                    suffix = f"Use '$bread space map full {full_x} {full_y} <system x> <system y>' to analyze a point within this system."
+            else:
+                prefix = "Full galaxy map:"
+                middle = f"Your current galaxy location: {user_account.get_galaxy_location(json_interface=self.json_interface)}.\nCorruption chance: {corruption_chance}%."
+            
+                suffix = "Use '$bread space map full <galaxy x> <galaxy y>' to view a specific system."
         else:
             prefix = "System map:"
             middle = f"Your current galaxy location: {user_account.get_galaxy_location(json_interface=self.json_interface)}.\nYour current system location: {user_account.get_system_location()}.\nCorruption chance: {corruption_chance}%."
@@ -5345,15 +5475,15 @@ anarchy - 1000% of your wager.
         send_file = discord.File(map_data, filename="space_map.png")
         file_path = "attachment://space_map.png"
 
-        unfortunate_embed = discord.Embed( # It's unfortunate that we have to use one.
+        embed = discord.Embed(
             title = prefix,
             description = middle + "\n\n" + suffix,
             color=8884479,
         )
-        unfortunate_embed.set_image(url=file_path)
-        unfortunate_embed.set_footer(text=f"Map generated in {round(after - before, 3)} seconds.")
+        embed.set_image(url=file_path)
+        embed.set_footer(text=f"Map generated in {round(after - before, 3)} seconds.")
 
-        return await ctx.reply(content, embed=unfortunate_embed, file=send_file)
+        return await ctx.reply(content, embed=embed, file=send_file)
 
 
     @bread.command(
@@ -5676,7 +5806,7 @@ anarchy - 1000% of your wager.
         message = ""
 
         if existing["level"] == 2 or existing["level"] == 4:
-            message = f"This Trade Hub is now able to relay signals from the Trade Hub network up to {store.trade_hub_distances[existing['level']]} tiles away!"
+            message = f"This Trade Hub is now able to relay trade signals from the Trade Hub network up to {store.trade_hub_distances[existing['level']]} tiles away!"
         elif existing["level"] == 3 or existing["level"] == 5:
             message = f"This Trade Hub now has {store.trade_hub_projects[existing['level']]} project slots!"
 
@@ -6644,7 +6774,8 @@ anarchy - 1000% of your wager.
             message_lines += "\n*New Trade Hub discovered! Trading using this trade hub is now available.*\n"
 
         message_lines += f"\nLevel: {hub.trade_hub_level}"
-        message_lines += f"\nTrade Hub network range: {store.trade_hub_distances[hub.trade_hub_level]}"
+        message_lines += f"\nTrade Hub network range: {hub.trade_distance}"
+        message_lines += f"\nCommunication network range: {hub.communication_distance}"
         message_lines += f"\nGalaxy location: ({hub.galaxy_xpos}, {hub.galaxy_ypos})"
         message_lines += f"\nSystem location: ({hub.system_xpos}, {hub.system_ypos})"
 
@@ -7953,21 +8084,6 @@ anarchy - 1000% of your wager.
         await ctx.send("Done.")
 
     ########################################################################################################################
-    #####      ADMIN SPACE_TICK
-
-    @admin.command(
-        brief="Runs the twice-per-day space tick.",
-        help = "Usage: bread admin space_tick"
-    )
-    @commands.check(verification.is_admin_check)
-    async def space_tick(self, ctx):
-        if await self.await_confirmation(ctx) is False:
-            return
-        
-        self.reset_space_all()
-        await ctx.send("Done.")
-
-    ########################################################################################################################
     #####      ADMIN DAILY_RESET
 
     @admin.command(
@@ -8509,7 +8625,7 @@ anarchy - 1000% of your wager.
     
     @admin.command(
         brief="Runs the space tick.",
-        help = "Usage: bread admin space_tick"
+        help = "Usage: bread admin run_space_tick"
     )
     @commands.check(verification.is_admin_check)
     async def run_space_tick(self, ctx):
@@ -8663,6 +8779,45 @@ anarchy - 1000% of your wager.
 
         self.json_interface.set_account(target, user_account, guild = ctx.guild.id)
 
+        await ctx.reply("Done.")
+
+    ########################################################################################################################
+    #####      ADMIN GENERATE_GALAXY
+
+    @admin.command(
+        brief="Gives an anarchy set to a member.",
+        help = "Usage: bread admin add_anarchy_set [optional member] [optional amount]"
+    )
+    @commands.check(verification.is_admin_check)
+    async def generate_galaxy(self, ctx,
+            ascension: typing.Optional[int]
+        ):
+        if ascension is None:
+            await ctx.reply("Please provide the ascension to generate the map for.")
+            return
+        
+        if not await self.await_confirmation(
+                ctx = ctx,
+                force = True,
+                message = "Are you really sure you want to do this? It will greatly increase the size of the database and will take some time to complete."
+            ):
+            return
+        
+        seed = self.json_interface.get_ascension_seed(ascension, ctx.guild.id)
+        
+        for x_coord in range(space.MAP_SIZE):
+            for y_coord in range(space.MAP_SIZE):
+                space.get_galaxy_coordinate(
+                    json_interface = self.json_interface,
+                    guild = ctx.guild.id,
+                    galaxy_seed = seed,
+                    ascension = ascension,
+                    xpos = x_coord,
+                    ypos = y_coord,
+                    load_data = True
+                )
+            print(f"Generating the entire a{ascension} galaxy as requested by {ctx.author.name}. Progress: {x_coord + 1}/256.")
+        
         await ctx.reply("Done.")
 
     ########################################################################################################################
@@ -8949,6 +9104,7 @@ anarchy - 1000% of your wager.
     
 
 bread_cog_ref = None
+
 bot_ref = None
 
 async def setup(bot: commands.Bot):

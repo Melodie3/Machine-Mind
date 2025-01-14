@@ -892,8 +892,102 @@ class Storm_Repulsion_Array(Trade_Hub_Upgrade):
         tier = system_tile.get_upgrade_level(cls)
         return f"An array of lasers enhancing the stability of rolls, decreasing corruption by {round((1 - cls.corruption_multipliers[tier]) * 100, 1)}%."
 
+class Offspring_Outlook(Trade_Hub_Upgrade):
+    internal = "offspring_outlook"
+    max_level = 1
+    unlock_level = 2
+    
+    @classmethod
+    def name(
+            cls,
+            day_seed: str,
+            system_tile: space.SystemTradeHub
+        ) -> str:
+        return "Offspring Outlook"
+
+    @classmethod
+    def description(
+            cls,
+            day_seed: str,
+            system_tile: space.SystemTradeHub
+        ) -> str:
+        return "A Trade Hub module allowing a docked ship to oversee and analyze map data within the Trade Hub's communication network."
+    
+    @classmethod
+    def completion(
+            cls: typing.Type[typing.Self],
+            day_seed: str,
+            system_tile: space.SystemTradeHub
+        ) -> str:        
+        return "The module is complete and can be used!\n*Use '$bread space map full' to view the galaxy map\nUse '$bread space map full [x coordinate] [y coordinate]' to view a system.*"
+    
+    @classmethod
+    def get_cost(
+            cls,
+            day_seed: str,
+            system_tile: space.SystemTradeHub
+        ) -> list[tuple[str, int]]:
+        return [
+            (values.normal_bread.text, 1000), (values.gem_gold.text, 75), (values.chessatron.text, 225)
+        ]
+    
+    @classmethod
+    def purchased_description(
+            cls: typing.Type[typing.Self],
+            day_seed: str,
+            system_tile: space.SystemTradeHub
+        ) -> str:
+        return "A module attached to the Trade Hub allowing access to the communication network, allowing the viewing of the full map."
+
+class Detection_Array(Trade_Hub_Upgrade):
+    internal = "detection_array"
+    max_level = 1
+    unlock_level = 1
+    
+    @classmethod
+    def name(
+            cls,
+            day_seed: str,
+            system_tile: space.SystemTradeHub
+        ) -> str:
+        return "Detection Array"
+
+    @classmethod
+    def description(
+            cls,
+            day_seed: str,
+            system_tile: space.SystemTradeHub
+        ) -> str:
+        return "High-powered suite of external sensors, capable of recieving communication network signals from 16 tiles away."
+    
+    @classmethod
+    def completion(
+            cls: typing.Type[typing.Self],
+            day_seed: str,
+            system_tile: space.SystemTradeHub
+        ) -> str:        
+        return "The sensors are up and running! This Trade Hub can now send and recieve communication network signals up to 16 tiles away!"
+    
+    @classmethod
+    def get_cost(
+            cls,
+            day_seed: str,
+            system_tile: space.SystemTradeHub
+        ) -> list[tuple[str, int]]:
+        return [
+            (values.gem_green.text, 50), (values.gem_gold.text, 10)
+        ]
+    
+    @classmethod
+    def purchased_description(
+            cls: typing.Type[typing.Self],
+            day_seed: str,
+            system_tile: space.SystemTradeHub
+        ) -> str:
+        return "A set of powerful sensors that increases this Trade Hub's range in the communication network."
+    
 all_trade_hub_upgrades = [Listening_Post, Nebula_Refinery, Quantum_Catapult, Hyperlane_Registrar, Shroud_Beacon,
-    Dark_Matter_Resonance_Chamber, Black_Hole_Observatory, Storm_Repulsion_Array
+    Dark_Matter_Resonance_Chamber, Black_Hole_Observatory, Storm_Repulsion_Array, Offspring_Outlook, Detection_Array
 ] # type: list[Trade_Hub_Upgrade]
 
 #######################################################################################################

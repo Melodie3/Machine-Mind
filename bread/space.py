@@ -6,6 +6,7 @@ import math
 import typing
 import random
 import io
+import sys
 
 # pip3 install pillow
 import PIL.Image as Image
@@ -19,6 +20,8 @@ import bread.utility as utility
 import bread.store as store
 
 import bread_cog
+
+sys.set_int_max_str_digits(2 ** 31 - 1)
 
 MAP_SIZE = 256
 
@@ -61,6 +64,47 @@ HUB_COLOR_TO_STRING = {
 # Swap the keys and values so you can go back and forth.
 HUB_STRING_TO_COLOR = dict(map(reversed, HUB_COLOR_TO_STRING.items()))
 
+# For the Trade Hub communication bouncing it needs bitboard masks for circles as well as the left and right halves of the map.
+MASK_LEFT = sum([(2 ** MAP_RADIUS - 1) << (n * MAP_SIZE) for n in range(MAP_SIZE)])
+MASK_RIGHT = MASK_LEFT << 128
+CIRCLE_8 = utility.dynamic_circle(8)
+CIRCLE_16 = utility.dynamic_circle(16)
+
+BASE_COMMUNICATION_RADIUS = 8
+
+def make_circle_mask(
+        x: int,
+        y: int,
+        radius: int = 8
+    ) -> int:
+    global circles
+    
+    x -= radius
+    y -= radius
+    
+    if radius == 8:
+        out = CIRCLE_8
+    else:
+        out = CIRCLE_16
+
+    if x > 0:
+        out <<= x
+    else:
+        out >>= abs(x)
+    
+    if y > 0:
+        out <<= y * 256
+    else:
+        out >>= abs(y) * 256
+    
+    # Remove any artifacts caused by wrapping around the left and right edges.
+    if x < 64:
+        out &= MASK_LEFT
+    elif x > 256 - 64:
+        out &= MASK_RIGHT
+    
+    return out
+
 ## Emojis:
 
 MAP_EMOJIS = {
@@ -82,6 +126,105 @@ MAP_EMOJIS = {
     "trade_hub": ":post_office:",
     "asteroid": ":rock:",
     "wormhole": ":hole:",
+}
+
+# These are stored as decimal numbers, but are read in binary.
+FULL_MAP_NUMBER_DATA = {
+    "0": 499878774318, # 0
+    "1": 150999273631, # 1
+    "2": 499324621087, # 2
+    "3": 1031900955710, # 3
+    "4": 75517364290, # 4
+    "5": 1082900120638, # 5
+    "6": 499858851374, # 6
+    "7": 1066261352584, # 7
+    "8": 499875628590, # 8
+    "9": 499878691873, # 9
+    "-": 32505856 # -
+}
+
+WORMHOLE_COLOR = (94, 9, 188)
+ASTEROID_COLOR = (128, 128, 128)
+TRADE_HUB_COLOR = (96, 96, 96)
+
+BORDER_REGULAR = (255, 0, 0)
+BORDER_NEBULA = (153, 0, 255)
+
+NEBULA_COLOR = (65, 25, 139)
+EXPLORED_COLOR = (29, 26, 54)
+UNEXPLORED_COLOR = (80, 79, 90)
+
+MAP_TEXT_BACKGROUND = (12, 11, 22)
+MAP_TEXT_COLOR = (255, 255, 255)
+
+STAR_COLORS_NO_HUB = {
+    "star1": (229, 173, 0),
+    "star2": (229, 173, 0),
+    "star3": (229, 173, 0),
+    "black_hole": (123, 93, 0),
+    "supermassive_black_hole": (123, 93, 0)
+}
+
+STAR_COLORS_WITH_HUB = {
+    "star1": (31, 163, 0),
+    "star2": (31, 163, 0),
+    "star3": (31, 163, 0),
+    "black_hole": (18, 98, 0),
+    "supermassive_black_hole": (18, 98, 0)
+}
+
+PLANET_COLORS = {
+    "bread": (252, 229, 205),
+    
+    "croissant": (249, 203, 156),
+    "flatbread": (249, 203, 156),
+    "stuffed_flatbread": (249, 203, 156),
+    "french_bread": (249, 203, 156),
+    "sandwich": (249, 203, 156),
+
+    "bagel": (246, 178, 107),
+    "doughnut": (246, 178, 107),
+    "waffle": (246, 178, 107),
+
+    "Bpawn": (183, 183, 183),
+    "Bknight": (183, 183, 183),
+    "Bbishop": (183, 183, 183),
+    "Brook": (183, 183, 183),
+    "Bqueen": (183, 183, 183),
+    "Bking": (183, 183, 183),
+
+    "Wpawn": (224, 224, 224),
+    "Wknight": (224, 224, 224),
+    "Wbishop": (224, 224, 224),
+    "Wrook": (224, 224, 224),
+    "Wqueen": (224, 224, 224),
+    "Wking": (224, 224, 224),
+
+    "gem_red": (234, 153, 153),
+    "gem_blue": (159, 197, 232),
+    "gem_purple": (180, 167, 214),
+    "gem_green": (182, 215, 168),
+    "gem_gold": (255, 242, 204),
+    "gem_pink": (219, 84, 166),
+    "gem_orange": (236, 89, 0),
+    "gem_cyan": (18, 134, 121),
+    "gem_white": (209, 209, 209),
+
+    "anarchy_chess": (224, 104, 104),
+
+    "Bpawnanarchy": (0, 23, 60),
+    "Bknightanarchy": (0, 23, 60),
+    "Bbishopanarchy": (0, 23, 60),
+    "Brookanarchy": (0, 23, 60),
+    "Buqeenanarchy": (0, 23, 60),
+    "Bkinganarchy": (0, 23, 60),
+
+    "Wpawnanarchy": (255, 156, 174),
+    "Wknightanarchy": (255, 156, 174),
+    "Wbishopanarchy": (255, 156, 174),
+    "Wrookanarchy": (255, 156, 174),
+    "Wqueenanarchy": (255, 156, 174),
+    "Wkinganarchy": (255, 156, 174),
 }
 
 EMOJI_PATHS = {
@@ -285,6 +428,8 @@ class SystemTile:
 
             trade_hub_level (typing.Optional[int], optional): The level of the trade hub that's on this tile. Defaults to None.
         """
+        self.type = "base"
+        
         self.galaxy_seed = galaxy_seed
 
         self.galaxy_xpos = galaxy_xpos
@@ -296,7 +441,7 @@ class SystemTile:
     
     # Optional for subclasses.
     def __str__(self: typing.Self):
-        return f"<SystemTile | system_x: {self.system_xpos} | system_y: {self.system_ypos} | galaxy_x: {self.galaxy_xpos} | galaxy_y: {self.galaxy_ypos}>"
+        return f"<SystemTile | Type: {self.type} | system_x: {self.system_xpos} | system_y: {self.system_ypos} | galaxy_x: {self.galaxy_xpos} | galaxy_y: {self.galaxy_ypos}>"
     
     # Optional for subclasses.
     def __repr__(self: typing.Self):
@@ -507,6 +652,14 @@ class SystemTradeHub(SystemTile):
     def color_str(self: typing.Self) -> str:
         return HUB_COLOR_TO_STRING[self.color]
     
+    @property
+    def trade_distance(self: typing.Self) -> int:
+        return store.trade_hub_distances[self.trade_hub_level]
+    
+    @property
+    def communication_distance(self: typing.Self) -> int:
+        return 8 * (1 + self.get_upgrade_level(projects.Detection_Array))
+    
     def get_emoji(self: typing.Self) -> str:
         return f"trade_hub_{self.color_str}"
     
@@ -519,15 +672,33 @@ class SystemTradeHub(SystemTile):
         ) -> list[str]:
         day_seed = json_interface.get_day_seed(guild=guild)
 
-        return [
+        out = [
             "Object type: Trade Hub",
             f"Trade Hub level: {self.trade_hub_level}",
-            f"Purchased upgrades: {sum(1 for upgrade in projects.all_trade_hub_upgrades if self.get_upgrade_level(upgrade))}",
-            f"Available upgrades: {len(self.get_available_upgrades(day_seed))}",
-            f"Trade Hub color: {self.color_str.title()}"
-            "Use '$bread space hub' while over the trade hub to interact with it."
         ]
+        
+        if detailed:
+            out.append("")
+            out.append("Purchased upgrades:")
+            
+            for upgrade in projects.all_trade_hub_upgrades:
+                if self.get_upgrade_level(upgrade):
+                    out.append(f"- {upgrade.name(day_seed, self)} level {self.get_upgrade_level(upgrade)}")
+                    
+            out.append("")
+            out.append("Available upgrades:")
+            
+            for upgrade in self.get_available_upgrades(day_seed):
+                out.append(f"- {upgrade.name(day_seed, self)}")
+                
+            out.append("")
+        else:
+            out.extend([f"Purchased upgrades: {sum(1 for upgrade in projects.all_trade_hub_upgrades if self.get_upgrade_level(upgrade))}", f"Available upgrades: {len(self.get_available_upgrades(day_seed))}"])
 
+        out.extend([f"Trade Hub color: {self.color_str.title()}", "Use '$bread space hub' while over the trade hub to interact with it."])
+        
+        return out
+    
     def get_upgrade_level(
             self: typing.Self,
             upgrade: str | projects.Trade_Hub_Upgrade,
@@ -1304,7 +1475,9 @@ def space_map(
         account: account.Bread_Account,
         json_interface: bread_cog.JSON_interface,
         mode: typing.Union[str, None] = None,
-        analyze_position: str = None
+        analyze_position: str = None,
+        other_settings: list[str] = None,
+        dict_settings: dict[any, any] = None
     ) -> io.BytesIO:
     """Generates the map of a system or galaxy that can be sent in Discord.
 
@@ -1313,10 +1486,17 @@ def space_map(
         json_interface: (bread_cog.JSON_interface): The JSON interface.
         mode (typing.Union[str, None], optional): The mode to use. 'galaxy' for the galaxy map. Defaults to the system map for anything else. Defaults to None.
         analyze_position (str, optional): The location to hover the analysis on. Example: `a1` and `e5`. If None is passed it will not add the analysis. Only works on the system map. Defaults to None.
+        other_settings (str, optional): Other settings provided by whoever is using the map. Defaults to None.
+        dict_settings (dict[Any, Any], optional): Internal settings to be provided to the maps. Defaults to None.
 
     Returns:
         io.BytesIO: BytesIO object corresponding to the generated image.
     """
+    if other_settings is None:
+        other_settings = []
+    if dict_settings is None:
+        dict_settings = {}
+        
     galaxy_seed = json_interface.get_ascension_seed(account.get_prestige_level(), guild=account.get("guild_id"))
 
     guild = account.get("guild_id")
@@ -1340,6 +1520,46 @@ def space_map(
             ascension = ascension,
             telescope_level = sensor_level,
             radius = radius
+        )
+    elif mode == "full" or mode == "f":
+        full_x = None
+        full_y = None
+        
+        analyze_x = None
+        analyze_y = None
+        
+        if len(other_settings) >= 2:
+            try:
+                full_x = bread_cog.parse_int(other_settings[0])
+                full_y = bread_cog.parse_int(other_settings[1])
+            except ValueError:
+                pass # It failed to parse, so it's probably intended to be something.
+        
+        if len(other_settings) >= 4:
+            try:
+                analyze_x = bread_cog.parse_int(other_settings[2])
+                analyze_y = bread_cog.parse_int(other_settings[3])
+            except ValueError:
+                pass # It failed to parse, so it's probably intended to be something.
+                
+        if full_x is not None and full_y is not None:
+            return full_map_system(  
+                json_interface = json_interface,
+                ascension = ascension,
+                guild = guild,
+                galaxy_x = full_x,
+                galaxy_y = full_y,
+                analyze_x = analyze_x,
+                analyze_y = analyze_y
+            )
+            
+        return full_map_galaxy(
+            json_interface = json_interface,
+            ascension = ascension,
+            guild = guild,
+            home_x = x_galaxy,
+            home_y = y_galaxy,
+            dict_settings = dict_settings
         )
     else:
         # Position within a system.
@@ -1699,7 +1919,460 @@ def system_map(
         
     return output
 
+def full_map_galaxy(
+        json_interface: bread_cog.JSON_interface,
+        ascension: int,
+        guild: typing.Union[discord.Guild, int, str],
+        home_x: int,
+        home_y: int,
+        render_grid: bool = True,
+        dict_settings: dict[any, any] = None
+    ) -> io.BytesIO:
+    if dict_settings is None:
+        dict_settings = {}
+    
+    bubble_data = dict_settings.get("bubbles", None)
+    
+    # Generate the data if it hasn't been passed.
+    if bubble_data is None:
+        bubble_data = generate_trade_hub_bubbles(
+            json_interface = json_interface,
+            ascension = ascension,
+            guild = guild
+        )
+    
+    bit_check = 1 << (home_x + 256 * home_y)
+    
+    for bubble in bubble_data:
+        if bubble & bit_check:
+            break
+    else:
+        # If there's no bubble found, use the entire map so at least something is shown.
+        bubble = MASK_LEFT & MASK_RIGHT
+    
+    map_data = json_interface.get_space_map_data(
+        ascension_id = ascension,
+        guild = guild
+    )
+    
+    hub_mask = generate_trade_hub_mask(
+        json_interface = json_interface,
+        ascension = ascension,
+        guild = guild
+    )
+        
+    def convert_index(
+            number_index: int,
+            place: int
+        ) -> tuple[int]:
+        """Converts an index in the map to a 0-65535 index."""
+        return number_index * 8192 + place
+
+    img = Image.new("RGB", (256, 256), UNEXPLORED_COLOR)
+
+    left = 256
+    right = 0
+    bottom = 256
+    top = 0
+
+    for seen_index, seen_number in enumerate(map_data.get("seen_tiles", [])):
+        for bit in utility.iterate_through_bits(seen_number):
+            index = convert_index(seen_index, bit)
             
+            if not bool((1 << index) & bubble):
+                continue
+            
+            bit_x, bit_y = index_to_coordinate(index)
+            
+            img.putpixel((bit_x, bit_y), EXPLORED_COLOR)
+            
+            if bit_x < left:
+                left = bit_x
+            if bit_x > right:
+                right = bit_x
+            if bit_y < bottom:
+                bottom = bit_y
+            if bit_y > top:
+                top = bit_y
+            
+    for seen_index, seen_number in enumerate(map_data.get("nebula_tiles", [])):
+        for bit in utility.iterate_through_bits(seen_number):
+            index = convert_index(seen_index, bit)
+            
+            if not bool((1 << index) & bubble):
+                continue
+            
+            bit_x, bit_y = index_to_coordinate(index)
+            
+            img.putpixel((bit_x, bit_y), NEBULA_COLOR)
+
+    for tile_key, info in map_data.get("system_data").items():
+        index = int(tile_key)
+        code = 1 << index
+        
+        if not bool(code & bubble):
+            continue
+        
+        x_coord, y_coord = index_to_coordinate(index)
+        
+        # Account for the 2x2 system.
+        if x_coord == 128 and y_coord == 128:
+            # The 2x2 system always spawns with a hub, so always use that color.
+            img.putpixel((127, 127), STAR_COLORS_WITH_HUB["supermassive_black_hole"])
+            img.putpixel((127, 128), STAR_COLORS_WITH_HUB["supermassive_black_hole"])
+            img.putpixel((128, 127), STAR_COLORS_WITH_HUB["supermassive_black_hole"])
+        
+        star_type = info.get("star_type", "star1")
+        
+        if code & hub_mask:
+            color_data = STAR_COLORS_WITH_HUB
+        else:
+            color_data = STAR_COLORS_NO_HUB
+        
+        img.putpixel((x_coord, y_coord), color_data[star_type])
+
+    ######################################
+    max_size = max(right - left, top - bottom)
+    
+    # as max_size goes to 240, this should go to 10
+    # but values below idk, 40? should be 50
+    
+    if max_size < 40:
+        size_multiplier = 50
+    else:
+        size_multiplier = 10 * (5 - int(((max_size - 40) * 4) / 200))
+    
+    size_multiplier = min(max(size_multiplier, 10), 50)
+
+    text_multiplier = size_multiplier // 10
+
+    img = img.crop((left, bottom, right + 1, top + 1))
+    img = img.resize((img.size[0] * size_multiplier, img.size[1] * size_multiplier), resample=Image.Resampling.NEAREST)
+
+    draw = ImageDraw.Draw(img)
+    
+    GRID_COLOR = (64, 64, 64)
+
+    if render_grid:
+        for x_coordinate in range(right - left):
+            draw.line([(x_coordinate * size_multiplier + (size_multiplier - 1) - (text_multiplier // 2), 0), (x_coordinate * size_multiplier + (size_multiplier - 1) - (text_multiplier // 2), img.size[1])], GRID_COLOR, width=text_multiplier)
+        
+        for y_coordinate in range(top - bottom):
+            draw.line([(0, y_coordinate * size_multiplier + (size_multiplier - 1) - (text_multiplier // 2)), (img.size[0], y_coordinate * size_multiplier + (size_multiplier - 1) - (text_multiplier // 2))], GRID_COLOR, width=text_multiplier)
+            
+    ######################################
+    # Render text.
+    
+    TEXT_WIDTH = 5
+
+    offset = (3 * (TEXT_WIDTH + 1) + 1) * text_multiplier
+
+    img_text = Image.new("RGBA", (img.size[0] + offset, img.size[1] + offset), MAP_TEXT_BACKGROUND)
+    img_text.paste(img, (offset, offset))
+    
+    def char_horizontal(xpos, ypos, num):
+        for bit in utility.iterate_through_bits(num):
+            for x in range(text_multiplier):
+                for y in range(text_multiplier):
+                    img_text.putpixel((text_multiplier * (4 - bit % 5) + x + xpos, text_multiplier * (7 - bit // 5) + y + ypos), MAP_TEXT_COLOR)
+
+    def draw_horizontal(vertical: int, number: int) -> None:
+        skip = 3 - len(str(number))
+        for char_index, char in enumerate(str(number)):
+            char_horizontal((char_index + skip) * text_multiplier * (TEXT_WIDTH + 1) + 1, vertical * size_multiplier + offset + 1, FULL_MAP_NUMBER_DATA[char])
+            
+    def char_vertical(xpos, ypos, num):
+        for bit in utility.iterate_through_bits(num):
+            for x in range(text_multiplier):
+                for y in range(text_multiplier):
+                    img_text.putpixel((text_multiplier * (7 - bit // 5) + x + xpos, text_multiplier * (bit % 5) + y + ypos), MAP_TEXT_COLOR)
+
+    def draw_vertical(horizontal: int, number: int) -> None:
+        for char_index, char in enumerate(str(number)):
+            char_vertical(horizontal * size_multiplier + offset + 1, (2 - (char_index)) * text_multiplier * (TEXT_WIDTH + 1) + 1, FULL_MAP_NUMBER_DATA[char])
+
+    for index, ypos in enumerate(range(top - bottom + 1)):
+        draw_horizontal(index, ypos + bottom)
+        
+    for index, xpos in enumerate(range(right - left + 1)):
+        draw_vertical(index, xpos + left)
+        
+    ######################################
+    # Render the "you are here" thingy.
+    
+    draw = ImageDraw.Draw(img_text)
+    
+    top_x = offset + size_multiplier * (home_x - left)
+    top_y = offset + size_multiplier * (home_y - bottom)
+    
+    base_width = int(size_multiplier // 2.5)
+    quarter = base_width // 4
+    
+    draw.rectangle(
+        [
+            (top_x - base_width, top_y - base_width),
+            (top_x + size_multiplier + base_width - size_multiplier // 10 - 1, top_y + size_multiplier + base_width - size_multiplier // 10 - 1)
+        ],
+        fill = None,
+        outline = GRID_COLOR,
+        width = base_width
+    )
+    
+    draw.rectangle(
+        [
+            (top_x - base_width + quarter, top_y - base_width + quarter),
+            (top_x + size_multiplier + base_width - quarter - size_multiplier // 10 - 1, top_y + size_multiplier + base_width - quarter - size_multiplier // 10 - 1)
+        ],
+        fill = None,
+        outline = (255, 0, 0),
+        width = base_width // 2
+    )
+    
+    ######################################
+
+    output = io.BytesIO()
+    img_text.save(output, "png")
+    output.seek(0)
+        
+    return output
+
+def full_map_system(
+        json_interface: bread_cog.JSON_interface,
+        ascension: int,
+        guild: typing.Union[discord.Guild, int, str],
+        galaxy_x: int,
+        galaxy_y: int,
+        analyze_x: int | None = None,
+        analyze_y: int | None = None,
+        render_grid: bool = True
+    ) -> io.BytesIO:
+    coordinate = get_galaxy_coordinate(
+        json_interface = json_interface,
+        guild = guild,
+        galaxy_seed = json_interface.get_ascension_seed(ascension, guild),
+        ascension = ascension,
+        xpos = galaxy_x,
+        ypos = galaxy_y,
+        load_data = True
+    )
+    system_data = coordinate.raw_system_data
+    
+    if system_data is None:
+        system_data = {}
+
+    radius = system_data.get("radius", 15) + 2
+
+    background_shade = 0
+
+    size = radius * 2 + 1
+    img = Image.new("RGB", (size, size), (background_shade, background_shade, background_shade, 255))
+    
+    if coordinate.system:
+        ascension_data = json_interface.get_space_ascension(ascension, guild)
+    
+        # This is all seen Trade Hubs.
+        trade_hub_data = ascension_data.get("trade_hubs", {})
+        
+        in_nebula = in_nebula_database(
+            json_interface = json_interface,
+            guild = guild,
+            ascension = ascension,
+            xpos = galaxy_x,
+            ypos = galaxy_y
+        )
+        
+        if in_nebula:
+            border_color = BORDER_NEBULA
+        else:
+            border_color = BORDER_REGULAR
+    
+        for xpos in range(size):
+            for ypos in range(size):
+                if math.hypot(xpos - radius, ypos - radius) >= radius:
+                    img.putpixel((xpos, ypos), border_color)
+
+        # Only include the non-hub colors here.
+        img.putpixel((radius, radius), STAR_COLORS_NO_HUB[system_data["star_type"]])
+
+        # Asteroids.
+        if system_data.get("asteroid_belt", False):
+            asteroid_added = []
+            distance = system_data.get("asteroid_belt_distance", 2)
+
+            for angle in range(360):
+                asteroid_x = distance * math.cos(math.radians(angle))
+                asteroid_y = distance * math.sin(math.radians(angle))
+
+                # Make sure it hasn't added an asteroid at this point yet.
+                if (asteroid_x, asteroid_y) in asteroid_added:
+                    continue
+                
+                img.putpixel((int(asteroid_x) + radius, int(asteroid_y) + radius), ASTEROID_COLOR)   
+
+                asteroid_added.append((asteroid_x, asteroid_y))
+        elif len(system_data.get("asteroid_belts", [])) > 0:
+            for distance in system_data.get("asteroid_belts", []):
+                asteroid_added = []
+
+                for angle in range(360):
+                    asteroid_x = distance * math.cos(math.radians(angle))
+                    asteroid_y = distance * math.sin(math.radians(angle))
+
+                    # Make sure it hasn't added an asteroid at this point yet.
+                    if (asteroid_x, asteroid_y) in asteroid_added:
+                        continue
+                    
+                    img.putpixel((int(asteroid_x) + radius, int(asteroid_y) + radius), ASTEROID_COLOR)   
+
+                    asteroid_added.append((asteroid_x, asteroid_y))
+
+        for planet_data in system_data.get("planets", []):
+            img.putpixel((round(planet_data.get("xpos", 1)) + radius, round(planet_data.get("ypos", 1)) + radius), PLANET_COLORS[values.get_emote(planet_data.get("type")).name])
+            
+        if system_data["wormhole"]["exists"]:
+            img.putpixel(
+                (
+                    system_data["wormhole"]["xpos"] + radius,
+                    system_data["wormhole"]["ypos"] + radius
+                ),
+                WORMHOLE_COLOR
+            )
+
+        # Trade hub.
+        if system_data.get("trade_hub", {}).get("exists", False) or trade_hub_data.get(f"{galaxy_x} {galaxy_y}", {}).get("level", 0) > 0:
+            if system_data.get("trade_hub", {}).get("exists", False):
+                trade_hub_x = system_data.get("trade_hub", {}).get("xpos", False)
+                trade_hub_y = system_data.get("trade_hub", {}).get("ypos", False)
+            else:
+                trade_hub_x, trade_hub_y = trade_hub_data.get(f"{galaxy_x} {galaxy_y}", {}).get("location", 0)
+                
+            img.putpixel((trade_hub_x + radius, trade_hub_y + radius), TRADE_HUB_COLOR)
+
+    ##################################################
+
+    size_multiplier = 50
+    text_multiplier = size_multiplier // 10
+
+    img = img.resize((img.size[0] * size_multiplier, img.size[1] * size_multiplier), resample=Image.Resampling.NEAREST)
+
+    draw = ImageDraw.Draw(img)
+
+    if render_grid:
+        grid_color = (64, 64, 64, 255)
+        
+        for coordinate in range(size):
+            draw.line([(coordinate * size_multiplier + (size_multiplier - 1) - (text_multiplier // 2), 0), (coordinate * size_multiplier + (size_multiplier - 1) - (text_multiplier // 2), img.size[1])], grid_color, width=text_multiplier)
+            draw.line([(0, coordinate * size_multiplier + (size_multiplier - 1) - (text_multiplier // 2)), (img.size[0], coordinate * size_multiplier + (size_multiplier - 1) - (text_multiplier // 2))], grid_color, width=text_multiplier)
+
+    ##################################################
+    TEXT_WIDTH = 5
+
+    offset = (3 * (TEXT_WIDTH + 1) + 1) * text_multiplier
+
+    img_text = Image.new("RGBA", (img.size[0] + offset, img.size[1] + offset), MAP_TEXT_BACKGROUND)
+    img_text.paste(img, (offset, offset))
+
+    def char_horizontal(xpos, ypos, num):
+        for bit in utility.iterate_through_bits(num):
+            for x in range(text_multiplier):
+                for y in range(text_multiplier):
+                    img_text.putpixel((text_multiplier * (4 - bit % 5) + x + xpos, text_multiplier * (7 - bit // 5) + y + ypos), MAP_TEXT_COLOR)
+
+    def draw_horizontal(vertical: int, number: int) -> None:
+        skip = 3 - len(str(number))
+        for char_index, char in enumerate(str(number)):
+            char_horizontal((char_index + skip) * text_multiplier * (TEXT_WIDTH + 1) + 1, vertical * size_multiplier + offset + 1, FULL_MAP_NUMBER_DATA[char])
+            
+    def char_vertical(xpos, ypos, num):
+        for bit in utility.iterate_through_bits(num):
+            for x in range(text_multiplier):
+                for y in range(text_multiplier):
+                    img_text.putpixel((text_multiplier * (7 - bit // 5) + x + xpos, text_multiplier * (bit % 5) + y + ypos), MAP_TEXT_COLOR)
+
+    def draw_vertical(horizontal: int, number: int) -> None:
+        for char_index, char in enumerate(str(number)):
+            char_vertical(horizontal * size_multiplier + offset + 1, (2 - (char_index)) * text_multiplier * (TEXT_WIDTH + 1) + 1, FULL_MAP_NUMBER_DATA[char])
+
+    for index, ypos in enumerate(range(size)):
+        draw_horizontal(index, ypos - radius)
+        
+    for index, xpos in enumerate(range(size)):
+        draw_vertical(index, xpos - radius)
+    
+    # Draw the analysis lines if needed.
+    if analyze_x is not None and analyze_y is not None:
+        draw = ImageDraw.Draw(img_text)
+        
+        # Limit where the analysis is.
+        analyze_x = min(max(analyze_x, -radius), radius)
+        analyze_y = min(max(analyze_y, -radius), radius)
+        
+        top_left_x = (analyze_x + radius) * size_multiplier + offset
+        top_left_y = (analyze_y + radius) * size_multiplier + offset
+        
+        # White lines.
+        draw.rectangle(
+            (
+                (top_left_x - 20, top_left_y - 20),
+                (top_left_x + size_multiplier + 14, top_left_y + size_multiplier + 14),
+            ),
+            fill = None,
+            outline = (255, 255, 255),
+            width = 20
+        )
+        
+        draw.line(
+            (
+                (top_left_x - 5, top_left_y + size_multiplier // 2 - 2),
+                (0, top_left_y + size_multiplier // 2 - 2),
+            ),
+            fill = (255, 255, 255),
+            width = 20
+        )
+        
+        draw.line(
+            (
+                (10, top_left_y + size_multiplier // 2 + 2),
+                (10, 0),
+            ),
+            fill = (255, 255, 255),
+            width = 20
+        )
+        
+        # Red lines.
+        draw.rectangle(
+            (
+                (top_left_x - 15, top_left_y - 15),
+                (top_left_x + size_multiplier + 9, top_left_y + size_multiplier + 9),
+            ),
+            fill = None,
+            outline = (255, 0, 0),
+            width = 10
+        )
+        
+        draw.line(
+            (
+                (top_left_x - 6, top_left_y + size_multiplier // 2 - 2),
+                (5, top_left_y + size_multiplier // 2 - 2),
+            ),
+            fill = (255, 0, 0),
+            width = 10
+        )
+        
+        draw.line(
+            (
+                (10, top_left_y + size_multiplier // 2 + 2),
+                (10, 0),
+            ),
+            fill = (255, 0, 0),
+            width = 10
+        )
+
+    output = io.BytesIO()
+    img_text.save(output, "png")
+    output.seek(0)
+        
+    return output
 
         
 
@@ -1709,6 +2382,98 @@ def system_map(
 ###################################################################################################################################
 ###################################################################################################################################
 ###################################################################################################################################
+
+def index_to_coordinate(index: int) -> tuple[int]:
+    """Converts an index in a map number to the (x, y) coordinate."""
+    return index % MAP_SIZE, index // MAP_SIZE
+
+def generate_trade_hub_bubbles(
+        json_interface: bread_cog.JSON_interface,
+        ascension: int,
+        guild: typing.Union[discord.Guild, int, str],
+    ) -> list[int]:
+    ascension_data = json_interface.get_space_ascension(ascension, guild)
+    
+    # This is all seen Trade Hubs.
+    trade_hub_data = ascension_data.get("trade_hubs", {})
+    
+    all_trade_hubs = []
+    have_increased_range = 0
+    
+    for key, data in trade_hub_data.items():
+        x, y = key.split(" ")
+        all_trade_hubs.append(int(x) + 256 * int(y))
+        
+        if data.get("upgrades", {}).get("detection_array", {}).get("level", 0) > 0:
+            have_increased_range |= 1 << (int(x) + 256 * int(y))
+    
+    # # Uncomment to use trade hubs that haven't been found yet. 
+    # # This shouldn't be enabled in-game but can be fun to look at in a testing environment.
+    # map_data = json_interface.get_space_map_data(ascension, guild)
+    # for key, data in map_data.get("system_data", {}).items():
+    #     if data.get("trade_hub", {}).get("exists", False):
+    #         if int(key) not in all_trade_hubs:
+    #             all_trade_hubs.append(int(key))
+    
+    ################################
+    
+    groups = []
+
+    for key in all_trade_hubs:
+        base_x, base_y = index_to_coordinate(key)
+        self_range = BASE_COMMUNICATION_RADIUS + (BASE_COMMUNICATION_RADIUS * bool((1 << key) & have_increased_range))
+            
+        added = []
+        for other_index, other_data in enumerate(groups):
+            for other_spot in other_data:
+                other_x, other_y = index_to_coordinate(other_spot)
+                other_range = BASE_COMMUNICATION_RADIUS + (BASE_COMMUNICATION_RADIUS * bool((1 << other_spot) & have_increased_range))
+                
+                if math.hypot(base_x - other_x, base_y - other_y) <= (self_range + other_range):
+                    groups[other_index].append(key)
+                    added.append(other_index)
+                    
+                    # If we've found one we don't need to continue searching this group.
+                    break
+        
+        if len(added) > 1:
+            copied = groups.copy()
+            fill = []
+            for group_id, group in enumerate(groups):
+                if group_id in added:
+                    fill.extend(group)
+            
+            # Remove duplicates.
+            fill = list(set(fill))
+            
+            for group_id in added:
+                copied.remove(groups[group_id])
+            
+            copied.append(fill)
+            
+            groups = copied
+        elif len(added) == 0:
+            groups.append([key])
+        
+    ################################
+
+    group_data = [0] * len(groups)
+
+    for key in all_trade_hubs:
+        base_x, base_y = index_to_coordinate(key)
+        
+        group = None
+        for gid, g in enumerate(groups):
+            if key in g:
+                group = gid
+                break
+        
+        if group is None:
+            continue
+        
+        group_data[group] |= make_circle_mask(int(base_x), int(base_y), radius=(BASE_COMMUNICATION_RADIUS + (BASE_COMMUNICATION_RADIUS * bool((1 << key) & have_increased_range))))
+    
+    return group_data
     
 def generate_galaxy_seed() -> str:
     """Generates a random new galaxy seed."""
@@ -1788,6 +2553,50 @@ def in_nebula_database(
     # Bitwise AND to get the bit on its own.
     return bool(seen_data[chunk] & 2 ** (tile_id % 8192))
 
+def generate_trade_hub_mask(
+        json_interface: bread_cog.JSON_interface,
+        guild: typing.Union[discord.Guild, int, str],
+        ascension: int
+    ) -> int:
+    """Generates an integer mask for every generated tile in the galaxy that has a Trade Hub on it.
+
+    Args:
+        json_interface (bread_cog.JSON_interface): The Bread Cog's JSON interface.
+        guild (typing.Union[discord.Guild, int, str]): The guild this is taking place in.
+        ascension (int): The ascension to get the data for.
+
+    Returns:
+        int: The generated mask.
+    """
+    ascension_data = json_interface.get_space_ascension(ascension, guild)
+    
+    # This is all seen Trade Hubs.
+    trade_hub_data = ascension_data.get("trade_hubs", {})
+    
+    map_data = json_interface.get_space_map_data(
+        ascension_id = ascension,
+        guild = guild
+    )
+    
+    out = 0
+    
+    for hub in trade_hub_data:
+        hub_x, hub_y = hub.split(" ")
+        
+        point = 1 << (int(hub_x) + 256 * int(hub_y))
+        out |= point
+    
+    for system_id, data in map_data.get("system_data", {}).items():
+        hub = data.get("trade_hub", {})
+        
+        if not hub.get("exists", False):
+            continue
+        
+        point = 1 << int(system_id)
+        out |= point
+        
+    return out
+        
 def get_system_raw_data(
         json_interface: bread_cog.JSON_interface,
         guild: typing.Union[discord.Guild, int, str],
