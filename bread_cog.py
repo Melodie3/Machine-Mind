@@ -6317,8 +6317,9 @@ anarchy - 1000% of your wager.
                 await ctx.reply(f"The Shroud Beacon has been configured to prioritize {new_state} projects.\nThe beacon takes some time to charge up, though, so it will only take effect the next time projects change.")
                 return
         
-        await ctx.reply("To configure the Shroud Beacon use '$bread space hub configure beacon <setting>'\nCurrent configuration: {}\nAvailable settings are as follows: '{}' or 'none' to disable it.".format(
+        await ctx.reply("To configure the Shroud Beacon use '$bread space hub configure beacon <setting>'\nCurrent configuration: {}\nQueued configuration: {}\nAvailable settings are as follows: '{}' or 'none' to disable it.".format(
             str(hub.get_setting("shroud_beacon_setting", None)).title(),
+            str(hub.get_setting("shroud_beacon_queue", None)).title(),
             '\', \''.join(all_configuration.keys())
         ))
     
