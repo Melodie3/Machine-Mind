@@ -759,13 +759,20 @@ class SystemWormhole(SystemTile):
             self: typing.Self,
             guild: typing.Union[discord.Guild, int, str],
             json_interface: bread_cog.JSON_interface,
+            user_account: account.Bread_Account,
             detailed: bool = False
         ) -> list[str]:
-        return [
-                "Object type: Wormhole",
-                "Use '$bread space move wormhole' when above.",
-                "Futher information: Unavailable."
-            ]
+        out = [
+            "Object type: Wormhole",
+            "Use '$bread space move wormhole' when above."
+        ]
+        
+        if detailed:
+            out.append(f"Link location: {self.wormhole_link_location}")
+        else:
+            out.append("Futher information: Unavailable.")
+        
+        return out
     
     def get_pair(self: typing.Self) -> SystemWormhole:
         """Returns a SystemWormhole object for this wormhole's pair."""
@@ -964,7 +971,7 @@ class GalaxyTile:
                 system_xpos = wormhole_data.get("xpos", None),
                 system_ypos = wormhole_data.get("ypos", None),
 
-                wormhole_link_location = wormhole_data.get("link_galaxy", None)
+                wormhole_link_location = tuple(wormhole_data.get("link_galaxy", None))
             )
         
         # If there's an asteroid belt, then add an object for the asteroids it contains.
