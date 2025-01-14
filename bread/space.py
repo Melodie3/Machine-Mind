@@ -389,6 +389,17 @@ for key, path in EMOJI_PATHS.items():
 
 print(f"Bread Space: Map image loading complete. Loaded images: {len(EMOJI_IMAGES)}/{len(EMOJI_PATHS)}.")
 
+print("Bread Space: Attempting to load and setup the map guide.")
+
+MAP_GUIDE_PATH = "images/map_guide.png"
+
+MAP_GUIDE = Image.open(MAP_GUIDE_PATH)
+
+MAP_GUIDE_BYTESIO = io.BytesIO()
+MAP_GUIDE.save(MAP_GUIDE_BYTESIO, "png")
+MAP_GUIDE_BYTESIO.seek(0)
+
+print("Bread Space: Map guide setup complete.")
 
 ########################################################################################
 ##### Base SystemTile class.

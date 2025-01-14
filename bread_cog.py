@@ -5328,6 +5328,13 @@ anarchy - 1000% of your wager.
             
             if hub_tile.get_upgrade_level(projects.Offspring_Outlook) < 1:
                 return await ctx.reply("This Trade Hub doesn't have the required upgrades to be able to read and analyze the map data from the communication network.")
+            
+            try:
+                if other_settings[0].lower() == "guide":
+                    send_file = discord.File(space.MAP_GUIDE_BYTESIO, filename="map_guide.png")
+                    return await ctx.reply(file=send_file)
+            except KeyError:
+                pass # If the setting was not provided a KeyError will be raised, which we can just ignore.
 
             full_x = None
             full_y = None
@@ -5459,12 +5466,12 @@ anarchy - 1000% of your wager.
                     prefix = "Full system map:"
                     middle = f"Your current galaxy location: {user_account.get_galaxy_location(json_interface=self.json_interface)}.\nCorruption chance: {corruption_chance}%.\nHighlighted system: ({full_x}, {full_y})"
                     
-                    suffix = f"Use '$bread space map full {full_x} {full_y} <system x> <system y>' to analyze a point within this system."
+                    suffix = f"Use '$bread space map full {full_x} {full_y} <system x> <system y>' to analyze a point within this system.\nUse '$bread space map full guide' to see a color guide."
             else:
                 prefix = "Full galaxy map:"
                 middle = f"Your current galaxy location: {user_account.get_galaxy_location(json_interface=self.json_interface)}.\nCorruption chance: {corruption_chance}%."
             
-                suffix = "Use '$bread space map full <galaxy x> <galaxy y>' to view a specific system."
+                suffix = "Use '$bread space map full <galaxy x> <galaxy y>' to view a specific system.\nUse '$bread space map full guide' to see a color guide."
         else:
             prefix = "System map:"
             middle = f"Your current galaxy location: {user_account.get_galaxy_location(json_interface=self.json_interface)}.\nYour current system location: {user_account.get_system_location()}.\nCorruption chance: {corruption_chance}%."
