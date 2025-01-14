@@ -365,8 +365,13 @@ class Bread_Account:
             values.chessatron.text,
             values.anarchy_chess.text,
             values.omega_chessatron.text,
+            values.gem_pink.text,
+            values.gem_orange.text,
+            values.gem_cyan.text,
             values.anarchy_chessatron.text,
-            values.anarchy_omega_chessatron.text
+            values.anarchy_omega_chessatron.text,
+            values.hotdog.text,
+            values.gem_white.text,
         ]
 
         bling_level = self.get("bling")

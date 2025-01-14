@@ -976,8 +976,13 @@ class Bling(Custom_price_item):
         (values.chessatron.text, 3),
         (values.anarchy_chess.text, 3),
         (values.omega_chessatron.text, 3),
+        (values.gem_pink.text, 3),
+        (values.gem_orange.text, 3),
+        (values.gem_cyan.text, 3),
         (values.anarchy_chessatron.text, 3),
-        (values.anarchy_omega_chessatron.text, 3)
+        (values.anarchy_omega_chessatron.text, 3),
+        (values.hotdog.text, 3),
+        (values.gem_white.text, 3),
     ]
 
     @classmethod
@@ -992,8 +997,13 @@ class Bling(Custom_price_item):
                 [(values.chessatron.text, 3)],
                 [(values.anarchy_chess.text, 3)],
                 [(values.omega_chessatron.text, 3)],
+                [(values.gem_pink.text, 3)],
+                [(values.gem_orange.text, 3)],
+                [(values.gem_cyan.text, 3)],
                 [(values.anarchy_chessatron.text, 3)],
                 [(values.anarchy_omega_chessatron.text, 3)],
+                [(values.hotdog.text, 3)],
+                [(values.gem_white.text, 3)],
     ]
 
     @classmethod

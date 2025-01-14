@@ -8464,9 +8464,14 @@ anarchy - 1000% of your wager.
             
         #     self.json_interface.set_custom_file("space", space_data, guild)
 
+        for guild in self.json_interface.all_guilds:
+            for user_account in self.json_interface.get_all_user_accounts(guild=guild):
+                if user_account.get(store.Bling.name) >= 9:
+                    user_account.increment(store.Bling.name, 3) # Account for the space gems being added.
+                    
+                    self.json_interface.set_account(user_account.user_id, user_account, guild)
+                    
         # When the rocket tiers were shifted and tier 3 was removed this'll correct everyone stats.
-        # for guild in self.json_interface.all_guilds:
-        #     for account in self.json_interface.get_all_user_accounts(guild=guild):
         #         space_level = account.get_space_level()
         #         if space_level >= 3:
         #             account.increment("space_level", -1)
