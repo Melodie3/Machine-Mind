@@ -2108,12 +2108,12 @@ class Bakery_Encounter(Project):
         ) -> list[tuple[str, int]]:
         rng = random.Random(utility.hash_args(day_seed, system_tile.tile_seed()))
 
-        amount_1 = rng.randint(10, 50)
+        amount_1 = rng.randint(5, 10)
 
         return [
-            (values.croissant.text, amount_1 * 10000),
-            (values.french_bread.text, amount_1 * 5000),
-            (rng.choice(values.all_rare_breads).text, amount_1 * 2500)
+            (values.croissant.text, amount_1 * 80000 - 300000),
+            (values.french_bread.text, amount_1 * 4000 - 150000),
+            (rng.choice(values.all_rare_breads).text, amount_1 * 20000 - 75000)
         ]
 
 class Corruption_Lab(Project):
