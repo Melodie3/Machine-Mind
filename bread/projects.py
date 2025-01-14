@@ -1300,7 +1300,7 @@ class Anarchy_Trading(Project):
         amount_1 = rng.randint(1, 3)
 
         return [
-            (values.anarchy_chessatron.text, 2 * amount_1)
+            (values.anarchy_chessatron.text, 4 * amount_1)
         ]
     
     @classmethod
@@ -1627,7 +1627,7 @@ class Anarchy_Tax_Evasion(Project):
         amount_1 = rng.randint(3, 6)
 
         return [
-            (values.omega_chessatron.text, amount_1 * 16)
+            (values.omega_chessatron.text, amount_1 * 4)
         ]
     
     @classmethod

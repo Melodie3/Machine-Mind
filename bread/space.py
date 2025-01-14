@@ -2320,6 +2320,7 @@ def get_trade_hub_project_categories(
         values.gem_pink.text: "gems",
         values.gem_orange.text: "gems",
         values.gem_cyan.text: "gems",
+        values.gem_white.text: "gems",
         # Misc items are not included so new items automatically get added to it.
     }
 
