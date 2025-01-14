@@ -274,6 +274,29 @@ def get_display_name(member: discord.Member) -> str:
     """Gets the display name of a discord.Member object."""
     return (member.global_name if (member.global_name is not None and member.name == member.display_name) else member.display_name)
 
+def dynamic_circle(radius: int) -> int:
+    """Generates a circle bitboard."""
+    covered = 1 << (radius + radius * 256)
+    
+    for angle in range(360):
+        for distance in range(1, radius + 1):
+            point_x = int(distance * math.cos(math.radians(angle)) + radius + 0.5)
+            point_y = int(distance * math.sin(math.radians(angle)) + radius + 0.5)
+            
+            covered |= 1 << (point_x + 256 * point_y)
+    
+    return covered
+    
+def iterate_through_bits(num: int) -> typing.Iterator[int]:
+    """Gives an iterator that iterates through the bit locations in an integer.
+    
+    >>> list(iterate_through_bits(13))
+    [0, 2, 3]"""
+    while num:
+        r = num & -num
+        yield r.bit_length() - 1
+        num ^= r
+
 def gen_embed(
         title: str, title_link: str = None,
         color: str | tuple[int, int, int] = "#8790ff", # 8884479

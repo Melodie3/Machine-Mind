@@ -33,7 +33,7 @@ moak_booster_multipliers = [1, 1.3, 1.7, 2.1, 2.8,3.7]
 # chessatron_shadow_booster_levels = [0, 5, 10, 15, 20]
 # shadow_gold_gem_luck_boost_levels = [0, 10, 20, 30, 40]
 
-trade_hub_distances = [0, 2, 4, 4, 6, 6]
+trade_hub_distances = [0, 2, 6, 6, 12, 12]
 trade_hub_squared = [n ** 2 for n in trade_hub_distances]
 
 trade_hub_projects = [0, 3, 3, 4, 4, 5]
@@ -42,6 +42,10 @@ class Store_Item:
     name = "generic_item"
     display_name = "Generic Item" # did you just say "generic excuse"??
     aliases = []
+    
+    show_available_when_bought = True
+    """Whether to show the "The __ shop item is now available." message when this item is bought.
+    This can be used to disable it on shop items that have their own version, and shop items where it isn't needed or would be kind of a mess."""
 
     @classmethod
     def cost(
@@ -972,8 +976,13 @@ class Bling(Custom_price_item):
         (values.chessatron.text, 3),
         (values.anarchy_chess.text, 3),
         (values.omega_chessatron.text, 3),
+        (values.gem_pink.text, 3),
+        (values.gem_orange.text, 3),
+        (values.gem_cyan.text, 3),
         (values.anarchy_chessatron.text, 3),
-        (values.anarchy_omega_chessatron.text, 3)
+        (values.anarchy_omega_chessatron.text, 3),
+        (values.hotdog.text, 3),
+        (values.gem_white.text, 3),
     ]
 
     @classmethod
@@ -988,8 +997,13 @@ class Bling(Custom_price_item):
                 [(values.chessatron.text, 3)],
                 [(values.anarchy_chess.text, 3)],
                 [(values.omega_chessatron.text, 3)],
+                [(values.gem_pink.text, 3)],
+                [(values.gem_orange.text, 3)],
+                [(values.gem_cyan.text, 3)],
                 [(values.anarchy_chessatron.text, 3)],
                 [(values.anarchy_omega_chessatron.text, 3)],
+                [(values.hotdog.text, 3)],
+                [(values.gem_white.text, 3)],
     ]
 
     @classmethod
@@ -1117,6 +1131,10 @@ class Multiroller_Terminal(Custom_price_item):
     def do_purchase(cls, user_account: account.Bread_Account):
         super().do_purchase(user_account)
         return "You have acquired the Multiroller Terminal, you can configure it with '$bread multiroller`."
+
+    @classmethod
+    def get_cost_types(cls, user_account: account.Bread_Account, level: int = None):
+        return [values.gem_green.text]
 
 
 
@@ -1584,6 +1602,7 @@ class Space_Shop_Item(Custom_price_item):
 class Bread_Rocket(Space_Shop_Item):
     name = "space_level"
     display_name = "Bread Rocket"
+    show_available_when_bought = False
 
     @classmethod
     def get_costs(cls):
@@ -2159,6 +2178,7 @@ space_shop_items = [Bread_Rocket, Upgraded_Autopilot, Fuel_Tank, Fuel_Research, 
 class Gambit_Shop_Level(Custom_price_item):
     name = "gambit_shop_level"
     display_name = "Gambit Shop Level"
+    show_available_when_bought = False
 
     @classmethod
     def get_costs(cls):
@@ -2696,7 +2716,7 @@ gambit_shop_items = [
     Gambit_Shop_Bagel, Gambit_Shop_Doughnut, Gambit_Shop_Waffle, # Rare bread (level 1)
     Gambit_Shop_Black_Pawn, Gambit_Shop_Black_Knight, Gambit_Shop_Black_Bishop, Gambit_Shop_Black_Rook, Gambit_Shop_Black_Queen, Gambit_Shop_Black_King, # Black chess pieces (level 2)
     Gambit_Shop_White_Pawn, Gambit_Shop_White_Knight, Gambit_Shop_White_Bishop, Gambit_Shop_White_Rook, Gambit_Shop_White_Queen, Gambit_Shop_White_King, # White chess pieces (level 3)
-    Gambit_Shop_Gem_Red, Gambit_Shop_Gem_Blue, Gambit_Shop_Gem_Purple, Gambit_Shop_Gem_Green, Gambit_Shop_Gem_Gold, Gambit_Shop_Gem_Pink, Gambit_Shop_Gem_Orange, Gambit_Shop_Gem_Cyan, # Gems (level 4)
+    Gambit_Shop_Gem_Red, Gambit_Shop_Gem_Blue, Gambit_Shop_Gem_Purple, Gambit_Shop_Gem_Green, Gambit_Shop_Gem_Gold, Gambit_Shop_Gem_Pink, Gambit_Shop_Gem_Orange, Gambit_Shop_Gem_Cyan, Gambit_Shop_Gem_White, # Gems (level 4)
     Gambit_Shop_Anarchy_Black_Pawn, Gambit_Shop_Anarchy_Black_Knight, Gambit_Shop_Anarchy_Black_Bishop, Gambit_Shop_Anarchy_Black_Rook, Gambit_Shop_Anarchy_Black_Queen, Gambit_Shop_Anarchy_Black_King, # Black anarchy pieces (level 5)
     Gambit_Shop_Anarchy_White_Pawn, Gambit_Shop_Anarchy_White_Knight, Gambit_Shop_Anarchy_White_Bishop, Gambit_Shop_Anarchy_White_Rook, Gambit_Shop_Anarchy_White_Queen, Gambit_Shop_Anarchy_White_King, # White anarchy pieces (level 6)
 ]

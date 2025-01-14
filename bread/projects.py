@@ -686,9 +686,9 @@ class Shroud_Beacon(Trade_Hub_Upgrade):
         ) -> str:
         tier = system_tile.get_upgrade_level(cls) + 1
         if tier >= 2:
-            return "The psionic beacon is now more powerful and is better at luring in specific projects.\n*Configure the beacon with '$bread space hub configure'.*"
+            return "The psionic beacon is now more powerful and is better at luring in specific projects.\n*Configure the beacon with '$bread space hub configure beacon'.*"
         
-        return "Incredible! The new psionic beacon has been installed and can be configured with '$bread space hub configure'!"
+        return "Incredible! The new psionic beacon has been installed and can be configured with '$bread space hub configure beacon'!"
     
     @classmethod
     def get_cost(
@@ -865,6 +865,23 @@ class Storm_Repulsion_Array(Trade_Hub_Upgrade):
             (values.black_king.text, 500 * tier), (values.white_king.text, 500 * tier),
             (values.gem_pink.text, 50), (values.gem_orange.text, 50), (values.chessatron.text, 250 * tier)
         ]
+
+    @classmethod
+    def is_available(
+            cls: typing.Type[typing.Self],
+            day_seed: str,
+            system_tile: space.SystemTradeHub
+        ) -> bool:
+        if not super().is_available(day_seed, system_tile):
+            return False
+        
+        # This one is only purchasable if the chance of corruption is not 0.
+        chance = space.get_corruption_chance(system_tile.galaxy_xpos - space.MAP_RADIUS, system_tile.galaxy_ypos - space.MAP_RADIUS)
+        
+        if chance == 0:
+            return False
+        
+        return True
     
     @classmethod
     def purchased_description(
@@ -875,8 +892,102 @@ class Storm_Repulsion_Array(Trade_Hub_Upgrade):
         tier = system_tile.get_upgrade_level(cls)
         return f"An array of lasers enhancing the stability of rolls, decreasing corruption by {round((1 - cls.corruption_multipliers[tier]) * 100, 1)}%."
 
+class Offspring_Outlook(Trade_Hub_Upgrade):
+    internal = "offspring_outlook"
+    max_level = 1
+    unlock_level = 2
+    
+    @classmethod
+    def name(
+            cls,
+            day_seed: str,
+            system_tile: space.SystemTradeHub
+        ) -> str:
+        return "Offspring Outlook"
+
+    @classmethod
+    def description(
+            cls,
+            day_seed: str,
+            system_tile: space.SystemTradeHub
+        ) -> str:
+        return "A Trade Hub module allowing a docked ship to oversee and analyze map data within the Trade Hub's communication network."
+    
+    @classmethod
+    def completion(
+            cls: typing.Type[typing.Self],
+            day_seed: str,
+            system_tile: space.SystemTradeHub
+        ) -> str:        
+        return "The module is complete and can be used!\n*Use '$bread space map full' to view the galaxy map\nUse '$bread space map full [x coordinate] [y coordinate]' to view a system.*"
+    
+    @classmethod
+    def get_cost(
+            cls,
+            day_seed: str,
+            system_tile: space.SystemTradeHub
+        ) -> list[tuple[str, int]]:
+        return [
+            (values.normal_bread.text, 1000), (values.gem_gold.text, 75), (values.chessatron.text, 225)
+        ]
+    
+    @classmethod
+    def purchased_description(
+            cls: typing.Type[typing.Self],
+            day_seed: str,
+            system_tile: space.SystemTradeHub
+        ) -> str:
+        return "A module attached to the Trade Hub allowing access to the communication network, allowing the viewing of the full map."
+
+class Detection_Array(Trade_Hub_Upgrade):
+    internal = "detection_array"
+    max_level = 1
+    unlock_level = 1
+    
+    @classmethod
+    def name(
+            cls,
+            day_seed: str,
+            system_tile: space.SystemTradeHub
+        ) -> str:
+        return "Detection Array"
+
+    @classmethod
+    def description(
+            cls,
+            day_seed: str,
+            system_tile: space.SystemTradeHub
+        ) -> str:
+        return "High-powered suite of external sensors, capable of recieving communication network signals from 16 tiles away."
+    
+    @classmethod
+    def completion(
+            cls: typing.Type[typing.Self],
+            day_seed: str,
+            system_tile: space.SystemTradeHub
+        ) -> str:        
+        return "The sensors are up and running! This Trade Hub can now send and recieve communication network signals up to 16 tiles away!"
+    
+    @classmethod
+    def get_cost(
+            cls,
+            day_seed: str,
+            system_tile: space.SystemTradeHub
+        ) -> list[tuple[str, int]]:
+        return [
+            (values.gem_green.text, 50), (values.gem_gold.text, 10)
+        ]
+    
+    @classmethod
+    def purchased_description(
+            cls: typing.Type[typing.Self],
+            day_seed: str,
+            system_tile: space.SystemTradeHub
+        ) -> str:
+        return "A set of powerful sensors that increases this Trade Hub's range in the communication network."
+    
 all_trade_hub_upgrades = [Listening_Post, Nebula_Refinery, Quantum_Catapult, Hyperlane_Registrar, Shroud_Beacon,
-    Dark_Matter_Resonance_Chamber, Black_Hole_Observatory, Storm_Repulsion_Array
+    Dark_Matter_Resonance_Chamber, Black_Hole_Observatory, Storm_Repulsion_Array, Offspring_Outlook, Detection_Array
 ] # type: list[Trade_Hub_Upgrade]
 
 #######################################################################################################
@@ -1300,7 +1411,7 @@ class Anarchy_Trading(Project):
         amount_1 = rng.randint(1, 3)
 
         return [
-            (values.anarchy_chessatron.text, 2 * amount_1)
+            (values.anarchy_chessatron.text, 4 * amount_1)
         ]
     
     @classmethod
@@ -1458,7 +1569,7 @@ class Beta_Minus(Project):
         amount_1 = rng.randint(6, 15)
 
         return [
-            (rng.choice(values.all_very_shinies).text, amount_1 * 10)
+            (rng.choice(values.all_very_shinies).text, amount_1 * 5)
         ]
 
 class Anarchy_Tax_Evasion(Project):
@@ -1627,7 +1738,7 @@ class Anarchy_Tax_Evasion(Project):
         amount_1 = rng.randint(3, 6)
 
         return [
-            (values.omega_chessatron.text, amount_1 * 16)
+            (values.omega_chessatron.text, amount_1 * 4)
         ]
     
     @classmethod
@@ -1997,12 +2108,12 @@ class Bakery_Encounter(Project):
         ) -> list[tuple[str, int]]:
         rng = random.Random(utility.hash_args(day_seed, system_tile.tile_seed()))
 
-        amount_1 = rng.randint(10, 50)
+        amount_1 = rng.randint(5, 10)
 
         return [
-            (values.croissant.text, amount_1 * 10000),
-            (values.french_bread.text, amount_1 * 5000),
-            (rng.choice(values.all_rare_breads).text, amount_1 * 2500)
+            (values.croissant.text, amount_1 * 80000 - 300000),
+            (values.french_bread.text, amount_1 * 4000 - 150000),
+            (rng.choice(values.all_rare_breads).text, amount_1 * 20000 - 75000)
         ]
 
 class Corruption_Lab(Project):
@@ -4091,7 +4202,7 @@ class Electrical_Issue(Project):
         ) -> str:
         rng = random.Random(utility.hash_args(day_seed, system_tile.tile_seed()))
 
-        cost = cls.get_cost(day_seed, system_tile)[0][1]
+        cost = cls.get_price_description(day_seed, system_tile)
         reward = cls.get_reward_description(day_seed, system_tile)
 
         part_1 = [

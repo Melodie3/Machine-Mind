@@ -876,6 +876,86 @@ class Bread_cog(commands.Cog, name="Bread"):
             self.currently_interacting.remove(user_id)
         except ValueError:
             pass
+    
+    def describe_added_shop_items(
+            self: typing.Self,
+            before: list | set,
+            after: list | set
+        ) -> str:
+        """Gives a description of added shop items based on a list of available shop items prior to something happening and a list for after it happened."""
+        difference = list(set(after) - set(before)) # What's in the end but not the start.
+        
+        added = ""
+        
+        if difference: # If it has any contents.
+            added = "\n\n*The "
+            
+            shop_data = {
+                "Bread Shop": [],
+                "Hidden Bakery": [],
+                "Gambit Shop": [],
+                "Space Shop": []
+            }
+            
+            for item in difference:
+                if item in store.normal_store_items:
+                    shop_data["Bread Shop"].append(item)
+                elif item in store.prestige_store_items:
+                    shop_data["Hidden Bakery"].append(item)
+                elif item in store.gambit_shop_items:
+                    shop_data["Gambit Shop"].append(item)
+                elif item in store.space_shop_items:
+                    shop_data["Space Shop"].append(item)
+            
+            def list_items(items: list) -> str:
+                joined = ", ".join([item.display_name for item in items])
+                
+                last_comma = joined.rsplit(",", 1)
+                
+                # Include the Oxford comma if the amount of items is not 2.
+                if len(items) == 2:
+                    return " and".join(last_comma)
+                else:
+                    return ", and".join(last_comma)
+
+            filtered = {name: contents for name, contents in shop_data.items() if contents}
+
+            # The goal is to have something that looks like this:
+            # The __, __, and __ shop items have been added to the Bread Shop, the __ and __ items to the Hidden Bakery, and the __ shop item to the Space Shop.
+            
+            for shop_index, data in enumerate(filtered.items()):
+                shop_name, items = data
+                
+                if shop_index != 0:
+                    if shop_index == len(filtered) - 1:
+                        added += ", and the "
+                    else:
+                        added += ", the "
+                
+                added += list_items(items)
+                
+                if shop_index == 0:
+                    added += " shop"
+                
+                added += " item"
+                
+                if len(items) > 1:
+                    added += "s"
+                
+                if shop_index == 0:
+                    if len(items) == 1:
+                        added += " has"
+                    else:
+                        added += " have"
+                    
+                    added += f" been added to the {shop_name}"
+                else:
+                    added += f" to the {shop_name}"
+            
+            added += ".*"
+        
+        return added
+    
 
     ########################################################################################################################
     #####      TASKS
@@ -2002,6 +2082,8 @@ loaf_converter""",
         if stored_rolls_remaining < 0:
             stored_rolls_remaining = 0
         
+        before_buyable = self.get_buyable_items(user_account, store.all_store_items)
+        
         ######
         ############################################################
 
@@ -2218,6 +2300,9 @@ loaf_converter""",
 
         if summarizer_commentary is not None:
             output_commentary += "\n\n" + summarizer_commentary
+        
+        after_buyable = self.get_buyable_items(user_account, store.all_store_items)
+        output_commentary += self.describe_added_shop_items(before_buyable, after_buyable)
 
         try:
             if output_commentary != "" and not output_commentary.isspace():
@@ -3057,10 +3142,6 @@ loaf_converter""",
 
                 #text += f"\n\nYou now have **{user_account.get('total_dough')} dough** remaining."
 
-            text += "\n\n" + cost_text
-
-            await ctx.reply(text)
-
         else: # item count above 1
 
             # why make a new reference to store.all_store_items? all_items is already set to that.
@@ -3122,10 +3203,20 @@ loaf_converter""",
             all_cost_types = item.get_cost_types(user_account)
             cost_text = describe_cost_list(all_cost_types)
 
-            text += "\n\n" + cost_text
+            # text += "\n\n" + cost_text
 
-            await ctx.reply(text)
+        ending_buyable = self.get_buyable_items(user_account, store.all_store_items)
+        
+        # If the item is set to not show what is now available, this variable will be False.
+        if item.show_available_when_bought:
+            text += self.describe_added_shop_items(
+                before = buyable_items,
+                after = ending_buyable
+            )
+            
+        text += "\n\n" + cost_text
 
+        await ctx.reply(text)
 
         # complete chessatron on this command
         if ctx.author.id in self.currently_interacting:
@@ -3652,6 +3743,8 @@ anarchy - 1000% of your wager.
         #     await ctx.reply("You don't have that much dough. I'll enter in the maximum amount for you.")
         #     await asyncio.sleep(1)
         #     amount = user_account.get("total_dough")
+        
+        before_buyable = self.get_buyable_items(user_account, store.all_store_items)
 
         user_account.increment("total_dough", -amount) 
         user_account.increment("daily_gambles", 1)
@@ -3732,29 +3825,34 @@ anarchy - 1000% of your wager.
                 
         except: 
             pass
+        
+        after_buyable = self.get_buyable_items(user_account, store.all_store_items)
+        append = self.describe_added_shop_items(before_buyable, after_buyable)
+        
         try: #try block because of potential messsage deletion.
             if result['result'].name == "horsey":
-                await ctx.reply("Sorry, you didn't win anything. Better luck next time.")
+                await ctx.reply("Sorry, you didn't win anything. Better luck next time." + append)
             elif result['result'].name in ["brick", "fide_brick", "brick_fide", "brick_gold"]:
                 try: # brick avoidance deterrant
                     response = "You found a brick. Please hold, delivering reward at high speed."
                     if result['result'].name == "brick_gold":
                         response += f" Looks like you'll be able to sell this one for {utility.smart_number(winnings)} dough."
+                    response += append
                     await ctx.reply(response)
                     await asyncio.sleep(2)
                 except:
                     pass 
                 await ctx.invoke(self.bot.get_command('brick'), member=ctx.author)
             else:
-                await ctx.reply(f"With a {winning_text}, you won {utility.smart_number(winnings)} dough.")
+                await ctx.reply(f"With a {winning_text}, you won {utility.smart_number(winnings)} dough." + append)
         
             daily_gambles = user_account.get_value_strict("daily_gambles")
             if daily_gambles == max_gambles:
-                await ctx.reply("That was all the gambling you can do today.")
+                await ctx.reply("That was all the gambling you can do today." + append)
 
             elif daily_gambles >= max_gambles-3:
                 #await ctx.reply("You can gamble one more time today.")
-                text= "You can gamble "+Bread_cog.write_number_of_times(max_gambles-daily_gambles)+" more today."
+                text= "You can gamble "+Bread_cog.write_number_of_times(max_gambles-daily_gambles)+" more today." + append
                 await ctx.reply(text)
         except:
             pass #only happens if original message was deleted.
@@ -5012,8 +5110,7 @@ anarchy - 1000% of your wager.
         output.append(f"Out of your {sn(daily_fuel_cap)} {values.daily_fuel.text} you have {sn(account.get('daily_fuel'))} remaining.")
         output.append(f"From your {sn(project_credits_cap)} daily {values.project_credits.text} you have {sn(account.get('hub_credits'))} remaining.")
 
-        if account.has(values.anarchy_omega_chessatron.text):
-            output.append(f"With {utility.write_count(account.get(values.anarchy_omega_chessatron.text), 'Anarchy Omega Chessatron')} you get {sn(account.get_anarchy_chessatron_dough_amount(True))} for each new anarchy chessatron.")
+        output.append(f"With {utility.write_count(account.get(values.anarchy_omega_chessatron.text), 'Anarchy Omega Chessatron')} you get {sn(account.get_anarchy_chessatron_dough_amount(True))} for each new anarchy chessatron.")
 
 
         output.append("")
@@ -5057,8 +5154,8 @@ anarchy - 1000% of your wager.
             amount_pieces = account.get_anarchy_piece_luck((lcs + 1) * rr) - 1
             amount_gems = account.get_space_gem_luck((lcs + 1) * rr) - 1
             output.append(f"With {account.write_count('advanced_exploration', 'level')} of Advanced Exploration you have the following:")
-            output.append(f"   {amount_pieces} ({amount_pieces}, {round(multiplier * 100, 4)}%) of your Loaf Converters are used to find anarchy pieces.")
-            output.append(f"   {utility.smart_number(round(amount_gems))} ({utility.smart_number(amount_gems)}, {round(multiplier * 2500, 4)}%) of your Loaf Converters are used to find space gems.")
+            output.append(f"   {round(amount_pieces)} ({round(amount_pieces, 5)}, {round(multiplier * 100, 4)}%) of your Loaf Converters are used to find anarchy pieces.")
+            output.append(f"   {utility.smart_number(round(amount_gems))} ({utility.smart_number(round(amount_gems, 5))}, {round(multiplier * 2500, 4)}%) of your Loaf Converters are used to find space gems.")
 
         if account.has("engine_efficiency"):
             level = account.get('engine_efficiency')
@@ -5215,6 +5312,78 @@ anarchy - 1000% of your wager.
 
         if content is None:
             content = ""
+        if map_type is None:
+            map_type = "system"
+            
+        dict_settings = {}
+        
+        other_settings = ctx.message.content.split(" " + map_type + " ", 1)[-1].split(" ")
+            
+        # Check to make sure the player is able to get the full map.
+        if map_type == "full" or map_type == "f":
+            hub_tile = user_account.get_system_tile(json_interface=self.json_interface) # type: space.SystemTradeHub
+
+            if hub_tile.type != "trade_hub":
+                return await ctx.reply("You currently do not have the ability to read and analyze map data from the communication network.\nBeing on a Trade Hub with the Offspring Outlook upgrade will allow you to read and analyze the data.")
+            
+            if hub_tile.get_upgrade_level(projects.Offspring_Outlook) < 1:
+                return await ctx.reply("This Trade Hub doesn't have the required upgrades to be able to read and analyze the map data from the communication network.")
+            
+            try:
+                if other_settings[0].lower() == "guide":
+                    send_file = discord.File(space.MAP_GUIDE_BYTESIO, filename="map_guide.png")
+                    return await ctx.reply(file=send_file)
+            except KeyError:
+                pass # If the setting was not provided a KeyError will be raised, which we can just ignore.
+
+            full_x = None
+            full_y = None
+            
+            try:
+                full_x = parse_int(other_settings[0])
+                full_y = parse_int(other_settings[1])
+            except (ValueError, KeyError):
+                pass # It failed to parse, so it's probably intended to be something.
+            
+            bubble_data = space.generate_trade_hub_bubbles(
+                json_interface = self.json_interface,
+                ascension = user_account.get_prestige_level(),
+                guild = ctx.guild
+            )
+            
+            if full_x is not None and full_y is not None:
+                galaxy_x, galaxy_y = user_account.get_galaxy_location(json_interface=self.json_interface)
+                
+                full_point = 1 << (full_x + space.MAP_SIZE * full_y)
+                current_point = 1 << (galaxy_x + space.MAP_SIZE * galaxy_y)
+                
+                group = None
+                
+                for index, group_check in enumerate(bubble_data):
+                    if group_check & current_point:
+                        group = index
+                        break
+                
+                if group is None:
+                    # This should never be able to occur, but if it does then something has seriously gone wrong.
+                    # If this somehow does happen, send a (hopefully) funny message and raise an exception to be looked at later.
+                    await ctx.reply("You are nowhere.")
+                    raise TypeError(f"Hub bubble group is None for {galaxy_x, galaxy_y} when it shouldn't be.")
+                
+                if not bool(bubble_data[group] & full_point):
+                    return await ctx.reply("That point is not available in the current range of the communication network.")
+            
+                if not space.has_seen_tile(
+                        json_interface = self.json_interface,
+                        guild = ctx.guild,
+                        ascension = user_account.get_prestige_level(),
+                        xpos = full_x,
+                        ypos = full_y
+                    ):
+                    return await ctx.reply("That is in range of the communication network, however nobody has seen what is there and the communication network does not have the missing information.")
+            
+            # If we're going through with doing the map, set the dictionary data.    
+            dict_settings["bubble_data"] = bubble_data
 
         ###############################
         before = time.time()
@@ -5222,7 +5391,9 @@ anarchy - 1000% of your wager.
         map_data = space.space_map(
             account = user_account,
             json_interface = self.json_interface,
-            mode = map_type
+            mode = map_type,
+            other_settings = other_settings,
+            dict_settings = dict_settings
         )
 
         after = time.time()
@@ -5238,6 +5409,69 @@ anarchy - 1000% of your wager.
 
             if not reduced_info:
                 suffix = "You can use '$bread space map' to view the map for the system you're in.\n\nUse '$bread space move galaxy' to move around on this map."
+        elif map_type == "full" or map_type == "f":
+            analyze_x = None
+            analyze_y = None
+            
+            if len(other_settings) >= 4:
+                try:
+                    analyze_x = parse_int(other_settings[2])
+                    analyze_y = parse_int(other_settings[3])
+                except ValueError:
+                    pass # It failed to parse, so it's probably intended to be something.
+            
+            if full_x is not None and full_y is not None:
+                if analyze_x is not None and analyze_y is not None:
+                    galaxy_seed = self.json_interface.get_ascension_seed(
+                        ascension_id = user_account.get_prestige_level(),
+                        guild = ctx.guild
+                    )
+                    
+                    galaxy_tile = space.get_galaxy_coordinate(
+                        json_interface = self.json_interface,
+                        guild = ctx.guild,
+                        galaxy_seed = galaxy_seed,
+                        ascension = user_account.get_prestige_level(),
+                        xpos = full_x,
+                        ypos = full_y,
+                        load_data = True
+                    )
+                    
+                    if galaxy_tile.system:
+                        analyze_point = galaxy_tile.get_system_tile(
+                            json_interface = self.json_interface,
+                            system_x = analyze_x,
+                            system_y = analyze_y
+                        )
+                        
+                        analysis_lines = analyze_point.get_analysis(
+                            guild = ctx.guild,
+                            json_interface = self.json_interface,
+                            user_account = user_account,
+                            detailed = True # Full analysis is always detailed.
+                        )
+                    else:
+                        analysis_lines = ["There is nothing here."]
+                        
+                    line_emoji = ":arrow_forward:"
+
+                    for index, item in enumerate(analysis_lines):
+                        analysis_lines[index] = f"{line_emoji} {item}"
+                        
+                    prefix = "Full system analysis:"
+                    middle = f"Your current galaxy location: {user_account.get_galaxy_location(json_interface=self.json_interface)}.\nCorruption chance: {corruption_chance}%.\nHighlighted system: ({full_x}, {full_y})\nHighlighted point: ({analyze_x}, {analyze_y})"
+                    
+                    suffix = "Analysis:\n" + "\n".join(analysis_lines)
+                else:
+                    prefix = "Full system map:"
+                    middle = f"Your current galaxy location: {user_account.get_galaxy_location(json_interface=self.json_interface)}.\nCorruption chance: {corruption_chance}%.\nHighlighted system: ({full_x}, {full_y})"
+                    
+                    suffix = f"Use '$bread space map full {full_x} {full_y} <system x> <system y>' to analyze a point within this system.\nUse '$bread space map full guide' to see a color guide."
+            else:
+                prefix = "Full galaxy map:"
+                middle = f"Your current galaxy location: {user_account.get_galaxy_location(json_interface=self.json_interface)}.\nCorruption chance: {corruption_chance}%."
+            
+                suffix = "Use '$bread space map full <galaxy x> <galaxy y>' to view a specific system.\nUse '$bread space map full guide' to see a color guide."
         else:
             prefix = "System map:"
             middle = f"Your current galaxy location: {user_account.get_galaxy_location(json_interface=self.json_interface)}.\nYour current system location: {user_account.get_system_location()}.\nCorruption chance: {corruption_chance}%."
@@ -5248,15 +5482,15 @@ anarchy - 1000% of your wager.
         send_file = discord.File(map_data, filename="space_map.png")
         file_path = "attachment://space_map.png"
 
-        unfortunate_embed = discord.Embed( # It's unfortunate that we have to use one.
+        embed = discord.Embed(
             title = prefix,
             description = middle + "\n\n" + suffix,
             color=8884479,
         )
-        unfortunate_embed.set_image(url=file_path)
-        unfortunate_embed.set_footer(text=f"Map generated in {round(after - before, 3)} seconds.")
+        embed.set_image(url=file_path)
+        embed.set_footer(text=f"Map generated in {round(after - before, 3)} seconds.")
 
-        return await ctx.reply(content, embed=unfortunate_embed, file=send_file)
+        return await ctx.reply(content, embed=embed, file=send_file)
 
 
     @bread.command(
@@ -5579,7 +5813,7 @@ anarchy - 1000% of your wager.
         message = ""
 
         if existing["level"] == 2 or existing["level"] == 4:
-            message = f"This Trade Hub is now able to relay signals from the Trade Hub network up to {store.trade_hub_distances[existing['level']]} tiles away!"
+            message = f"This Trade Hub is now able to relay trade signals from the Trade Hub network up to {store.trade_hub_distances[existing['level']]} tiles away!"
         elif existing["level"] == 3 or existing["level"] == 5:
             message = f"This Trade Hub now has {store.trade_hub_projects[existing['level']]} project slots!"
 
@@ -6169,10 +6403,8 @@ anarchy - 1000% of your wager.
                     message_lines = f"Continued:\n\n{add}"
 
         await ctx.reply(message_lines)
-
-
     
-    async def trade_hub_configure(
+    async def trade_hub_configure_beacon(
             self: typing.Self,
             ctx: commands.Context,
             user_account: account.Bread_Account,
@@ -6181,16 +6413,16 @@ anarchy - 1000% of your wager.
             hub: space.SystemTradeHub,
             actions: tuple[str]
         ) -> None:
-        """Configuration for the Trade Hub's upgrades."""
+        """Trade Hub configuration, specifically the Shroud Beacon."""
         if hub.get_upgrade_level(projects.Shroud_Beacon) < 1:
             await ctx.reply("There is nothing to configure.")
             return
         
         all_configuration = space.get_trade_hub_project_categories(day_seed, hub)
 
-        if len(actions) >= 2:
-            if actions[1].lower() in all_configuration or actions[1].lower() == "none":
-                new_state = actions[1].lower()
+        if len(actions) >= 3:
+            if actions[2].lower() in all_configuration or actions[2].lower() == "none":
+                new_state = actions[2].lower()
 
                 if new_state == "none":
                     new_state = None
@@ -6222,10 +6454,91 @@ anarchy - 1000% of your wager.
                 await ctx.reply(f"The Shroud Beacon has been configured to prioritize {new_state} projects.\nThe beacon takes some time to charge up, though, so it will only take effect the next time projects change.")
                 return
         
-        await ctx.reply("To configure the Shroud Beacon use '$bread space hub configure <setting>'\nCurrent configuration: {}\nAvailable settings are as follows: '{}' or 'none' to disable it.".format(
+        await ctx.reply("To configure the Shroud Beacon use '$bread space hub configure beacon <setting>'\nCurrent configuration: {}\nQueued configuration: {}\nAvailable settings are as follows: '{}' or 'none' to disable it.".format(
             str(hub.get_setting("shroud_beacon_setting", None)).title(),
+            str(hub.get_setting("shroud_beacon_queue", None)).title(),
             '\', \''.join(all_configuration.keys())
         ))
+    
+    async def trade_hub_configure_color(
+            self: typing.Self,
+            ctx: commands.Context,
+            user_account: account.Bread_Account,
+            day_seed: str,
+            hub_projects: list[dict],
+            hub: space.SystemTradeHub,
+            actions: tuple[str]
+        ) -> None:
+        available_colors = list(space.HUB_STRING_TO_COLOR.keys())
+        
+        if len(actions) < 3 or actions[2].lower() not in available_colors:
+            await ctx.reply(f"To change the color of this Trade Hub, use '$bread space hub configure color <color>'\nAvailable colors: {', '.join(available_colors)}")
+            return
+        
+        chosen = actions[2].lower()
+        color_code = space.HUB_STRING_TO_COLOR[chosen]
+        
+        # Configure this setting.
+        trade_hub_data = self.json_interface.get_trade_hub_data(
+            guild = ctx.guild,
+            ascension = user_account.get_prestige_level(),
+            galaxy_x = hub.galaxy_xpos,
+            galaxy_y = hub.galaxy_ypos
+        )
+
+        trade_hub_data["color_id"] = color_code
+
+        self.json_interface.update_trade_hub_data(
+            guild = ctx.guild,
+            ascension = user_account.get_prestige_level(),
+            galaxy_x = hub.galaxy_xpos,
+            galaxy_y = hub.galaxy_ypos,
+            new_data = trade_hub_data
+        )
+        
+        await ctx.reply(f"Success, this Trade Hub is now colored {chosen} on the map.")
+
+    
+    async def trade_hub_configure(
+            self: typing.Self,
+            ctx: commands.Context,
+            user_account: account.Bread_Account,
+            day_seed: str,
+            hub_projects: list[dict],
+            hub: space.SystemTradeHub,
+            actions: tuple[str]
+        ) -> None:
+        """Configuration for the Trade Hub's upgrades."""
+        if len(actions) > 1:
+            if actions[1].lower() in ["beacon", "shroud", "shroud_beacon"]:
+                await self.trade_hub_configure_beacon(
+                    ctx = ctx,
+                    user_account = user_account,
+                    day_seed = day_seed,
+                    hub_projects = hub_projects,
+                    hub = hub,
+                    actions = actions
+                )
+                return
+            elif actions[1].lower() in ["color", "colour", "colors", "colours"]:
+                await self.trade_hub_configure_color(
+                    ctx = ctx,
+                    user_account = user_account,
+                    day_seed = day_seed,
+                    hub_projects = hub_projects,
+                    hub = hub,
+                    actions = actions
+                )
+                return
+        
+        available_configuration = ["color"]
+        
+        if hub.get_upgrade_level(projects.Shroud_Beacon) >= 1:
+            available_configuration.append("beacon")
+        
+        await ctx.reply(f"To configure a specific section of the Trade Hub, use '$bread space hub configure <section> <settings>'\nList of available sections: {', '.join(available_configuration)}")
+            
+        
 
     ########################################################################################################################
     #####      BREAD SPACE HUB
@@ -6337,7 +6650,7 @@ anarchy - 1000% of your wager.
                     system_y = create_y
                 )
 
-                await ctx.reply(f"Well done, you have created a Trade Hub at ({create_x}, {create_y})!")
+                await ctx.reply(f"Well done, you have created a Trade Hub at ({create_x}, {create_y}) in ({galaxy_x}, {galaxy_y})!")
                 return
 
             cost = projects.Trade_Hub.get_price_description(day_seed, hub)
@@ -6468,7 +6781,8 @@ anarchy - 1000% of your wager.
             message_lines += "\n*New Trade Hub discovered! Trading using this trade hub is now available.*\n"
 
         message_lines += f"\nLevel: {hub.trade_hub_level}"
-        message_lines += f"\nTrade Hub network range: {store.trade_hub_distances[hub.trade_hub_level]}"
+        message_lines += f"\nTrade Hub network range: {hub.trade_distance}"
+        message_lines += f"\nCommunication network range: {hub.communication_distance}"
         message_lines += f"\nGalaxy location: ({hub.galaxy_xpos}, {hub.galaxy_ypos})"
         message_lines += f"\nSystem location: ({hub.system_xpos}, {hub.system_ypos})"
 
@@ -7091,7 +7405,7 @@ anarchy - 1000% of your wager.
                 # If the end location is not a system, then set the system x and y to 0.
                 user_account.set("system_xpos", 0)
                 user_account.set("system_ypos", 0)
-            else:
+            elif end_location != start_location: # If the galaxy location is the same don't modify the system position.
                 # If we're moving between parts of the 2x2 system, do nothing.
                 if not ((end_location in space.ALL_CENTER) and start_location in space.ALL_CENTER):
                     # If the location is a system, then determine the size of the system and the angle of attack.
@@ -8150,9 +8464,14 @@ anarchy - 1000% of your wager.
             
         #     self.json_interface.set_custom_file("space", space_data, guild)
 
+        for guild in self.json_interface.all_guilds:
+            for user_account in self.json_interface.get_all_user_accounts(guild=guild):
+                if user_account.get(store.Bling.name) >= 9:
+                    user_account.increment(store.Bling.name, 3) # Account for the space gems being added.
+                    
+                    self.json_interface.set_account(user_account.user_id, user_account, guild)
+                    
         # When the rocket tiers were shifted and tier 3 was removed this'll correct everyone stats.
-        # for guild in self.json_interface.all_guilds:
-        #     for account in self.json_interface.get_all_user_accounts(guild=guild):
         #         space_level = account.get_space_level()
         #         if space_level >= 3:
         #             account.increment("space_level", -1)
@@ -8318,7 +8637,7 @@ anarchy - 1000% of your wager.
     
     @admin.command(
         brief="Runs the space tick.",
-        help = "Usage: bread admin space_tick"
+        help = "Usage: bread admin run_space_tick"
     )
     @commands.check(verification.is_admin_check)
     async def run_space_tick(self, ctx):
@@ -8472,6 +8791,45 @@ anarchy - 1000% of your wager.
 
         self.json_interface.set_account(target, user_account, guild = ctx.guild.id)
 
+        await ctx.reply("Done.")
+
+    ########################################################################################################################
+    #####      ADMIN GENERATE_GALAXY
+
+    @admin.command(
+        brief="Gives an anarchy set to a member.",
+        help = "Usage: bread admin add_anarchy_set [optional member] [optional amount]"
+    )
+    @commands.check(verification.is_admin_check)
+    async def generate_galaxy(self, ctx,
+            ascension: typing.Optional[int]
+        ):
+        if ascension is None:
+            await ctx.reply("Please provide the ascension to generate the map for.")
+            return
+        
+        if not await self.await_confirmation(
+                ctx = ctx,
+                force = True,
+                message = "Are you really sure you want to do this? It will greatly increase the size of the database and will take some time to complete."
+            ):
+            return
+        
+        seed = self.json_interface.get_ascension_seed(ascension, ctx.guild.id)
+        
+        for x_coord in range(space.MAP_SIZE):
+            for y_coord in range(space.MAP_SIZE):
+                space.get_galaxy_coordinate(
+                    json_interface = self.json_interface,
+                    guild = ctx.guild.id,
+                    galaxy_seed = seed,
+                    ascension = ascension,
+                    xpos = x_coord,
+                    ypos = y_coord,
+                    load_data = True
+                )
+            print(f"Generating the entire a{ascension} galaxy as requested by {ctx.author.name}. Progress: {x_coord + 1}/256.")
+        
         await ctx.reply("Done.")
 
     ########################################################################################################################
@@ -8758,6 +9116,7 @@ anarchy - 1000% of your wager.
     
 
 bread_cog_ref = None
+
 bot_ref = None
 
 async def setup(bot: commands.Bot):
