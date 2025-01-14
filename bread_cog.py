@@ -7953,6 +7953,21 @@ anarchy - 1000% of your wager.
         await ctx.send("Done.")
 
     ########################################################################################################################
+    #####      ADMIN SPACE_TICK
+
+    @admin.command(
+        brief="Runs the twice-per-day space tick.",
+        help = "Usage: bread admin space_tick"
+    )
+    @commands.check(verification.is_admin_check)
+    async def space_tick(self, ctx):
+        if await self.await_confirmation(ctx) is False:
+            return
+        
+        self.reset_space_all()
+        await ctx.send("Done.")
+
+    ########################################################################################################################
     #####      ADMIN DAILY_RESET
 
     @admin.command(
