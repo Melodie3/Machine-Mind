@@ -2549,6 +2549,10 @@ def in_nebula_database(
     Returns:
         bool: Whether the given tile coordinates are marked as in a nebula in the database.
     """
+    if xpos < 0 or ypos < 0 or \
+        xpos >= MAP_SIZE or ypos >= MAP_SIZE:
+            return False
+        
     if map_data is None:
         map_data = json_interface.get_space_map_data(
             ascension_id = ascension,
