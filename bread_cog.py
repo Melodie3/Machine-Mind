@@ -7266,7 +7266,7 @@ anarchy - 1000% of your wager.
                 # If the end location is not a system, then set the system x and y to 0.
                 user_account.set("system_xpos", 0)
                 user_account.set("system_ypos", 0)
-            else:
+            elif end_location != start_location: # If the galaxy location is the same don't modify the system position.
                 # If we're moving between parts of the 2x2 system, do nothing.
                 if not ((end_location in space.ALL_CENTER) and start_location in space.ALL_CENTER):
                     # If the location is a system, then determine the size of the system and the angle of attack.
