@@ -865,6 +865,23 @@ class Storm_Repulsion_Array(Trade_Hub_Upgrade):
             (values.black_king.text, 500 * tier), (values.white_king.text, 500 * tier),
             (values.gem_pink.text, 50), (values.gem_orange.text, 50), (values.chessatron.text, 250 * tier)
         ]
+
+    @classmethod
+    def is_available(
+            cls: typing.Type[typing.Self],
+            day_seed: str,
+            system_tile: space.SystemTradeHub
+        ) -> bool:
+        if not super().is_available(day_seed, system_tile):
+            return False
+        
+        # This one is only purchasable if the chance of corruption is not 0.
+        chance = space.get_corruption_chance(system_tile.galaxy_xpos - space.MAP_RADIUS, system_tile.galaxy_ypos - space.MAP_RADIUS)
+        
+        if chance == 0:
+            return False
+        
+        return True
     
     @classmethod
     def purchased_description(
