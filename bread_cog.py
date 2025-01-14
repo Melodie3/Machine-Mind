@@ -6266,10 +6266,8 @@ anarchy - 1000% of your wager.
                     message_lines = f"Continued:\n\n{add}"
 
         await ctx.reply(message_lines)
-
-
     
-    async def trade_hub_configure(
+    async def trade_hub_configure_beacon(
             self: typing.Self,
             ctx: commands.Context,
             user_account: account.Bread_Account,
@@ -6278,16 +6276,16 @@ anarchy - 1000% of your wager.
             hub: space.SystemTradeHub,
             actions: tuple[str]
         ) -> None:
-        """Configuration for the Trade Hub's upgrades."""
+        """Trade Hub configuration, specifically the Shroud Beacon."""
         if hub.get_upgrade_level(projects.Shroud_Beacon) < 1:
             await ctx.reply("There is nothing to configure.")
             return
         
         all_configuration = space.get_trade_hub_project_categories(day_seed, hub)
 
-        if len(actions) >= 2:
-            if actions[1].lower() in all_configuration or actions[1].lower() == "none":
-                new_state = actions[1].lower()
+        if len(actions) >= 3:
+            if actions[2].lower() in all_configuration or actions[2].lower() == "none":
+                new_state = actions[2].lower()
 
                 if new_state == "none":
                     new_state = None
@@ -6319,10 +6317,90 @@ anarchy - 1000% of your wager.
                 await ctx.reply(f"The Shroud Beacon has been configured to prioritize {new_state} projects.\nThe beacon takes some time to charge up, though, so it will only take effect the next time projects change.")
                 return
         
-        await ctx.reply("To configure the Shroud Beacon use '$bread space hub configure <setting>'\nCurrent configuration: {}\nAvailable settings are as follows: '{}' or 'none' to disable it.".format(
+        await ctx.reply("To configure the Shroud Beacon use '$bread space hub configure beacon <setting>'\nCurrent configuration: {}\nAvailable settings are as follows: '{}' or 'none' to disable it.".format(
             str(hub.get_setting("shroud_beacon_setting", None)).title(),
             '\', \''.join(all_configuration.keys())
         ))
+    
+    async def trade_hub_configure_color(
+            self: typing.Self,
+            ctx: commands.Context,
+            user_account: account.Bread_Account,
+            day_seed: str,
+            hub_projects: list[dict],
+            hub: space.SystemTradeHub,
+            actions: tuple[str]
+        ) -> None:
+        available_colors = list(space.HUB_STRING_TO_COLOR.keys())
+        
+        if len(actions) < 3 or actions[2].lower() not in available_colors:
+            await ctx.reply(f"To change the color of this Trade Hub, use '$bread space hub configure color <color>'\nAvailable colors: {', '.join(available_colors)}")
+            return
+        
+        chosen = actions[2].lower()
+        color_code = space.HUB_STRING_TO_COLOR[chosen]
+        
+        # Configure this setting.
+        trade_hub_data = self.json_interface.get_trade_hub_data(
+            guild = ctx.guild,
+            ascension = user_account.get_prestige_level(),
+            galaxy_x = hub.galaxy_xpos,
+            galaxy_y = hub.galaxy_ypos
+        )
+
+        trade_hub_data["color_id"] = color_code
+
+        self.json_interface.update_trade_hub_data(
+            guild = ctx.guild,
+            ascension = user_account.get_prestige_level(),
+            galaxy_x = hub.galaxy_xpos,
+            galaxy_y = hub.galaxy_ypos,
+            new_data = trade_hub_data
+        )
+        
+        await ctx.reply(f"Success, this Trade Hub is now colored {chosen} on the map.")
+
+    
+    async def trade_hub_configure(
+            self: typing.Self,
+            ctx: commands.Context,
+            user_account: account.Bread_Account,
+            day_seed: str,
+            hub_projects: list[dict],
+            hub: space.SystemTradeHub,
+            actions: tuple[str]
+        ) -> None:
+        """Configuration for the Trade Hub's upgrades."""
+        if len(actions) > 1:
+            if actions[1].lower() in ["beacon", "shroud", "shroud_beacon"]:
+                await self.trade_hub_configure_beacon(
+                    ctx = ctx,
+                    user_account = user_account,
+                    day_seed = day_seed,
+                    hub_projects = hub_projects,
+                    hub = hub,
+                    actions = actions
+                )
+                return
+            elif actions[1].lower() in ["color", "colour", "colors", "colours"]:
+                await self.trade_hub_configure_color(
+                    ctx = ctx,
+                    user_account = user_account,
+                    day_seed = day_seed,
+                    hub_projects = hub_projects,
+                    hub = hub,
+                    actions = actions
+                )
+                return
+        
+        available_configuration = ["color"]
+        
+        if hub.get_upgrade_level(projects.Shroud_Beacon) >= 1:
+            available_configuration.append("beacon")
+        
+        await ctx.reply(f"To configure a specific section of the Trade Hub, use '$bread space hub configure <section> <settings>'\nList of available sections: {', '.join(available_configuration)}")
+            
+        
 
     ########################################################################################################################
     #####      BREAD SPACE HUB

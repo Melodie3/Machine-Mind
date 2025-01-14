@@ -686,9 +686,9 @@ class Shroud_Beacon(Trade_Hub_Upgrade):
         ) -> str:
         tier = system_tile.get_upgrade_level(cls) + 1
         if tier >= 2:
-            return "The psionic beacon is now more powerful and is better at luring in specific projects.\n*Configure the beacon with '$bread space hub configure'.*"
+            return "The psionic beacon is now more powerful and is better at luring in specific projects.\n*Configure the beacon with '$bread space hub configure beacon'.*"
         
-        return "Incredible! The new psionic beacon has been installed and can be configured with '$bread space hub configure'!"
+        return "Incredible! The new psionic beacon has been installed and can be configured with '$bread space hub configure beacon'!"
     
     @classmethod
     def get_cost(

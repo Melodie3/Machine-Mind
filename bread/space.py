@@ -37,6 +37,30 @@ MOVE_FUEL_WORMHOLE = 325
 ALTERNATE_CENTER = [(MAP_RADIUS - 1, MAP_RADIUS - 1), (MAP_RADIUS, MAP_RADIUS - 1), (MAP_RADIUS - 1, MAP_RADIUS)]
 ALL_CENTER = ALTERNATE_CENTER + [(MAP_RADIUS, MAP_RADIUS)]
 
+HubColor = int
+HUB_RED = 0
+HUB_ORANGE = 1
+HUB_YELLOW = 2
+HUB_GREEN = 3
+HUB_CYAN = 4
+HUB_BLUE = 5
+HUB_PURPLE = 6
+HUB_PINK = 7
+
+HUB_COLOR_TO_STRING = {
+    HUB_RED: "red",
+    HUB_ORANGE: "orange",
+    HUB_YELLOW: "yellow",
+    HUB_GREEN: "green",
+    HUB_CYAN: "cyan",
+    HUB_BLUE: "blue",
+    HUB_PURPLE: "purple",
+    HUB_PINK: "pink",
+}
+
+# Swap the keys and values so you can go back and forth.
+HUB_STRING_TO_COLOR = dict(map(reversed, HUB_COLOR_TO_STRING.items()))
+
 ## Emojis:
 
 MAP_EMOJIS = {
@@ -132,10 +156,19 @@ EMOJI_PATHS = {
     "black_hole": "images/black_hole.png",
     "supermassive_black_hole": "images/black_hole.png", # Glaciers melting in the dead of night.
     "wormhole": "images/wormhole.png",
-    "trade_hub": "images/trade_hub.png",
     "asteroid": "images/asteroid.png",
     "bread": "images/bread.png",
 
+    # Trade Hubs.
+    "trade_hub_red": "images/trade_hub_red.png",
+    "trade_hub_orange": "images/trade_hub_orange.png",
+    "trade_hub_yellow": "images/trade_hub_yellow.png",
+    "trade_hub_green": "images/trade_hub_green.png",
+    "trade_hub_cyan": "images/trade_hub_cyan.png",
+    "trade_hub_blue": "images/trade_hub_blue.png",
+    "trade_hub_purple": "images/trade_hub_purple.png",
+    "trade_hub_pink": "images/trade_hub_pink.png",
+    
     # 2x2 black hole.
     "black_hole_top_left": "images/black_hole_top_left.png",
     "black_hole_top_right": "images/black_hole_top_right.png",
@@ -451,6 +484,7 @@ class SystemTradeHub(SystemTile):
             system_ypos: int,
 
             trade_hub_level: int = None,
+            color: HubColor | None = None,
             upgrades: dict[str, int] = None,
             settings: dict[str, typing.Any] = None
         ) -> None:
@@ -459,15 +493,22 @@ class SystemTradeHub(SystemTile):
             upgrades = {}
         if settings is None:
             settings = {}
+        if color is None:
+            color = HUB_RED
 
         self.trade_hub_level = trade_hub_level
         self.upgrades = upgrades
         self.settings = settings
         self.project_count = store.trade_hub_projects[trade_hub_level]
         self.type = "trade_hub"
+        self.color = color
+    
+    @property
+    def color_str(self: typing.Self) -> str:
+        return HUB_COLOR_TO_STRING[self.color]
     
     def get_emoji(self: typing.Self) -> str:
-        return "trade_hub"
+        return f"trade_hub_{self.color_str}"
     
     def get_analysis(
             self: typing.Self,
@@ -483,6 +524,7 @@ class SystemTradeHub(SystemTile):
             f"Trade Hub level: {self.trade_hub_level}",
             f"Purchased upgrades: {sum(1 for upgrade in projects.all_trade_hub_upgrades if self.get_upgrade_level(upgrade))}",
             f"Available upgrades: {len(self.get_available_upgrades(day_seed))}",
+            f"Trade Hub color: {self.color_str.title()}"
             "Use '$bread space hub' while over the trade hub to interact with it."
         ]
 
@@ -2160,6 +2202,7 @@ def get_trade_hub(
             trade_hub_level = trade_hub.get("level", 1),
             upgrades = trade_hub.get("upgrades", dict()),
             settings = trade_hub.get("settings", dict()),
+            color = trade_hub.get("color_id", HUB_RED),
         )
     
     generated = generation.generate_system(
@@ -2182,7 +2225,8 @@ def get_trade_hub(
         system_ypos = generated["trade_hub"]["ypos"],
         trade_hub_level = generated["trade_hub"]["level"],
         upgrades = {},
-        settings = {}
+        settings = {},
+        color = HUB_RED # Default color is red.
     )
 
             
