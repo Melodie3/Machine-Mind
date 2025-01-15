@@ -623,7 +623,7 @@ class Hyperlane_Registrar(Trade_Hub_Upgrade):
             system_tile: space.SystemTradeHub
         ) -> str:
         tier = system_tile.get_upgrade_level(cls)
-        return f"A powerful supercomputer aboard the Trade Hub that's able to crunch the numbers required to find more efficient ways to use your fuel.\nThis results in a {round(cls.cost_multipliers[tier + 1] * 100)}% fuel consumption reduction for anyone moving, if they start somewhere within this Trade Hub's radius.\n*If one player is within radius of multiple Trade Hubs only the best one is used, the effect does not stack.*"
+        return f"A powerful supercomputer aboard the Trade Hub that's able to crunch the numbers required to find more efficient ways to use your fuel.\nThis results in a {round((1 - cls.cost_multipliers[tier + 1]) * 100)}% fuel consumption reduction for anyone moving, if they start somewhere within this Trade Hub's radius.\n*If one player is within radius of multiple Trade Hubs only the best one is used, the effect does not stack.*"
     
     @classmethod
     def completion(
