@@ -2244,15 +2244,15 @@ class Corruption_Lab(Project):
         distance = math.hypot(system_tile.galaxy_xpos - space.MAP_RADIUS, system_tile.galaxy_ypos - space.MAP_RADIUS)
         
         if distance <= 2:
-            out += " `0.99`"
+            out += r" `0.99`"
         elif distance <= 80:
-            out += " `\left(\frac{\cos\left(\left(x-2\right)\frac{\pi}{78}\right)}{2}+0.5\right)0.99`"
+            out += r" `\left(\frac{\cos\left(\left(x-2\right)\frac{\pi}{78}\right)}{2}+0.5\right)0.99`"
         elif distance <= 87:
-            out += " `0`"
+            out += r" `0`"
         elif distance <= 241.81799:
-            out += " `\left(\frac{\cos\left(\frac{70055\left(x-87\right)\pi}{10845774}\right)}{-2}+0.5\right)0.99`"
+            out += r" `\left(\frac{\cos\left(\frac{70055\left(x-87\right)\pi}{10845774}\right)}{-2}+0.5\right)0.99`"
         else:
-            out += " `0.99`"
+            out += r" `0.99`"
 
         return out
     
