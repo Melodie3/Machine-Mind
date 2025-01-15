@@ -1949,9 +1949,9 @@ class Gem_Extraction(Project):
             (values.gem_purple.text, amount_1 * 7500),
             (values.gem_green.text, amount_1 * 3750),
             (values.gem_gold.text, amount_1 * 1875),
-            (values.gem_pink.text, amount_1 * 150),
-            (values.gem_orange.text, amount_1 * 150),
-            (values.gem_cyan.text, amount_1 * 150)
+            (values.gem_pink.text, amount_1 * 50),
+            (values.gem_orange.text, amount_1 * 50),
+            (values.gem_cyan.text, amount_1 * 50)
         ]
 
 class Bakery_Encounter(Project):
