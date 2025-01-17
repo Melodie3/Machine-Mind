@@ -692,15 +692,39 @@ class SystemTradeHub(SystemTile):
             out.append("")
             out.append("Purchased upgrades:")
             
+            found = False
             for upgrade in projects.all_trade_hub_upgrades:
                 if self.get_upgrade_level(upgrade):
+                    found = True
                     out.append(f"- {upgrade.name(day_seed, self)} level {self.get_upgrade_level(upgrade)}")
+                    
+            if not found:
+                out.append("*None*")
+                
                     
             out.append("")
             out.append("Available upgrades:")
             
+            found = False
             for upgrade in self.get_available_upgrades(day_seed):
+                found = True
                 out.append(f"- {upgrade.name(day_seed, self)}")
+                
+            if not found:
+                out.append("*None*")
+                
+            out.append("")
+            out.append("Available projects:")
+            
+            available_projects = get_trade_hub_projects(
+                json_interface = json_interface,
+                user_account = user_account,
+                system_tile = self
+            )
+            for project_data in available_projects:
+                project = project_data.get("project")
+                
+                out.append(f"- {project.name(day_seed, self)}")
                 
             out.append("")
         else:
