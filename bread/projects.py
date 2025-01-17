@@ -4300,7 +4300,7 @@ class Electrical_Issue(Project):
         return [(values.anarchy_black_knight.text, amount)]
     
 class Chess_Tournament(Project):
-    """Written by Kapola."""
+    """Concept by Duck, written by Kapola."""
     internal = "chess_tournament"
     
     @classmethod
@@ -5944,7 +5944,7 @@ class Gem_Mining(Project):
         return [(values.gem_red.text, amount)]
 
 class Jewelry_Store(Project):
-    """Written by Kapola."""
+    """Concept by Emily, written by Kapola."""
     internal = "jewelry_store"
     
     @classmethod
@@ -6068,7 +6068,7 @@ class Jewelry_Store(Project):
         return [(values.gem_blue.text, amount)]
 
 class Generator_Breakdown(Project):
-    """Written by Kapola."""
+    """Concept by Emily, written by Kapola."""
     internal = "generator_breakdown"
     
     @classmethod
@@ -6199,7 +6199,7 @@ class Generator_Breakdown(Project):
         return [(values.gem_purple.text, amount)]
 
 class Gem_Salesman(Project):
-    """Written by Kapola."""
+    """Concept by Emily, written by Kapola."""
     internal = "gem_salesman"
     
     @classmethod
