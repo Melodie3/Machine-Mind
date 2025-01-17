@@ -6023,6 +6023,24 @@ anarchy - 1000% of your wager.
 
 
         ##########
+        # Going through with contributing.
+        
+        # Refresh the project data in case anything has changed between when it originally was fetched.
+        # Two people contributing at the same time can cause this to be the case.
+        hub_projects = space.get_trade_hub_projects(
+            json_interface = self.json_interface,
+            user_account = user_account,
+            system_tile = hub
+        )
+        project_data = hub_projects[project_number - 1]
+        
+        if project_data.get("completed", False):
+            await ctx.reply("This project has already been completed.")
+            return
+        
+        project = project_data.get("project") # type: projects.Project
+        contribution_data = project_data.get("contributions", [])
+        player_data = contribution_data.get(str(ctx.author.id), {"items": {}})
 
         user_account.increment("hub_credits", -credits_used)
         
