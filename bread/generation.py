@@ -596,15 +596,8 @@ def generate_system(
     Returns:
         typing.Union[dict, None]: The data for the system in a dict if the tile has a system on it, otherwise None.
     """
-
-    ######################################################################################
-    ##### CHANGES MADE TO THIS WILL AFFECT EVERY SYSTEM, INCLUDING ONES ALREADY SEEN #####
-    ##### This is because the contents of systems are generated on-demand, and are   #####
-    ##### not stored in the database anywhere. Natural trade hubs that haven't been  #####
-    ##### levelled up should stay, however they may not spawn in the same location   #####
-    ##### before changes are made. Trade hubs that have been levelled up will stay.  #####
-    ##### Depending on where the change is made asteroid belts & planets may change. #####
-    ######################################################################################
+    
+    # Changes can be made to this and it won't overwrite already-seen things, as the map is stored in the database.
 
     gradient_info = generate_gradients(galaxy_seed)
     nebula_info = generate_nebulae(galaxy_seed)

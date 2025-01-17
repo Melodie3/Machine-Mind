@@ -3353,20 +3353,15 @@ def get_move_cost_galaxy(
     cost_sum = 0
 
     through_nebula = False
-
-    map_data = json_interface.get_space_map_data(
-        ascension_id = ascension,
-        guild = guild
-    )
+    
+    seed = json_interface.get_ascension_seed(ascension, guild)
+    nebulae_data = generation.generate_nebulae(galaxy_seed=seed)
     
     for x, y in points:
-        nebula = in_nebula_database(
-            json_interface = json_interface,
-            guild = guild,
-            ascension = ascension,
-            xpos = x,
-            ypos = y,
-            map_data = map_data
+        nebula = generation.in_nebula(
+            nebulae_info = nebulae_data,
+            x = x - MAP_RADIUS,
+            y = y - MAP_RADIUS
         )
 
         if nebula:
