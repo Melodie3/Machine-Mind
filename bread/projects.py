@@ -2112,7 +2112,7 @@ class Bakery_Encounter(Project):
 
         return [
             (values.croissant.text, amount_1 * 80000 - 300000),
-            (values.french_bread.text, amount_1 * 4000 - 150000),
+            (values.french_bread.text, amount_1 * 40000 - 150000),
             (rng.choice(values.all_rare_breads).text, amount_1 * 20000 - 75000)
         ]
 
