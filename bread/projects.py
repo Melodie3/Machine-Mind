@@ -4300,7 +4300,7 @@ class Electrical_Issue(Project):
         return [(values.anarchy_black_knight.text, amount)]
     
 class Chess_Tournament(Project):
-    """Concept by DUck, written by Kapola."""
+    """Concept by Duck, written by Kapola."""
     internal = "chess_tournament"
     
     @classmethod
