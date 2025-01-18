@@ -623,7 +623,7 @@ class Hyperlane_Registrar(Trade_Hub_Upgrade):
             system_tile: space.SystemTradeHub
         ) -> str:
         tier = system_tile.get_upgrade_level(cls)
-        return f"A powerful supercomputer aboard the Trade Hub that's able to crunch the numbers required to find more efficient ways to use your fuel.\nThis results in a {round(cls.cost_multipliers[tier + 1] * 100)}% fuel consumption reduction for anyone moving, if they start somewhere within this Trade Hub's radius.\n*If one player is within radius of multiple Trade Hubs only the best one is used, the effect does not stack.*"
+        return f"A powerful supercomputer aboard the Trade Hub that's able to crunch the numbers required to find more efficient ways to use your fuel.\nThis results in a {round((1 - cls.cost_multipliers[tier + 1]) * 100)}% fuel consumption reduction for anyone moving, if they start somewhere within this Trade Hub's radius.\n*If one player is within radius of multiple Trade Hubs only the best one is used, the effect does not stack.*"
     
     @classmethod
     def completion(
@@ -1949,9 +1949,9 @@ class Gem_Extraction(Project):
             (values.gem_purple.text, amount_1 * 7500),
             (values.gem_green.text, amount_1 * 3750),
             (values.gem_gold.text, amount_1 * 1875),
-            (values.gem_pink.text, amount_1 * 150),
-            (values.gem_orange.text, amount_1 * 150),
-            (values.gem_cyan.text, amount_1 * 150)
+            (values.gem_pink.text, amount_1 * 50),
+            (values.gem_orange.text, amount_1 * 50),
+            (values.gem_cyan.text, amount_1 * 50)
         ]
 
 class Bakery_Encounter(Project):
@@ -2112,7 +2112,7 @@ class Bakery_Encounter(Project):
 
         return [
             (values.croissant.text, amount_1 * 80000 - 300000),
-            (values.french_bread.text, amount_1 * 4000 - 150000),
+            (values.french_bread.text, amount_1 * 40000 - 150000),
             (rng.choice(values.all_rare_breads).text, amount_1 * 20000 - 75000)
         ]
 
@@ -2244,15 +2244,15 @@ class Corruption_Lab(Project):
         distance = math.hypot(system_tile.galaxy_xpos - space.MAP_RADIUS, system_tile.galaxy_ypos - space.MAP_RADIUS)
         
         if distance <= 2:
-            out += " `0.99`"
+            out += r" `0.99`"
         elif distance <= 80:
-            out += " `\left(\frac{\cos\left(\left(x-2\right)\frac{\pi}{78}\right)}{2}+0.5\right)0.99`"
+            out += r" `\left(\frac{\cos\left(\left(x-2\right)\frac{\pi}{78}\right)}{2}+0.5\right)0.99`"
         elif distance <= 87:
-            out += " `0`"
+            out += r" `0`"
         elif distance <= 241.81799:
-            out += " `\left(\frac{\cos\left(\frac{70055\left(x-87\right)\pi}{10845774}\right)}{-2}+0.5\right)0.99`"
+            out += r" `\left(\frac{\cos\left(\frac{70055\left(x-87\right)\pi}{10845774}\right)}{-2}+0.5\right)0.99`"
         else:
-            out += " `0.99`"
+            out += r" `0.99`"
 
         return out
     
@@ -4300,7 +4300,7 @@ class Electrical_Issue(Project):
         return [(values.anarchy_black_knight.text, amount)]
     
 class Chess_Tournament(Project):
-    """Written by Kapola."""
+    """Concept by Duck, written by Kapola."""
     internal = "chess_tournament"
     
     @classmethod
@@ -5944,7 +5944,7 @@ class Gem_Mining(Project):
         return [(values.gem_red.text, amount)]
 
 class Jewelry_Store(Project):
-    """Written by Kapola."""
+    """Concept by Emily, written by Kapola."""
     internal = "jewelry_store"
     
     @classmethod
@@ -6068,7 +6068,7 @@ class Jewelry_Store(Project):
         return [(values.gem_blue.text, amount)]
 
 class Generator_Breakdown(Project):
-    """Written by Kapola."""
+    """Concept by Emily, written by Kapola."""
     internal = "generator_breakdown"
     
     @classmethod
@@ -6199,7 +6199,7 @@ class Generator_Breakdown(Project):
         return [(values.gem_purple.text, amount)]
 
 class Gem_Salesman(Project):
-    """Written by Kapola."""
+    """Concept by Emily, written by Kapola."""
     internal = "gem_salesman"
     
     @classmethod

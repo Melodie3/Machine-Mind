@@ -692,15 +692,39 @@ class SystemTradeHub(SystemTile):
             out.append("")
             out.append("Purchased upgrades:")
             
+            found = False
             for upgrade in projects.all_trade_hub_upgrades:
                 if self.get_upgrade_level(upgrade):
+                    found = True
                     out.append(f"- {upgrade.name(day_seed, self)} level {self.get_upgrade_level(upgrade)}")
+                    
+            if not found:
+                out.append("*None*")
+                
                     
             out.append("")
             out.append("Available upgrades:")
             
+            found = False
             for upgrade in self.get_available_upgrades(day_seed):
+                found = True
                 out.append(f"- {upgrade.name(day_seed, self)}")
+                
+            if not found:
+                out.append("*None*")
+                
+            out.append("")
+            out.append("Available projects:")
+            
+            available_projects = get_trade_hub_projects(
+                json_interface = json_interface,
+                user_account = user_account,
+                system_tile = self
+            )
+            for project_data in available_projects:
+                project = project_data.get("project")
+                
+                out.append(f"- {project.name(day_seed, self)}")
                 
             out.append("")
         else:
@@ -3353,20 +3377,15 @@ def get_move_cost_galaxy(
     cost_sum = 0
 
     through_nebula = False
-
-    map_data = json_interface.get_space_map_data(
-        ascension_id = ascension,
-        guild = guild
-    )
+    
+    seed = json_interface.get_ascension_seed(ascension, guild)
+    nebulae_data = generation.generate_nebulae(galaxy_seed=seed)
     
     for x, y in points:
-        nebula = in_nebula_database(
-            json_interface = json_interface,
-            guild = guild,
-            ascension = ascension,
-            xpos = x,
-            ypos = y,
-            map_data = map_data
+        nebula = generation.in_nebula(
+            nebulae_info = nebulae_data,
+            x = x - MAP_RADIUS,
+            y = y - MAP_RADIUS
         )
 
         if nebula:
