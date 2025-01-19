@@ -2210,6 +2210,10 @@ loaf_converter""",
                 total_value += user_account.add_dough_intelligent(individual_value)
             #value = user_account.add_dough_intelligent(result["value"])
             result["value"] += total_value # this is for the summarizer
+            
+            if "gambit_shop_bonus" in result:
+                result["gambit_shop_bonus"] *= user_account.get_prestige_multiplier()
+                result["gambit_shop_bonus"] = int(result["gambit_shop_bonus"])
 
             #track highest roll separately
             prev_highest_roll = user_account.get("highest_roll")
