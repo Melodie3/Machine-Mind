@@ -721,7 +721,10 @@ class SystemTradeHub(SystemTile):
                 user_account = user_account,
                 system_tile = self
             )
-            for project_data in available_projects:
+            for project_index, project_data in enumerate(available_projects):
+                if project_index >= store.trade_hub_projects[self.trade_hub_level]:
+                    break
+                
                 project = project_data.get("project")
                 
                 out.append(f"- {project.name(day_seed, self)}")
