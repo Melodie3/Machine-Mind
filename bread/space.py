@@ -825,6 +825,7 @@ class SystemPlanet(SystemTile):
         ascension = json_interface.ascension_from_seed(guild=guild, galaxy_seed=self.galaxy_seed)
 
         planet_modifiers = get_planet_modifiers(
+            user_account = user_account,
             json_interface = json_interface,
             ascension = ascension,
             guild=guild,
@@ -2442,7 +2443,7 @@ def generate_trade_hub_bubbles(
         if data.get("upgrades", {}).get("detection_array", {}).get("level", 0) > 0:
             have_increased_range |= 1 << (int(x) + 256 * int(y))
     
-    # # Uncomment to use trade hubs that haven't been found yet. 
+    # # Uncomment to use trade hubs that haven't been found yet, but still generated.
     # # This shouldn't be enabled in-game but can be fun to look at in a testing environment.
     # map_data = json_interface.get_space_map_data(ascension, guild)
     # for key, data in map_data.get("system_data", {}).items():
@@ -2863,6 +2864,7 @@ def get_system_coordinate(
     )
 
 def get_planet_modifiers(
+        user_account: account.Bread_Account,
         json_interface: bread_cog.JSON_interface,
         ascension: int,
         guild: typing.Union[discord.Guild, int, str],
@@ -2895,6 +2897,11 @@ def get_planet_modifiers(
 
     # If it isn't a planet, then use the defaults of 1.
     if isinstance(tile, SystemPlanet):
+        corruption_chance = tile.get_galaxy_tile(
+            user_account = user_account,
+            json_interface = json_interface
+        ).corruption_chance() * 100
+        
         priority = tile.get_priority_item()
 
         galaxy_tile = get_galaxy_coordinate(
@@ -2966,6 +2973,15 @@ def get_planet_modifiers(
             # This prevents the priority item from being less common than normal.
             if key == priority and odds[key] < 1:
                 odds[key] = abs(odds[key] - 1) + 1
+        
+        # Apply the soft mathematical cap.
+        cap_denominator = (corruption_chance ** 1.6) / 64 + 1
+        
+        def cap(value: float) -> float:
+            return (value - 1) * ((((- (value - 1)) / cap_denominator) ** 2 + 1) ** (-1 / 3)) + 1
+        
+        for key, value in odds.copy().items():
+            odds[key] = cap(value)
 
 
     result = {}

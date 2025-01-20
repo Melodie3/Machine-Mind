@@ -66,6 +66,7 @@ def bread_roll(
         day_seed = json_interface.get_day_seed(guild=user_account.get("guild_id"))
 
         rarity_modifiers = space.get_planet_modifiers(
+            user_account = user_account,
             json_interface = json_interface,
             ascension = user_account.get_prestige_level(),
             guild = user_account.get("guild_id"),
