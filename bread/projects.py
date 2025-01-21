@@ -1006,7 +1006,7 @@ class Base_Project(Project):
             day_seed: str,
             system_tile: space.SystemTradeHub
         ) -> str:
-        rng = random.Random(utility.hash_args(day_seed, system_tile.tile_seed()))
+        rng = random.Random(utility.hash_args(day_seed, system_tile.tile_seed(), "name"))
         
         options = []
 
@@ -1018,7 +1018,7 @@ class Base_Project(Project):
             day_seed: str,
             system_tile: space.SystemTradeHub
         ) -> str:
-        rng = random.Random(utility.hash_args(day_seed, system_tile.tile_seed()))
+        rng = random.Random(utility.hash_args(day_seed, system_tile.tile_seed(), "description"))
 
         cost = cls.get_price_description(day_seed, system_tile)
         reward = cls.get_reward_description(day_seed, system_tile)
@@ -1047,7 +1047,7 @@ class Base_Project(Project):
             day_seed: str,
             system_tile: space.SystemTradeHub
         ) -> str:
-        rng = random.Random(utility.hash_args(day_seed, system_tile.tile_seed()))
+        rng = random.Random(utility.hash_args(day_seed, system_tile.tile_seed(), "completion"))
 
         options = []
 
@@ -1059,6 +1059,7 @@ class Base_Project(Project):
             day_seed: str,
             system_tile: space.SystemTradeHub
         ) -> list[tuple[str, int]]:
+        rng = random.Random(utility.hash_args(day_seed, system_tile.tile_seed(), "items"))
         return []
     
     @classmethod
@@ -1067,6 +1068,7 @@ class Base_Project(Project):
             day_seed: str,
             system_tile: space.SystemTradeHub
         ) -> list[tuple[str, int]]:
+        rng = random.Random(utility.hash_args(day_seed, system_tile.tile_seed(), "items"))
         return []
 
 #######################################################################################################
@@ -1083,7 +1085,7 @@ class Essential_Oils(Project):
             day_seed: str,
             system_tile: space.SystemTradeHub
         ) -> str:
-        rng = random.Random(utility.hash_args(day_seed, system_tile.tile_seed()))
+        rng = random.Random(utility.hash_args(day_seed, system_tile.tile_seed(), "name"))
         
         options = [
             "Essential Oils",
@@ -1099,7 +1101,7 @@ class Essential_Oils(Project):
             day_seed: str,
             system_tile: space.SystemTradeHub
         ) -> str:
-        rng = random.Random(utility.hash_args(day_seed, system_tile.tile_seed()))
+        rng = random.Random(utility.hash_args(day_seed, system_tile.tile_seed(), "description"))
 
         cost = cls.get_price_description(day_seed, system_tile)
         reward = cls.get_reward_description(day_seed, system_tile)
@@ -1147,7 +1149,7 @@ class Essential_Oils(Project):
             day_seed: str,
             system_tile: space.SystemTradeHub
         ) -> str:
-        rng = random.Random(utility.hash_args(day_seed, system_tile.tile_seed()))
+        rng = random.Random(utility.hash_args(day_seed, system_tile.tile_seed(), "completion"))
         reward = cls.get_reward_description(day_seed, system_tile)
 
         options = [
@@ -1164,7 +1166,7 @@ class Essential_Oils(Project):
             day_seed: str,
             system_tile: space.SystemTradeHub
         ) -> list[tuple[str, int]]:
-        rng = random.Random(utility.hash_args(day_seed, system_tile.tile_seed()))
+        rng = random.Random(utility.hash_args(day_seed, system_tile.tile_seed(), "items"))
 
         amount = rng.randint(2, 6) * 250 + 50
 
@@ -1176,7 +1178,7 @@ class Essential_Oils(Project):
             day_seed: str,
             system_tile: space.SystemTradeHub
         ) -> list[tuple[str, int]]:
-        rng = random.Random(utility.hash_args(day_seed, system_tile.tile_seed()))
+        rng = random.Random(utility.hash_args(day_seed, system_tile.tile_seed(), "items"))
 
         amount = rng.randint(2, 6) * 250 + 50
 
@@ -1209,7 +1211,7 @@ class Bingobango(Project):
             day_seed: str,
             system_tile: space.SystemTradeHub
         ) -> str:
-        rng = random.Random(utility.hash_args(day_seed, system_tile.tile_seed()))
+        rng = random.Random(utility.hash_args(day_seed, system_tile.tile_seed(), "name"))
         
         options = [
             "Bingobango"
@@ -1223,7 +1225,7 @@ class Bingobango(Project):
             day_seed: str,
             system_tile: space.SystemTradeHub
         ) -> str:
-        rng = random.Random(utility.hash_args(day_seed, system_tile.tile_seed()))
+        rng = random.Random(utility.hash_args(day_seed, system_tile.tile_seed(), "description"))
 
         cost = cls.get_price_description(day_seed, system_tile)
         reward = cls.get_reward_description(day_seed, system_tile)
@@ -1257,7 +1259,7 @@ class Bingobango(Project):
             day_seed: str,
             system_tile: space.SystemTradeHub
         ) -> str:
-        rng = random.Random(utility.hash_args(day_seed, system_tile.tile_seed()))
+        rng = random.Random(utility.hash_args(day_seed, system_tile.tile_seed(), "completion"))
 
         options = [
             "bingobango!"
@@ -1271,6 +1273,7 @@ class Bingobango(Project):
             day_seed: str,
             system_tile: space.SystemTradeHub
         ) -> list[tuple[str, int]]:
+        rng = random.Random(utility.hash_args(day_seed, system_tile.tile_seed(), "items"))
         return [(values.anarchy_chess.text, 1)]
     
     @classmethod
@@ -1279,7 +1282,7 @@ class Bingobango(Project):
             day_seed: str,
             system_tile: space.SystemTradeHub
         ) -> list[tuple[str, int]]:
-        rng = random.Random(utility.hash_args(day_seed, system_tile.tile_seed()))
+        rng = random.Random(utility.hash_args(day_seed, system_tile.tile_seed(), "items"))
 
         amount = rng.randint(10, 20) * 2000
 
@@ -1295,7 +1298,7 @@ class Anarchy_Trading(Project):
             day_seed: str,
             system_tile: space.SystemTradeHub
          ) -> str:
-        rng = random.Random(utility.hash_args(day_seed, system_tile.tile_seed()))
+        rng = random.Random(utility.hash_args(day_seed, system_tile.tile_seed(), "name"))
 
         options = [
             "Anarchy Trading",
@@ -1312,7 +1315,7 @@ class Anarchy_Trading(Project):
             day_seed: str,
             system_tile: space.SystemTradeHub
         ) -> str:
-        rng = random.Random(utility.hash_args(day_seed, system_tile.tile_seed()))
+        rng = random.Random(utility.hash_args(day_seed, system_tile.tile_seed(), "description"))
 
         cost = cls.get_price_description(day_seed, system_tile)
         reward = cls.get_reward_description(day_seed, system_tile)
@@ -1389,7 +1392,7 @@ class Anarchy_Trading(Project):
             day_seed: str,
             system_tile: space.SystemTradeHub
         ) -> str:
-        rng = random.Random(utility.hash_args(day_seed, system_tile.tile_seed()))
+        rng = random.Random(utility.hash_args(day_seed, system_tile.tile_seed(), "completion"))
         reward = cls.get_reward_description(day_seed, system_tile)
 
         options = [
@@ -1406,7 +1409,7 @@ class Anarchy_Trading(Project):
             day_seed: str,
             system_tile: space.SystemTradeHub
         ) -> list[tuple[str, int]]:
-        rng = random.Random(utility.hash_args(day_seed, system_tile.tile_seed()))
+        rng = random.Random(utility.hash_args(day_seed, system_tile.tile_seed(), "items"))
 
         amount_1 = rng.randint(1, 3)
 
@@ -1420,7 +1423,7 @@ class Anarchy_Trading(Project):
             day_seed: str,
             system_tile: space.SystemTradeHub
         ) -> list[tuple[str, int]]:
-        rng = random.Random(utility.hash_args(day_seed, system_tile.tile_seed()))
+        rng = random.Random(utility.hash_args(day_seed, system_tile.tile_seed(), "items"))
 
         amount_1 = rng.randint(1, 3)
 
@@ -1438,7 +1441,7 @@ class Beta_Minus(Project):
             day_seed: str,
             system_tile: space.SystemTradeHub
          ) -> str:
-        rng = random.Random(utility.hash_args(day_seed, system_tile.tile_seed()))
+        rng = random.Random(utility.hash_args(day_seed, system_tile.tile_seed(), "name"))
 
         options = [
             "Beta Minus",
@@ -1455,7 +1458,7 @@ class Beta_Minus(Project):
             day_seed: str,
             system_tile: space.SystemTradeHub
         ) -> str:
-        rng = random.Random(utility.hash_args(day_seed, system_tile.tile_seed()))
+        rng = random.Random(utility.hash_args(day_seed, system_tile.tile_seed(), "description"))
 
         cost = cls.get_price_description(day_seed, system_tile)
         reward = cls.get_reward_description(day_seed, system_tile)
@@ -1532,7 +1535,7 @@ class Beta_Minus(Project):
             day_seed: str,
             system_tile: space.SystemTradeHub
         ) -> str:
-        rng = random.Random(utility.hash_args(day_seed, system_tile.tile_seed()))
+        rng = random.Random(utility.hash_args(day_seed, system_tile.tile_seed(), "completion"))
         reward = cls.get_reward_description(day_seed, system_tile)
 
         options = [
@@ -1549,7 +1552,7 @@ class Beta_Minus(Project):
             day_seed: str,
             system_tile: space.SystemTradeHub
         ) -> list[tuple[str, int]]:
-        rng = random.Random(utility.hash_args(day_seed, system_tile.tile_seed()))
+        rng = random.Random(utility.hash_args(day_seed, system_tile.tile_seed(), "items"))
 
         amount_1 = rng.randint(6, 15)
 
@@ -1564,7 +1567,7 @@ class Beta_Minus(Project):
             day_seed: str,
             system_tile: space.SystemTradeHub
         ) -> list[tuple[str, int]]:
-        rng = random.Random(utility.hash_args(day_seed, system_tile.tile_seed()))
+        rng = random.Random(utility.hash_args(day_seed, system_tile.tile_seed(), "items"))
 
         amount_1 = rng.randint(6, 15)
 
@@ -1582,7 +1585,7 @@ class Anarchy_Tax_Evasion(Project):
             day_seed: str,
             system_tile: space.SystemTradeHub
          ) -> str:
-        rng = random.Random(utility.hash_args(day_seed, system_tile.tile_seed()))
+        rng = random.Random(utility.hash_args(day_seed, system_tile.tile_seed(), "name"))
 
         options = [
             "Anarchy Tax Evasion",
@@ -1599,7 +1602,7 @@ class Anarchy_Tax_Evasion(Project):
             day_seed: str,
             system_tile: space.SystemTradeHub
         ) -> str:
-        rng = random.Random(utility.hash_args(day_seed, system_tile.tile_seed()))
+        rng = random.Random(utility.hash_args(day_seed, system_tile.tile_seed(), "description"))
 
         cost = cls.get_price_description(day_seed, system_tile)
         reward = cls.get_reward_description(day_seed, system_tile)
@@ -1716,7 +1719,7 @@ class Anarchy_Tax_Evasion(Project):
             day_seed: str,
             system_tile: space.SystemTradeHub
         ) -> str:
-        rng = random.Random(utility.hash_args(day_seed, system_tile.tile_seed()))
+        rng = random.Random(utility.hash_args(day_seed, system_tile.tile_seed(), "completion"))
         reward = cls.get_reward_description(day_seed, system_tile)
 
         options = [
@@ -1733,7 +1736,7 @@ class Anarchy_Tax_Evasion(Project):
             day_seed: str,
             system_tile: space.SystemTradeHub
         ) -> list[tuple[str, int]]:
-        rng = random.Random(utility.hash_args(day_seed, system_tile.tile_seed()))
+        rng = random.Random(utility.hash_args(day_seed, system_tile.tile_seed(), "items"))
 
         amount_1 = rng.randint(3, 6)
 
@@ -1747,7 +1750,7 @@ class Anarchy_Tax_Evasion(Project):
             day_seed: str,
             system_tile: space.SystemTradeHub
         ) -> list[tuple[str, int]]:
-        rng = random.Random(utility.hash_args(day_seed, system_tile.tile_seed()))
+        rng = random.Random(utility.hash_args(day_seed, system_tile.tile_seed(), "items"))
 
         amount_1 = rng.randint(3, 6)
 
@@ -1765,7 +1768,7 @@ class Gem_Extraction(Project):
             day_seed: str,
             system_tile: space.SystemTradeHub
          ) -> str:
-        rng = random.Random(utility.hash_args(day_seed, system_tile.tile_seed()))
+        rng = random.Random(utility.hash_args(day_seed, system_tile.tile_seed(), "name"))
 
         options = [
             "Gem Extraction",
@@ -1782,7 +1785,7 @@ class Gem_Extraction(Project):
             day_seed: str,
             system_tile: space.SystemTradeHub
         ) -> str:
-        rng = random.Random(utility.hash_args(day_seed, system_tile.tile_seed()))
+        rng = random.Random(utility.hash_args(day_seed, system_tile.tile_seed(), "description"))
 
         cost = cls.get_price_description(day_seed, system_tile)
         reward = cls.get_reward_description(day_seed, system_tile)
@@ -1907,7 +1910,7 @@ class Gem_Extraction(Project):
             day_seed: str,
             system_tile: space.SystemTradeHub
         ) -> str:
-        rng = random.Random(utility.hash_args(day_seed, system_tile.tile_seed()))
+        rng = random.Random(utility.hash_args(day_seed, system_tile.tile_seed(), "completion"))
         reward = cls.get_reward_description(day_seed, system_tile)
         cost = cls.get_price_description(day_seed, system_tile)
 
@@ -1925,7 +1928,7 @@ class Gem_Extraction(Project):
             day_seed: str,
             system_tile: space.SystemTradeHub
         ) -> list[tuple[str, int]]:
-        rng = random.Random(utility.hash_args(day_seed, system_tile.tile_seed()))
+        rng = random.Random(utility.hash_args(day_seed, system_tile.tile_seed(), "items"))
 
         amount_1 = rng.randint(1, 3)
 
@@ -1939,7 +1942,7 @@ class Gem_Extraction(Project):
             day_seed: str,
             system_tile: space.SystemTradeHub
         ) -> list[tuple[str, int]]:
-        rng = random.Random(utility.hash_args(day_seed, system_tile.tile_seed()))
+        rng = random.Random(utility.hash_args(day_seed, system_tile.tile_seed(), "items"))
 
         amount_1 = rng.randint(1, 3)
 
@@ -1964,7 +1967,7 @@ class Bakery_Encounter(Project):
             day_seed: str,
             system_tile: space.SystemTradeHub
          ) -> str:
-        rng = random.Random(utility.hash_args(day_seed, system_tile.tile_seed()))
+        rng = random.Random(utility.hash_args(day_seed, system_tile.tile_seed(), "name"))
 
         options = [
             "Bakery Encounter",
@@ -1981,7 +1984,7 @@ class Bakery_Encounter(Project):
             day_seed: str,
             system_tile: space.SystemTradeHub
         ) -> str:
-        rng = random.Random(utility.hash_args(day_seed, system_tile.tile_seed()))
+        rng = random.Random(utility.hash_args(day_seed, system_tile.tile_seed(), "description"))
 
         cost = cls.get_price_description(day_seed, system_tile)
         reward = cls.get_reward_description(day_seed, system_tile)
@@ -2073,7 +2076,7 @@ class Bakery_Encounter(Project):
             day_seed: str,
             system_tile: space.SystemTradeHub
         ) -> str:
-        rng = random.Random(utility.hash_args(day_seed, system_tile.tile_seed()))
+        rng = random.Random(utility.hash_args(day_seed, system_tile.tile_seed(), "completion"))
         reward = cls.get_reward_description(day_seed, system_tile)
 
         options = [
@@ -2090,7 +2093,7 @@ class Bakery_Encounter(Project):
             day_seed: str,
             system_tile: space.SystemTradeHub
         ) -> list[tuple[str, int]]:
-        rng = random.Random(utility.hash_args(day_seed, system_tile.tile_seed()))
+        rng = random.Random(utility.hash_args(day_seed, system_tile.tile_seed(), "items"))
 
         amount_1 = rng.randint(5, 10)
 
@@ -2106,7 +2109,7 @@ class Bakery_Encounter(Project):
             day_seed: str,
             system_tile: space.SystemTradeHub
         ) -> list[tuple[str, int]]:
-        rng = random.Random(utility.hash_args(day_seed, system_tile.tile_seed()))
+        rng = random.Random(utility.hash_args(day_seed, system_tile.tile_seed(), "items"))
 
         amount_1 = rng.randint(5, 10)
 
@@ -2126,7 +2129,7 @@ class Corruption_Lab(Project):
             day_seed: str,
             system_tile: space.SystemTradeHub
          ) -> str:
-        rng = random.Random(utility.hash_args(day_seed, system_tile.tile_seed()))
+        rng = random.Random(utility.hash_args(day_seed, system_tile.tile_seed(), "name"))
 
         options = [
             "Corruption Lab",
@@ -2143,7 +2146,7 @@ class Corruption_Lab(Project):
             day_seed: str,
             system_tile: space.SystemTradeHub
         ) -> str:
-        rng = random.Random(utility.hash_args(day_seed, system_tile.tile_seed()))
+        rng = random.Random(utility.hash_args(day_seed, system_tile.tile_seed(), "description"))
 
         cost = cls.get_price_description(day_seed, system_tile)
         reward = cls.get_reward_description(day_seed, system_tile)
@@ -2228,7 +2231,7 @@ class Corruption_Lab(Project):
             day_seed: str,
             system_tile: space.SystemTradeHub
         ) -> str:
-        rng = random.Random(utility.hash_args(day_seed, system_tile.tile_seed()))
+        rng = random.Random(utility.hash_args(day_seed, system_tile.tile_seed(), "completion"))
         reward = cls.get_reward_description(day_seed, system_tile)
 
         options = [
@@ -2262,7 +2265,7 @@ class Corruption_Lab(Project):
             day_seed: str,
             system_tile: space.SystemTradeHub
         ) -> list[tuple[str, int]]:
-        rng = random.Random(utility.hash_args(day_seed, system_tile.tile_seed()))
+        rng = random.Random(utility.hash_args(day_seed, system_tile.tile_seed(), "items"))
 
         amount_1 = rng.randint(3, 5)
 
@@ -2277,7 +2280,7 @@ class Corruption_Lab(Project):
             day_seed: str,
             system_tile: space.SystemTradeHub
         ) -> list[tuple[str, int]]:
-        rng = random.Random(utility.hash_args(day_seed, system_tile.tile_seed()))
+        rng = random.Random(utility.hash_args(day_seed, system_tile.tile_seed(), "items"))
 
         amount_1 = rng.randint(3, 5)
 
@@ -2295,7 +2298,7 @@ class Cafeteria_Kerfuffle(Project):
             day_seed: str,
             system_tile: space.SystemTradeHub
          ) -> str:
-        rng = random.Random(utility.hash_args(day_seed, system_tile.tile_seed()))
+        rng = random.Random(utility.hash_args(day_seed, system_tile.tile_seed(), "name"))
 
         options = [
             "Cafeteria Kerfuffle",
@@ -2312,7 +2315,7 @@ class Cafeteria_Kerfuffle(Project):
             day_seed: str,
             system_tile: space.SystemTradeHub
         ) -> str:
-        rng = random.Random(utility.hash_args(day_seed, system_tile.tile_seed()))
+        rng = random.Random(utility.hash_args(day_seed, system_tile.tile_seed(), "description"))
 
         cost = cls.get_price_description(day_seed, system_tile)
         reward = cls.get_reward_description(day_seed, system_tile)
@@ -2453,7 +2456,7 @@ class Cafeteria_Kerfuffle(Project):
             day_seed: str,
             system_tile: space.SystemTradeHub
         ) -> str:
-        rng = random.Random(utility.hash_args(day_seed, system_tile.tile_seed()))
+        rng = random.Random(utility.hash_args(day_seed, system_tile.tile_seed(), "completion"))
         reward = cls.get_reward_description(day_seed, system_tile)
 
         options = [
@@ -2470,7 +2473,7 @@ class Cafeteria_Kerfuffle(Project):
             day_seed: str,
             system_tile: space.SystemTradeHub
         ) -> list[tuple[str, int]]:
-        rng = random.Random(utility.hash_args(day_seed, system_tile.tile_seed()))
+        rng = random.Random(utility.hash_args(day_seed, system_tile.tile_seed(), "items"))
 
         return [
             (values.anarchy_chessatron.text, 1)
@@ -2482,7 +2485,7 @@ class Cafeteria_Kerfuffle(Project):
             day_seed: str,
             system_tile: space.SystemTradeHub
         ) -> list[tuple[str, int]]:
-        rng = random.Random(utility.hash_args(day_seed, system_tile.tile_seed()))
+        rng = random.Random(utility.hash_args(day_seed, system_tile.tile_seed(), "items"))
 
         return [
             (values.hotdog.text, 1)
@@ -2498,7 +2501,7 @@ class Health_Inspection(Project):
             day_seed: str,
             system_tile: space.SystemTradeHub
          ) -> str:
-        rng = random.Random(utility.hash_args(day_seed, system_tile.tile_seed()))
+        rng = random.Random(utility.hash_args(day_seed, system_tile.tile_seed(), "name"))
 
         options = [
             "Health Inspection",
@@ -2515,7 +2518,7 @@ class Health_Inspection(Project):
             day_seed: str,
             system_tile: space.SystemTradeHub
         ) -> str:
-        rng = random.Random(utility.hash_args(day_seed, system_tile.tile_seed()))
+        rng = random.Random(utility.hash_args(day_seed, system_tile.tile_seed(), "title"))
         
         options = [
             "Cosmic Crumbs",
@@ -2531,7 +2534,7 @@ class Health_Inspection(Project):
             day_seed: str,
             system_tile: space.SystemTradeHub
         ) -> str:
-        rng = random.Random(utility.hash_args(day_seed, system_tile.tile_seed()))
+        rng = random.Random(utility.hash_args(day_seed, system_tile.tile_seed(), "description"))
 
         cost = cls.get_price_description(day_seed, system_tile)
         reward = cls.get_reward_description(day_seed, system_tile)
@@ -2617,7 +2620,7 @@ class Health_Inspection(Project):
             day_seed: str,
             system_tile: space.SystemTradeHub
         ) -> str:
-        rng = random.Random(utility.hash_args(day_seed, system_tile.tile_seed()))
+        rng = random.Random(utility.hash_args(day_seed, system_tile.tile_seed(), "completion"))
         cost = cls.get_price_description(day_seed, system_tile)
         reward = cls.get_reward_description(day_seed, system_tile)
         title = cls.title(day_seed, system_tile)
@@ -2636,7 +2639,7 @@ class Health_Inspection(Project):
             day_seed: str,
             system_tile: space.SystemTradeHub
         ) -> list[tuple[str, int]]:
-        rng = random.Random(utility.hash_args(day_seed, system_tile.tile_seed()))
+        rng = random.Random(utility.hash_args(day_seed, system_tile.tile_seed(), "items"))
 
         amount_1 = rng.randint(5, 20) * 100
 
@@ -2650,7 +2653,7 @@ class Health_Inspection(Project):
             day_seed: str,
             system_tile: space.SystemTradeHub
         ) -> list[tuple[str, int]]:
-        rng = random.Random(utility.hash_args(day_seed, system_tile.tile_seed()))
+        rng = random.Random(utility.hash_args(day_seed, system_tile.tile_seed(), "items"))
         
         amount_1 = rng.randint(5, 20) * 100
 
@@ -2668,7 +2671,7 @@ class Stonk_Exchange(Project):
             day_seed: str,
             system_tile: space.SystemTradeHub
          ) -> str:
-        rng = random.Random(utility.hash_args(day_seed, system_tile.tile_seed()))
+        rng = random.Random(utility.hash_args(day_seed, system_tile.tile_seed(), "name"))
 
         options = [
             "Stonk Exchange",
@@ -2685,7 +2688,7 @@ class Stonk_Exchange(Project):
             day_seed: str,
             system_tile: space.SystemTradeHub
         ) -> str:
-        rng = random.Random(utility.hash_args(day_seed, system_tile.tile_seed()))
+        rng = random.Random(utility.hash_args(day_seed, system_tile.tile_seed(), "description"))
 
         cost = cls.get_price_description(day_seed, system_tile)
         reward = cls.get_reward_description(day_seed, system_tile)
@@ -2770,7 +2773,7 @@ class Stonk_Exchange(Project):
             day_seed: str,
             system_tile: space.SystemTradeHub
         ) -> str:
-        rng = random.Random(utility.hash_args(day_seed, system_tile.tile_seed()))
+        rng = random.Random(utility.hash_args(day_seed, system_tile.tile_seed(), "completion"))
         reward = cls.get_reward_description(day_seed, system_tile)
 
         options = [
@@ -2812,7 +2815,7 @@ class Stonk_Exchange(Project):
             day_seed: str,
             system_tile: space.SystemTradeHub
         ) -> list[tuple[str, int]]:
-        rng = random.Random(utility.hash_args(day_seed, system_tile.tile_seed()))
+        rng = random.Random(utility.hash_args(day_seed, system_tile.tile_seed(), "items"))
         json_interface = system_tile.galaxy_tile.json_interface
         
         reward = cls.get_reward(day_seed, system_tile)
@@ -2836,7 +2839,7 @@ class Stonk_Exchange(Project):
             day_seed: str,
             system_tile: space.SystemTradeHub
         ) -> list[tuple[str, int]]:
-        rng = random.Random(utility.hash_args(day_seed, system_tile.tile_seed()))
+        rng = random.Random(utility.hash_args(day_seed, system_tile.tile_seed(), "items"))
         json = system_tile.galaxy_tile.json_interface
         
         weights = {
@@ -2875,7 +2878,7 @@ class Beach_Disappearance(Project):
             day_seed: str,
             system_tile: space.SystemTradeHub
         ) -> str:
-        rng = random.Random(utility.hash_args(day_seed, system_tile.tile_seed()))
+        rng = random.Random(utility.hash_args(day_seed, system_tile.tile_seed(), "name"))
         
         options = [
             "Beach Disappearance",
@@ -2891,7 +2894,7 @@ class Beach_Disappearance(Project):
             day_seed: str,
             system_tile: space.SystemTradeHub
         ) -> str:
-        rng = random.Random(utility.hash_args(day_seed, system_tile.tile_seed()))
+        rng = random.Random(utility.hash_args(day_seed, system_tile.tile_seed(), "description"))
 
         cost = cls.get_price_description(day_seed, system_tile)
         reward = cls.get_reward_description(day_seed, system_tile)
@@ -2976,7 +2979,7 @@ class Beach_Disappearance(Project):
             day_seed: str,
             system_tile: space.SystemTradeHub
         ) -> str:
-        rng = random.Random(utility.hash_args(day_seed, system_tile.tile_seed()))
+        rng = random.Random(utility.hash_args(day_seed, system_tile.tile_seed(), "completion"))
 
         options = [
             f"Woo! Thanks to you, all the beaches are back and the animals have returned to their usual life!",
@@ -2992,7 +2995,7 @@ class Beach_Disappearance(Project):
             day_seed: str,
             system_tile: space.SystemTradeHub
         ) -> list[tuple[str, int]]:
-        rng = random.Random(utility.hash_args(day_seed, system_tile.tile_seed()))
+        rng = random.Random(utility.hash_args(day_seed, system_tile.tile_seed(), "items"))
 
         amount = rng.randint(10, 20) * 12800
 
@@ -3004,7 +3007,7 @@ class Beach_Disappearance(Project):
             day_seed: str,
             system_tile: space.SystemTradeHub
         ) -> list[tuple[str, int]]:
-        rng = random.Random(utility.hash_args(day_seed, system_tile.tile_seed()))
+        rng = random.Random(utility.hash_args(day_seed, system_tile.tile_seed(), "items"))
 
         amount = rng.randint(10, 20) * 200
 
@@ -3022,7 +3025,7 @@ class Croissant_Cravings(Project):
             day_seed: str,
             system_tile: space.SystemTradeHub
         ) -> str:
-        rng = random.Random(utility.hash_args(day_seed, system_tile.tile_seed()))
+        rng = random.Random(utility.hash_args(day_seed, system_tile.tile_seed(), "name"))
         
         options = [
             "Croissant Cravings",
@@ -3038,7 +3041,7 @@ class Croissant_Cravings(Project):
             day_seed: str,
             system_tile: space.SystemTradeHub
         ) -> str:
-        rng = random.Random(utility.hash_args(day_seed, system_tile.tile_seed()))
+        rng = random.Random(utility.hash_args(day_seed, system_tile.tile_seed(), "description"))
 
         cost = cls.get_price_description(day_seed, system_tile)
         reward = cls.get_reward_description(day_seed, system_tile)
@@ -3108,7 +3111,7 @@ class Croissant_Cravings(Project):
             day_seed: str,
             system_tile: space.SystemTradeHub
         ) -> str:
-        rng = random.Random(utility.hash_args(day_seed, system_tile.tile_seed()))
+        rng = random.Random(utility.hash_args(day_seed, system_tile.tile_seed(), "completion"))
         cost = cls.get_price_description(day_seed, system_tile)
         reward = cls.get_reward_description(day_seed, system_tile)
 
@@ -3126,7 +3129,7 @@ class Croissant_Cravings(Project):
             day_seed: str,
             system_tile: space.SystemTradeHub
         ) -> list[tuple[str, int]]:
-        rng = random.Random(utility.hash_args(day_seed, system_tile.tile_seed()))
+        rng = random.Random(utility.hash_args(day_seed, system_tile.tile_seed(), "items"))
 
         amount = rng.randint(10, 20) * 19200
 
@@ -3138,7 +3141,7 @@ class Croissant_Cravings(Project):
             day_seed: str,
             system_tile: space.SystemTradeHub
         ) -> list[tuple[str, int]]:
-        rng = random.Random(utility.hash_args(day_seed, system_tile.tile_seed()))
+        rng = random.Random(utility.hash_args(day_seed, system_tile.tile_seed(), "items"))
 
         amount = rng.randint(10, 20) * 200
 
@@ -3156,7 +3159,7 @@ class Appease_The_French(Project):
             day_seed: str,
             system_tile: space.SystemTradeHub
         ) -> str:
-        rng = random.Random(utility.hash_args(day_seed, system_tile.tile_seed()))
+        rng = random.Random(utility.hash_args(day_seed, system_tile.tile_seed(), "name"))
         
         options = [
             "Appease the French",
@@ -3172,7 +3175,7 @@ class Appease_The_French(Project):
             day_seed: str,
             system_tile: space.SystemTradeHub
         ) -> str:
-        rng = random.Random(utility.hash_args(day_seed, system_tile.tile_seed()))
+        rng = random.Random(utility.hash_args(day_seed, system_tile.tile_seed(), "description"))
 
         cost = cls.get_price_description(day_seed, system_tile)
         reward = cls.get_reward_description(day_seed, system_tile)
@@ -3235,7 +3238,7 @@ class Appease_The_French(Project):
             day_seed: str,
             system_tile: space.SystemTradeHub
         ) -> str:
-        rng = random.Random(utility.hash_args(day_seed, system_tile.tile_seed()))
+        rng = random.Random(utility.hash_args(day_seed, system_tile.tile_seed(), "completion"))
         reward = cls.get_reward_description(day_seed, system_tile)
 
         options = [
@@ -3252,7 +3255,7 @@ class Appease_The_French(Project):
             day_seed: str,
             system_tile: space.SystemTradeHub
         ) -> list[tuple[str, int]]:
-        rng = random.Random(utility.hash_args(day_seed, system_tile.tile_seed()))
+        rng = random.Random(utility.hash_args(day_seed, system_tile.tile_seed(), "items"))
 
         amount = rng.randint(10, 20) * 19200
 
@@ -3264,7 +3267,7 @@ class Appease_The_French(Project):
             day_seed: str,
             system_tile: space.SystemTradeHub
         ) -> list[tuple[str, int]]:
-        rng = random.Random(utility.hash_args(day_seed, system_tile.tile_seed()))
+        rng = random.Random(utility.hash_args(day_seed, system_tile.tile_seed(), "items"))
 
         amount = rng.randint(10, 20) * 150
 
@@ -3280,7 +3283,7 @@ class Flatbread_Shortage(Project):
             day_seed: str,
             system_tile: space.SystemTradeHub
         ) -> str:
-        rng = random.Random(utility.hash_args(day_seed, system_tile.tile_seed()))
+        rng = random.Random(utility.hash_args(day_seed, system_tile.tile_seed(), "name"))
         
         options = [
             "Flatbread Shortage",
@@ -3296,7 +3299,7 @@ class Flatbread_Shortage(Project):
             day_seed: str,
             system_tile: space.SystemTradeHub
         ) -> str:
-        rng = random.Random(utility.hash_args(day_seed, system_tile.tile_seed()))
+        rng = random.Random(utility.hash_args(day_seed, system_tile.tile_seed(), "description"))
 
         cost = cls.get_price_description(day_seed, system_tile)
         reward = cls.get_reward_description(day_seed, system_tile)
@@ -3387,7 +3390,7 @@ class Flatbread_Shortage(Project):
             day_seed: str,
             system_tile: space.SystemTradeHub
         ) -> str:
-        rng = random.Random(utility.hash_args(day_seed, system_tile.tile_seed()))
+        rng = random.Random(utility.hash_args(day_seed, system_tile.tile_seed(), "completion"))
         reward = cls.get_reward_description(day_seed, system_tile)
 
         options = [
@@ -3404,7 +3407,7 @@ class Flatbread_Shortage(Project):
             day_seed: str,
             system_tile: space.SystemTradeHub
         ) -> list[tuple[str, int]]:
-        rng = random.Random(utility.hash_args(day_seed, system_tile.tile_seed()))
+        rng = random.Random(utility.hash_args(day_seed, system_tile.tile_seed(), "items"))
 
         amount = rng.randint(10, 20) * 9600
 
@@ -3416,7 +3419,7 @@ class Flatbread_Shortage(Project):
             day_seed: str,
             system_tile: space.SystemTradeHub
         ) -> list[tuple[str, int]]:
-        rng = random.Random(utility.hash_args(day_seed, system_tile.tile_seed()))
+        rng = random.Random(utility.hash_args(day_seed, system_tile.tile_seed(), "items"))
 
         amount = rng.randint(10, 20) * 100
 
@@ -3434,7 +3437,7 @@ class Too_Much_Stuffing(Project):
             day_seed: str,
             system_tile: space.SystemTradeHub
         ) -> str:
-        rng = random.Random(utility.hash_args(day_seed, system_tile.tile_seed()))
+        rng = random.Random(utility.hash_args(day_seed, system_tile.tile_seed(), "name"))
         
         options = [
             "Too Much Stuffing",
@@ -3450,7 +3453,7 @@ class Too_Much_Stuffing(Project):
             day_seed: str,
             system_tile: space.SystemTradeHub
         ) -> str:
-        rng = random.Random(utility.hash_args(day_seed, system_tile.tile_seed()))
+        rng = random.Random(utility.hash_args(day_seed, system_tile.tile_seed(), "description"))
 
         cost = cls.get_price_description(day_seed, system_tile)
         reward = cls.get_reward_description(day_seed, system_tile)
@@ -3548,7 +3551,7 @@ class Too_Much_Stuffing(Project):
             day_seed: str,
             system_tile: space.SystemTradeHub
         ) -> str:
-        rng = random.Random(utility.hash_args(day_seed, system_tile.tile_seed()))
+        rng = random.Random(utility.hash_args(day_seed, system_tile.tile_seed(), "completion"))
         reward = cls.get_reward_description(day_seed, system_tile)
 
         options = [
@@ -3565,7 +3568,7 @@ class Too_Much_Stuffing(Project):
             day_seed: str,
             system_tile: space.SystemTradeHub
         ) -> list[tuple[str, int]]:
-        rng = random.Random(utility.hash_args(day_seed, system_tile.tile_seed()))
+        rng = random.Random(utility.hash_args(day_seed, system_tile.tile_seed(), "items"))
 
         amount = rng.randint(10, 20) * 14400
 
@@ -3577,7 +3580,7 @@ class Too_Much_Stuffing(Project):
             day_seed: str,
             system_tile: space.SystemTradeHub
         ) -> list[tuple[str, int]]:
-        rng = random.Random(utility.hash_args(day_seed, system_tile.tile_seed()))
+        rng = random.Random(utility.hash_args(day_seed, system_tile.tile_seed(), "items"))
 
         amount = rng.randint(10, 20) * 150
 
@@ -3597,7 +3600,7 @@ class Waffle_Machine(Project):
             day_seed: str,
             system_tile: space.SystemTradeHub
         ) -> str:
-        rng = random.Random(utility.hash_args(day_seed, system_tile.tile_seed()))
+        rng = random.Random(utility.hash_args(day_seed, system_tile.tile_seed(), "name"))
         
         options = [
             "Waffle Machine",
@@ -3613,7 +3616,7 @@ class Waffle_Machine(Project):
             day_seed: str,
             system_tile: space.SystemTradeHub
         ) -> str:
-        rng = random.Random(utility.hash_args(day_seed, system_tile.tile_seed()))
+        rng = random.Random(utility.hash_args(day_seed, system_tile.tile_seed(), "description"))
 
         cost = cls.get_price_description(day_seed, system_tile)
         reward = cls.get_reward_description(day_seed, system_tile)
@@ -3704,7 +3707,7 @@ class Waffle_Machine(Project):
             day_seed: str,
             system_tile: space.SystemTradeHub
         ) -> str:
-        rng = random.Random(utility.hash_args(day_seed, system_tile.tile_seed()))
+        rng = random.Random(utility.hash_args(day_seed, system_tile.tile_seed(), "completion"))
 
         options = [
             f"Phew! That was close to a waffle-pocalypse! But luckily the waffles were provided! The Trade Hub has put in an order for a replacement waffle machine, but until that arrives everyone will have all the waffles they want!",
@@ -3720,7 +3723,7 @@ class Waffle_Machine(Project):
             day_seed: str,
             system_tile: space.SystemTradeHub
         ) -> list[tuple[str, int]]:
-        rng = random.Random(utility.hash_args(day_seed, system_tile.tile_seed()))
+        rng = random.Random(utility.hash_args(day_seed, system_tile.tile_seed(), "items"))
 
         amount = rng.randint(10, 20) * 12800
 
@@ -3732,7 +3735,7 @@ class Waffle_Machine(Project):
             day_seed: str,
             system_tile: space.SystemTradeHub
         ) -> list[tuple[str, int]]:
-        rng = random.Random(utility.hash_args(day_seed, system_tile.tile_seed()))
+        rng = random.Random(utility.hash_args(day_seed, system_tile.tile_seed(), "items"))
 
         amount = rng.randint(10, 20) * 200
 
@@ -3748,7 +3751,7 @@ class Stolen_Donuts(Project):
             day_seed: str,
             system_tile: space.SystemTradeHub
         ) -> str:
-        rng = random.Random(utility.hash_args(day_seed, system_tile.tile_seed()))
+        rng = random.Random(utility.hash_args(day_seed, system_tile.tile_seed(), "name"))
         
         options = [
             "Stolen Donuts",
@@ -3764,7 +3767,7 @@ class Stolen_Donuts(Project):
             day_seed: str,
             system_tile: space.SystemTradeHub
         ) -> str:
-        rng = random.Random(utility.hash_args(day_seed, system_tile.tile_seed()))
+        rng = random.Random(utility.hash_args(day_seed, system_tile.tile_seed(), "description"))
 
         cost = cls.get_price_description(day_seed, system_tile)
         reward = cls.get_reward_description(day_seed, system_tile)
@@ -3855,7 +3858,7 @@ class Stolen_Donuts(Project):
             day_seed: str,
             system_tile: space.SystemTradeHub
         ) -> str:
-        rng = random.Random(utility.hash_args(day_seed, system_tile.tile_seed()))
+        rng = random.Random(utility.hash_args(day_seed, system_tile.tile_seed(), "completion"))
         cost = cls.get_price_description(day_seed, system_tile)
 
         options = [
@@ -3872,7 +3875,7 @@ class Stolen_Donuts(Project):
             day_seed: str,
             system_tile: space.SystemTradeHub
         ) -> list[tuple[str, int]]:
-        rng = random.Random(utility.hash_args(day_seed, system_tile.tile_seed()))
+        rng = random.Random(utility.hash_args(day_seed, system_tile.tile_seed(), "items"))
 
         amount = rng.randint(10, 20) * 12800
 
@@ -3884,7 +3887,7 @@ class Stolen_Donuts(Project):
             day_seed: str,
             system_tile: space.SystemTradeHub
         ) -> list[tuple[str, int]]:
-        rng = random.Random(utility.hash_args(day_seed, system_tile.tile_seed()))
+        rng = random.Random(utility.hash_args(day_seed, system_tile.tile_seed(), "items"))
 
         amount = rng.randint(10, 20) * 100
 
@@ -3900,7 +3903,7 @@ class Ecosystem_Problem(Project):
             day_seed: str,
             system_tile: space.SystemTradeHub
         ) -> str:
-        rng = random.Random(utility.hash_args(day_seed, system_tile.tile_seed()))
+        rng = random.Random(utility.hash_args(day_seed, system_tile.tile_seed(), "name"))
         
         options = [
             "Ecosystem Problem",
@@ -3916,7 +3919,7 @@ class Ecosystem_Problem(Project):
             day_seed: str,
             system_tile: space.SystemTradeHub
         ) -> str:
-        rng = random.Random(utility.hash_args(day_seed, system_tile.tile_seed()))
+        rng = random.Random(utility.hash_args(day_seed, system_tile.tile_seed(), "description"))
 
         cost = cls.get_price_description(day_seed, system_tile)
         reward = cls.get_reward_description(day_seed, system_tile)
@@ -3993,7 +3996,7 @@ class Ecosystem_Problem(Project):
             day_seed: str,
             system_tile: space.SystemTradeHub
         ) -> str:
-        rng = random.Random(utility.hash_args(day_seed, system_tile.tile_seed()))
+        rng = random.Random(utility.hash_args(day_seed, system_tile.tile_seed(), "completion"))
 
         options = [
             "It worked! The animal population has returned to normal!",
@@ -4009,7 +4012,7 @@ class Ecosystem_Problem(Project):
             day_seed: str,
             system_tile: space.SystemTradeHub
         ) -> list[tuple[str, int]]:
-        rng = random.Random(utility.hash_args(day_seed, system_tile.tile_seed()))
+        rng = random.Random(utility.hash_args(day_seed, system_tile.tile_seed(), "items"))
 
         amount = rng.randint(10, 20) * 12800
 
@@ -4021,7 +4024,7 @@ class Ecosystem_Problem(Project):
             day_seed: str,
             system_tile: space.SystemTradeHub
         ) -> list[tuple[str, int]]:
-        rng = random.Random(utility.hash_args(day_seed, system_tile.tile_seed()))
+        rng = random.Random(utility.hash_args(day_seed, system_tile.tile_seed(), "items"))
 
         amount = rng.randint(10, 20) * 50
 
@@ -4039,7 +4042,7 @@ class Board_Game_Festival(Project):
             day_seed: str,
             system_tile: space.SystemTradeHub
         ) -> str:
-        rng = random.Random(utility.hash_args(day_seed, system_tile.tile_seed()))
+        rng = random.Random(utility.hash_args(day_seed, system_tile.tile_seed(), "name"))
         
         options = [
             "Board Game Festival",
@@ -4055,7 +4058,7 @@ class Board_Game_Festival(Project):
             day_seed: str,
             system_tile: space.SystemTradeHub
         ) -> str:
-        rng = random.Random(utility.hash_args(day_seed, system_tile.tile_seed()))
+        rng = random.Random(utility.hash_args(day_seed, system_tile.tile_seed(), "description"))
 
         cost = cls.get_cost(day_seed, system_tile)[0][1]
         reward = cls.get_reward_description(day_seed, system_tile)
@@ -4138,7 +4141,7 @@ class Board_Game_Festival(Project):
             day_seed: str,
             system_tile: space.SystemTradeHub
         ) -> str:
-        rng = random.Random(utility.hash_args(day_seed, system_tile.tile_seed()))
+        rng = random.Random(utility.hash_args(day_seed, system_tile.tile_seed(), "completion"))
 
         reward = cls.get_reward_description(day_seed, system_tile)
 
@@ -4156,7 +4159,7 @@ class Board_Game_Festival(Project):
             day_seed: str,
             system_tile: space.SystemTradeHub
         ) -> list[tuple[str, int]]:
-        rng = random.Random(utility.hash_args(day_seed, system_tile.tile_seed()))
+        rng = random.Random(utility.hash_args(day_seed, system_tile.tile_seed(), "items"))
 
         amount = rng.randint(2, 6) * 1024
 
@@ -4168,7 +4171,7 @@ class Board_Game_Festival(Project):
             day_seed: str,
             system_tile: space.SystemTradeHub
         ) -> list[tuple[str, int]]:
-        rng = random.Random(utility.hash_args(day_seed, system_tile.tile_seed()))
+        rng = random.Random(utility.hash_args(day_seed, system_tile.tile_seed(), "items"))
 
         amount = rng.randint(2, 6) * 8
 
@@ -4184,7 +4187,7 @@ class Electrical_Issue(Project):
             day_seed: str,
             system_tile: space.SystemTradeHub
         ) -> str:
-        rng = random.Random(utility.hash_args(day_seed, system_tile.tile_seed()))
+        rng = random.Random(utility.hash_args(day_seed, system_tile.tile_seed(), "name"))
         
         options = [
             "Electrical Issue",
@@ -4200,7 +4203,7 @@ class Electrical_Issue(Project):
             day_seed: str,
             system_tile: space.SystemTradeHub
         ) -> str:
-        rng = random.Random(utility.hash_args(day_seed, system_tile.tile_seed()))
+        rng = random.Random(utility.hash_args(day_seed, system_tile.tile_seed(), "description"))
 
         cost = cls.get_price_description(day_seed, system_tile)
         reward = cls.get_reward_description(day_seed, system_tile)
@@ -4263,7 +4266,7 @@ class Electrical_Issue(Project):
             day_seed: str,
             system_tile: space.SystemTradeHub
         ) -> str:
-        rng = random.Random(utility.hash_args(day_seed, system_tile.tile_seed()))
+        rng = random.Random(utility.hash_args(day_seed, system_tile.tile_seed(), "completion"))
 
         reward = cls.get_reward_description(day_seed, system_tile)
 
@@ -4281,7 +4284,7 @@ class Electrical_Issue(Project):
             day_seed: str,
             system_tile: space.SystemTradeHub
         ) -> list[tuple[str, int]]:
-        rng = random.Random(utility.hash_args(day_seed, system_tile.tile_seed()))
+        rng = random.Random(utility.hash_args(day_seed, system_tile.tile_seed(), "items"))
 
         amount = rng.randint(2, 6) * 256
 
@@ -4293,7 +4296,7 @@ class Electrical_Issue(Project):
             day_seed: str,
             system_tile: space.SystemTradeHub
         ) -> list[tuple[str, int]]:
-        rng = random.Random(utility.hash_args(day_seed, system_tile.tile_seed()))
+        rng = random.Random(utility.hash_args(day_seed, system_tile.tile_seed(), "items"))
 
         amount = rng.randint(2, 6) * 2
 
@@ -4309,7 +4312,7 @@ class Chess_Tournament(Project):
             day_seed: str,
             system_tile: space.SystemTradeHub
         ) -> str:
-        rng = random.Random(utility.hash_args(day_seed, system_tile.tile_seed()))
+        rng = random.Random(utility.hash_args(day_seed, system_tile.tile_seed(), "name"))
         
         options = [
             "Chess Tournament",
@@ -4325,7 +4328,7 @@ class Chess_Tournament(Project):
             day_seed: str,
             system_tile: space.SystemTradeHub
         ) -> str:
-        rng = random.Random(utility.hash_args(day_seed, system_tile.tile_seed()))
+        rng = random.Random(utility.hash_args(day_seed, system_tile.tile_seed(), "description"))
 
         cost = cls.get_cost(day_seed, system_tile)[0][1]
         reward = cls.get_reward_description(day_seed, system_tile)
@@ -4409,7 +4412,7 @@ class Chess_Tournament(Project):
             day_seed: str,
             system_tile: space.SystemTradeHub
         ) -> str:
-        rng = random.Random(utility.hash_args(day_seed, system_tile.tile_seed()))
+        rng = random.Random(utility.hash_args(day_seed, system_tile.tile_seed(), "completion"))
 
         reward = cls.get_reward_description(day_seed, system_tile)
 
@@ -4427,7 +4430,7 @@ class Chess_Tournament(Project):
             day_seed: str,
             system_tile: space.SystemTradeHub
         ) -> list[tuple[str, int]]:
-        rng = random.Random(utility.hash_args(day_seed, system_tile.tile_seed()))
+        rng = random.Random(utility.hash_args(day_seed, system_tile.tile_seed(), "items"))
 
         amount = rng.randint(2,6) * 256
 
@@ -4439,7 +4442,7 @@ class Chess_Tournament(Project):
             day_seed: str,
             system_tile: space.SystemTradeHub
         ) -> list[tuple[str, int]]:
-        rng = random.Random(utility.hash_args(day_seed, system_tile.tile_seed()))
+        rng = random.Random(utility.hash_args(day_seed, system_tile.tile_seed(), "items"))
 
         amount = rng.randint(2, 6) * 2
 
@@ -4455,7 +4458,7 @@ class Diorama_Issue(Project):
             day_seed: str,
             system_tile: space.SystemTradeHub
         ) -> str:
-        rng = random.Random(utility.hash_args(day_seed, system_tile.tile_seed()))
+        rng = random.Random(utility.hash_args(day_seed, system_tile.tile_seed(), "name"))
         
         options = [
             "Diorama Issue",
@@ -4471,7 +4474,7 @@ class Diorama_Issue(Project):
             day_seed: str,
             system_tile: space.SystemTradeHub
         ) -> str:
-        rng = random.Random(utility.hash_args(day_seed, system_tile.tile_seed()))
+        rng = random.Random(utility.hash_args(day_seed, system_tile.tile_seed(), "description"))
 
         cost = cls.get_price_description(day_seed, system_tile)
         reward = cls.get_reward_description(day_seed, system_tile)
@@ -4534,7 +4537,7 @@ class Diorama_Issue(Project):
             day_seed: str,
             system_tile: space.SystemTradeHub
         ) -> str:
-        rng = random.Random(utility.hash_args(day_seed, system_tile.tile_seed()))
+        rng = random.Random(utility.hash_args(day_seed, system_tile.tile_seed(), "completion"))
         reward = cls.get_reward_description(day_seed, system_tile)
 
         options = [
@@ -4551,7 +4554,7 @@ class Diorama_Issue(Project):
             day_seed: str,
             system_tile: space.SystemTradeHub
         ) -> list[tuple[str, int]]:
-        rng = random.Random(utility.hash_args(day_seed, system_tile.tile_seed()))
+        rng = random.Random(utility.hash_args(day_seed, system_tile.tile_seed(), "items"))
 
         amount = rng.randint(2,6) * 256
         return [(values.black_rook.text, amount)]
@@ -4562,7 +4565,7 @@ class Diorama_Issue(Project):
             day_seed: str,
             system_tile: space.SystemTradeHub
         ) -> list[tuple[str, int]]:
-        rng = random.Random(utility.hash_args(day_seed, system_tile.tile_seed()))
+        rng = random.Random(utility.hash_args(day_seed, system_tile.tile_seed(), "items"))
 
         amount = rng.randint(2, 6) * 2
         return [(values.anarchy_black_rook.text, amount)]
@@ -4580,7 +4583,7 @@ class Offering_Ritual_Duplicate(Project):
             day_seed: str,
             system_tile: space.SystemTradeHub
         ) -> str:
-        rng = random.Random(utility.hash_args(day_seed, system_tile.tile_seed()))
+        rng = random.Random(utility.hash_args(day_seed, system_tile.tile_seed(), "name"))
         
         options = [
             "Offering Ritual",
@@ -4596,7 +4599,7 @@ class Offering_Ritual_Duplicate(Project):
             day_seed: str,
             system_tile: space.SystemTradeHub
         ) -> str:
-        rng = random.Random(utility.hash_args(day_seed, system_tile.tile_seed()))
+        rng = random.Random(utility.hash_args(day_seed, system_tile.tile_seed(), "description"))
 
         cost = cls.get_price_description(day_seed, system_tile)
         reward = cls.get_reward_description(day_seed, system_tile)
@@ -4673,7 +4676,7 @@ class Offering_Ritual_Duplicate(Project):
             day_seed: str,
             system_tile: space.SystemTradeHub
         ) -> str:
-        rng = random.Random(utility.hash_args(day_seed, system_tile.tile_seed()))
+        rng = random.Random(utility.hash_args(day_seed, system_tile.tile_seed(), "completion"))
         reward = cls.get_reward_description(day_seed, system_tile)
 
         options = [
@@ -4690,7 +4693,7 @@ class Offering_Ritual_Duplicate(Project):
             day_seed: str,
             system_tile: space.SystemTradeHub
         ) -> list[tuple[str, int]]:
-        rng = random.Random(utility.hash_args(day_seed, system_tile.tile_seed()))
+        rng = random.Random(utility.hash_args(day_seed, system_tile.tile_seed(), "items"))
 
         amount = rng.randint(2,6) * 128
         return [(values.black_queen.text, amount)]
@@ -4701,7 +4704,7 @@ class Offering_Ritual_Duplicate(Project):
             day_seed: str,
             system_tile: space.SystemTradeHub
         ) -> list[tuple[str, int]]:
-        rng = random.Random(utility.hash_args(day_seed, system_tile.tile_seed()))
+        rng = random.Random(utility.hash_args(day_seed, system_tile.tile_seed(), "items"))
 
         amount = rng.randint(2, 6)
         return [(values.anarchy_black_queen.text, amount)]
@@ -4719,7 +4722,7 @@ class Royal_Summit_Duplicate(Project):
             day_seed: str,
             system_tile: space.SystemTradeHub
         ) -> str:
-        rng = random.Random(utility.hash_args(day_seed, system_tile.tile_seed()))
+        rng = random.Random(utility.hash_args(day_seed, system_tile.tile_seed(), "name"))
         
         options = [
             "Royal Summit",
@@ -4735,7 +4738,7 @@ class Royal_Summit_Duplicate(Project):
             day_seed: str,
             system_tile: space.SystemTradeHub
         ) -> str:
-        rng = random.Random(utility.hash_args(day_seed, system_tile.tile_seed()))
+        rng = random.Random(utility.hash_args(day_seed, system_tile.tile_seed(), "description"))
 
         cost = cls.get_price_description(day_seed, system_tile)
         reward = cls.get_reward_description(day_seed, system_tile)
@@ -4826,7 +4829,7 @@ class Royal_Summit_Duplicate(Project):
             day_seed: str,
             system_tile: space.SystemTradeHub
         ) -> str:
-        rng = random.Random(utility.hash_args(day_seed, system_tile.tile_seed()))
+        rng = random.Random(utility.hash_args(day_seed, system_tile.tile_seed(), "completion"))
 
         options = [
             "Bravo! The Trade Hub's council has successfully orchestrated a grand reception for the visiting royalty! Through your collective efforts, the diplomatic mission has flourished, and bonds of friendship have been strengthened between distant realms!",
@@ -4842,7 +4845,7 @@ class Royal_Summit_Duplicate(Project):
             day_seed: str,
             system_tile: space.SystemTradeHub
         ) -> list[tuple[str, int]]:
-        rng = random.Random(utility.hash_args(day_seed, system_tile.tile_seed()))
+        rng = random.Random(utility.hash_args(day_seed, system_tile.tile_seed(), "items"))
 
         amount = rng.randint(2, 6) * 128
         return [(values.black_king.text, amount)]
@@ -4853,7 +4856,7 @@ class Royal_Summit_Duplicate(Project):
             day_seed: str,
             system_tile: space.SystemTradeHub
         ) -> list[tuple[str, int]]:
-        rng = random.Random(utility.hash_args(day_seed, system_tile.tile_seed()))
+        rng = random.Random(utility.hash_args(day_seed, system_tile.tile_seed(), "items"))
 
         amount = rng.randint(2, 6)
         return [(values.anarchy_black_king.text, amount)]
@@ -4873,7 +4876,7 @@ class Board_Game_Festival_Duplicate(Project):
             day_seed: str,
             system_tile: space.SystemTradeHub
         ) -> str:
-        rng = random.Random(utility.hash_args(day_seed, system_tile.tile_seed()))
+        rng = random.Random(utility.hash_args(day_seed, system_tile.tile_seed(), "name"))
         
         options = [
             "Board Game Festival",
@@ -4889,7 +4892,7 @@ class Board_Game_Festival_Duplicate(Project):
             day_seed: str,
             system_tile: space.SystemTradeHub
         ) -> str:
-        rng = random.Random(utility.hash_args(day_seed, system_tile.tile_seed()))
+        rng = random.Random(utility.hash_args(day_seed, system_tile.tile_seed(), "description"))
 
         cost = cls.get_cost(day_seed, system_tile)[0][1]
         reward = cls.get_reward_description(day_seed, system_tile)
@@ -4972,7 +4975,7 @@ class Board_Game_Festival_Duplicate(Project):
             day_seed: str,
             system_tile: space.SystemTradeHub
         ) -> str:
-        rng = random.Random(utility.hash_args(day_seed, system_tile.tile_seed()))
+        rng = random.Random(utility.hash_args(day_seed, system_tile.tile_seed(), "completion"))
 
         reward = cls.get_reward_description(day_seed, system_tile)
 
@@ -4990,7 +4993,7 @@ class Board_Game_Festival_Duplicate(Project):
             day_seed: str,
             system_tile: space.SystemTradeHub
         ) -> list[tuple[str, int]]:
-        rng = random.Random(utility.hash_args(day_seed, system_tile.tile_seed()))
+        rng = random.Random(utility.hash_args(day_seed, system_tile.tile_seed(), "items"))
 
         amount = rng.randint(2, 6) * 1024
 
@@ -5002,7 +5005,7 @@ class Board_Game_Festival_Duplicate(Project):
             day_seed: str,
             system_tile: space.SystemTradeHub
         ) -> list[tuple[str, int]]:
-        rng = random.Random(utility.hash_args(day_seed, system_tile.tile_seed()))
+        rng = random.Random(utility.hash_args(day_seed, system_tile.tile_seed(), "items"))
 
         amount = rng.randint(2, 6) * 8
 
@@ -5018,7 +5021,7 @@ class Round_Table(Project):
             day_seed: str,
             system_tile: space.SystemTradeHub
         ) -> str:
-        rng = random.Random(utility.hash_args(day_seed, system_tile.tile_seed()))
+        rng = random.Random(utility.hash_args(day_seed, system_tile.tile_seed(), "name"))
         
         options = [
             "The Round Table",
@@ -5034,7 +5037,7 @@ class Round_Table(Project):
             day_seed: str,
             system_tile: space.SystemTradeHub
         ) -> str:
-        rng = random.Random(utility.hash_args(day_seed, system_tile.tile_seed()))
+        rng = random.Random(utility.hash_args(day_seed, system_tile.tile_seed(), "description"))
 
         cost = cls.get_cost(day_seed, system_tile)[0][1]
         reward = cls.get_reward_description(day_seed, system_tile)
@@ -5118,7 +5121,7 @@ class Round_Table(Project):
             day_seed: str,
             system_tile: space.SystemTradeHub
         ) -> str:
-        rng = random.Random(utility.hash_args(day_seed, system_tile.tile_seed()))
+        rng = random.Random(utility.hash_args(day_seed, system_tile.tile_seed(), "completion"))
 
         cost = cls.get_cost(day_seed, system_tile)[0][1]
         reward = cls.get_reward_description(day_seed, system_tile)
@@ -5137,7 +5140,7 @@ class Round_Table(Project):
             day_seed: str,
             system_tile: space.SystemTradeHub
         ) -> list[tuple[str, int]]:
-        rng = random.Random(utility.hash_args(day_seed, system_tile.tile_seed()))
+        rng = random.Random(utility.hash_args(day_seed, system_tile.tile_seed(), "items"))
 
         amount = rng.randint(2,6) * 256
 
@@ -5149,7 +5152,7 @@ class Round_Table(Project):
             day_seed: str,
             system_tile: space.SystemTradeHub
         ) -> list[tuple[str, int]]:
-        rng = random.Random(utility.hash_args(day_seed, system_tile.tile_seed()))
+        rng = random.Random(utility.hash_args(day_seed, system_tile.tile_seed(), "items"))
 
         amount = rng.randint(2, 6) * 2
 
@@ -5165,7 +5168,7 @@ class Stolen_Bishops(Project):
             day_seed: str,
             system_tile: space.SystemTradeHub
         ) -> str:
-        rng = random.Random(utility.hash_args(day_seed, system_tile.tile_seed()))
+        rng = random.Random(utility.hash_args(day_seed, system_tile.tile_seed(), "name"))
         
         options = [
             "Stolen Bishops",
@@ -5181,7 +5184,7 @@ class Stolen_Bishops(Project):
             day_seed: str,
             system_tile: space.SystemTradeHub
         ) -> str:
-        rng = random.Random(utility.hash_args(day_seed, system_tile.tile_seed()))
+        rng = random.Random(utility.hash_args(day_seed, system_tile.tile_seed(), "description"))
 
         cost = cls.get_price_description(day_seed, system_tile)
         reward = cls.get_reward_description(day_seed, system_tile)
@@ -5244,7 +5247,7 @@ class Stolen_Bishops(Project):
             day_seed: str,
             system_tile: space.SystemTradeHub
         ) -> str:
-        rng = random.Random(utility.hash_args(day_seed, system_tile.tile_seed()))
+        rng = random.Random(utility.hash_args(day_seed, system_tile.tile_seed(), "completion"))
 
         reward = cls.get_reward_description(day_seed, system_tile)
 
@@ -5262,7 +5265,7 @@ class Stolen_Bishops(Project):
             day_seed: str,
             system_tile: space.SystemTradeHub
         ) -> list[tuple[str, int]]:
-        rng = random.Random(utility.hash_args(day_seed, system_tile.tile_seed()))
+        rng = random.Random(utility.hash_args(day_seed, system_tile.tile_seed(), "items"))
 
         amount = rng.randint(2,6) * 256
 
@@ -5274,7 +5277,7 @@ class Stolen_Bishops(Project):
             day_seed: str,
             system_tile: space.SystemTradeHub
         ) -> list[tuple[str, int]]:
-        rng = random.Random(utility.hash_args(day_seed, system_tile.tile_seed()))
+        rng = random.Random(utility.hash_args(day_seed, system_tile.tile_seed(), "items"))
 
         amount = rng.randint(2, 6) * 2
 
@@ -5290,7 +5293,7 @@ class Fortress_Building(Project):
             day_seed: str,
             system_tile: space.SystemTradeHub
         ) -> str:
-        rng = random.Random(utility.hash_args(day_seed, system_tile.tile_seed()))
+        rng = random.Random(utility.hash_args(day_seed, system_tile.tile_seed(), "name"))
         
         options = [
             "Fortress Building",
@@ -5306,7 +5309,7 @@ class Fortress_Building(Project):
             day_seed: str,
             system_tile: space.SystemTradeHub
         ) -> str:
-        rng = random.Random(utility.hash_args(day_seed, system_tile.tile_seed()))
+        rng = random.Random(utility.hash_args(day_seed, system_tile.tile_seed(), "description"))
 
         cost = cls.get_price_description(day_seed, system_tile)
         reward = cls.get_reward_description(day_seed, system_tile)
@@ -5376,7 +5379,7 @@ class Fortress_Building(Project):
             day_seed: str,
             system_tile: space.SystemTradeHub
         ) -> str:
-        rng = random.Random(utility.hash_args(day_seed, system_tile.tile_seed()))
+        rng = random.Random(utility.hash_args(day_seed, system_tile.tile_seed(), "completion"))
         reward = cls.get_reward_description(day_seed, system_tile)
 
         options = [
@@ -5393,7 +5396,7 @@ class Fortress_Building(Project):
             day_seed: str,
             system_tile: space.SystemTradeHub
         ) -> list[tuple[str, int]]:
-        rng = random.Random(utility.hash_args(day_seed, system_tile.tile_seed()))
+        rng = random.Random(utility.hash_args(day_seed, system_tile.tile_seed(), "items"))
 
         amount = rng.randint(2,6) * 256
         return [(values.white_rook.text, amount)]
@@ -5404,7 +5407,7 @@ class Fortress_Building(Project):
             day_seed: str,
             system_tile: space.SystemTradeHub
         ) -> list[tuple[str, int]]:
-        rng = random.Random(utility.hash_args(day_seed, system_tile.tile_seed()))
+        rng = random.Random(utility.hash_args(day_seed, system_tile.tile_seed(), "items"))
 
         amount = rng.randint(2, 6) * 2
         return [(values.anarchy_white_rook.text, amount)]
@@ -5419,7 +5422,7 @@ class Offering_Ritual(Project):
             day_seed: str,
             system_tile: space.SystemTradeHub
         ) -> str:
-        rng = random.Random(utility.hash_args(day_seed, system_tile.tile_seed()))
+        rng = random.Random(utility.hash_args(day_seed, system_tile.tile_seed(), "name"))
         
         options = [
             "Offering Ritual",
@@ -5435,7 +5438,7 @@ class Offering_Ritual(Project):
             day_seed: str,
             system_tile: space.SystemTradeHub
         ) -> str:
-        rng = random.Random(utility.hash_args(day_seed, system_tile.tile_seed()))
+        rng = random.Random(utility.hash_args(day_seed, system_tile.tile_seed(), "description"))
 
         cost = cls.get_price_description(day_seed, system_tile)
         reward = cls.get_reward_description(day_seed, system_tile)
@@ -5512,7 +5515,7 @@ class Offering_Ritual(Project):
             day_seed: str,
             system_tile: space.SystemTradeHub
         ) -> str:
-        rng = random.Random(utility.hash_args(day_seed, system_tile.tile_seed()))
+        rng = random.Random(utility.hash_args(day_seed, system_tile.tile_seed(), "completion"))
         reward = cls.get_reward_description(day_seed, system_tile)
 
         options = [
@@ -5529,7 +5532,7 @@ class Offering_Ritual(Project):
             day_seed: str,
             system_tile: space.SystemTradeHub
         ) -> list[tuple[str, int]]:
-        rng = random.Random(utility.hash_args(day_seed, system_tile.tile_seed()))
+        rng = random.Random(utility.hash_args(day_seed, system_tile.tile_seed(), "items"))
 
         amount = rng.randint(2,6) * 128
         return [(values.white_queen.text, amount)]
@@ -5540,7 +5543,7 @@ class Offering_Ritual(Project):
             day_seed: str,
             system_tile: space.SystemTradeHub
         ) -> list[tuple[str, int]]:
-        rng = random.Random(utility.hash_args(day_seed, system_tile.tile_seed()))
+        rng = random.Random(utility.hash_args(day_seed, system_tile.tile_seed(), "items"))
 
         amount = rng.randint(2, 6)
         return [(values.anarchy_white_queen.text, amount)]
@@ -5555,7 +5558,7 @@ class Royal_Summit(Project):
             day_seed: str,
             system_tile: space.SystemTradeHub
         ) -> str:
-        rng = random.Random(utility.hash_args(day_seed, system_tile.tile_seed()))
+        rng = random.Random(utility.hash_args(day_seed, system_tile.tile_seed(), "name"))
         
         options = [
             "Royal Summit",
@@ -5571,7 +5574,7 @@ class Royal_Summit(Project):
             day_seed: str,
             system_tile: space.SystemTradeHub
         ) -> str:
-        rng = random.Random(utility.hash_args(day_seed, system_tile.tile_seed()))
+        rng = random.Random(utility.hash_args(day_seed, system_tile.tile_seed(), "description"))
 
         cost = cls.get_price_description(day_seed, system_tile)
         reward = cls.get_reward_description(day_seed, system_tile)
@@ -5662,7 +5665,7 @@ class Royal_Summit(Project):
             day_seed: str,
             system_tile: space.SystemTradeHub
         ) -> str:
-        rng = random.Random(utility.hash_args(day_seed, system_tile.tile_seed()))
+        rng = random.Random(utility.hash_args(day_seed, system_tile.tile_seed(), "completion"))
 
         options = [
             "Bravo! The Trade Hub's council has successfully orchestrated a grand reception for the visiting royalty! Through your collective efforts, the diplomatic mission has flourished, and bonds of friendship have been strengthened between distant realms!",
@@ -5678,7 +5681,7 @@ class Royal_Summit(Project):
             day_seed: str,
             system_tile: space.SystemTradeHub
         ) -> list[tuple[str, int]]:
-        rng = random.Random(utility.hash_args(day_seed, system_tile.tile_seed()))
+        rng = random.Random(utility.hash_args(day_seed, system_tile.tile_seed(), "items"))
 
         amount = rng.randint(2, 6) * 128
         return [(values.white_king.text, amount)]
@@ -5689,7 +5692,7 @@ class Royal_Summit(Project):
             day_seed: str,
             system_tile: space.SystemTradeHub
         ) -> list[tuple[str, int]]:
-        rng = random.Random(utility.hash_args(day_seed, system_tile.tile_seed()))
+        rng = random.Random(utility.hash_args(day_seed, system_tile.tile_seed(), "items"))
 
         amount = rng.randint(2, 6)
         return [(values.anarchy_white_king.text, amount)]
@@ -5706,7 +5709,7 @@ class Emergency_Fuel(Project):
             day_seed: str,
             system_tile: space.SystemTradeHub
         ) -> str:
-        rng = random.Random(utility.hash_args(day_seed, system_tile.tile_seed()))
+        rng = random.Random(utility.hash_args(day_seed, system_tile.tile_seed(), "name"))
         
         options = [
             "Emergency Fuel",
@@ -5722,7 +5725,7 @@ class Emergency_Fuel(Project):
             day_seed: str,
             system_tile: space.SystemTradeHub
         ) -> str:
-        rng = random.Random(utility.hash_args(day_seed, system_tile.tile_seed()))
+        rng = random.Random(utility.hash_args(day_seed, system_tile.tile_seed(), "description"))
 
         cost = cls.get_price_description(day_seed, system_tile)
         reward = cls.get_reward_description(day_seed, system_tile)
@@ -5771,7 +5774,7 @@ class Emergency_Fuel(Project):
             day_seed: str,
             system_tile: space.SystemTradeHub
         ) -> str:
-        rng = random.Random(utility.hash_args(day_seed, system_tile.tile_seed()))
+        rng = random.Random(utility.hash_args(day_seed, system_tile.tile_seed(), "completion"))
         reward = cls.get_reward_description(day_seed, system_tile)
 
         options = [
@@ -5788,7 +5791,7 @@ class Emergency_Fuel(Project):
             day_seed: str,
             system_tile: space.SystemTradeHub
         ) -> list[tuple[str, int]]:
-        rng = random.Random(utility.hash_args(day_seed, system_tile.tile_seed()))
+        rng = random.Random(utility.hash_args(day_seed, system_tile.tile_seed(), "items"))
 
         amount = rng.randint(4, 8) * 50
 
@@ -5800,7 +5803,7 @@ class Emergency_Fuel(Project):
             day_seed: str,
             system_tile: space.SystemTradeHub
         ) -> list[tuple[str, int]]:
-        rng = random.Random(utility.hash_args(day_seed, system_tile.tile_seed()))
+        rng = random.Random(utility.hash_args(day_seed, system_tile.tile_seed(), "items"))
 
         amount = rng.randint(4, 8) * 40
 
@@ -5816,7 +5819,7 @@ class Gem_Mining(Project):
             day_seed: str,
             system_tile: space.SystemTradeHub
         ) -> str:
-        rng = random.Random(utility.hash_args(day_seed, system_tile.tile_seed()))
+        rng = random.Random(utility.hash_args(day_seed, system_tile.tile_seed(), "name"))
         
         options = [
             "Gem Mining",
@@ -5832,7 +5835,7 @@ class Gem_Mining(Project):
             day_seed: str,
             system_tile: space.SystemTradeHub
         ) -> str:
-        rng = random.Random(utility.hash_args(day_seed, system_tile.tile_seed()))
+        rng = random.Random(utility.hash_args(day_seed, system_tile.tile_seed(), "description"))
 
         cost = cls.get_price_description(day_seed, system_tile)
         reward = cls.get_reward_description(day_seed, system_tile)
@@ -5909,7 +5912,7 @@ class Gem_Mining(Project):
             day_seed: str,
             system_tile: space.SystemTradeHub
         ) -> str:
-        rng = random.Random(utility.hash_args(day_seed, system_tile.tile_seed()))
+        rng = random.Random(utility.hash_args(day_seed, system_tile.tile_seed(), "completion"))
 
         options = [
             "The gems were enough and the mining planet has returned to full efficiency!",
@@ -5925,7 +5928,7 @@ class Gem_Mining(Project):
             day_seed: str,
             system_tile: space.SystemTradeHub
         ) -> list[tuple[str, int]]:
-        rng = random.Random(utility.hash_args(day_seed, system_tile.tile_seed()))
+        rng = random.Random(utility.hash_args(day_seed, system_tile.tile_seed(), "items"))
 
         amount = rng.randint(2, 6) * 20
 
@@ -5937,7 +5940,7 @@ class Gem_Mining(Project):
             day_seed: str,
             system_tile: space.SystemTradeHub
         ) -> list[tuple[str, int]]:
-        rng = random.Random(utility.hash_args(day_seed, system_tile.tile_seed()))
+        rng = random.Random(utility.hash_args(day_seed, system_tile.tile_seed(), "items"))
 
         amount = rng.randint(2, 6) * 40
 
@@ -5953,7 +5956,7 @@ class Jewelry_Store(Project):
             day_seed: str,
             system_tile: space.SystemTradeHub
         ) -> str:
-        rng = random.Random(utility.hash_args(day_seed, system_tile.tile_seed()))
+        rng = random.Random(utility.hash_args(day_seed, system_tile.tile_seed(), "name"))
         
         options = [
             "Jewelry Store",
@@ -5969,7 +5972,7 @@ class Jewelry_Store(Project):
             day_seed: str,
             system_tile: space.SystemTradeHub
         ) -> str:
-        rng = random.Random(utility.hash_args(day_seed, system_tile.tile_seed()))
+        rng = random.Random(utility.hash_args(day_seed, system_tile.tile_seed(), "description"))
 
         cost = cls.get_price_description(day_seed, system_tile)
         reward = cls.get_reward_description(day_seed, system_tile)
@@ -6032,7 +6035,7 @@ class Jewelry_Store(Project):
             day_seed: str,
             system_tile: space.SystemTradeHub
         ) -> str:
-        rng = random.Random(utility.hash_args(day_seed, system_tile.tile_seed()))
+        rng = random.Random(utility.hash_args(day_seed, system_tile.tile_seed(), "completion"))
         reward = cls.get_reward_description(day_seed, system_tile)
 
         options = [
@@ -6049,7 +6052,7 @@ class Jewelry_Store(Project):
             day_seed: str,
             system_tile: space.SystemTradeHub
         ) -> list[tuple[str, int]]:
-        rng = random.Random(utility.hash_args(day_seed, system_tile.tile_seed()))
+        rng = random.Random(utility.hash_args(day_seed, system_tile.tile_seed(), "items"))
 
         amount = rng.randint(2, 6) * 20
 
@@ -6061,7 +6064,7 @@ class Jewelry_Store(Project):
             day_seed: str,
             system_tile: space.SystemTradeHub
         ) -> list[tuple[str, int]]:
-        rng = random.Random(utility.hash_args(day_seed, system_tile.tile_seed()))
+        rng = random.Random(utility.hash_args(day_seed, system_tile.tile_seed(), "items"))
 
         amount = rng.randint(2, 6) * 40
 
@@ -6077,7 +6080,7 @@ class Generator_Breakdown(Project):
             day_seed: str,
             system_tile: space.SystemTradeHub
         ) -> str:
-        rng = random.Random(utility.hash_args(day_seed, system_tile.tile_seed()))
+        rng = random.Random(utility.hash_args(day_seed, system_tile.tile_seed(), "name"))
         
         options = [
             "Generator Breakdown",
@@ -6093,7 +6096,7 @@ class Generator_Breakdown(Project):
             day_seed: str,
             system_tile: space.SystemTradeHub
         ) -> str:
-        rng = random.Random(utility.hash_args(day_seed, system_tile.tile_seed()))
+        rng = random.Random(utility.hash_args(day_seed, system_tile.tile_seed(), "description"))
 
         cost = cls.get_price_description(day_seed, system_tile)
         reward = cls.get_reward_description(day_seed, system_tile)
@@ -6163,7 +6166,7 @@ class Generator_Breakdown(Project):
             day_seed: str,
             system_tile: space.SystemTradeHub
         ) -> str:
-        rng = random.Random(utility.hash_args(day_seed, system_tile.tile_seed()))
+        rng = random.Random(utility.hash_args(day_seed, system_tile.tile_seed(), "completion"))
         reward = cls.get_reward_description(day_seed, system_tile)
 
         options = [
@@ -6180,7 +6183,7 @@ class Generator_Breakdown(Project):
             day_seed: str,
             system_tile: space.SystemTradeHub
         ) -> list[tuple[str, int]]:
-        rng = random.Random(utility.hash_args(day_seed, system_tile.tile_seed()))
+        rng = random.Random(utility.hash_args(day_seed, system_tile.tile_seed(), "items"))
 
         amount = rng.randint(2, 6) * 20
 
@@ -6192,7 +6195,7 @@ class Generator_Breakdown(Project):
             day_seed: str,
             system_tile: space.SystemTradeHub
         ) -> list[tuple[str, int]]:
-        rng = random.Random(utility.hash_args(day_seed, system_tile.tile_seed()))
+        rng = random.Random(utility.hash_args(day_seed, system_tile.tile_seed(), "items"))
 
         amount = rng.randint(2, 6) * 40
 
@@ -6208,7 +6211,7 @@ class Gem_Salesman(Project):
             day_seed: str,
             system_tile: space.SystemTradeHub
         ) -> str:
-        rng = random.Random(utility.hash_args(day_seed, system_tile.tile_seed()))
+        rng = random.Random(utility.hash_args(day_seed, system_tile.tile_seed(), "name"))
         
         options = [
             "Gem Salesman",
@@ -6224,7 +6227,7 @@ class Gem_Salesman(Project):
             day_seed: str,
             system_tile: space.SystemTradeHub
         ) -> str:
-        rng = random.Random(utility.hash_args(day_seed, system_tile.tile_seed()))
+        rng = random.Random(utility.hash_args(day_seed, system_tile.tile_seed(), "description"))
 
         cost = cls.get_price_description(day_seed, system_tile)
         reward = cls.get_reward_description(day_seed, system_tile)
@@ -6308,7 +6311,7 @@ class Gem_Salesman(Project):
             day_seed: str,
             system_tile: space.SystemTradeHub
         ) -> str:
-        rng = random.Random(utility.hash_args(day_seed, system_tile.tile_seed()))
+        rng = random.Random(utility.hash_args(day_seed, system_tile.tile_seed(), "completion"))
         reward = cls.get_reward_description(day_seed, system_tile)
 
         options = [
@@ -6327,7 +6330,7 @@ class Gem_Salesman(Project):
             day_seed: str,
             system_tile: space.SystemTradeHub
         ) -> list[tuple[str, int]]:
-        rng = random.Random(utility.hash_args(day_seed, system_tile.tile_seed()))
+        rng = random.Random(utility.hash_args(day_seed, system_tile.tile_seed(), "items"))
 
         amount = rng.randint(2, 6) * 5
 
@@ -6339,7 +6342,7 @@ class Gem_Salesman(Project):
             day_seed: str,
             system_tile: space.SystemTradeHub
         ) -> list[tuple[str, int]]:
-        rng = random.Random(utility.hash_args(day_seed, system_tile.tile_seed()))
+        rng = random.Random(utility.hash_args(day_seed, system_tile.tile_seed(), "items"))
 
         amount = rng.randint(2, 6) * 40
 
@@ -6357,7 +6360,7 @@ class Omega_Order(Project):
             day_seed: str,
             system_tile: space.SystemTradeHub
         ) -> str:
-        rng = random.Random(utility.hash_args(day_seed, system_tile.tile_seed()))
+        rng = random.Random(utility.hash_args(day_seed, system_tile.tile_seed(), "name"))
         
         options = [
             "Omega Order",
@@ -6373,7 +6376,7 @@ class Omega_Order(Project):
             day_seed: str,
             system_tile: space.SystemTradeHub
         ) -> str:
-        rng = random.Random(utility.hash_args(day_seed, system_tile.tile_seed()))
+        rng = random.Random(utility.hash_args(day_seed, system_tile.tile_seed(), "description"))
 
         cost = cls.get_price_description(day_seed, system_tile)
         reward = cls.get_reward_description(day_seed, system_tile)
@@ -6436,7 +6439,7 @@ class Omega_Order(Project):
             day_seed: str,
             system_tile: space.SystemTradeHub
         ) -> str:
-        rng = random.Random(utility.hash_args(day_seed, system_tile.tile_seed()))
+        rng = random.Random(utility.hash_args(day_seed, system_tile.tile_seed(), "completion"))
         reward = cls.get_reward_description(day_seed, system_tile)
 
         options = [
@@ -6453,7 +6456,7 @@ class Omega_Order(Project):
             day_seed: str,
             system_tile: space.SystemTradeHub
         ) -> list[tuple[str, int]]:
-        rng = random.Random(utility.hash_args(day_seed, system_tile.tile_seed()))
+        rng = random.Random(utility.hash_args(day_seed, system_tile.tile_seed(), "items"))
 
         amount = rng.randint(2, 6)
 
@@ -6465,7 +6468,7 @@ class Omega_Order(Project):
             day_seed: str,
             system_tile: space.SystemTradeHub
         ) -> list[tuple[str, int]]:
-        rng = random.Random(utility.hash_args(day_seed, system_tile.tile_seed()))
+        rng = random.Random(utility.hash_args(day_seed, system_tile.tile_seed(), "items"))
 
         amount = rng.randint(2, 6) * 3
 
@@ -6481,7 +6484,7 @@ class Chessatron_Repair(Project):
             day_seed: str,
             system_tile: space.SystemTradeHub
         ) -> str:
-        rng = random.Random(utility.hash_args(day_seed, system_tile.tile_seed()))
+        rng = random.Random(utility.hash_args(day_seed, system_tile.tile_seed(), "name"))
         
         options = [
             "Chessatron Repair",
@@ -6497,7 +6500,7 @@ class Chessatron_Repair(Project):
             day_seed: str,
             system_tile: space.SystemTradeHub
         ) -> str:
-        rng = random.Random(utility.hash_args(day_seed, system_tile.tile_seed()))
+        rng = random.Random(utility.hash_args(day_seed, system_tile.tile_seed(), "description"))
 
         cost = cls.get_price_description(day_seed, system_tile)
         reward = cls.get_reward_description(day_seed, system_tile)
@@ -6556,7 +6559,7 @@ class Chessatron_Repair(Project):
             day_seed: str,
             system_tile: space.SystemTradeHub
         ) -> str:
-        rng = random.Random(utility.hash_args(day_seed, system_tile.tile_seed()))
+        rng = random.Random(utility.hash_args(day_seed, system_tile.tile_seed(), "completion"))
         reward = cls.get_reward_description(day_seed, system_tile)
 
         options = [
@@ -6573,7 +6576,7 @@ class Chessatron_Repair(Project):
             day_seed: str,
             system_tile: space.SystemTradeHub
         ) -> list[tuple[str, int]]:
-        rng = random.Random(utility.hash_args(day_seed, system_tile.tile_seed()))
+        rng = random.Random(utility.hash_args(day_seed, system_tile.tile_seed(), "items"))
 
         amount = rng.randint(2, 6) * 50 + 100
 
@@ -6585,7 +6588,7 @@ class Chessatron_Repair(Project):
             day_seed: str,
             system_tile: space.SystemTradeHub
         ) -> list[tuple[str, int]]:
-        rng = random.Random(utility.hash_args(day_seed, system_tile.tile_seed()))
+        rng = random.Random(utility.hash_args(day_seed, system_tile.tile_seed(), "items"))
 
         amount = rng.randint(2, 6) * 3
 
