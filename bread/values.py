@@ -337,7 +337,8 @@ anarchy_chessatron = Emote(
     value=100_000, # Doesn't really do much since the anarchy tron dough equation was changed.
     name="anarchy_chessatron",
     attributes=["unique", "full_anarchy_set"],
-    awards_value = True
+    awards_value = True,
+    alternate_names = ["atron", "anarchy_tron"]
 )
 
 anarchy_omega_chessatron = Emote(
@@ -346,7 +347,7 @@ anarchy_omega_chessatron = Emote(
     name="anarchy_omega_chessatron",
     attributes=["unique"],
     awards_value = True,
-    alternate_names = ["anarchy_omega"],
+    alternate_names = ["anarchy_omega", "aomega"],
     giftable=False
 )
 
