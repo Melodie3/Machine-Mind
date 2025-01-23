@@ -74,14 +74,14 @@ def array_subtract(
     output.extend(array1)
     #print(f"Array subtract: subtracting {array2} from {array1}")
     #print(f"output: {output}")
-    for object in array2:
+    for obj in array2:
     #for i in range(len(array2)):
         
         #object = array2[i]
         #print(f"Object {i} is {object}")
-        if object in output:
+        if obj in output:
             #print(f"Object {i} is in output")
-            output.remove(object)
+            output.remove(obj)
             #print(f"Removing. Output is now {output}")
             #this is subtly different, but it means that duplicate members are only removed one at a time
     return output

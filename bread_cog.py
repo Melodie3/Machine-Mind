@@ -5167,7 +5167,7 @@ anarchy - 1000% of your wager.
 
         if account.has("payment_bonus"):
             level = account.get('payment_bonus')
-            output.append(f"You've recieved {utility.write_count(level, 'dubious bonus', 'e')} so far, and that gets you {level * 100} more {values.project_credits.text} per day.")
+            output.append(f"You've recieved {utility.write_count(level, 'dubious bonus', 'e')} so far, and that gets you {utility.smart_number(int(level * store.Payment_Bonus.per_level))} more {values.project_credits.text} per day.")
         
         output.append("")
         output.append(f"Throughout your time in space you've created {utility.write_count(account.get('trade_hubs_created'), 'Trade Hub')} and helped contribute to {utility.write_count(account.get('projects_completed'), 'completed project')}.")
