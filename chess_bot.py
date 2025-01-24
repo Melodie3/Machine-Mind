@@ -1229,6 +1229,16 @@ class Chess_bot(commands.Cog, name="Chess"):
                 output += "Checkmate.\n"
             elif work_board.is_stalemate():
                 output += "Stalemate."
+            elif work_board.is_fivefold_repetition():
+                output += "Draw by fivefold repetition."
+            elif work_board.is_seventyfive_moves():
+                output += "Draw by the seventy-five move rule."
+            elif work_board.is_insufficient_material():
+                output += "Draw by insufficient material."
+            elif work_board.is_fifty_moves():
+                output += "Draw by the fifty-move rule."
+            elif work_board.is_repetition():
+                output += "Draw by threefold repetition."
             else:            
                 output += str(outcome.termination) + "\n"
 
@@ -1244,10 +1254,10 @@ class Chess_bot(commands.Cog, name="Chess"):
             output += "Check.\n"
             
         if work_board.can_claim_threefold_repetition():
-            output += "Threefold repetition has occured, use '$draw' to claim a draw.\n"
+            output += "Threefold repetition can occur on this turn, use '$draw' to claim a draw.\n"
             
         if work_board.can_claim_fifty_moves():
-            output += "No captures or pawn moves have occured in the last 50 moves, use '$draw' to claim a draw.\n"
+            output += "On this turn is is possible to have had no captures or pawn moves in the last 50 moves, use '$draw' to claim a draw.\n"
 
         if work_board.has_legal_en_passant():
             output += "En passant is available. **You'd better take it.**\n\n"
