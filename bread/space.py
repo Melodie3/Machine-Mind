@@ -2917,17 +2917,29 @@ def get_planet_modifiers(
             load_data = True
         ) # type: GalaxyTile
 
+        #############################################
+        #               | Not nebula: | Nebula:     #
+        # --------------+-------------+-------------#
+        # Regular star: | 1           | 0.2         #
+        # --------------+-------------+-------------#
+        # Black hole:   | 0.4         | 0.08        #
+        # --------------+-------------+-------------#
+        # Supermassive: | 0.074074074 | 0.014814814 #
+        #############################################
+        
         if galaxy_tile.in_nebula:
             denominator = 0.2
         else:
             denominator = 1
 
         if galaxy_tile.star.star_type == "black_hole":
-            # If it's a black hole, make it a little crazier by dividing the denominator by 5.
+            # If it's a black hole, make it a little crazier by dividing the denominator by 2.5.
             denominator /= 2.5
         elif galaxy_tile.star.star_type == "supermassive_black_hole":
             # If it's the supermassive black hole at the center of the galaxy, chaos.
-            denominator /= 5
+            # Result of black hole in a nebula is 12.5, so by dividing by 13.5 it means a supermassive black hole is crazier than that.
+            # If the center happenes to be in a nebula things will get even worse, with a resulting denominator of ~0.0148 (0.02 / 13.5), as compared to the non-nebula one of ~0.074 (1 / 13.5).
+            denominator /= 13.5
         
         raw_seed = tile.tile_seed()
 
@@ -2936,10 +2948,10 @@ def get_planet_modifiers(
         mod = 0
         if galaxy_tile.trade_hub is not None:
             if galaxy_tile.trade_hub.get_upgrade_level(projects.Nebula_Refinery) > 0:
-                mod += abs(random.Random(f"{raw_seed}_nebularefinery").gauss(mu=math.pi / 100, sigma=0.05)) * 2
+                mod += abs(random.Random(f"{raw_seed}_nebularefinery").gauss(mu=math.tau / 10, sigma=0.05)) * 2
 
             if galaxy_tile.trade_hub.get_upgrade_level(projects.Black_Hole_Observatory) > 0:
-                mod += abs(random.Random(f"{raw_seed}_blackholeobservatory").gauss(mu=math.pi / 100, sigma=0.05)) * 2
+                mod += abs(random.Random(f"{raw_seed}_blackholeobservatory").gauss(mu=math.tau / 10, sigma=0.05)) * 2
 
             chamber_level = galaxy_tile.trade_hub.get_upgrade_level(projects.Dark_Matter_Resonance_Chamber)
 
@@ -2955,12 +2967,14 @@ def get_planet_modifiers(
             key_mod = 0
 
             if chamber_level > 0 and key == "anarchy_piece":
-                key_mod += abs(random.Random(f"{raw_seed}_darkmatterresonancechamber").gauss(mu=math.pi / 100, sigma=0.05)) * 2 * chamber_level
+                key_mod += abs(random.Random(f"{raw_seed}_darkmatterresonancechamber").gauss(mu=math.tau / 10, sigma=0.05)) * 2 * chamber_level
 
-            odds[key] = random.Random(f"{raw_seed}{key}").gauss(mu=1 + mod + key_mod, sigma=deviation)
+            odds[key] = random.Random(f"{raw_seed}{key}").gauss(mu=1, sigma=deviation)
 
             if key == priority:
                 odds[key] = (abs(odds[key] - 1) + 1) * phi
+            
+            odds[key] += mod + key_mod
 
         # Now to get the actual modifiers.
         # These do change per day, but tend to be around the default seeds calculated above.
