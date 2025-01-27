@@ -5337,8 +5337,8 @@ anarchy - 1000% of your wager.
                 if other_settings[0].lower() == "guide":
                     send_file = discord.File(space.MAP_GUIDE_BYTESIO, filename="map_guide.png")
                     return await ctx.reply(file=send_file)
-            except KeyError:
-                pass # If the setting was not provided a KeyError will be raised, which we can just ignore.
+            except IndexError:
+                pass # If the setting was not provided a IndexError will be raised, which we can just ignore.
 
             full_x = None
             full_y = None
@@ -5346,7 +5346,7 @@ anarchy - 1000% of your wager.
             try:
                 full_x = parse_int(other_settings[0])
                 full_y = parse_int(other_settings[1])
-            except (ValueError, KeyError):
+            except (ValueError, IndexError):
                 pass # It failed to parse, so it's probably intended to be something.
             
             bubble_data = space.generate_trade_hub_bubbles(
@@ -5358,8 +5358,17 @@ anarchy - 1000% of your wager.
             if full_x is not None and full_y is not None:
                 galaxy_x, galaxy_y = user_account.get_galaxy_location(json_interface=self.json_interface)
                 
-                full_point = 1 << (full_x + space.MAP_SIZE * full_y)
-                current_point = 1 << (galaxy_x + space.MAP_SIZE * galaxy_y)
+                if full_y < 0:
+                    full_point = 1 >> (full_x + space.MAP_SIZE * abs(full_y))
+                else:
+                    full_point = 1 << (full_x + space.MAP_SIZE * full_y)
+                
+                # This `if` shouldn't ever trigger since you can't get the full map without being on a trade hub,
+                # and trade hubs are always in the galaxy. But just in case, we'll check.
+                if galaxy_y < 0:
+                    current_point = 1 >> (galaxy_x + space.MAP_SIZE * abs(galaxy_y))
+                else:
+                    current_point = 1 << (galaxy_x + space.MAP_SIZE * galaxy_y)
                 
                 group = None
                 
