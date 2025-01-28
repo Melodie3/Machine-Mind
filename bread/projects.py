@@ -3708,9 +3708,9 @@ class Mysterious_Ship(Project):
 
 
         part_28 = [
-            "\nA loud announcement,",
-            "\nAn announcement,",
-            "\nThe captain makes an announcement,"
+            "\nA loud announcement can be heard,",
+            "\nAn announcement can be heard,",
+            "\nThe captain making an announcement can be heard,"
         ]
 
 
