@@ -4072,12 +4072,12 @@ class Waxillium_Space_Station(Project):
 
 
         part_12 = {
-            "My lord Kelsier has seen it fit to offer you": 585,
-            "My master, the Lord Ruler, has seen it fit to offer you": 585,
-            "My master Odium has seen it fit to offer you": 585,
-            "My master, The Sunlit Man, has seen it fit to offer you": 585,
-            "My liege lord, the King Susebron, has seen it fit to offer you": 585,
-            "My commander Zellion has seen it fit to offer you": 585,
+            "My lord Kelsier has seen it fit to offer you": 2020.5,
+            "My master, the Lord Ruler, has seen it fit to offer you": 2020.5,
+            "My master Odium has seen it fit to offer you": 2020.5,
+            "My master, The Sunlit Man, has seen it fit to offer you": 2020.5,
+            "My liege lord, the King Susebron, has seen it fit to offer you": 2020.5,
+            "My commander Zellion has seen it fit to offer you": 2020.5,
             "My master Hoid has seen it fit to bestow upon you a :flute: as well as": 1
         }
 
