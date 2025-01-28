@@ -6204,9 +6204,30 @@ anarchy - 1000% of your wager.
         
         if amount_contributed != amount_needed:
             message_lines += f"\n\nTo contribute to this project, use '$bread space hub contribute {project_number} [amount] [item]'."
+        
+        if len(message_lines) <= 1950:
+            await ctx.reply(message_lines)
+        else:
+            # If the message is too long split it by sentences and send each piece.
+            
+            split = message_lines.split(".")
+            
+            send = []
+            current = ""
+            
+            for sentence in split:
+                if len(current) + len(sentence) < 1950:
+                    current += sentence + "."
+                else:
+                    send.append(current)
+                    current = sentence + "."
+            
+            send.append(current)
+            
+            for part in send:
+                await ctx.reply(part)
 
 
-        await ctx.reply(message_lines)
 
     ##############################################################################################################
     
