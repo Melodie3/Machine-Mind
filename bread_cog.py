@@ -5729,6 +5729,13 @@ anarchy - 1000% of your wager.
             amount: int
         ) -> None:
         """Contributes items to a trade hub level."""
+        level_messages = {
+            2: f"This Trade Hub is now able to relay trade signals from the Trade Hub network up to {store.trade_hub_distances[2]} tiles away!",
+            3: f"This Trade Hub now has {store.trade_hub_projects[3]} project slots!",
+            4: f"This Trade Hub is now able to relay trade signals from the Trade Hub network up to {store.trade_hub_distances[4]} tiles away!",
+            5: f"This Trade Hub now has {store.trade_hub_projects[5]} project slots!",
+        }
+        
         level_project = projects.Trade_Hub
         max_level = len(level_project.all_costs())
 
@@ -5751,6 +5758,109 @@ anarchy - 1000% of your wager.
             system_tile = hub,
             progress_data = level_progress
         )
+        
+        if amount == "full":
+            # Contributing everything is handled separately, since it contributes all of the items.
+            
+            required_description = level_project.get_remaining_description(
+                day_seed = day_seed,
+                system_tile = hub,
+                progress_data = level_progress
+            )
+            
+            # Item is the confirmation, so treat it as such.
+            if not item:
+                message = [f"To level up the Trade Hub, you have the following items out of what is needed:\n"]
+                
+                for item_iter, amount in remaining.items():
+                    message.append(f"{item_iter}: {utility.smart_number(user_account.get(item_iter))}/{utility.smart_number(amount)}")
+                
+                message.append("\nWould you like to contribute all of these items to level up the Trade Hub? Yes or no.")
+                
+                self.currently_interacting.append(ctx.author.id)
+                
+                confirm_text = ["yes", "y", "confirm"]
+                cancel_text = ["no", "n", "cancel"]
+
+                await ctx.reply("\n".join(message))
+                    
+                def check(m: discord.Message):
+                    return m.author.id == ctx.author.id and m.channel.id == ctx.channel.id 
+
+                try:
+                    msg = await self.bot.wait_for('message', check = check, timeout = 60.0)
+                except asyncio.TimeoutError: 
+                    await ctx.reply("I'm sorry, but you have taken too long and I must attend to the next customer.")
+                    self.remove_from_interacting(ctx.author.id)
+                    return
+                
+                if msg.content.lower() in cancel_text:
+                    await ctx.reply("Very well, come back when you would like to level up the Trade Hub.")
+
+                    self.remove_from_interacting(ctx.author.id)
+                    return
+                elif msg.content.lower() not in confirm_text:
+                    await ctx.reply("I'm not entirely sure what that is, please try again.")
+
+                    self.remove_from_interacting(ctx.author.id)
+                    return
+                
+                self.remove_from_interacting(ctx.author.id)
+            
+            # If it gets to this point that means it's time to attempt to level up the Trade Hub.
+            
+            for item_iter, amount in remaining.items():
+                if user_account.get(item_iter) < amount:
+                    await ctx.reply(f"You do not have enough {item_iter} to level up the Trade Hub.")
+                    return
+
+                user_account.increment(item_iter, -amount)
+                
+            self.json_interface.set_account(ctx.author, user_account, guild = ctx.guild.id)
+
+            await ctx.reply("You have contributed {used} to level up the Trade Hub.\nYou now have {remaining} remaining.".format(
+                used = required_description,
+                remaining = " , ".join([f"**{utility.smart_number(user_account.get(item_iter))}** {item_iter}" for item_iter in remaining.keys()])
+            ))
+            
+            existing = self.json_interface.get_trade_hub_data(
+                guild = ctx.guild.id,
+                ascension = user_account.get_prestige_level(),
+                galaxy_x = galaxy_x,
+                galaxy_y = galaxy_y
+            )
+
+            if "level" in existing:
+                existing["level"] += 1
+            else:
+                # If the key doesn't exist, then we know it's a natural one.
+                # All natural trade hubs have a level of 1, so update it to 2.
+                existing["level"] = 2
+
+            # Reset the progress dict.
+            existing["level_progress"] = {}
+            
+            self.json_interface.update_trade_hub_data(
+                guild = ctx.guild.id,
+                ascension = user_account.get_prestige_level(),
+                galaxy_x = galaxy_x,
+                galaxy_y = galaxy_y,
+                new_data = existing
+            )
+            
+            message = level_messages[existing["level"]]
+
+            send_lines = f"Trade Hub levelled up to level {existing['level']}! {message}"
+            send_lines += level_project.completion(day_seed, hub)
+
+            send_lines += "\n\n"
+            for player_id in list(level_progress.keys()) + [ctx.author.id]:
+                send_lines += f"<@{player_id}> "
+                
+            await asyncio.sleep(1)
+
+            await ctx.send(send_lines)
+            return
     
         if item.text not in remaining:
             await ctx.reply("We don't need any more of that to level up the Trade Hub.")
@@ -5823,12 +5933,7 @@ anarchy - 1000% of your wager.
             new_data = existing
         )
         
-        message = ""
-
-        if existing["level"] == 2 or existing["level"] == 4:
-            message = f"This Trade Hub is now able to relay trade signals from the Trade Hub network up to {store.trade_hub_distances[existing['level']]} tiles away!"
-        elif existing["level"] == 3 or existing["level"] == 5:
-            message = f"This Trade Hub now has {store.trade_hub_projects[existing['level']]} project slots!"
+        message = level_messages[existing["level"]]
 
         send_lines = f"Trade Hub levelled up to level {existing['level']}! {message}"
         send_lines += level_project.completion(day_seed, hub)
@@ -5861,6 +5966,9 @@ anarchy - 1000% of your wager.
             actions: tuple[str]
         ) -> None:
         """Contributes items to a trade hub project, or the trade hub level."""
+        if ctx.author.id in self.currently_interacting:
+            return
+        
         galaxy_x, galaxy_y = user_account.get_galaxy_location(json_interface=self.json_interface, correct_center=True)
 
         actions += [" ", " ", " ", " "]
@@ -5874,26 +5982,34 @@ anarchy - 1000% of your wager.
 
             if actions[2] == "all":
                 amount = "all"
+            elif actions[2] == "full" and project_number == "level":
+                amount = "full"
             else:
                 amount = parse_int(actions[2])
 
-            item = values.get_emote(actions[3])
+            if actions[2] == "full":
+                # If the amount is full, then the item is not needed and the confirmation goes in its slot.
+                # This also means that the confirmation is passed to the level contribution, which it wouldn't do otherwise.
+                item = actions[3].lower() in ["yes", "y", "confirm"]
+            else:
+                item = values.get_emote(actions[3])
+                
             confirmation = actions[4].lower() in ["yes", "y", "confirm"]
         except ValueError:
             if project_number == "level":
-                await ctx.reply("To help level up the Trade Hub, use this format:\n'$bread space hub contribute level [amount] [item]'")
+                await ctx.reply("To help level up the Trade Hub, use this format:\n'$bread space hub contribute level [amount] [item]' to contribute a single type of item, or '$bread space hub contribute level full' to contribute all required items.")
             else:
                 await ctx.reply("To contribute to a project, use this format:\n'$bread space hub contribute [project number] [amount] [item]'")
             return
 
         if item is None:
             if project_number == "level":
-                await ctx.reply("To help level up the Trade Hub, use this format:\n'$bread space hub contribute level [amount] [item]'")
+                await ctx.reply("To help level up the Trade Hub, use this format:\n'$bread space hub contribute level [amount] [item]' to contribute a single type of item, or '$bread space hub contribute level full' to contribute all required items.")
             else:
                 await ctx.reply("To contribute to a project, use this format:\n'$bread space hub contribute [project number] [amount] [item]'")
             return
         
-        if amount != "all":
+        if amount != "all" and not(amount == "full" and project_number == "level"):
             if amount < 0:
                 await ctx.reply("Hey there, are you trying to steal resources?\nThat's kind of rude.")
                 await ctx.invoke(self.bot.get_command('brick'), member=ctx.author)
