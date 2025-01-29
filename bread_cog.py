@@ -7013,9 +7013,10 @@ anarchy - 1000% of your wager.
     async def bread_move(self, ctx,
             move_map: typing.Optional[str] = commands.parameter(description = "Which map to move on."),
             move_location: typing.Optional[str] = commands.parameter(description = "The location to move to."),
-            confirm: typing.Optional[str] = commands.parameter(description = "Whether to confirm automatically.")
+            confirm: typing.Optional[str] = commands.parameter(description = "Whether to confirm automatically."),
+            other: typing.Optional[str] = commands.parameter(description = "Other arguments specific to how you're moving.")
         ):
-        await self.space_move(ctx, move_map, move_location, confirm)
+        await self.space_move(ctx, move_map, move_location, confirm, other)
     
     @space.command(
         name = "move",
