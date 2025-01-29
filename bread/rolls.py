@@ -666,6 +666,7 @@ def summarize_roll(
     if "shiny" in result.keys():
         output += f"\nShiny Items: {utility.smart_number(result['shiny'])}\n"
         removals.append("shiny")
+        removals.append("very_shiny")
 
     for key in result.keys():
         emote = values.get_emote(key)
