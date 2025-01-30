@@ -689,6 +689,14 @@ class SystemTradeHub(SystemTile):
         ]
         
         if detailed:
+            # Gotta check for Dimensional Shrine.
+            user_tile = user_account.get_system_tile(json_interface)
+            
+            if user_tile.type == "trade_hub":
+                dimensional_shrine = bool(user_tile.get_upgrade_level(projects.Dimensional_Shrine))
+            else:
+                dimensional_shrine = False
+            
             out.append("")
             out.append("Purchased upgrades:")
             
@@ -721,13 +729,23 @@ class SystemTradeHub(SystemTile):
                 user_account = user_account,
                 system_tile = self
             )
+            shrine_used = False
             for project_index, project_data in enumerate(available_projects):
+                around = ""
                 if project_index >= store.trade_hub_projects[self.trade_hub_level]:
-                    break
+                    if dimensional_shrine:
+                        around = "~~"
+                        shrine_used = True
+                    else:
+                        break
                 
                 project = project_data.get("project")
                 
-                out.append(f"- {project.name(day_seed, self)}")
+                out.append(f"- {around}{project.name(day_seed, self)}{around}")
+            
+            if shrine_used:
+                out.append("Crossed out projects are not shown, but")
+                out.append("will be shown if the hub is levelled up.")
                 
             out.append("")
         else:

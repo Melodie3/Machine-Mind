@@ -985,9 +985,69 @@ class Detection_Array(Trade_Hub_Upgrade):
             system_tile: space.SystemTradeHub
         ) -> str:
         return "A set of powerful sensors that increases this Trade Hub's range in the communication network."
+   
+class Dimensional_Shrine(Trade_Hub_Upgrade):
+    internal = "dimensional_shrine"
+    max_level = 1
+    unlock_level = 2
+    
+    @classmethod
+    def name(
+            cls,
+            day_seed: str,
+            system_tile: space.SystemTradeHub
+        ) -> str:
+        return "Dimensional Shrine"
+
+    @classmethod
+    def description(
+            cls,
+            day_seed: str,
+            system_tile: space.SystemTradeHub
+        ) -> str:
+        return "A dimensional shrine that allows the full map to include unavailable projects in a Trade Hub analysis."
+    
+    @classmethod
+    def completion(
+            cls: typing.Type[typing.Self],
+            day_seed: str,
+            system_tile: space.SystemTradeHub
+        ) -> str:        
+        return "The shrine is working! You can now use '$bread space map full' on any Trade Hub and see all the projects that hub will have, even ones not available yet."
+    
+    @classmethod
+    def get_cost(
+            cls,
+            day_seed: str,
+            system_tile: space.SystemTradeHub
+        ) -> list[tuple[str, int]]:
+        return [
+            (values.normal_bread.text, 500), (values.gem_gold.text, 25), (values.chessatron.text, 250)
+        ]
+    
+    @classmethod
+    def purchased_description(
+            cls: typing.Type[typing.Self],
+            day_seed: str,
+            system_tile: space.SystemTradeHub
+        ) -> str:
+        return "A powerful shrine that allows the full map to include unavailable projects in any Trade Hub analysis."
+
+    @classmethod
+    def is_available(
+            cls: typing.Type[typing.Self],
+            day_seed: str,
+            system_tile: space.SystemTradeHub
+        ) -> bool:
+        if not super().is_available(day_seed, system_tile):
+            return False
+        
+        # This one is only purchasable if the hub has any level of Offpsing Outlook.
+        return bool(system_tile.get_upgrade_level(Offspring_Outlook))
     
 all_trade_hub_upgrades = [Listening_Post, Nebula_Refinery, Quantum_Catapult, Hyperlane_Registrar, Shroud_Beacon,
-    Dark_Matter_Resonance_Chamber, Black_Hole_Observatory, Storm_Repulsion_Array, Offspring_Outlook, Detection_Array
+    Dark_Matter_Resonance_Chamber, Black_Hole_Observatory, Storm_Repulsion_Array, Offspring_Outlook, Detection_Array,
+    Dimensional_Shrine
 ] # type: list[Trade_Hub_Upgrade]
 
 #######################################################################################################
