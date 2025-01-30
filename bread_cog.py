@@ -5418,7 +5418,7 @@ anarchy - 1000% of your wager.
 
         if map_type == "galaxy" or map_type == "g":
             prefix = "Galaxy map:"
-            middle = f"Your current galaxy location: {user_account.get_galaxy_location(json_interface=self.json_interface)}.\nCorruption chance: {corruption_chance}%."
+            middle = f"Your current galaxy location: {user_account.get_galaxy_location(json_interface=self.json_interface)}.\nYour corruption chance: {corruption_chance}%."
 
             if not reduced_info:
                 suffix = "You can use '$bread space map' to view the map for the system you're in.\n\nUse '$bread space move galaxy' to move around on this map."
@@ -5434,6 +5434,8 @@ anarchy - 1000% of your wager.
                     pass # It failed to parse, so it's probably intended to be something.
             
             if full_x is not None and full_y is not None:
+                highlighted_corruption = round(space.get_corruption_chance(full_x - space.MAP_RADIUS, full_y - space.MAP_RADIUS) * 100, 2)
+                
                 if analyze_x is not None and analyze_y is not None:
                     galaxy_seed = self.json_interface.get_ascension_seed(
                         ascension_id = user_account.get_prestige_level(),
@@ -5472,22 +5474,22 @@ anarchy - 1000% of your wager.
                         analysis_lines[index] = f"{line_emoji} {item}"
                         
                     prefix = "Full system analysis:"
-                    middle = f"Your current galaxy location: {user_account.get_galaxy_location(json_interface=self.json_interface)}.\nCorruption chance: {corruption_chance}%.\nHighlighted system: ({full_x}, {full_y})\nHighlighted point: ({analyze_x}, {analyze_y})"
+                    middle = f"Your current galaxy location: {user_account.get_galaxy_location(json_interface=self.json_interface)}.\nYour corruption chance: {corruption_chance}%.\nHighlighted system: ({full_x}, {full_y})\nHighlighted corruption chance: {highlighted_corruption}%.\nHighlighted point: ({analyze_x}, {analyze_y})"
                     
                     suffix = "Analysis:\n" + "\n".join(analysis_lines)
                 else:
                     prefix = "Full system map:"
-                    middle = f"Your current galaxy location: {user_account.get_galaxy_location(json_interface=self.json_interface)}.\nCorruption chance: {corruption_chance}%.\nHighlighted system: ({full_x}, {full_y})"
+                    middle = f"Your current galaxy location: {user_account.get_galaxy_location(json_interface=self.json_interface)}.\nYour corruption chance: {corruption_chance}%.\nHighlighted system: ({full_x}, {full_y})\nHighlighted corruption chance: {highlighted_corruption}%."
                     
                     suffix = f"Use '$bread space map full {full_x} {full_y} <system x> <system y>' to analyze a point within this system.\nUse '$bread space map full guide' to see a color guide."
             else:
                 prefix = "Full galaxy map:"
-                middle = f"Your current galaxy location: {user_account.get_galaxy_location(json_interface=self.json_interface)}.\nCorruption chance: {corruption_chance}%."
+                middle = f"Your current galaxy location: {user_account.get_galaxy_location(json_interface=self.json_interface)}.\nYour corruption chance: {corruption_chance}%."
             
                 suffix = "Use '$bread space map full <galaxy x> <galaxy y>' to view a specific system.\nUse '$bread space map full guide' to see a color guide."
         else:
             prefix = "System map:"
-            middle = f"Your current galaxy location: {user_account.get_galaxy_location(json_interface=self.json_interface)}.\nYour current system location: {user_account.get_system_location()}.\nCorruption chance: {corruption_chance}%."
+            middle = f"Your current galaxy location: {user_account.get_galaxy_location(json_interface=self.json_interface)}.\nYour current system location: {user_account.get_system_location()}.\nYour corruption chance: {corruption_chance}%."
             
             if not reduced_info:
                 suffix = "You can use '$bread space map galaxy' to view the galaxy map.\n\nUse '$bread space move system' to move around on this map.\nUse '$bread space analyze' to get more information about somewhere."
