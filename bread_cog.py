@@ -7245,6 +7245,7 @@ anarchy - 1000% of your wager.
             user_account.set("galaxy_ypos", ending_ypos)
             user_account.set("system_xpos", 0)
             user_account.set("system_ypos", 0)
+            user_account.increment("galaxy_move_count", 1)
 
             # Save the player account.
             self.json_interface.set_account(ctx.author.id, user_account, guild = ctx.guild.id)
