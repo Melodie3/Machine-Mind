@@ -273,19 +273,19 @@ recipes = {
 
     "gem_pink": [
         {
-            "cost": [(values.gem_orange, 2), (values.gem_cyan, 2)]
+            "cost": [(values.gem_orange, 1), (values.gem_cyan, 1)]
         }
     ],
 
     "gem_orange": [
         {
-            "cost": [(values.gem_pink, 2), (values.gem_cyan, 2)]
+            "cost": [(values.gem_pink, 1), (values.gem_cyan, 1)]
         }
     ],
 
     "gem_cyan": [
         {
-            "cost": [(values.gem_pink, 2), (values.gem_orange, 2)]
+            "cost": [(values.gem_pink, 1), (values.gem_orange, 1)]
         }
     ],
 

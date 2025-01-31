@@ -768,11 +768,23 @@ class Chess_bot(commands.Cog, name="Chess"):
         work_board = current_game.game_board
 
         turn = work_board.turn
-        # 4 variations:
+        # 6 variations:
         # white's turn, white offers
         # white's turn, black accepts
         # black's turn, black offers
         # black's turn, white accepts
+        # 50 move rule can be claimed
+        # 3-fold repetition can be claimed
+        
+        if work_board.can_claim_fifty_moves():
+            await ctx.reply("The fifty-move rule has been claimed.")
+            await current_game.end_game(reason = "the fifty-move rule was claimed.")
+            return
+        
+        if work_board.can_claim_threefold_repetition():
+            await ctx.reply("Threefold repetition has been claimed.")
+            await current_game.end_game(reason = "threefold repetition was claimed.")
+            return
 
         # is white the one who started the offer
         if (turn == chess.WHITE): 
@@ -1217,6 +1229,16 @@ class Chess_bot(commands.Cog, name="Chess"):
                 output += "Checkmate.\n"
             elif work_board.is_stalemate():
                 output += "Stalemate."
+            elif work_board.is_fivefold_repetition():
+                output += "Draw by fivefold repetition."
+            elif work_board.is_seventyfive_moves():
+                output += "Draw by the seventy-five move rule."
+            elif work_board.is_insufficient_material():
+                output += "Draw by insufficient material."
+            elif work_board.is_fifty_moves():
+                output += "Draw by the fifty-move rule."
+            elif work_board.is_repetition():
+                output += "Draw by threefold repetition."
             else:            
                 output += str(outcome.termination) + "\n"
 
@@ -1230,6 +1252,12 @@ class Chess_bot(commands.Cog, name="Chess"):
         
         if work_board.is_check():
             output += "Check.\n"
+            
+        if work_board.can_claim_threefold_repetition():
+            output += "Threefold repetition can occur on this turn, use '$draw' to claim a draw.\n"
+            
+        if work_board.can_claim_fifty_moves():
+            output += "On this turn is is possible to have had no captures or pawn moves in the last 50 moves, use '$draw' to claim a draw.\n"
 
         if work_board.has_legal_en_passant():
             output += "En passant is available. **You'd better take it.**\n\n"
@@ -1253,8 +1281,11 @@ class Chess_bot(commands.Cog, name="Chess"):
             output += f'[Variant "{current_game.game_details}"]\n'
         if (current_game.starting_fen is not None):
             output += f'[FEN "{current_game.starting_fen}"]\n'
-        output += '[Site "AnarchyChess Official Discord"]\n'
-        output += datetime.now().strftime('[Date "%Y.%-m.%-d"]\n')
+        output += '[Site "AnarchyChess Official Discord"]\n' # Doesn't this mean that it'll be incorrect outside of the AC server?
+        
+        current_time = datetime.now()
+        output += f"[Date \"{current_time.year}.{current_time.month}.{current_time.day}\"]\n"
+        
         output += f'[White "{Chess_bot.get_printed_player_list(current_game.players_white)}"]\n'
         output += f'[Black "{Chess_bot.get_printed_player_list(current_game.players_black)}"]\n'
 

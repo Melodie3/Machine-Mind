@@ -689,6 +689,14 @@ class SystemTradeHub(SystemTile):
         ]
         
         if detailed:
+            # Gotta check for Dimensional Shrine.
+            user_tile = user_account.get_system_tile(json_interface)
+            
+            if user_tile.type == "trade_hub":
+                dimensional_shrine = bool(user_tile.get_upgrade_level(projects.Dimensional_Shrine))
+            else:
+                dimensional_shrine = False
+            
             out.append("")
             out.append("Purchased upgrades:")
             
@@ -721,10 +729,23 @@ class SystemTradeHub(SystemTile):
                 user_account = user_account,
                 system_tile = self
             )
-            for project_data in available_projects:
+            shrine_used = False
+            for project_index, project_data in enumerate(available_projects):
+                around = ""
+                if project_index >= store.trade_hub_projects[self.trade_hub_level]:
+                    if dimensional_shrine:
+                        around = "~~"
+                        shrine_used = True
+                    else:
+                        break
+                
                 project = project_data.get("project")
                 
-                out.append(f"- {project.name(day_seed, self)}")
+                out.append(f"- {around}{project.name(day_seed, self)}{around}")
+            
+            if shrine_used:
+                out.append("Crossed out projects are not shown, but")
+                out.append("will be shown if the hub is levelled up.")
                 
             out.append("")
         else:
@@ -825,6 +846,7 @@ class SystemPlanet(SystemTile):
         ascension = json_interface.ascension_from_seed(guild=guild, galaxy_seed=self.galaxy_seed)
 
         planet_modifiers = get_planet_modifiers(
+            user_account = user_account,
             json_interface = json_interface,
             ascension = ascension,
             guild=guild,
@@ -1563,12 +1585,20 @@ def space_map(
         analyze_x = None
         analyze_y = None
         
+        local_map = False
+        
+        if len(other_settings) >= 1:
+            if other_settings[0].lower() == "local":
+                # Used by full galaxy map.
+                local_map = True
+                
         if len(other_settings) >= 2:
             try:
                 full_x = bread_cog.parse_int(other_settings[0])
                 full_y = bread_cog.parse_int(other_settings[1])
             except ValueError:
                 pass # It failed to parse, so it's probably intended to be something.
+                
         
         if len(other_settings) >= 4:
             try:
@@ -1594,6 +1624,7 @@ def space_map(
             guild = guild,
             home_x = x_galaxy,
             home_y = y_galaxy,
+            local_map = local_map,
             dict_settings = dict_settings
         )
     else:
@@ -1960,6 +1991,7 @@ def full_map_galaxy(
         guild: typing.Union[discord.Guild, int, str],
         home_x: int,
         home_y: int,
+        local_map: bool = False,
         render_grid: bool = True,
         dict_settings: dict[any, any] = None
     ) -> io.BytesIO:
@@ -2018,6 +2050,10 @@ def full_map_galaxy(
                 continue
             
             bit_x, bit_y = index_to_coordinate(index)
+            
+            if local_map:
+                if not(abs(bit_x - home_x) < 31 and abs(bit_y - home_y) < 31):
+                    continue
             
             img.putpixel((bit_x, bit_y), EXPLORED_COLOR)
             
@@ -2442,7 +2478,7 @@ def generate_trade_hub_bubbles(
         if data.get("upgrades", {}).get("detection_array", {}).get("level", 0) > 0:
             have_increased_range |= 1 << (int(x) + 256 * int(y))
     
-    # # Uncomment to use trade hubs that haven't been found yet. 
+    # # Uncomment to use trade hubs that haven't been found yet, but still generated.
     # # This shouldn't be enabled in-game but can be fun to look at in a testing environment.
     # map_data = json_interface.get_space_map_data(ascension, guild)
     # for key, data in map_data.get("system_data", {}).items():
@@ -2863,6 +2899,7 @@ def get_system_coordinate(
     )
 
 def get_planet_modifiers(
+        user_account: account.Bread_Account,
         json_interface: bread_cog.JSON_interface,
         ascension: int,
         guild: typing.Union[discord.Guild, int, str],
@@ -2895,6 +2932,11 @@ def get_planet_modifiers(
 
     # If it isn't a planet, then use the defaults of 1.
     if isinstance(tile, SystemPlanet):
+        corruption_chance = tile.get_galaxy_tile(
+            user_account = user_account,
+            json_interface = json_interface
+        ).corruption_chance() * 100
+        
         priority = tile.get_priority_item()
 
         galaxy_tile = get_galaxy_coordinate(
@@ -2907,17 +2949,29 @@ def get_planet_modifiers(
             load_data = True
         ) # type: GalaxyTile
 
+        #############################################
+        #               | Not nebula: | Nebula:     #
+        # --------------+-------------+-------------#
+        # Regular star: | 1           | 0.2         #
+        # --------------+-------------+-------------#
+        # Black hole:   | 0.4         | 0.08        #
+        # --------------+-------------+-------------#
+        # Supermassive: | 0.074074074 | 0.014814814 #
+        #############################################
+        
         if galaxy_tile.in_nebula:
             denominator = 0.2
         else:
             denominator = 1
 
         if galaxy_tile.star.star_type == "black_hole":
-            # If it's a black hole, make it a little crazier by dividing the denominator by 5.
+            # If it's a black hole, make it a little crazier by dividing the denominator by 2.5.
             denominator /= 2.5
         elif galaxy_tile.star.star_type == "supermassive_black_hole":
             # If it's the supermassive black hole at the center of the galaxy, chaos.
-            denominator /= 5
+            # Result of black hole in a nebula is 12.5, so by dividing by 13.5 it means a supermassive black hole is crazier than that.
+            # If the center happenes to be in a nebula things will get even worse, with a resulting denominator of ~0.0148 (0.02 / 13.5), as compared to the non-nebula one of ~0.074 (1 / 13.5).
+            denominator /= 13.5
         
         raw_seed = tile.tile_seed()
 
@@ -2926,10 +2980,10 @@ def get_planet_modifiers(
         mod = 0
         if galaxy_tile.trade_hub is not None:
             if galaxy_tile.trade_hub.get_upgrade_level(projects.Nebula_Refinery) > 0:
-                mod += abs(random.Random(f"{raw_seed}_nebularefinery").gauss(mu=math.pi / 100, sigma=0.05)) * 2
+                mod += abs(random.Random(f"{raw_seed}_nebularefinery").gauss(mu=math.tau / 10, sigma=0.05)) * 2
 
             if galaxy_tile.trade_hub.get_upgrade_level(projects.Black_Hole_Observatory) > 0:
-                mod += abs(random.Random(f"{raw_seed}_blackholeobservatory").gauss(mu=math.pi / 100, sigma=0.05)) * 2
+                mod += abs(random.Random(f"{raw_seed}_blackholeobservatory").gauss(mu=math.tau / 10, sigma=0.05)) * 2
 
             chamber_level = galaxy_tile.trade_hub.get_upgrade_level(projects.Dark_Matter_Resonance_Chamber)
 
@@ -2945,12 +2999,14 @@ def get_planet_modifiers(
             key_mod = 0
 
             if chamber_level > 0 and key == "anarchy_piece":
-                key_mod += abs(random.Random(f"{raw_seed}_darkmatterresonancechamber").gauss(mu=math.pi / 100, sigma=0.05)) * 2 * chamber_level
+                key_mod += abs(random.Random(f"{raw_seed}_darkmatterresonancechamber").gauss(mu=math.tau / 10, sigma=0.05)) * 2 * chamber_level
 
-            odds[key] = random.Random(f"{raw_seed}{key}").gauss(mu=1 + mod + key_mod, sigma=deviation)
+            odds[key] = random.Random(f"{raw_seed}{key}").gauss(mu=1, sigma=deviation)
 
             if key == priority:
                 odds[key] = (abs(odds[key] - 1) + 1) * phi
+            
+            odds[key] += mod + key_mod
 
         # Now to get the actual modifiers.
         # These do change per day, but tend to be around the default seeds calculated above.
@@ -2966,6 +3022,15 @@ def get_planet_modifiers(
             # This prevents the priority item from being less common than normal.
             if key == priority and odds[key] < 1:
                 odds[key] = abs(odds[key] - 1) + 1
+        
+        # Apply the soft mathematical cap.
+        cap_denominator = (corruption_chance ** 1.6) / 64 + 1
+        
+        def cap(value: float) -> float:
+            return (value - 1) * ((((- (value - 1)) / cap_denominator) ** 2 + 1) ** (-1 / 3)) + 1
+        
+        for key, value in odds.copy().items():
+            odds[key] = cap(value)
 
 
     result = {}

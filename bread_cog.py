@@ -2210,6 +2210,10 @@ loaf_converter""",
                 total_value += user_account.add_dough_intelligent(individual_value)
             #value = user_account.add_dough_intelligent(result["value"])
             result["value"] += total_value # this is for the summarizer
+            
+            if "gambit_shop_bonus" in result:
+                result["gambit_shop_bonus"] *= user_account.get_prestige_multiplier()
+                result["gambit_shop_bonus"] = int(result["gambit_shop_bonus"])
 
             #track highest roll separately
             prev_highest_roll = user_account.get("highest_roll")
@@ -5163,7 +5167,7 @@ anarchy - 1000% of your wager.
 
         if account.has("payment_bonus"):
             level = account.get('payment_bonus')
-            output.append(f"You've recieved {utility.write_count(level, 'dubious bonus', 'e')} so far, and that gets you {level * 100} more {values.project_credits.text} per day.")
+            output.append(f"You've recieved {utility.write_count(level, 'dubious bonus', 'e')} so far, and that gets you {utility.smart_number(int(level * store.Payment_Bonus.per_level))} more {values.project_credits.text} per day.")
         
         output.append("")
         output.append(f"Throughout your time in space you've created {utility.write_count(account.get('trade_hubs_created'), 'Trade Hub')} and helped contribute to {utility.write_count(account.get('projects_completed'), 'completed project')}.")
@@ -5333,8 +5337,8 @@ anarchy - 1000% of your wager.
                 if other_settings[0].lower() == "guide":
                     send_file = discord.File(space.MAP_GUIDE_BYTESIO, filename="map_guide.png")
                     return await ctx.reply(file=send_file)
-            except KeyError:
-                pass # If the setting was not provided a KeyError will be raised, which we can just ignore.
+            except IndexError:
+                pass # If the setting was not provided a IndexError will be raised, which we can just ignore.
 
             full_x = None
             full_y = None
@@ -5342,7 +5346,7 @@ anarchy - 1000% of your wager.
             try:
                 full_x = parse_int(other_settings[0])
                 full_y = parse_int(other_settings[1])
-            except (ValueError, KeyError):
+            except (ValueError, IndexError):
                 pass # It failed to parse, so it's probably intended to be something.
             
             bubble_data = space.generate_trade_hub_bubbles(
@@ -5354,8 +5358,17 @@ anarchy - 1000% of your wager.
             if full_x is not None and full_y is not None:
                 galaxy_x, galaxy_y = user_account.get_galaxy_location(json_interface=self.json_interface)
                 
-                full_point = 1 << (full_x + space.MAP_SIZE * full_y)
-                current_point = 1 << (galaxy_x + space.MAP_SIZE * galaxy_y)
+                if full_y < 0:
+                    full_point = 1 >> (full_x + space.MAP_SIZE * abs(full_y))
+                else:
+                    full_point = 1 << (full_x + space.MAP_SIZE * full_y)
+                
+                # This `if` shouldn't ever trigger since you can't get the full map without being on a trade hub,
+                # and trade hubs are always in the galaxy. But just in case, we'll check.
+                if galaxy_y < 0:
+                    current_point = 1 >> (galaxy_x + space.MAP_SIZE * abs(galaxy_y))
+                else:
+                    current_point = 1 << (galaxy_x + space.MAP_SIZE * galaxy_y)
                 
                 group = None
                 
@@ -5405,7 +5418,7 @@ anarchy - 1000% of your wager.
 
         if map_type == "galaxy" or map_type == "g":
             prefix = "Galaxy map:"
-            middle = f"Your current galaxy location: {user_account.get_galaxy_location(json_interface=self.json_interface)}.\nCorruption chance: {corruption_chance}%."
+            middle = f"Your current galaxy location: {user_account.get_galaxy_location(json_interface=self.json_interface)}.\nYour corruption chance: {corruption_chance}%."
 
             if not reduced_info:
                 suffix = "You can use '$bread space map' to view the map for the system you're in.\n\nUse '$bread space move galaxy' to move around on this map."
@@ -5421,6 +5434,8 @@ anarchy - 1000% of your wager.
                     pass # It failed to parse, so it's probably intended to be something.
             
             if full_x is not None and full_y is not None:
+                highlighted_corruption = round(space.get_corruption_chance(full_x - space.MAP_RADIUS, full_y - space.MAP_RADIUS) * 100, 2)
+                
                 if analyze_x is not None and analyze_y is not None:
                     galaxy_seed = self.json_interface.get_ascension_seed(
                         ascension_id = user_account.get_prestige_level(),
@@ -5459,22 +5474,22 @@ anarchy - 1000% of your wager.
                         analysis_lines[index] = f"{line_emoji} {item}"
                         
                     prefix = "Full system analysis:"
-                    middle = f"Your current galaxy location: {user_account.get_galaxy_location(json_interface=self.json_interface)}.\nCorruption chance: {corruption_chance}%.\nHighlighted system: ({full_x}, {full_y})\nHighlighted point: ({analyze_x}, {analyze_y})"
+                    middle = f"Your current galaxy location: {user_account.get_galaxy_location(json_interface=self.json_interface)}.\nYour corruption chance: {corruption_chance}%.\nHighlighted system: ({full_x}, {full_y})\nHighlighted corruption chance: {highlighted_corruption}%.\nHighlighted point: ({analyze_x}, {analyze_y})"
                     
                     suffix = "Analysis:\n" + "\n".join(analysis_lines)
                 else:
                     prefix = "Full system map:"
-                    middle = f"Your current galaxy location: {user_account.get_galaxy_location(json_interface=self.json_interface)}.\nCorruption chance: {corruption_chance}%.\nHighlighted system: ({full_x}, {full_y})"
+                    middle = f"Your current galaxy location: {user_account.get_galaxy_location(json_interface=self.json_interface)}.\nYour corruption chance: {corruption_chance}%.\nHighlighted system: ({full_x}, {full_y})\nHighlighted corruption chance: {highlighted_corruption}%."
                     
                     suffix = f"Use '$bread space map full {full_x} {full_y} <system x> <system y>' to analyze a point within this system.\nUse '$bread space map full guide' to see a color guide."
             else:
                 prefix = "Full galaxy map:"
-                middle = f"Your current galaxy location: {user_account.get_galaxy_location(json_interface=self.json_interface)}.\nCorruption chance: {corruption_chance}%."
+                middle = f"Your current galaxy location: {user_account.get_galaxy_location(json_interface=self.json_interface)}.\nYour corruption chance: {corruption_chance}%."
             
                 suffix = "Use '$bread space map full <galaxy x> <galaxy y>' to view a specific system.\nUse '$bread space map full guide' to see a color guide."
         else:
             prefix = "System map:"
-            middle = f"Your current galaxy location: {user_account.get_galaxy_location(json_interface=self.json_interface)}.\nYour current system location: {user_account.get_system_location()}.\nCorruption chance: {corruption_chance}%."
+            middle = f"Your current galaxy location: {user_account.get_galaxy_location(json_interface=self.json_interface)}.\nYour current system location: {user_account.get_system_location()}.\nYour corruption chance: {corruption_chance}%."
             
             if not reduced_info:
                 suffix = "You can use '$bread space map galaxy' to view the galaxy map.\n\nUse '$bread space move system' to move around on this map.\nUse '$bread space analyze' to get more information about somewhere."
@@ -5716,6 +5731,13 @@ anarchy - 1000% of your wager.
             amount: int
         ) -> None:
         """Contributes items to a trade hub level."""
+        level_messages = {
+            2: f"This Trade Hub is now able to relay trade signals from the Trade Hub network up to {store.trade_hub_distances[2]} tiles away!",
+            3: f"This Trade Hub now has {store.trade_hub_projects[3]} project slots!",
+            4: f"This Trade Hub is now able to relay trade signals from the Trade Hub network up to {store.trade_hub_distances[4]} tiles away!",
+            5: f"This Trade Hub now has {store.trade_hub_projects[5]} project slots!",
+        }
+        
         level_project = projects.Trade_Hub
         max_level = len(level_project.all_costs())
 
@@ -5738,6 +5760,109 @@ anarchy - 1000% of your wager.
             system_tile = hub,
             progress_data = level_progress
         )
+        
+        if amount == "full":
+            # Contributing everything is handled separately, since it contributes all of the items.
+            
+            required_description = level_project.get_remaining_description(
+                day_seed = day_seed,
+                system_tile = hub,
+                progress_data = level_progress
+            )
+            
+            # Item is the confirmation, so treat it as such.
+            if not item:
+                message = [f"To level up the Trade Hub, you have the following items out of what is needed:\n"]
+                
+                for item_iter, amount in remaining.items():
+                    message.append(f"{item_iter}: {utility.smart_number(user_account.get(item_iter))}/{utility.smart_number(amount)}")
+                
+                message.append("\nWould you like to contribute all of these items to level up the Trade Hub? Yes or no.")
+                
+                self.currently_interacting.append(ctx.author.id)
+                
+                confirm_text = ["yes", "y", "confirm"]
+                cancel_text = ["no", "n", "cancel"]
+
+                await ctx.reply("\n".join(message))
+                    
+                def check(m: discord.Message):
+                    return m.author.id == ctx.author.id and m.channel.id == ctx.channel.id 
+
+                try:
+                    msg = await self.bot.wait_for('message', check = check, timeout = 60.0)
+                except asyncio.TimeoutError: 
+                    await ctx.reply("I'm sorry, but you have taken too long and I must attend to the next customer.")
+                    self.remove_from_interacting(ctx.author.id)
+                    return
+                
+                if msg.content.lower() in cancel_text:
+                    await ctx.reply("Very well, come back when you would like to level up the Trade Hub.")
+
+                    self.remove_from_interacting(ctx.author.id)
+                    return
+                elif msg.content.lower() not in confirm_text:
+                    await ctx.reply("I'm not entirely sure what that is, please try again.")
+
+                    self.remove_from_interacting(ctx.author.id)
+                    return
+                
+                self.remove_from_interacting(ctx.author.id)
+            
+            # If it gets to this point that means it's time to attempt to level up the Trade Hub.
+            
+            for item_iter, amount in remaining.items():
+                if user_account.get(item_iter) < amount:
+                    await ctx.reply(f"You do not have enough {item_iter} to level up the Trade Hub.")
+                    return
+
+                user_account.increment(item_iter, -amount)
+                
+            self.json_interface.set_account(ctx.author, user_account, guild = ctx.guild.id)
+
+            await ctx.reply("You have contributed {used} to level up the Trade Hub.\nYou now have {remaining} remaining.".format(
+                used = required_description,
+                remaining = " , ".join([f"**{utility.smart_number(user_account.get(item_iter))}** {item_iter}" for item_iter in remaining.keys()])
+            ))
+            
+            existing = self.json_interface.get_trade_hub_data(
+                guild = ctx.guild.id,
+                ascension = user_account.get_prestige_level(),
+                galaxy_x = galaxy_x,
+                galaxy_y = galaxy_y
+            )
+
+            if "level" in existing:
+                existing["level"] += 1
+            else:
+                # If the key doesn't exist, then we know it's a natural one.
+                # All natural trade hubs have a level of 1, so update it to 2.
+                existing["level"] = 2
+
+            # Reset the progress dict.
+            existing["level_progress"] = {}
+            
+            self.json_interface.update_trade_hub_data(
+                guild = ctx.guild.id,
+                ascension = user_account.get_prestige_level(),
+                galaxy_x = galaxy_x,
+                galaxy_y = galaxy_y,
+                new_data = existing
+            )
+            
+            message = level_messages[existing["level"]]
+
+            send_lines = f"Trade Hub levelled up to level {existing['level']}! {message}"
+            send_lines += level_project.completion(day_seed, hub)
+
+            send_lines += "\n\n"
+            for player_id in list(level_progress.keys()) + [ctx.author.id]:
+                send_lines += f"<@{player_id}> "
+                
+            await asyncio.sleep(1)
+
+            await ctx.send(send_lines)
+            return
     
         if item.text not in remaining:
             await ctx.reply("We don't need any more of that to level up the Trade Hub.")
@@ -5810,12 +5935,7 @@ anarchy - 1000% of your wager.
             new_data = existing
         )
         
-        message = ""
-
-        if existing["level"] == 2 or existing["level"] == 4:
-            message = f"This Trade Hub is now able to relay trade signals from the Trade Hub network up to {store.trade_hub_distances[existing['level']]} tiles away!"
-        elif existing["level"] == 3 or existing["level"] == 5:
-            message = f"This Trade Hub now has {store.trade_hub_projects[existing['level']]} project slots!"
+        message = level_messages[existing["level"]]
 
         send_lines = f"Trade Hub levelled up to level {existing['level']}! {message}"
         send_lines += level_project.completion(day_seed, hub)
@@ -5848,6 +5968,9 @@ anarchy - 1000% of your wager.
             actions: tuple[str]
         ) -> None:
         """Contributes items to a trade hub project, or the trade hub level."""
+        if ctx.author.id in self.currently_interacting:
+            return
+        
         galaxy_x, galaxy_y = user_account.get_galaxy_location(json_interface=self.json_interface, correct_center=True)
 
         actions += [" ", " ", " ", " "]
@@ -5861,26 +5984,34 @@ anarchy - 1000% of your wager.
 
             if actions[2] == "all":
                 amount = "all"
+            elif actions[2] == "full" and project_number == "level":
+                amount = "full"
             else:
                 amount = parse_int(actions[2])
 
-            item = values.get_emote(actions[3])
+            if actions[2] == "full":
+                # If the amount is full, then the item is not needed and the confirmation goes in its slot.
+                # This also means that the confirmation is passed to the level contribution, which it wouldn't do otherwise.
+                item = actions[3].lower() in ["yes", "y", "confirm"]
+            else:
+                item = values.get_emote(actions[3])
+                
             confirmation = actions[4].lower() in ["yes", "y", "confirm"]
         except ValueError:
             if project_number == "level":
-                await ctx.reply("To help level up the Trade Hub, use this format:\n'$bread space hub contribute level [amount] [item]'")
+                await ctx.reply("To help level up the Trade Hub, use this format:\n'$bread space hub contribute level [amount] [item]' to contribute a single type of item, or '$bread space hub contribute level full' to contribute all required items.")
             else:
                 await ctx.reply("To contribute to a project, use this format:\n'$bread space hub contribute [project number] [amount] [item]'")
             return
 
         if item is None:
             if project_number == "level":
-                await ctx.reply("To help level up the Trade Hub, use this format:\n'$bread space hub contribute level [amount] [item]'")
+                await ctx.reply("To help level up the Trade Hub, use this format:\n'$bread space hub contribute level [amount] [item]' to contribute a single type of item, or '$bread space hub contribute level full' to contribute all required items.")
             else:
                 await ctx.reply("To contribute to a project, use this format:\n'$bread space hub contribute [project number] [amount] [item]'")
             return
         
-        if amount != "all":
+        if amount != "all" and not(amount == "full" and project_number == "level"):
             if amount < 0:
                 await ctx.reply("Hey there, are you trying to steal resources?\nThat's kind of rude.")
                 await ctx.invoke(self.bot.get_command('brick'), member=ctx.author)
@@ -6191,9 +6322,30 @@ anarchy - 1000% of your wager.
         
         if amount_contributed != amount_needed:
             message_lines += f"\n\nTo contribute to this project, use '$bread space hub contribute {project_number} [amount] [item]'."
+        
+        if len(message_lines) <= 1950:
+            await ctx.reply(message_lines)
+        else:
+            # If the message is too long split it by sentences and send each piece.
+            
+            split = message_lines.split(".")
+            
+            send = []
+            current = ""
+            
+            for sentence in split:
+                if len(current) + len(sentence) < 1950:
+                    current += sentence + "."
+                else:
+                    send.append(current)
+                    current = sentence + "."
+            
+            send.append(current)
+            
+            for part in send:
+                await ctx.reply(part)
 
 
-        await ctx.reply(message_lines)
 
     ##############################################################################################################
     
@@ -6863,9 +7015,10 @@ anarchy - 1000% of your wager.
     async def bread_move(self, ctx,
             move_map: typing.Optional[str] = commands.parameter(description = "Which map to move on."),
             move_location: typing.Optional[str] = commands.parameter(description = "The location to move to."),
-            confirm: typing.Optional[str] = commands.parameter(description = "Whether to confirm automatically.")
+            confirm: typing.Optional[str] = commands.parameter(description = "Whether to confirm automatically."),
+            other: typing.Optional[str] = commands.parameter(description = "Other arguments specific to how you're moving.")
         ):
-        await self.space_move(ctx, move_map, move_location, confirm)
+        await self.space_move(ctx, move_map, move_location, confirm, other)
     
     @space.command(
         name = "move",
@@ -7092,6 +7245,7 @@ anarchy - 1000% of your wager.
             user_account.set("galaxy_ypos", ending_ypos)
             user_account.set("system_xpos", 0)
             user_account.set("system_ypos", 0)
+            user_account.increment("galaxy_move_count", 1)
 
             # Save the player account.
             self.json_interface.set_account(ctx.author.id, user_account, guild = ctx.guild.id)

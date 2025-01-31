@@ -985,9 +985,69 @@ class Detection_Array(Trade_Hub_Upgrade):
             system_tile: space.SystemTradeHub
         ) -> str:
         return "A set of powerful sensors that increases this Trade Hub's range in the communication network."
+   
+class Dimensional_Shrine(Trade_Hub_Upgrade):
+    internal = "dimensional_shrine"
+    max_level = 1
+    unlock_level = 2
+    
+    @classmethod
+    def name(
+            cls,
+            day_seed: str,
+            system_tile: space.SystemTradeHub
+        ) -> str:
+        return "Dimensional Shrine"
+
+    @classmethod
+    def description(
+            cls,
+            day_seed: str,
+            system_tile: space.SystemTradeHub
+        ) -> str:
+        return "A dimensional shrine that allows the full map to include unavailable projects in a Trade Hub analysis."
+    
+    @classmethod
+    def completion(
+            cls: typing.Type[typing.Self],
+            day_seed: str,
+            system_tile: space.SystemTradeHub
+        ) -> str:        
+        return "The shrine is working! You can now use '$bread space map full' on any Trade Hub and see all the projects that hub will have, even ones not available yet."
+    
+    @classmethod
+    def get_cost(
+            cls,
+            day_seed: str,
+            system_tile: space.SystemTradeHub
+        ) -> list[tuple[str, int]]:
+        return [
+            (values.normal_bread.text, 500), (values.gem_gold.text, 25), (values.chessatron.text, 250)
+        ]
+    
+    @classmethod
+    def purchased_description(
+            cls: typing.Type[typing.Self],
+            day_seed: str,
+            system_tile: space.SystemTradeHub
+        ) -> str:
+        return "A powerful shrine that allows the full map to include unavailable projects in any Trade Hub analysis."
+
+    @classmethod
+    def is_available(
+            cls: typing.Type[typing.Self],
+            day_seed: str,
+            system_tile: space.SystemTradeHub
+        ) -> bool:
+        if not super().is_available(day_seed, system_tile):
+            return False
+        
+        # This one is only purchasable if the hub has any level of Offpsing Outlook.
+        return bool(system_tile.get_upgrade_level(Offspring_Outlook))
     
 all_trade_hub_upgrades = [Listening_Post, Nebula_Refinery, Quantum_Catapult, Hyperlane_Registrar, Shroud_Beacon,
-    Dark_Matter_Resonance_Chamber, Black_Hole_Observatory, Storm_Repulsion_Array, Offspring_Outlook, Detection_Array
+    Dark_Matter_Resonance_Chamber, Black_Hole_Observatory, Storm_Repulsion_Array, Offspring_Outlook, Detection_Array,
+    Dimensional_Shrine
 ] # type: list[Trade_Hub_Upgrade]
 
 #######################################################################################################
@@ -1006,7 +1066,7 @@ class Base_Project(Project):
             day_seed: str,
             system_tile: space.SystemTradeHub
         ) -> str:
-        rng = random.Random(utility.hash_args(day_seed, system_tile.tile_seed()))
+        rng = random.Random(utility.hash_args(day_seed, system_tile.tile_seed(), "name"))
         
         options = []
 
@@ -1018,7 +1078,7 @@ class Base_Project(Project):
             day_seed: str,
             system_tile: space.SystemTradeHub
         ) -> str:
-        rng = random.Random(utility.hash_args(day_seed, system_tile.tile_seed()))
+        rng = random.Random(utility.hash_args(day_seed, system_tile.tile_seed(), "description"))
 
         cost = cls.get_price_description(day_seed, system_tile)
         reward = cls.get_reward_description(day_seed, system_tile)
@@ -1047,7 +1107,7 @@ class Base_Project(Project):
             day_seed: str,
             system_tile: space.SystemTradeHub
         ) -> str:
-        rng = random.Random(utility.hash_args(day_seed, system_tile.tile_seed()))
+        rng = random.Random(utility.hash_args(day_seed, system_tile.tile_seed(), "completion"))
 
         options = []
 
@@ -1059,6 +1119,7 @@ class Base_Project(Project):
             day_seed: str,
             system_tile: space.SystemTradeHub
         ) -> list[tuple[str, int]]:
+        rng = random.Random(utility.hash_args(day_seed, system_tile.tile_seed(), "items"))
         return []
     
     @classmethod
@@ -1067,6 +1128,7 @@ class Base_Project(Project):
             day_seed: str,
             system_tile: space.SystemTradeHub
         ) -> list[tuple[str, int]]:
+        rng = random.Random(utility.hash_args(day_seed, system_tile.tile_seed(), "items"))
         return []
 
 #######################################################################################################
@@ -1083,7 +1145,7 @@ class Essential_Oils(Project):
             day_seed: str,
             system_tile: space.SystemTradeHub
         ) -> str:
-        rng = random.Random(utility.hash_args(day_seed, system_tile.tile_seed()))
+        rng = random.Random(utility.hash_args(day_seed, system_tile.tile_seed(), "name"))
         
         options = [
             "Essential Oils",
@@ -1099,7 +1161,7 @@ class Essential_Oils(Project):
             day_seed: str,
             system_tile: space.SystemTradeHub
         ) -> str:
-        rng = random.Random(utility.hash_args(day_seed, system_tile.tile_seed()))
+        rng = random.Random(utility.hash_args(day_seed, system_tile.tile_seed(), "description"))
 
         cost = cls.get_price_description(day_seed, system_tile)
         reward = cls.get_reward_description(day_seed, system_tile)
@@ -1147,7 +1209,7 @@ class Essential_Oils(Project):
             day_seed: str,
             system_tile: space.SystemTradeHub
         ) -> str:
-        rng = random.Random(utility.hash_args(day_seed, system_tile.tile_seed()))
+        rng = random.Random(utility.hash_args(day_seed, system_tile.tile_seed(), "completion"))
         reward = cls.get_reward_description(day_seed, system_tile)
 
         options = [
@@ -1164,7 +1226,7 @@ class Essential_Oils(Project):
             day_seed: str,
             system_tile: space.SystemTradeHub
         ) -> list[tuple[str, int]]:
-        rng = random.Random(utility.hash_args(day_seed, system_tile.tile_seed()))
+        rng = random.Random(utility.hash_args(day_seed, system_tile.tile_seed(), "items"))
 
         amount = rng.randint(2, 6) * 250 + 50
 
@@ -1176,7 +1238,7 @@ class Essential_Oils(Project):
             day_seed: str,
             system_tile: space.SystemTradeHub
         ) -> list[tuple[str, int]]:
-        rng = random.Random(utility.hash_args(day_seed, system_tile.tile_seed()))
+        rng = random.Random(utility.hash_args(day_seed, system_tile.tile_seed(), "items"))
 
         amount = rng.randint(2, 6) * 250 + 50
 
@@ -1209,7 +1271,7 @@ class Bingobango(Project):
             day_seed: str,
             system_tile: space.SystemTradeHub
         ) -> str:
-        rng = random.Random(utility.hash_args(day_seed, system_tile.tile_seed()))
+        rng = random.Random(utility.hash_args(day_seed, system_tile.tile_seed(), "name"))
         
         options = [
             "Bingobango"
@@ -1223,7 +1285,7 @@ class Bingobango(Project):
             day_seed: str,
             system_tile: space.SystemTradeHub
         ) -> str:
-        rng = random.Random(utility.hash_args(day_seed, system_tile.tile_seed()))
+        rng = random.Random(utility.hash_args(day_seed, system_tile.tile_seed(), "description"))
 
         cost = cls.get_price_description(day_seed, system_tile)
         reward = cls.get_reward_description(day_seed, system_tile)
@@ -1257,7 +1319,7 @@ class Bingobango(Project):
             day_seed: str,
             system_tile: space.SystemTradeHub
         ) -> str:
-        rng = random.Random(utility.hash_args(day_seed, system_tile.tile_seed()))
+        rng = random.Random(utility.hash_args(day_seed, system_tile.tile_seed(), "completion"))
 
         options = [
             "bingobango!"
@@ -1271,6 +1333,7 @@ class Bingobango(Project):
             day_seed: str,
             system_tile: space.SystemTradeHub
         ) -> list[tuple[str, int]]:
+        rng = random.Random(utility.hash_args(day_seed, system_tile.tile_seed(), "items"))
         return [(values.anarchy_chess.text, 1)]
     
     @classmethod
@@ -1279,7 +1342,7 @@ class Bingobango(Project):
             day_seed: str,
             system_tile: space.SystemTradeHub
         ) -> list[tuple[str, int]]:
-        rng = random.Random(utility.hash_args(day_seed, system_tile.tile_seed()))
+        rng = random.Random(utility.hash_args(day_seed, system_tile.tile_seed(), "items"))
 
         amount = rng.randint(10, 20) * 2000
 
@@ -1295,7 +1358,7 @@ class Anarchy_Trading(Project):
             day_seed: str,
             system_tile: space.SystemTradeHub
          ) -> str:
-        rng = random.Random(utility.hash_args(day_seed, system_tile.tile_seed()))
+        rng = random.Random(utility.hash_args(day_seed, system_tile.tile_seed(), "name"))
 
         options = [
             "Anarchy Trading",
@@ -1312,7 +1375,7 @@ class Anarchy_Trading(Project):
             day_seed: str,
             system_tile: space.SystemTradeHub
         ) -> str:
-        rng = random.Random(utility.hash_args(day_seed, system_tile.tile_seed()))
+        rng = random.Random(utility.hash_args(day_seed, system_tile.tile_seed(), "description"))
 
         cost = cls.get_price_description(day_seed, system_tile)
         reward = cls.get_reward_description(day_seed, system_tile)
@@ -1389,7 +1452,7 @@ class Anarchy_Trading(Project):
             day_seed: str,
             system_tile: space.SystemTradeHub
         ) -> str:
-        rng = random.Random(utility.hash_args(day_seed, system_tile.tile_seed()))
+        rng = random.Random(utility.hash_args(day_seed, system_tile.tile_seed(), "completion"))
         reward = cls.get_reward_description(day_seed, system_tile)
 
         options = [
@@ -1406,7 +1469,7 @@ class Anarchy_Trading(Project):
             day_seed: str,
             system_tile: space.SystemTradeHub
         ) -> list[tuple[str, int]]:
-        rng = random.Random(utility.hash_args(day_seed, system_tile.tile_seed()))
+        rng = random.Random(utility.hash_args(day_seed, system_tile.tile_seed(), "items"))
 
         amount_1 = rng.randint(1, 3)
 
@@ -1420,7 +1483,7 @@ class Anarchy_Trading(Project):
             day_seed: str,
             system_tile: space.SystemTradeHub
         ) -> list[tuple[str, int]]:
-        rng = random.Random(utility.hash_args(day_seed, system_tile.tile_seed()))
+        rng = random.Random(utility.hash_args(day_seed, system_tile.tile_seed(), "items"))
 
         amount_1 = rng.randint(1, 3)
 
@@ -1438,7 +1501,7 @@ class Beta_Minus(Project):
             day_seed: str,
             system_tile: space.SystemTradeHub
          ) -> str:
-        rng = random.Random(utility.hash_args(day_seed, system_tile.tile_seed()))
+        rng = random.Random(utility.hash_args(day_seed, system_tile.tile_seed(), "name"))
 
         options = [
             "Beta Minus",
@@ -1455,7 +1518,7 @@ class Beta_Minus(Project):
             day_seed: str,
             system_tile: space.SystemTradeHub
         ) -> str:
-        rng = random.Random(utility.hash_args(day_seed, system_tile.tile_seed()))
+        rng = random.Random(utility.hash_args(day_seed, system_tile.tile_seed(), "description"))
 
         cost = cls.get_price_description(day_seed, system_tile)
         reward = cls.get_reward_description(day_seed, system_tile)
@@ -1532,7 +1595,7 @@ class Beta_Minus(Project):
             day_seed: str,
             system_tile: space.SystemTradeHub
         ) -> str:
-        rng = random.Random(utility.hash_args(day_seed, system_tile.tile_seed()))
+        rng = random.Random(utility.hash_args(day_seed, system_tile.tile_seed(), "completion"))
         reward = cls.get_reward_description(day_seed, system_tile)
 
         options = [
@@ -1549,7 +1612,7 @@ class Beta_Minus(Project):
             day_seed: str,
             system_tile: space.SystemTradeHub
         ) -> list[tuple[str, int]]:
-        rng = random.Random(utility.hash_args(day_seed, system_tile.tile_seed()))
+        rng = random.Random(utility.hash_args(day_seed, system_tile.tile_seed(), "items"))
 
         amount_1 = rng.randint(6, 15)
 
@@ -1564,7 +1627,7 @@ class Beta_Minus(Project):
             day_seed: str,
             system_tile: space.SystemTradeHub
         ) -> list[tuple[str, int]]:
-        rng = random.Random(utility.hash_args(day_seed, system_tile.tile_seed()))
+        rng = random.Random(utility.hash_args(day_seed, system_tile.tile_seed(), "items"))
 
         amount_1 = rng.randint(6, 15)
 
@@ -1582,7 +1645,7 @@ class Anarchy_Tax_Evasion(Project):
             day_seed: str,
             system_tile: space.SystemTradeHub
          ) -> str:
-        rng = random.Random(utility.hash_args(day_seed, system_tile.tile_seed()))
+        rng = random.Random(utility.hash_args(day_seed, system_tile.tile_seed(), "name"))
 
         options = [
             "Anarchy Tax Evasion",
@@ -1599,7 +1662,7 @@ class Anarchy_Tax_Evasion(Project):
             day_seed: str,
             system_tile: space.SystemTradeHub
         ) -> str:
-        rng = random.Random(utility.hash_args(day_seed, system_tile.tile_seed()))
+        rng = random.Random(utility.hash_args(day_seed, system_tile.tile_seed(), "description"))
 
         cost = cls.get_price_description(day_seed, system_tile)
         reward = cls.get_reward_description(day_seed, system_tile)
@@ -1716,7 +1779,7 @@ class Anarchy_Tax_Evasion(Project):
             day_seed: str,
             system_tile: space.SystemTradeHub
         ) -> str:
-        rng = random.Random(utility.hash_args(day_seed, system_tile.tile_seed()))
+        rng = random.Random(utility.hash_args(day_seed, system_tile.tile_seed(), "completion"))
         reward = cls.get_reward_description(day_seed, system_tile)
 
         options = [
@@ -1733,7 +1796,7 @@ class Anarchy_Tax_Evasion(Project):
             day_seed: str,
             system_tile: space.SystemTradeHub
         ) -> list[tuple[str, int]]:
-        rng = random.Random(utility.hash_args(day_seed, system_tile.tile_seed()))
+        rng = random.Random(utility.hash_args(day_seed, system_tile.tile_seed(), "items"))
 
         amount_1 = rng.randint(3, 6)
 
@@ -1747,7 +1810,7 @@ class Anarchy_Tax_Evasion(Project):
             day_seed: str,
             system_tile: space.SystemTradeHub
         ) -> list[tuple[str, int]]:
-        rng = random.Random(utility.hash_args(day_seed, system_tile.tile_seed()))
+        rng = random.Random(utility.hash_args(day_seed, system_tile.tile_seed(), "items"))
 
         amount_1 = rng.randint(3, 6)
 
@@ -1765,7 +1828,7 @@ class Gem_Extraction(Project):
             day_seed: str,
             system_tile: space.SystemTradeHub
          ) -> str:
-        rng = random.Random(utility.hash_args(day_seed, system_tile.tile_seed()))
+        rng = random.Random(utility.hash_args(day_seed, system_tile.tile_seed(), "name"))
 
         options = [
             "Gem Extraction",
@@ -1782,7 +1845,7 @@ class Gem_Extraction(Project):
             day_seed: str,
             system_tile: space.SystemTradeHub
         ) -> str:
-        rng = random.Random(utility.hash_args(day_seed, system_tile.tile_seed()))
+        rng = random.Random(utility.hash_args(day_seed, system_tile.tile_seed(), "description"))
 
         cost = cls.get_price_description(day_seed, system_tile)
         reward = cls.get_reward_description(day_seed, system_tile)
@@ -1907,7 +1970,7 @@ class Gem_Extraction(Project):
             day_seed: str,
             system_tile: space.SystemTradeHub
         ) -> str:
-        rng = random.Random(utility.hash_args(day_seed, system_tile.tile_seed()))
+        rng = random.Random(utility.hash_args(day_seed, system_tile.tile_seed(), "completion"))
         reward = cls.get_reward_description(day_seed, system_tile)
         cost = cls.get_price_description(day_seed, system_tile)
 
@@ -1925,7 +1988,7 @@ class Gem_Extraction(Project):
             day_seed: str,
             system_tile: space.SystemTradeHub
         ) -> list[tuple[str, int]]:
-        rng = random.Random(utility.hash_args(day_seed, system_tile.tile_seed()))
+        rng = random.Random(utility.hash_args(day_seed, system_tile.tile_seed(), "items"))
 
         amount_1 = rng.randint(1, 3)
 
@@ -1939,7 +2002,7 @@ class Gem_Extraction(Project):
             day_seed: str,
             system_tile: space.SystemTradeHub
         ) -> list[tuple[str, int]]:
-        rng = random.Random(utility.hash_args(day_seed, system_tile.tile_seed()))
+        rng = random.Random(utility.hash_args(day_seed, system_tile.tile_seed(), "items"))
 
         amount_1 = rng.randint(1, 3)
 
@@ -1964,7 +2027,7 @@ class Bakery_Encounter(Project):
             day_seed: str,
             system_tile: space.SystemTradeHub
          ) -> str:
-        rng = random.Random(utility.hash_args(day_seed, system_tile.tile_seed()))
+        rng = random.Random(utility.hash_args(day_seed, system_tile.tile_seed(), "name"))
 
         options = [
             "Bakery Encounter",
@@ -1981,13 +2044,13 @@ class Bakery_Encounter(Project):
             day_seed: str,
             system_tile: space.SystemTradeHub
         ) -> str:
-        rng = random.Random(utility.hash_args(day_seed, system_tile.tile_seed()))
+        rng = random.Random(utility.hash_args(day_seed, system_tile.tile_seed(), "description"))
 
         cost = cls.get_price_description(day_seed, system_tile)
         reward = cls.get_reward_description(day_seed, system_tile)
 
         part_1 = [
-            "Mmm…what’s that? ",
+            "Mmm…what’s that?",
             "You are drawn to a building in the distance…",
             "Gosh, something is making me hungry…"
         ]
@@ -2073,7 +2136,7 @@ class Bakery_Encounter(Project):
             day_seed: str,
             system_tile: space.SystemTradeHub
         ) -> str:
-        rng = random.Random(utility.hash_args(day_seed, system_tile.tile_seed()))
+        rng = random.Random(utility.hash_args(day_seed, system_tile.tile_seed(), "completion"))
         reward = cls.get_reward_description(day_seed, system_tile)
 
         options = [
@@ -2090,7 +2153,7 @@ class Bakery_Encounter(Project):
             day_seed: str,
             system_tile: space.SystemTradeHub
         ) -> list[tuple[str, int]]:
-        rng = random.Random(utility.hash_args(day_seed, system_tile.tile_seed()))
+        rng = random.Random(utility.hash_args(day_seed, system_tile.tile_seed(), "items"))
 
         amount_1 = rng.randint(5, 10)
 
@@ -2106,7 +2169,7 @@ class Bakery_Encounter(Project):
             day_seed: str,
             system_tile: space.SystemTradeHub
         ) -> list[tuple[str, int]]:
-        rng = random.Random(utility.hash_args(day_seed, system_tile.tile_seed()))
+        rng = random.Random(utility.hash_args(day_seed, system_tile.tile_seed(), "items"))
 
         amount_1 = rng.randint(5, 10)
 
@@ -2126,7 +2189,7 @@ class Corruption_Lab(Project):
             day_seed: str,
             system_tile: space.SystemTradeHub
          ) -> str:
-        rng = random.Random(utility.hash_args(day_seed, system_tile.tile_seed()))
+        rng = random.Random(utility.hash_args(day_seed, system_tile.tile_seed(), "name"))
 
         options = [
             "Corruption Lab",
@@ -2143,7 +2206,7 @@ class Corruption_Lab(Project):
             day_seed: str,
             system_tile: space.SystemTradeHub
         ) -> str:
-        rng = random.Random(utility.hash_args(day_seed, system_tile.tile_seed()))
+        rng = random.Random(utility.hash_args(day_seed, system_tile.tile_seed(), "description"))
 
         cost = cls.get_price_description(day_seed, system_tile)
         reward = cls.get_reward_description(day_seed, system_tile)
@@ -2228,7 +2291,7 @@ class Corruption_Lab(Project):
             day_seed: str,
             system_tile: space.SystemTradeHub
         ) -> str:
-        rng = random.Random(utility.hash_args(day_seed, system_tile.tile_seed()))
+        rng = random.Random(utility.hash_args(day_seed, system_tile.tile_seed(), "completion"))
         reward = cls.get_reward_description(day_seed, system_tile)
 
         options = [
@@ -2262,7 +2325,7 @@ class Corruption_Lab(Project):
             day_seed: str,
             system_tile: space.SystemTradeHub
         ) -> list[tuple[str, int]]:
-        rng = random.Random(utility.hash_args(day_seed, system_tile.tile_seed()))
+        rng = random.Random(utility.hash_args(day_seed, system_tile.tile_seed(), "items"))
 
         amount_1 = rng.randint(3, 5)
 
@@ -2277,7 +2340,7 @@ class Corruption_Lab(Project):
             day_seed: str,
             system_tile: space.SystemTradeHub
         ) -> list[tuple[str, int]]:
-        rng = random.Random(utility.hash_args(day_seed, system_tile.tile_seed()))
+        rng = random.Random(utility.hash_args(day_seed, system_tile.tile_seed(), "items"))
 
         amount_1 = rng.randint(3, 5)
 
@@ -2295,7 +2358,7 @@ class Cafeteria_Kerfuffle(Project):
             day_seed: str,
             system_tile: space.SystemTradeHub
          ) -> str:
-        rng = random.Random(utility.hash_args(day_seed, system_tile.tile_seed()))
+        rng = random.Random(utility.hash_args(day_seed, system_tile.tile_seed(), "name"))
 
         options = [
             "Cafeteria Kerfuffle",
@@ -2312,7 +2375,7 @@ class Cafeteria_Kerfuffle(Project):
             day_seed: str,
             system_tile: space.SystemTradeHub
         ) -> str:
-        rng = random.Random(utility.hash_args(day_seed, system_tile.tile_seed()))
+        rng = random.Random(utility.hash_args(day_seed, system_tile.tile_seed(), "description"))
 
         cost = cls.get_price_description(day_seed, system_tile)
         reward = cls.get_reward_description(day_seed, system_tile)
@@ -2453,7 +2516,7 @@ class Cafeteria_Kerfuffle(Project):
             day_seed: str,
             system_tile: space.SystemTradeHub
         ) -> str:
-        rng = random.Random(utility.hash_args(day_seed, system_tile.tile_seed()))
+        rng = random.Random(utility.hash_args(day_seed, system_tile.tile_seed(), "completion"))
         reward = cls.get_reward_description(day_seed, system_tile)
 
         options = [
@@ -2470,7 +2533,7 @@ class Cafeteria_Kerfuffle(Project):
             day_seed: str,
             system_tile: space.SystemTradeHub
         ) -> list[tuple[str, int]]:
-        rng = random.Random(utility.hash_args(day_seed, system_tile.tile_seed()))
+        rng = random.Random(utility.hash_args(day_seed, system_tile.tile_seed(), "items"))
 
         return [
             (values.anarchy_chessatron.text, 1)
@@ -2482,7 +2545,7 @@ class Cafeteria_Kerfuffle(Project):
             day_seed: str,
             system_tile: space.SystemTradeHub
         ) -> list[tuple[str, int]]:
-        rng = random.Random(utility.hash_args(day_seed, system_tile.tile_seed()))
+        rng = random.Random(utility.hash_args(day_seed, system_tile.tile_seed(), "items"))
 
         return [
             (values.hotdog.text, 1)
@@ -2498,7 +2561,7 @@ class Health_Inspection(Project):
             day_seed: str,
             system_tile: space.SystemTradeHub
          ) -> str:
-        rng = random.Random(utility.hash_args(day_seed, system_tile.tile_seed()))
+        rng = random.Random(utility.hash_args(day_seed, system_tile.tile_seed(), "name"))
 
         options = [
             "Health Inspection",
@@ -2515,7 +2578,7 @@ class Health_Inspection(Project):
             day_seed: str,
             system_tile: space.SystemTradeHub
         ) -> str:
-        rng = random.Random(utility.hash_args(day_seed, system_tile.tile_seed()))
+        rng = random.Random(utility.hash_args(day_seed, system_tile.tile_seed(), "title"))
         
         options = [
             "Cosmic Crumbs",
@@ -2531,7 +2594,7 @@ class Health_Inspection(Project):
             day_seed: str,
             system_tile: space.SystemTradeHub
         ) -> str:
-        rng = random.Random(utility.hash_args(day_seed, system_tile.tile_seed()))
+        rng = random.Random(utility.hash_args(day_seed, system_tile.tile_seed(), "description"))
 
         cost = cls.get_price_description(day_seed, system_tile)
         reward = cls.get_reward_description(day_seed, system_tile)
@@ -2617,7 +2680,7 @@ class Health_Inspection(Project):
             day_seed: str,
             system_tile: space.SystemTradeHub
         ) -> str:
-        rng = random.Random(utility.hash_args(day_seed, system_tile.tile_seed()))
+        rng = random.Random(utility.hash_args(day_seed, system_tile.tile_seed(), "completion"))
         cost = cls.get_price_description(day_seed, system_tile)
         reward = cls.get_reward_description(day_seed, system_tile)
         title = cls.title(day_seed, system_tile)
@@ -2636,7 +2699,7 @@ class Health_Inspection(Project):
             day_seed: str,
             system_tile: space.SystemTradeHub
         ) -> list[tuple[str, int]]:
-        rng = random.Random(utility.hash_args(day_seed, system_tile.tile_seed()))
+        rng = random.Random(utility.hash_args(day_seed, system_tile.tile_seed(), "items"))
 
         amount_1 = rng.randint(5, 20) * 100
 
@@ -2650,7 +2713,7 @@ class Health_Inspection(Project):
             day_seed: str,
             system_tile: space.SystemTradeHub
         ) -> list[tuple[str, int]]:
-        rng = random.Random(utility.hash_args(day_seed, system_tile.tile_seed()))
+        rng = random.Random(utility.hash_args(day_seed, system_tile.tile_seed(), "items"))
         
         amount_1 = rng.randint(5, 20) * 100
 
@@ -2668,7 +2731,7 @@ class Stonk_Exchange(Project):
             day_seed: str,
             system_tile: space.SystemTradeHub
          ) -> str:
-        rng = random.Random(utility.hash_args(day_seed, system_tile.tile_seed()))
+        rng = random.Random(utility.hash_args(day_seed, system_tile.tile_seed(), "name"))
 
         options = [
             "Stonk Exchange",
@@ -2685,7 +2748,7 @@ class Stonk_Exchange(Project):
             day_seed: str,
             system_tile: space.SystemTradeHub
         ) -> str:
-        rng = random.Random(utility.hash_args(day_seed, system_tile.tile_seed()))
+        rng = random.Random(utility.hash_args(day_seed, system_tile.tile_seed(), "description"))
 
         cost = cls.get_price_description(day_seed, system_tile)
         reward = cls.get_reward_description(day_seed, system_tile)
@@ -2719,7 +2782,7 @@ class Stonk_Exchange(Project):
 
 
         part_5 = [
-            "Their stock of a specific stonk is running low, ",
+            "Their stock of a specific stonk is running low,",
             "While having physical stonks is good and all, they've realized they're going to run out of one stonk,",
             "They've discovered to much distress that they don't have enough of a single type of stonk,"
         ]
@@ -2770,7 +2833,7 @@ class Stonk_Exchange(Project):
             day_seed: str,
             system_tile: space.SystemTradeHub
         ) -> str:
-        rng = random.Random(utility.hash_args(day_seed, system_tile.tile_seed()))
+        rng = random.Random(utility.hash_args(day_seed, system_tile.tile_seed(), "completion"))
         reward = cls.get_reward_description(day_seed, system_tile)
 
         options = [
@@ -2812,7 +2875,7 @@ class Stonk_Exchange(Project):
             day_seed: str,
             system_tile: space.SystemTradeHub
         ) -> list[tuple[str, int]]:
-        rng = random.Random(utility.hash_args(day_seed, system_tile.tile_seed()))
+        rng = random.Random(utility.hash_args(day_seed, system_tile.tile_seed(), "items"))
         json_interface = system_tile.galaxy_tile.json_interface
         
         reward = cls.get_reward(day_seed, system_tile)
@@ -2836,7 +2899,7 @@ class Stonk_Exchange(Project):
             day_seed: str,
             system_tile: space.SystemTradeHub
         ) -> list[tuple[str, int]]:
-        rng = random.Random(utility.hash_args(day_seed, system_tile.tile_seed()))
+        rng = random.Random(utility.hash_args(day_seed, system_tile.tile_seed(), "items"))
         json = system_tile.galaxy_tile.json_interface
         
         weights = {
@@ -2859,6 +2922,1321 @@ class Stonk_Exchange(Project):
             (stonk.text, amount)
         ]
 
+class Ski_Hill_Issue(Project):
+    """Written by Kapola."""
+    internal = "ski_hill_issue"
+
+    @classmethod
+    def name(
+            cls,
+            day_seed: str,
+            system_tile: space.SystemTradeHub
+         ) -> str:
+        rng = random.Random(utility.hash_args(day_seed, system_tile.tile_seed(), "name"))
+
+        options = [
+            "Ski Hill Issue",
+            "Social Standings",
+            "Bingo Jail",
+            "White Gem Taxes"
+        ]
+
+
+        return rng.choice(options)
+
+    @classmethod
+    def description(
+            cls,
+            day_seed: str,
+            system_tile: space.SystemTradeHub
+        ) -> str:
+        rng = random.Random(utility.hash_args(day_seed, system_tile.tile_seed(), "description"))
+
+        cost = cls.get_price_description(day_seed, system_tile)
+        reward = cls.get_reward_description(day_seed, system_tile)
+
+        part_1 = [
+            "So, the Trade Hub has had a new \"feature\" added to it recently,",
+            "There is a new installation on this Trade Hub here,",
+            "A new piece of infrastructure has been added to the Hub just last week,"
+        ]
+
+
+        part_2 = [
+            "and many are confused as to the point of it.",
+            "which a lot of people are quite puzzled about.",
+            "and it's one of the most confusing things that's been done here in a while."
+        ]
+
+
+        part_3 = [
+            "The ruler of the local system has ordered",
+            "The system's leader has demanded",
+            "Our supreme leader recently ordered"
+        ]
+
+
+        part_4 = [
+            "that a ski hill be built on one of the planets.",
+            "that a local hill on a planet be turned into a ski resort.",
+            "that, with all possible haste, a ski hill be constructed."
+        ]
+
+
+        part_5 = [
+            "The chairlifts and slopes were immediately constructed,",
+            "This was done immediately at their request,",
+            "Of course, work started on it instantly,"
+        ]
+
+
+        part_6 = [
+            "however, the leader omitted some information",
+            "but the ruler has withheld crucial information",
+            "unfortunately the leader purposefully omitted important details"
+        ]
+
+
+        part_7 = [
+            "when announcing this to the public.",
+            "when they told everyone about this.",
+            "after the ski hill opened."
+        ]
+
+
+        part_8 = [
+            "A brand new AI named \"Latent-Dreamer\", each day,",
+            "A new algorithm engineered by the Hub's best computer scientists, each day,",
+            "Each day, new AI created at their request by Hub engineers"
+        ]
+
+
+        part_9 = [
+            "considers some trails \"good\" and others \"bad\".",
+            "will declare some slopes \"good\" and some others \"bad\".",
+            "orders some slopes to be \"good\" and some slopes \"bad\"."
+        ]
+
+
+        part_10 = [
+            "The algorithm beneath this is allegedly very complicated,",
+            "This AI is supposedly very complex,",
+            "It has been said that this algorithm was very convoluted,"
+        ]
+
+
+        part_11 = [
+            "however the output seems indistinguishable from randomness!",
+            "but to an average layperson it seems to just be a random number generator!",
+            "but to us it seems that the trails are picked entirely at random!"
+        ]
+
+
+        part_12 = [
+            "It is also the case that everyone here",
+            "Also, all residents of the Hub",
+            "Furthermore, everyone in the system"
+        ]
+
+
+        part_13 = [
+            "is legally required to ski each day,",
+            "is obligated by the ruler to ski there every day,",
+            "must legally use some trails there every day,"
+        ]
+
+
+        part_14 = [
+            "and they are remotely recorded during their whole descent.",
+            "and captors sense the trails taken by everyone.",
+            "and all slopes taken by all skiers are tracked."
+        ]
+
+
+        part_15 = [
+            "The ruler then added a new \"social standing\" statistic tracked by the government,",
+            "Also, a new \"social standing\" internal government metric has been created,",
+            "The leader has made a \"social standing\" metric that's based on this,"
+        ]
+
+
+        part_16 = [
+            "which goes up every time you take a good slope and down when you take a bad one.",
+            "and one's standing increases for taking a \"good\" slope and decreases for a \"bad\" slope.",
+            "and your standing goes up or down when you take good and bad slopes respectively."
+        ]
+
+
+        part_17 = [
+            "A new tax system was introduced based on this,",
+            "The leader then added a tax system based on this,",
+            "This metric is used by a new tweaked tax system,"
+        ]
+
+
+        part_18 = [
+            "that declares that the lowest people in social standing",
+            "which says that the people with a bad social standing",
+            "that makes people with a low social standing"
+        ]
+
+
+        part_19 = [
+            "owe taxes to the ones with the highest standing.",
+            "have to pay some taxes to people with a high standing.",
+            "need to give tax payments to higher-standing persons."
+        ]
+
+
+        part_20 = [
+            f"The problem is those taxes are in the form of {values.gem_white.text},",
+            f"Slight issue, though: taxes are to be paid as {values.gem_white.text},",
+            f"{values.gem_white.text} are what taxes need to be paid as, though,"
+        ]
+
+
+        part_21 = [
+            "which are so scarcely rare many have never seen one!",
+            "and these are so rare no one in the system has one!",
+            "and no one has those!"
+        ]
+
+
+        part_22 = [
+            "Importantly, those who can't pay get sent to jail,",
+            "People who owe taxes but can't pay also are thrown in prison,",
+            "Crucially, if one owes, but can't pay, they go to prison,"
+        ]
+
+
+        part_23 = [
+            "where the government (the Bingo-Bot)",
+            "in which the government (the Bingo-Bot)",
+            "and here the Bingo-Bot (the government)"
+        ]
+
+
+        part_24 = [
+            "takes all their items!",
+            "will take all that person's items!",
+            "seizes all items and dough that person has!"
+        ]
+
+
+        part_25 = [
+            "Fortunately, though,",
+            "Thankfully,",
+            "Some good news, however:"
+        ]
+
+
+        part_26 = [
+            "there is a prisoner with the knowledge that allows them to",
+            "one prisoner has a recipe to",
+            "the newest prisoner has what it takes in order to"
+        ]
+
+
+        part_27 = [
+            "brew the elusive gems using other space gems,",
+            "alchemize those famed gems with regular space gems,",
+            f"distill the {values.gem_white.text} from normal space gems,"
+        ]
+
+
+        part_28 = [
+            "and if they get those,",
+            "and if only they can get their hands on some,",
+            "and if they can get all they need in those,"
+        ]
+
+
+        part_29 = [
+            "they'll make their tax payment and be able to leave.",
+            "they can pay their taxes and be freed.",
+            "their taxes can be paid and they'll be able to leave."
+        ]
+
+
+        part_30 = [
+            f"If you can just help them with {cost},",
+            f"They just need {cost} to make it, and if you provide those,",
+            f"All they need is {cost} from you, and if you pay with that,"
+        ]
+
+
+        part_31 = [
+            "the richest prisoners, who have immense wealth in their bank accounts outside prison,",
+            "the wealthiest prisoners, with immense riches stashed away,",
+            "the mightiest among them, who are rich outside jail,"
+        ]
+
+
+        part_32 = [
+            f"have said that they would give you {reward}!",
+            f"promised that {reward} would be yours!",
+            f"declared that {reward} would be your reward!"
+        ]
+
+        return " ".join([
+            rng.choice(part_1),
+            rng.choice(part_2),
+            rng.choice(part_3),
+            rng.choice(part_4),
+            rng.choice(part_5),
+            rng.choice(part_6),
+            rng.choice(part_7),
+            rng.choice(part_8),
+            rng.choice(part_9),
+            rng.choice(part_10),
+            rng.choice(part_11),
+            rng.choice(part_12),
+            rng.choice(part_13),
+            rng.choice(part_14),
+            rng.choice(part_15),
+            rng.choice(part_16),
+            rng.choice(part_17),
+            rng.choice(part_18),
+            rng.choice(part_19),
+            rng.choice(part_20),
+            rng.choice(part_21),
+            rng.choice(part_22),
+            rng.choice(part_23),
+            rng.choice(part_24),
+            rng.choice(part_25),
+            rng.choice(part_26),
+            rng.choice(part_27),
+            rng.choice(part_28),
+            rng.choice(part_29),
+            rng.choice(part_30),
+            rng.choice(part_31),
+            rng.choice(part_32),
+        ])
+
+    @classmethod
+    def completion(
+            cls: typing.Type[typing.Self],
+            day_seed: str,
+            system_tile: space.SystemTradeHub
+        ) -> str:
+        rng = random.Random(utility.hash_args(day_seed, system_tile.tile_seed(), "completion"))
+        reward = cls.get_reward_description(day_seed, system_tile)
+
+        options = [
+            "Hooray! You did it! The prisoners are now freed!",
+            f"They've made the {values.gem_white.text}, paid their taxes and escaped! Here's the {reward} they're giving you!",
+            f"The prisoners are free! The ruler doesn't seem too happy that you helped them escape though. Here's your {reward}, but be careful: they might take your spleen!"
+        ]
+
+        return rng.choice(options)
+    
+    @classmethod
+    def get_cost(
+            cls,
+            day_seed: str,
+            system_tile: space.SystemTradeHub
+        ) -> list[tuple[str, int]]:
+        rng = random.Random(utility.hash_args(day_seed, system_tile.tile_seed(), "items"))
+
+        amount_1 = rng.randint(3, 8)
+
+        return [
+            (values.gem_pink.text, amount_1 * 25),
+            (values.gem_orange.text, amount_1 * 25),
+            (values.gem_cyan.text, amount_1 * 25)
+        ]
+    
+    @classmethod
+    def get_reward(
+            cls,
+            day_seed: str,
+            system_tile: space.SystemTradeHub
+        ) -> list[tuple[str, int]]:
+        rng = random.Random(utility.hash_args(day_seed, system_tile.tile_seed(), "items"))
+
+        amount_1 = rng.randint(3, 8)
+
+        return [
+            (values.gem_red.text, amount_1 * 2000),
+            (values.gem_blue.text, amount_1 * 1000),
+            (values.gem_purple.text, amount_1 * 500),
+            (values.gem_green.text, amount_1 * 250),
+            (values.gem_gold.text, amount_1 * 100)
+        ]
+
+class The_Galaxy_Edge(Project):
+    """Written by Duck."""
+    internal = "the_galaxy_edge"
+
+    @classmethod
+    def name(
+            cls,
+            day_seed: str,
+            system_tile: space.SystemTradeHub
+         ) -> str:
+        rng = random.Random(utility.hash_args(day_seed, system_tile.tile_seed(), "name"))
+
+        options = [
+            "The Galaxy Edge",
+            "Galaxy's Edge",
+            "Galaxy Adventure"
+        ]
+
+
+        return rng.choice(options)
+
+    @classmethod
+    def description(
+            cls,
+            day_seed: str,
+            system_tile: space.SystemTradeHub
+        ) -> str:
+        rng = random.Random(utility.hash_args(day_seed, system_tile.tile_seed(), "description"))
+
+        cost = cls.get_price_description(day_seed, system_tile)
+        reward = cls.get_reward_description(day_seed, system_tile)
+
+        part_1 = [
+            "There's a ship in the Trade Hub's dock to refuel.",
+            "Incredible, there's a ship docked at the Trade Hub that's currently refueling.",
+            "Wow, there's a docked ship in the Trade Hub currently refueling."
+        ]
+
+
+        part_2 = [
+            "While the existence of the ship is not surprising at all,",
+            "Although the ship existing isn't all too shocking,",
+            "Despite it not being surprising that the ship exists,"
+        ]
+
+
+        part_3 = [
+            "the journey it has planned is quite intriguing.",
+            "its planned mission is one that you don't see every day.",
+            "the plan it has for its journey is not something you really ever see."
+        ]
+
+
+        part_4 = [
+            "They're going to try to adventure to the edge of the galaxy.",
+            "They're attempting to reach the edge of the galaxy.",
+            "The galaxy's edge is their goal, and they're trying to get there."
+        ]
+
+
+        part_5 = [
+            "Despite being warned about",
+            "Even though they are aware of",
+            "Although the crew was warned about"
+        ]
+
+
+        part_6 = [
+            "corruption",
+            "mysterious occurrences",
+            "boinge"
+        ]
+
+
+        part_7 = [
+            "and a few other weird things,",
+            "and some other funky stuff,",
+            "and the appearance of some crazy things,"
+        ]
+
+
+        part_8 = [
+            "they've decided to go forward with their mission.",
+            "they've decided that they're going to continue anyway.",
+            "they're going through with their plan."
+        ]
+
+
+        part_9 = [
+            "In the rare event that they run into some weird magnetic storm",
+            "On the off chance that they encounter something like a magnetic storm",
+            "If they were to run into a form of magnetic storm"
+        ]
+
+
+        part_10 = [
+            "that damages their ship,",
+            "that damages their engine,",
+            "that heavily damages their drive core,"
+        ]
+
+
+        part_11 = [
+            "they're looking for some backup generators in order to keep them going.",
+            "they're seeing about getting backup generators right now to get them going again.",
+            "they're attempting to purchase generators they can use as a backup if needed."
+        ]
+
+
+        part_12 = [
+            "They estimate that,",
+            "Their estimates say that,",
+            "They're guessing that,"
+        ]
+
+
+        part_13 = [
+            "even if they encounter some storm,",
+            "even if they were to encounter a storm,",
+            "if they do run into a magnetic storm,"
+        ]
+
+
+        part_14 = [
+            f"{cost} would be enough to get them back on their feet.",
+            f"{cost} would suffice to keep them going.",
+            f"{cost} would be sufficient to return to normal operations."
+        ]
+
+
+        part_15 = [
+            f"They picked up some extra {reward} back on",
+            f"They got {reward} extra from",
+            f"They have {reward} on their ship that they got from"
+        ]
+
+
+        part_16 = [
+            "Hauer",
+            "Hillos",
+            "Klendath",
+            "Orvall",
+            "Ubogleelt",
+            "Xraneax",
+            "Wenkwort",
+            "Helito",
+            "Alpha Centauri",
+            "Procyon",
+            "Sirius",
+            "Sol",
+            "Trappist",
+            "Odryskia",
+            "Polaris",
+            "Seddom",
+            "Parvus",
+            "Zanaam",
+            "Shallash",
+            "Larionessi Refuge",
+            "Zevox",
+            "Ultima Vigilis",
+            "Gish",
+            "Paridayda",
+            "Scion of Vagros",
+            "Dugar",
+            "Ivusheh",
+            "Taprib",
+            "Vapob",
+            "Sursect",
+            "Ithome",
+            "Ophala"
+        ]
+
+
+        part_17 = [
+            "on a mission a couple months ago,",
+            "on a previous mission,",
+            "a couple months ago,"
+        ]
+
+
+        part_18 = [
+            "so they're giving it away as a reward.",
+            "so they've decided to give it as payment.",
+            "so they're paying that so someone who can help."
+        ]
+
+        return " ".join([
+            rng.choice(part_1),
+            rng.choice(part_2),
+            rng.choice(part_3),
+            rng.choice(part_4),
+            rng.choice(part_5),
+            rng.choice(part_6),
+            rng.choice(part_7),
+            rng.choice(part_8),
+            rng.choice(part_9),
+            rng.choice(part_10),
+            rng.choice(part_11),
+            rng.choice(part_12),
+            rng.choice(part_13),
+            rng.choice(part_14),
+            rng.choice(part_15),
+            rng.choice(part_16),
+            rng.choice(part_17),
+            rng.choice(part_18),
+        ])
+
+    @classmethod
+    def completion(
+            cls: typing.Type[typing.Self],
+            day_seed: str,
+            system_tile: space.SystemTradeHub
+        ) -> str:
+        rng = random.Random(utility.hash_args(day_seed, system_tile.tile_seed(), "completion"))
+        reward = cls.get_reward_description(day_seed, system_tile)
+        cost = cls.get_price_description(day_seed, system_tile)
+
+        options = [
+            f"They're leaving now! They got all the {cost} they wanted, and they're off to explore the edge of the galaxy! Here's the {reward} you were promised. Let's hope they don't need emergency information on extrasensory perception...",
+            f"Off they go! After refueling the {cost} you gave them was enough and you have received the {reward} you were promised. Let's hope they don't need emergency information on extrasensory perception...",
+            f"And away they go! The {cost} you gave them is likely to be sufficient, even though the chance of them encountering a magnetic storm is incredibly low. The {reward} is currently on its way to you! Let's hope they don't need emergency information on extrasensory perception..."
+        ]
+
+        return rng.choice(options)
+    
+    @classmethod
+    def get_cost(
+            cls,
+            day_seed: str,
+            system_tile: space.SystemTradeHub
+        ) -> list[tuple[str, int]]:
+        rng = random.Random(utility.hash_args(day_seed, system_tile.tile_seed(), "items"))
+
+        amount_1 = rng.randint(5, 10)
+
+        return [
+            (values.black_knight.text, amount_1 * 750)
+        ]
+    
+    @classmethod
+    def get_reward(
+            cls,
+            day_seed: str,
+            system_tile: space.SystemTradeHub
+        ) -> list[tuple[str, int]]:
+        rng = random.Random(utility.hash_args(day_seed, system_tile.tile_seed(), "items"))
+
+        amount_1 = rng.randint(5, 10)
+
+        return [
+            (rng.choice(values.anarchy_pieces_white_biased).text, amount_1 * 20)
+        ]
+
+class Mysterious_Ship(Project):
+    """Written by Duck."""
+    internal = "mysterious_ship"
+
+    @classmethod
+    def name(
+            cls,
+            day_seed: str,
+            system_tile: space.SystemTradeHub
+         ) -> str:
+        rng = random.Random(utility.hash_args(day_seed, system_tile.tile_seed(), "name"))
+
+        options = [
+            "Mysterious Ship",
+            "Abandon Ship",
+            "Mystery Ship"
+        ]
+
+
+        return rng.choice(options)
+
+    @classmethod
+    def description(
+            cls,
+            day_seed: str,
+            system_tile: space.SystemTradeHub
+        ) -> str:
+        rng = random.Random(utility.hash_args(day_seed, system_tile.tile_seed(), "description"))
+
+        cost = cls.get_price_description(day_seed, system_tile)
+        reward = cls.get_reward_description(day_seed, system_tile)
+
+        part_1 = [
+            "Oh dear,",
+            "Oh no,",
+            "Uh oh,"
+        ]
+
+
+        part_2 = [
+            "this is not good.",
+            "this is terrible.",
+            "this is bad."
+        ]
+
+
+        part_3 = [
+            "In the Trade Hub's bridge we have detected an unknown object",
+            "The Trade Hub's sensors have picked up a weird object",
+            "The sensors aboard the Trade Hub have found a very weird object"
+        ]
+
+
+        part_4 = [
+            "floating past.",
+            "floating through space.",
+            "passing by the hub."
+        ]
+
+
+        part_5 = [
+            "The object appears to be a lost ship,",
+            "The sensors have been able to detect that the object is a ship,",
+            "The object has the shape of a ship,"
+        ]
+
+
+        part_6 = [
+            "but the lights inside it are completely dark.",
+            "but there is no light coming from the it.",
+            "but it is not emitting any light."
+        ]
+
+
+        part_7 = [
+            "Before rescue crews were able to get ready to go aboard the ship,",
+            "Before rescue teams got ready to board the ship,",
+            "Prior to a rescue team boarding the ship,"
+        ]
+
+
+        part_8 = [
+            "the radio dishes on the Trade Hub detected a looping recording coming from the ship.",
+            "sensors on the Trade Hub detected a looping recording coming from the ship.",
+            "the sensor operators located a looping recording originating from the ship."
+        ]
+
+
+        part_9 = [
+            "It is slightly corrupted, as it's been looping for a while, but some parts are still legible:\n",
+            "The recording is slightly corrupted due to the time it's been looping, but some parts can still be understood:\n",
+            "It's corrupted a little bit due to looping for so long, but it's possible to understand some of it:\n"
+        ]
+
+
+        part_10 = [
+            "   \"▖╢╪ ┴╪║┅├▖║ ▚╪ ▔┴╪ ║╪╪╳▛░, ┼▔▒▖▔╳▛, ▔┴╪ ▛▙▖╢╳▛░ ├╪║║ ▖╢▔▛ ╳▛┼┴╪╬╳▘├╪.\"\n",
+            "   \"▚╢▔▖ ▚╪ ▔┴╪ ║╪╪╳▛░ ╳║ ▔▘║▙├┅▖╪├┆ ╳▛┼┴╪╬╳▘├╪, ┼▔▒▖▔╳▛.\"\n",
+            "   \"▖╢╪ ┴╪║┅├▖║ ║╢▙▚ ╳▛┼┴╪╬╳▘├╪ ▕╪▔▖║ ▖╢▔▖ ▚╪ ╢▔▝╪ ▛╪▝╪┴ ║╪╪▛ ▘╪▕▙┴╪, ┼▔▒▖▔╳▛.\"\n"
+        ]
+
+
+        part_11 = [
+            "   \"▙╢ ░▙╬, ▖╢╳║ ╳║ ▖╪┴┴╳▘├╪. Is there any explanation for this? ▚╪ ▛╪╪╬ ▖▙ ▕╳░┅┴╪ ╳▖ ▙┅▖.\"\n",
+            "   \"▖╢╳║ ╳║ ▘▔╬. Have you figured out anything related to the cause?\"\n",
+            "   \"╬╪▔┴ ░▙╬ ╢▔▝╪ ▞╪┴┼┆ ▙▛ ▞╪. We must get to the ▘▙▖▖▙▞ ▙▕ ▖╢╳║, we need to find the reason.\"\n"
+        ]
+
+
+        part_12 = [
+            "   \"▖╢╪ ╬▙┼▖▙┴║ ╢▔▝╪ ▖┴╳╪╬ ▕▙┴ ╢▙┅┴║ ▔▛╬ ┼▔▛▛▙▖ ▕╳▛╬ ▔▛┆▖╢╳▛░.",
+            "   \"▚╪ ╢▔▝╪ ▔▖▖╪▞▒▖╪╬ ▖▙ ▕╳▛╬ ▔▛┆▖╢╳▛░ ▚╪ ┼▔▛ ▕▙┴ ╢▙┅┴║ ▔▖ ▖╢╳║ ▒▙╳▛▖, ▔▛╬ ▚╪ ╢▔▝╪ ▛▙▖ ▕▙┅▛╬ ▔▛┆▖╢╳▛░.",
+            "   \"▚╪ ╢▔▝╪ ├▙▙▗╪╬ ▔▖ ╪▝╪┴┆ ▒▙║║╳▘├╪ ▒╳╪┼╪ ▙▕ ╳▛▕▙┴▞▔▖╳▙▛ ▔▛╬ ▕▙┅▛╬ ▛▙▖╢╳▛░ ▖╢▔▖ ║▖▔▛╬║ ▙┅▖, ▖╢╪┴╪'║ ▜┅║▖ ▛▙▖╢╳▛░."
+        ]
+
+
+        part_13 = [
+            "╢╪ ╳║ ░┴▙▚╳▛░ ║▖┴▙▛░╪┴ ▘┆ ▖╢╪ ▞╳▛┅▖╪ ▔▛╬ ▚╪ ┼▔▛▛▙▖ ╢▙├╬ ╢╳▞ ▕▙┴ ├▙▛░\"\n",
+            "╢╪ ╳║ ░╪▖▖╳▛░ ║▖┴▙▛░╪┴ ┼▙▛║▖▔▛▖├┆, ▔▛╬ ╳ ╬▙ ▛▙▖ ▖╢╳▛▗ ▚╪ ▚╳├├ ▘╪ ▔▘├╪ ▖▙ ┴╪║▖┴▔╳▛ ╢╳▞ ▚╳▖╢╳▛ ▖╢╪ ▛╪▟▖ ╢▙┅┴.\"\n",
+            "▚╪ ┼▔▛▛▙▖ ╢▙├╬ ╢╳▞ ▕▙┴ ▞┅┼╢ ├▙▛░╪┴ ▔▖ ▖╢╳║ ▒▙╳▛▖, ╢╪ ╳║ ░╪▖▖╳▛░ ║▖┴▙▛░╪┴ ▘┆ ▖╢╪ ▞╳▛┅▖╪.\"\n"
+        ]
+
+
+        part_14 = [
+            "   \"There's a planet nearby,",
+            "   \"I believe there is a planet near here,",
+            "   \"We will soon be at a planet,"
+        ]
+
+
+        part_15 = [
+            "Hauer,",
+            "Hillos,",
+            "Klendath,",
+            "Orvall,",
+            "Ubogleelt,",
+            "Xraneax,",
+            "Wenkwort,",
+            "Helito,",
+            "Alpha Centauri,",
+            "Procyon,",
+            "Sirius,",
+            "Sol,",
+            "Trappist,",
+            "Odryskia,",
+            "Polaris,",
+            "Seddom,",
+            "Parvus,",
+            "Zanaam,",
+            "Shallash,",
+            "Larionessi Refuge,",
+            "Zevox,",
+            "Ultima Vigilis,",
+            "Gish,",
+            "Paridayda,",
+            "Scion of Vagros,",
+            "Dugar,",
+            "Ivusheh,",
+            "Taprib,",
+            "Vapob,",
+            "Sursect,",
+            "Ithome,",
+            "Ophala,"
+        ]
+
+
+        part_16 = [
+            "we could probably ║▖┴▔▛╬ ╢╳▞ ▖╢╪┴╪ ▙▛┼╪ ▚╪ arrive.\"\n",
+            "when there we can ║▖┴▔▛╬ ╢╳▞.\"\n",
+            "we can ├╪▔▝╪ ╢╳▞ ▖╢╪┴╪ ▚╢╪▛ we arrive.\"\n"
+        ]
+
+
+        part_17 = [
+            "   \"▖╢╪┴╪'║ ▛▙ ▚▔┆ ╢╪ ╳║ ░▙╳▛░ ▖▙ ▔├├▙▚ ▖╢▔▖ ▖▙ ╢▔▒▒╪▛!",
+            "   \"╢╪ ╳║ ▛▙▖ ░▙╳▛░ ▖▙ ├╪▖ ┅║ ╬▙ ▖╢▔▖.",
+            "   \"╳ ╬▙▛'▖ ▖╢╳▛▗ ▚╪ ▚╳├├ ▘╪ ▔▘├╪ ▖▙ ╬▙ ▖╢▔▖."
+        ]
+
+
+        part_18 = [
+            "╢╪ ▚╳├├ ▘╪ ▖▙▙ ║▖┴▙▛░ ▔▖ ▖╢╪ ▖╳▞╪.\"\n",
+            "╢╳║ ▒▙▚╪┴ ▚╳├├ ╢▔▝╪ ▒┴▙░┴╪║║╪╬ ▖▙▙ ▞┅┼╢ ▕▙┴ ┅║ ▖▙ ▘╪ ▔▘├╪ ▖▙ ╬▙ ▖╢▔▖.\"\n",
+            "╢╳║ ▔▘╳├╳▖╳╪║ ▚╳├├ ▘╪ ╪▛▙┅░╢ ▖▙ ▙▝╪┴▒▙▚╪┴ ┅║ ▘┆ ▖╢╪▛.\"\n"
+        ]
+
+
+        part_19 = [
+            "   \"It is our only option, ▚╪ ┼▔▛▛▙▖ ├╪▖ ╢╳▞ ║▖▔┆ ▙▛ ▖╢╪ ║╢╳▒.\"\n",
+            "   \"We have no other choice, ├╪▖▖╳▛░ ╢╳▞ ║▖▔┆ ╢╪┴╪ ▚╳├├ ▘╪ ▔ ╬╪▔▖╢ ║╪▛▖╪▛┼╪.\"\n",
+            "   \"It is the only thing we can do, ▚╪ ▚╳├├ ▔├├ ╬╳╪ ▙▖╢╪┴▚╳║╪.\"\n"
+        ]
+
+
+        part_20 = [
+            "   \"╢▙▚ ├▙▛░ ▚╳├├ ╳▖ ▖▔▗╪ ▖▙ ░╪▖ ▖▙ ▖╢╪ ▒├▔▛╪▖?\"\n",
+            "   \"╢▙▚ ├▙▛░ ┅▛▖╳├ ▚╪ ▔┴┴╳▝╪ ▔▖ ▖╢╪ ▒├▔▛╪▖?\"\n",
+            "   \"╢▙▚ ▞┅┼╢ ▖╳▞╪ ▚╳├├ ╳▖ ▘╪ ┅▛▖╳├ ▚╪ ░╪▖ ▖▙ ▖╢╪ ▒├▔▛╪▖?\"\n"
+        ]
+
+
+        part_21 = [
+            "   \"▛▙▖ ├▙▛░.\"\n\n",
+            "   \"▛▙▖ ▞┅┼╢ ▖╳▞╪.\"\n\n",
+            "   \"▚╪'├├ ▘╪ ▖╢╪┴╪ ║▙▙▛.\"\n\n"
+        ]
+
+
+        part_22 = [
+            "   \"Captain, ╢╪ ╳║ ┴╪║╳║▖╳▛░ ▞▙┴╪ ▖╢▔▛ ▚╪ ╪▟▒╪┼▖╪╬.\"\n",
+            "   \"╢╪ ╳║ ║▖┴▙▛░╪┴ ▖╢▔▛ ▚╪ ╪▟▒╪┼▖╪╬, ▚╪ ┼▔▛▛▙▖ ░╪▖ ╢╳▞ ╬▙▚▛ ▖▙ ▖╢╪ ▒├▔▛╪▖, captain.\"\n",
+            "   \"▚╪ ┼▔▛▛▙▖ ║╪▛╬ ╢╳▞ ▖▙ ▖╢╪ ▒├▔▛╪▖, captain, ╢╪ ╳║ ▖▙▙ ║▖▙▛░.\"\n"
+        ]
+
+
+        part_23 = [
+            "   \"Send everybody down.\"\n",
+            "   \"Everyone must go, then.\"\n",
+            "   \"All crew must go, then.\"\n"
+        ]
+
+
+        part_24 = [
+            "   \"What???\"\n",
+            "   \"Captain, are you sure?\"\n",
+            "   \"Are you sure of this, captain?\"\n"
+        ]
+
+
+        part_25 = [
+            "   \"Everybody or nobody, and one is a lot better than the other.\"\n",
+            "   \"We send everybody or we send nobody, and one is a lot more appealing than the other.\"\n",
+            "   \"Either everybody is sent, or nobody is. One increases are chances of survival by a lot, so we're sending everybody.\"\n"
+        ]
+
+
+        part_26 = [
+            "   \"What about the ship, captain?\"\n",
+            "   \"What will the ship do in our absence, captain?\"\n",
+            "   \"What should we tell the ship to do, captain?\"\n"
+        ]
+
+
+        part_27 = [
+            "   \"Leave it on autopilot, it will find its way home.\"",
+            "   \"Put it on autopilot, it will navigate home.\"",
+            "   \"Autopilot, it will make it home.\""
+        ]
+
+
+        part_28 = [
+            "\nA loud announcement can be heard,",
+            "\nAn announcement can be heard,",
+            "\nThe captain making an announcement can be heard,"
+        ]
+
+
+        part_29 = [
+            "before a lot of scrambling can be heard as the crew members rush out of the bridge,",
+            "before the crew members in the bridge can be heard scrambling out,",
+            "prior to all of the crew members in the bridge leaving quickly,"
+        ]
+
+
+        part_30 = [
+            "marking the end of the recording.",
+            "ending the recording.",
+            "before the recording loops."
+        ]
+
+
+        part_31 = [
+            "\nThe rescue teams paused their boarding of the ship temporarily until more information could be discovered, as",
+            "\nThe teams planned to board the ship temporarily paused to wait for more information to be found, as",
+            "\nThe rescue teams slated to go aboard the ship temporarily paused to wait for more information, as"
+        ]
+
+
+        part_32 = [
+            "they did not want to board the ship if something dangerous was still aboard.",
+            "they were not excited about boarding if there was the possibility of something dangerous inside.",
+            "they were not that up for boarding a ship that, as far as they knew, could have had some evil monster."
+        ]
+
+
+        part_33 = [
+            "Luckily, though, it was found that there was no life aboard.",
+            "Fortunately through multiple scans no life was found on the ship.",
+            "Scans showed that there was no life on the ship, so it was safe to board."
+        ]
+
+
+        part_34 = [
+            "Unluckily, though, a crucial tool used to get inside the ships has gone missing, so the teams are unable to board.",
+            "Unfortunately a required tool to board the ship has vanished from the team's storage, causing it to be impossible to board.",
+            "Randomly, though, an important tool required to board the ship has seemingly disappeared, meaning the teams are unable to go aboard the ship."
+        ]
+
+
+        part_35 = [
+            "In the time before more professional tools can arrive,",
+            "Before the ordered tools can arrive,",
+            "Prior to new tools arriving,"
+        ]
+
+
+        part_36 = [
+            f"they've determined that {cost} would be sufficient as a hacky replacement.",
+            f"they're pretty sure that, even if it won't work perfectly, {cost} would work well enough as a replacement.",
+            f"they've announced that {cost} would work well enough to temporarily replace the missing tools."
+        ]
+
+
+        part_37 = [
+            "The abandoned ship has some cool stuff aboard that the teams are promising you'll get if you help them,",
+            "The teams are promising that whoever helps them will get some cool stuff that is aboard the ship,",
+            "The rescue teams have promised that any cool items on the ship will be given to those who help,"
+        ]
+
+
+        part_38 = [
+            f"which sensors read is approximately {reward}.",
+            f"which, the hub sensors say, is {reward}.",
+            f"which, if the hub sensors are correct, is {reward}."
+        ]
+
+        return " ".join([
+            rng.choice(part_1),
+            rng.choice(part_2),
+            rng.choice(part_3),
+            rng.choice(part_4),
+            rng.choice(part_5),
+            rng.choice(part_6),
+            rng.choice(part_7),
+            rng.choice(part_8),
+            rng.choice(part_9),
+            rng.choice(part_10),
+            rng.choice(part_11),
+            rng.choice(part_12),
+            rng.choice(part_13),
+            rng.choice(part_14),
+            rng.choice(part_15),
+            rng.choice(part_16),
+            rng.choice(part_17),
+            rng.choice(part_18),
+            rng.choice(part_19),
+            rng.choice(part_20),
+            rng.choice(part_21),
+            rng.choice(part_22),
+            rng.choice(part_23),
+            rng.choice(part_24),
+            rng.choice(part_25),
+            rng.choice(part_26),
+            rng.choice(part_27),
+            rng.choice(part_28),
+            rng.choice(part_29),
+            rng.choice(part_30),
+            rng.choice(part_31),
+            rng.choice(part_32),
+            rng.choice(part_33),
+            rng.choice(part_34),
+            rng.choice(part_35),
+            rng.choice(part_36),
+            rng.choice(part_37),
+            rng.choice(part_38),
+        ])
+
+    @classmethod
+    def completion(
+            cls: typing.Type[typing.Self],
+            day_seed: str,
+            system_tile: space.SystemTradeHub
+        ) -> str:
+        rng = random.Random(utility.hash_args(day_seed, system_tile.tile_seed(), "completion"))
+        reward = cls.get_reward_description(day_seed, system_tile)
+
+        options = [
+            f"The ship has been recovered! Yippee! The hub sensors were indeed correct and the teams should be giving you the {reward} any second now.",
+            f"The ship has been pulled into the Trade Hub properly and now the {reward} you were promised was stolen, what???? Okay, nevermind, they're giving it to you right now.",
+            f"The ship totally did not explode, nope. The rescue team arrived back in the Trade Hub safely and are going to be giving you the {reward} sometime soon."
+        ]
+
+        return rng.choice(options)
+    
+    @classmethod
+    def get_cost(
+            cls,
+            day_seed: str,
+            system_tile: space.SystemTradeHub
+        ) -> list[tuple[str, int]]:
+        rng = random.Random(utility.hash_args(day_seed, system_tile.tile_seed(), "items"))
+
+        amount_1 = rng.randint(5, 10)
+
+        return [
+            (rng.choice(values.all_chess_pieces).text, amount_1 * 750)
+        ]
+    
+    @classmethod
+    def get_reward(
+            cls,
+            day_seed: str,
+            system_tile: space.SystemTradeHub
+        ) -> list[tuple[str, int]]:
+        rng = random.Random(utility.hash_args(day_seed, system_tile.tile_seed(), "items"))
+
+        amount_1 = rng.randint(5, 10)
+
+        return [
+            (rng.choice(values.anarchy_pieces_black_biased).text, amount_1 * 15),
+            (rng.choice(values.anarchy_pieces_white_biased).text, amount_1 * 15)
+        ]
+
+class Waxillium_Space_Station(Project):
+    """Written by Komm."""
+    internal = "waxillium_space_station"
+
+    @classmethod
+    def name(
+            cls,
+            day_seed: str,
+            system_tile: space.SystemTradeHub
+         ) -> str:
+        rng = random.Random(utility.hash_args(day_seed, system_tile.tile_seed(), "name"))
+
+        options = [
+            "Waxillium Space Station",
+            "Iron Seven Waystation",
+            "Wayne Waystation",
+            "Ladrian Waystation",
+            "Dawnshot Waystation"
+        ]
+
+
+        return rng.choice(options)
+
+    @classmethod
+    def description(
+            cls,
+            day_seed: str,
+            system_tile: space.SystemTradeHub
+        ) -> str:
+        rng = random.Random(utility.hash_args(day_seed, system_tile.tile_seed(), "description"))
+
+        cost = cls.get_price_description(day_seed, system_tile)
+        reward = cls.get_reward_description(day_seed, system_tile)
+
+        part_1 = [
+            "The captain of a ship, the Wandersail, beckons you over",
+            "The admiral of a ship, the Night Brigade, stands in front of you",
+            "The captain of an A16 Pewternaut calls you over",
+            "The captain of a ship, the Two Cups, appears before you"
+        ]
+
+
+        part_2 = [
+            "and says to you",
+            "and whispers to you",
+            "and tells you",
+            "and utters to you",
+            "and proclaims to you"
+        ]
+
+
+        part_3 = [
+            "quietly,",
+            "loudly,",
+            "softly,",
+            "boldly,",
+            "faintly,",
+            "calmly,",
+            "hesitantly,",
+            "lightly,",
+            "dramatically,",
+            "secretly,",
+            "decisively,"
+        ]
+
+
+        part_4 = {
+            "\"Life before Death\".": 17,
+            "\"Journey before Destination.": 17,
+            "\"Strength before Weakness\".": 17,
+            "\"There's always another secret.\"": 1,
+            "\"I am a stick\"": 1
+        }
+
+
+        part_5 = [
+            "\n\nNow listen. We need your help. Our latest shipment was lost, and we don't have the vital supplies we need. Therefore, we"
+        ]
+
+
+        part_6 = [
+            "would truly appreciate your aid.",
+            "would be immensely grateful for your assistance.",
+            "would be deeply appreciative of your gracious assistance.",
+            "would be most obliged for your generous aid."
+        ]
+
+
+        part_7 = [
+            "To restore our wealth, we need to retrieve some Midnight Essence",
+            "To restore our wealth, we need to retrieve some Crimson Essence",
+            "To restore our wealth, we need to retrieve some Emerald Essence",
+            "To restore our wealth, we need to retrieve some Sapphire Essence",
+            "To restore our wealth, we need to retrieve some Rose Essence",
+            "To restore our wealth, we need to retrieve an iron bracelet,",
+            "To restore our wealth, we need to retrieve a steel bracelet,",
+            "To restore our wealth, we need to retrieve a tin bracelet,",
+            "To restore our wealth, we need to retrieve a pewter bracelet,",
+            "To restore our wealth, we need to retrieve a zinc bracelet,",
+            "To restore our wealth, we need to retrieve a brass bracelet,",
+            "To restore our wealth, we need to retrieve a copper bracelet,",
+            "To restore our wealth, we need to retrieve a bronze bracelet,",
+            "To restore our wealth, we need to retrieve a cadmium bracelet,",
+            "To restore our wealth, we need to retrieve a bendalloy bracelet,",
+            "To restore our wealth, we need to retrieve a gold bracelet,",
+            "To restore our wealth, we need to retrieve an electrum bracelet,",
+            "To restore our wealth, we need to retrieve a chromium bracelet,",
+            "To restore our wealth, we need to retrieve a nicrosil bracelet,",
+            "To restore our wealth, we need to retrieve an aluminum bracelet,",
+            "To restore our wealth, we need to retrieve a duralumin bracelet",
+            "To restore our wealth, we need to retrieve an atium bracelet",
+            "To restore our wealth, we need to retrieve a lerasium bracelet",
+            "To restore our wealth, we need to retrieve a trellium bracelet",
+            "To restore our wealth, we need to retrieve an ettmetal bracelet",
+            "To restore our wealth, we need to retrieve a talking sword",
+            "To restore our wealth, we need to retrieve an armor set",
+            "To restore our wealth, we need to retrieve a magic orb",
+            "To restore our wealth, we need to retrieve an anti-magic orb",
+            "To restore our wealth, we need to retrieve a bomb",
+            "To restore our wealth, we need to retrieve a magical orb",
+            "To restore our wealth, we need to retrieve a laptop",
+            "To restore our wealth, we need to retrieve a shotgun",
+            "To restore our wealth, we need to retrieve a bead of atium",
+            "To restore our wealth, we need to retrieve a bead of lerasium",
+            "To restore our wealth, we need to retrieve a soulcaster",
+            "To restore our wealth, we need to retrieve a book of AonDor",
+            "To restore our wealth, we need to retrieve a vial of sand"
+        ]
+
+
+        part_8 = [
+            "from Canticle, which is currently",
+            "from Lumar, which is currently",
+            "from Roshar, which is currently",
+            "from Ashyn, which is currently",
+            "from Bjendal, which is currently",
+            "from Braize, which is currently",
+            "from First of the Sun, which is currently",
+            "from Komashi, which is currently",
+            "from Mythos, which is currently",
+            "from Nalthis, which is currently",
+            "from Obrodai, which is currently",
+            "from Roshar, which is currently",
+            "from Scadriel, which is currently",
+            "from Sel, which is currently",
+            "from Taldain, which is currently",
+            "from Threnody, which is currently",
+            "from Vax, which is currently",
+            "from Yolen, which is currently"
+        ]
+
+
+        part_9 = [
+            "infested by",
+            "inhabited by",
+            "overrun by",
+            "controlled by",
+            "ruled by",
+            "encroached upon by",
+            "swarming with",
+            "occupied by",
+            "besieged by",
+            "dominated by",
+            "overwhelmed by"
+        ]
+
+
+        part_10 = [
+            "dangerous",
+            "diabolical",
+            "perilous",
+            "treacherous",
+            "menacing",
+            "sinister",
+            "malicious",
+            "nefarious",
+            "hazardous",
+            "threatening",
+            "malevolent",
+            "ominous",
+            "lethal",
+            "villainous",
+            "wicked",
+            "evil",
+            "vindictive",
+            "frightening",
+            "devious",
+            "savage"
+        ]
+
+
+        part_11 = [
+            f"Shades {values.shadow_moak.text}. They can't be defeated unless we have {cost}.",
+            f"Nightmares. They can't be banished unless we magically paint them using {cost}.",
+            f"fearsome Awakened Soldiers. They can't be slain unless we use {cost}.",
+            f"shape-shifting creatures who are pierced with magical metal spikes. According to our studies, we need {cost} to destroy them.",
+            f"Steel Inquisitors. They are impossible to destroy without {cost}.",
+            f"gold {values.gem_gold.text} and red {values.gem_red.text} statues. They are nigh on indestructible without {cost}."
+        ]
+
+
+        part_12 = {
+            "My lord Kelsier has seen it fit to offer you": 2020.5,
+            "My master, the Lord Ruler, has seen it fit to offer you": 2020.5,
+            "My master Odium has seen it fit to offer you": 2020.5,
+            "My master, The Sunlit Man, has seen it fit to offer you": 2020.5,
+            "My liege lord, the King Susebron, has seen it fit to offer you": 2020.5,
+            "My commander Zellion has seen it fit to offer you": 2020.5,
+            "My master Hoid has seen it fit to bestow upon you a :flute: as well as": 1
+        }
+
+
+        part_13 = [
+            f"{reward} as compensation for your resources.",
+            f"{reward} in exchange for your resources.",
+            f"{reward} for your resources.",
+            f"{reward} in trade for your assistance.",
+            f"{reward} as a token of gratitude for your assistance.",
+            f"{reward} for your assistance.",
+            f"{reward} in return for your assistance.",
+            f"{reward} in return for your help."
+        ]
+
+
+        part_14 = [
+            "\n\nWe are most grateful."
+        ]
+
+        return " ".join([
+            rng.choice(part_1),
+            rng.choice(part_2),
+            rng.choice(part_3),
+            rng.choices(list(part_4.keys()), weights=list(part_4.values()))[0],
+            rng.choice(part_5),
+            rng.choice(part_6),
+            rng.choice(part_7),
+            rng.choice(part_8),
+            rng.choice(part_9),
+            rng.choice(part_10),
+            rng.choice(part_11),
+            rng.choices(list(part_12.keys()), weights=list(part_12.values()))[0],
+            rng.choice(part_13),
+            rng.choice(part_14),
+        ])
+
+    @classmethod
+    def completion(
+            cls: typing.Type[typing.Self],
+            day_seed: str,
+            system_tile: space.SystemTradeHub
+        ) -> str:
+        rng = random.Random(utility.hash_args(day_seed, system_tile.tile_seed(), "completion"))
+        reward = cls.get_reward_description(day_seed, system_tile)
+
+        options = [
+            "Excellent Job! Adonalsium will remember your actions."
+        ]
+
+        return rng.choice(options)
+    
+    @classmethod
+    def get_cost(
+            cls,
+            day_seed: str,
+            system_tile: space.SystemTradeHub
+        ) -> list[tuple[str, int]]:
+        rng = random.Random(utility.hash_args(day_seed, system_tile.tile_seed(), "items"))
+        
+        amount_1 = rng.randint(2, 4)
+        
+        multiplier = {
+            values.anarchy_black_pawn: 8,
+            values.anarchy_black_rook: 2,
+            values.anarchy_black_knight: 2,
+            values.anarchy_black_bishop: 2,
+            values.anarchy_black_king: 1,
+            values.anarchy_black_queen: 1,
+            values.anarchy_white_pawn: 8,
+            values.anarchy_white_rook: 2,
+            values.anarchy_white_knight: 2,
+            values.anarchy_white_bishop: 2,
+            values.anarchy_white_king: 1,
+            values.anarchy_white_queen: 1
+        }
+        
+        piece = rng.choice(values.all_anarchy_pieces_biased)
+        
+        piece_multiplier = multiplier[piece]
+
+        return [
+            (piece.text, amount_1 * 4 * piece_multiplier)
+        ]
+    
+    @classmethod
+    def get_reward(
+            cls,
+            day_seed: str,
+            system_tile: space.SystemTradeHub
+        ) -> list[tuple[str, int]]:
+        rng = random.Random(utility.hash_args(day_seed, system_tile.tile_seed(), "items"))
+        
+        amount_1 = rng.randint(2, 4)
+
+        return [
+            (values.anarchy_chessatron.text, amount_1)
+        ]
+
 #######################################################################################################
 ##### Take item projects. #############################################################################
 #######################################################################################################
@@ -2875,7 +4253,7 @@ class Beach_Disappearance(Project):
             day_seed: str,
             system_tile: space.SystemTradeHub
         ) -> str:
-        rng = random.Random(utility.hash_args(day_seed, system_tile.tile_seed()))
+        rng = random.Random(utility.hash_args(day_seed, system_tile.tile_seed(), "name"))
         
         options = [
             "Beach Disappearance",
@@ -2891,7 +4269,7 @@ class Beach_Disappearance(Project):
             day_seed: str,
             system_tile: space.SystemTradeHub
         ) -> str:
-        rng = random.Random(utility.hash_args(day_seed, system_tile.tile_seed()))
+        rng = random.Random(utility.hash_args(day_seed, system_tile.tile_seed(), "description"))
 
         cost = cls.get_price_description(day_seed, system_tile)
         reward = cls.get_reward_description(day_seed, system_tile)
@@ -2976,7 +4354,7 @@ class Beach_Disappearance(Project):
             day_seed: str,
             system_tile: space.SystemTradeHub
         ) -> str:
-        rng = random.Random(utility.hash_args(day_seed, system_tile.tile_seed()))
+        rng = random.Random(utility.hash_args(day_seed, system_tile.tile_seed(), "completion"))
 
         options = [
             f"Woo! Thanks to you, all the beaches are back and the animals have returned to their usual life!",
@@ -2992,7 +4370,7 @@ class Beach_Disappearance(Project):
             day_seed: str,
             system_tile: space.SystemTradeHub
         ) -> list[tuple[str, int]]:
-        rng = random.Random(utility.hash_args(day_seed, system_tile.tile_seed()))
+        rng = random.Random(utility.hash_args(day_seed, system_tile.tile_seed(), "items"))
 
         amount = rng.randint(10, 20) * 12800
 
@@ -3004,7 +4382,7 @@ class Beach_Disappearance(Project):
             day_seed: str,
             system_tile: space.SystemTradeHub
         ) -> list[tuple[str, int]]:
-        rng = random.Random(utility.hash_args(day_seed, system_tile.tile_seed()))
+        rng = random.Random(utility.hash_args(day_seed, system_tile.tile_seed(), "items"))
 
         amount = rng.randint(10, 20) * 200
 
@@ -3022,7 +4400,7 @@ class Croissant_Cravings(Project):
             day_seed: str,
             system_tile: space.SystemTradeHub
         ) -> str:
-        rng = random.Random(utility.hash_args(day_seed, system_tile.tile_seed()))
+        rng = random.Random(utility.hash_args(day_seed, system_tile.tile_seed(), "name"))
         
         options = [
             "Croissant Cravings",
@@ -3038,7 +4416,7 @@ class Croissant_Cravings(Project):
             day_seed: str,
             system_tile: space.SystemTradeHub
         ) -> str:
-        rng = random.Random(utility.hash_args(day_seed, system_tile.tile_seed()))
+        rng = random.Random(utility.hash_args(day_seed, system_tile.tile_seed(), "description"))
 
         cost = cls.get_price_description(day_seed, system_tile)
         reward = cls.get_reward_description(day_seed, system_tile)
@@ -3108,7 +4486,7 @@ class Croissant_Cravings(Project):
             day_seed: str,
             system_tile: space.SystemTradeHub
         ) -> str:
-        rng = random.Random(utility.hash_args(day_seed, system_tile.tile_seed()))
+        rng = random.Random(utility.hash_args(day_seed, system_tile.tile_seed(), "completion"))
         cost = cls.get_price_description(day_seed, system_tile)
         reward = cls.get_reward_description(day_seed, system_tile)
 
@@ -3126,7 +4504,7 @@ class Croissant_Cravings(Project):
             day_seed: str,
             system_tile: space.SystemTradeHub
         ) -> list[tuple[str, int]]:
-        rng = random.Random(utility.hash_args(day_seed, system_tile.tile_seed()))
+        rng = random.Random(utility.hash_args(day_seed, system_tile.tile_seed(), "items"))
 
         amount = rng.randint(10, 20) * 19200
 
@@ -3138,7 +4516,7 @@ class Croissant_Cravings(Project):
             day_seed: str,
             system_tile: space.SystemTradeHub
         ) -> list[tuple[str, int]]:
-        rng = random.Random(utility.hash_args(day_seed, system_tile.tile_seed()))
+        rng = random.Random(utility.hash_args(day_seed, system_tile.tile_seed(), "items"))
 
         amount = rng.randint(10, 20) * 200
 
@@ -3156,7 +4534,7 @@ class Appease_The_French(Project):
             day_seed: str,
             system_tile: space.SystemTradeHub
         ) -> str:
-        rng = random.Random(utility.hash_args(day_seed, system_tile.tile_seed()))
+        rng = random.Random(utility.hash_args(day_seed, system_tile.tile_seed(), "name"))
         
         options = [
             "Appease the French",
@@ -3172,7 +4550,7 @@ class Appease_The_French(Project):
             day_seed: str,
             system_tile: space.SystemTradeHub
         ) -> str:
-        rng = random.Random(utility.hash_args(day_seed, system_tile.tile_seed()))
+        rng = random.Random(utility.hash_args(day_seed, system_tile.tile_seed(), "description"))
 
         cost = cls.get_price_description(day_seed, system_tile)
         reward = cls.get_reward_description(day_seed, system_tile)
@@ -3235,7 +4613,7 @@ class Appease_The_French(Project):
             day_seed: str,
             system_tile: space.SystemTradeHub
         ) -> str:
-        rng = random.Random(utility.hash_args(day_seed, system_tile.tile_seed()))
+        rng = random.Random(utility.hash_args(day_seed, system_tile.tile_seed(), "completion"))
         reward = cls.get_reward_description(day_seed, system_tile)
 
         options = [
@@ -3252,7 +4630,7 @@ class Appease_The_French(Project):
             day_seed: str,
             system_tile: space.SystemTradeHub
         ) -> list[tuple[str, int]]:
-        rng = random.Random(utility.hash_args(day_seed, system_tile.tile_seed()))
+        rng = random.Random(utility.hash_args(day_seed, system_tile.tile_seed(), "items"))
 
         amount = rng.randint(10, 20) * 19200
 
@@ -3264,7 +4642,7 @@ class Appease_The_French(Project):
             day_seed: str,
             system_tile: space.SystemTradeHub
         ) -> list[tuple[str, int]]:
-        rng = random.Random(utility.hash_args(day_seed, system_tile.tile_seed()))
+        rng = random.Random(utility.hash_args(day_seed, system_tile.tile_seed(), "items"))
 
         amount = rng.randint(10, 20) * 150
 
@@ -3280,7 +4658,7 @@ class Flatbread_Shortage(Project):
             day_seed: str,
             system_tile: space.SystemTradeHub
         ) -> str:
-        rng = random.Random(utility.hash_args(day_seed, system_tile.tile_seed()))
+        rng = random.Random(utility.hash_args(day_seed, system_tile.tile_seed(), "name"))
         
         options = [
             "Flatbread Shortage",
@@ -3296,7 +4674,7 @@ class Flatbread_Shortage(Project):
             day_seed: str,
             system_tile: space.SystemTradeHub
         ) -> str:
-        rng = random.Random(utility.hash_args(day_seed, system_tile.tile_seed()))
+        rng = random.Random(utility.hash_args(day_seed, system_tile.tile_seed(), "description"))
 
         cost = cls.get_price_description(day_seed, system_tile)
         reward = cls.get_reward_description(day_seed, system_tile)
@@ -3387,7 +4765,7 @@ class Flatbread_Shortage(Project):
             day_seed: str,
             system_tile: space.SystemTradeHub
         ) -> str:
-        rng = random.Random(utility.hash_args(day_seed, system_tile.tile_seed()))
+        rng = random.Random(utility.hash_args(day_seed, system_tile.tile_seed(), "completion"))
         reward = cls.get_reward_description(day_seed, system_tile)
 
         options = [
@@ -3404,7 +4782,7 @@ class Flatbread_Shortage(Project):
             day_seed: str,
             system_tile: space.SystemTradeHub
         ) -> list[tuple[str, int]]:
-        rng = random.Random(utility.hash_args(day_seed, system_tile.tile_seed()))
+        rng = random.Random(utility.hash_args(day_seed, system_tile.tile_seed(), "items"))
 
         amount = rng.randint(10, 20) * 9600
 
@@ -3416,7 +4794,7 @@ class Flatbread_Shortage(Project):
             day_seed: str,
             system_tile: space.SystemTradeHub
         ) -> list[tuple[str, int]]:
-        rng = random.Random(utility.hash_args(day_seed, system_tile.tile_seed()))
+        rng = random.Random(utility.hash_args(day_seed, system_tile.tile_seed(), "items"))
 
         amount = rng.randint(10, 20) * 100
 
@@ -3434,7 +4812,7 @@ class Too_Much_Stuffing(Project):
             day_seed: str,
             system_tile: space.SystemTradeHub
         ) -> str:
-        rng = random.Random(utility.hash_args(day_seed, system_tile.tile_seed()))
+        rng = random.Random(utility.hash_args(day_seed, system_tile.tile_seed(), "name"))
         
         options = [
             "Too Much Stuffing",
@@ -3450,7 +4828,7 @@ class Too_Much_Stuffing(Project):
             day_seed: str,
             system_tile: space.SystemTradeHub
         ) -> str:
-        rng = random.Random(utility.hash_args(day_seed, system_tile.tile_seed()))
+        rng = random.Random(utility.hash_args(day_seed, system_tile.tile_seed(), "description"))
 
         cost = cls.get_price_description(day_seed, system_tile)
         reward = cls.get_reward_description(day_seed, system_tile)
@@ -3548,7 +4926,7 @@ class Too_Much_Stuffing(Project):
             day_seed: str,
             system_tile: space.SystemTradeHub
         ) -> str:
-        rng = random.Random(utility.hash_args(day_seed, system_tile.tile_seed()))
+        rng = random.Random(utility.hash_args(day_seed, system_tile.tile_seed(), "completion"))
         reward = cls.get_reward_description(day_seed, system_tile)
 
         options = [
@@ -3565,7 +4943,7 @@ class Too_Much_Stuffing(Project):
             day_seed: str,
             system_tile: space.SystemTradeHub
         ) -> list[tuple[str, int]]:
-        rng = random.Random(utility.hash_args(day_seed, system_tile.tile_seed()))
+        rng = random.Random(utility.hash_args(day_seed, system_tile.tile_seed(), "items"))
 
         amount = rng.randint(10, 20) * 14400
 
@@ -3577,7 +4955,7 @@ class Too_Much_Stuffing(Project):
             day_seed: str,
             system_tile: space.SystemTradeHub
         ) -> list[tuple[str, int]]:
-        rng = random.Random(utility.hash_args(day_seed, system_tile.tile_seed()))
+        rng = random.Random(utility.hash_args(day_seed, system_tile.tile_seed(), "items"))
 
         amount = rng.randint(10, 20) * 150
 
@@ -3597,7 +4975,7 @@ class Waffle_Machine(Project):
             day_seed: str,
             system_tile: space.SystemTradeHub
         ) -> str:
-        rng = random.Random(utility.hash_args(day_seed, system_tile.tile_seed()))
+        rng = random.Random(utility.hash_args(day_seed, system_tile.tile_seed(), "name"))
         
         options = [
             "Waffle Machine",
@@ -3613,7 +4991,7 @@ class Waffle_Machine(Project):
             day_seed: str,
             system_tile: space.SystemTradeHub
         ) -> str:
-        rng = random.Random(utility.hash_args(day_seed, system_tile.tile_seed()))
+        rng = random.Random(utility.hash_args(day_seed, system_tile.tile_seed(), "description"))
 
         cost = cls.get_price_description(day_seed, system_tile)
         reward = cls.get_reward_description(day_seed, system_tile)
@@ -3704,7 +5082,7 @@ class Waffle_Machine(Project):
             day_seed: str,
             system_tile: space.SystemTradeHub
         ) -> str:
-        rng = random.Random(utility.hash_args(day_seed, system_tile.tile_seed()))
+        rng = random.Random(utility.hash_args(day_seed, system_tile.tile_seed(), "completion"))
 
         options = [
             f"Phew! That was close to a waffle-pocalypse! But luckily the waffles were provided! The Trade Hub has put in an order for a replacement waffle machine, but until that arrives everyone will have all the waffles they want!",
@@ -3720,7 +5098,7 @@ class Waffle_Machine(Project):
             day_seed: str,
             system_tile: space.SystemTradeHub
         ) -> list[tuple[str, int]]:
-        rng = random.Random(utility.hash_args(day_seed, system_tile.tile_seed()))
+        rng = random.Random(utility.hash_args(day_seed, system_tile.tile_seed(), "items"))
 
         amount = rng.randint(10, 20) * 12800
 
@@ -3732,7 +5110,7 @@ class Waffle_Machine(Project):
             day_seed: str,
             system_tile: space.SystemTradeHub
         ) -> list[tuple[str, int]]:
-        rng = random.Random(utility.hash_args(day_seed, system_tile.tile_seed()))
+        rng = random.Random(utility.hash_args(day_seed, system_tile.tile_seed(), "items"))
 
         amount = rng.randint(10, 20) * 200
 
@@ -3748,7 +5126,7 @@ class Stolen_Donuts(Project):
             day_seed: str,
             system_tile: space.SystemTradeHub
         ) -> str:
-        rng = random.Random(utility.hash_args(day_seed, system_tile.tile_seed()))
+        rng = random.Random(utility.hash_args(day_seed, system_tile.tile_seed(), "name"))
         
         options = [
             "Stolen Donuts",
@@ -3764,7 +5142,7 @@ class Stolen_Donuts(Project):
             day_seed: str,
             system_tile: space.SystemTradeHub
         ) -> str:
-        rng = random.Random(utility.hash_args(day_seed, system_tile.tile_seed()))
+        rng = random.Random(utility.hash_args(day_seed, system_tile.tile_seed(), "description"))
 
         cost = cls.get_price_description(day_seed, system_tile)
         reward = cls.get_reward_description(day_seed, system_tile)
@@ -3820,7 +5198,7 @@ class Stolen_Donuts(Project):
         part_9 = [
             "A estimation from Duck Donuts",
             "A quick calculation",
-            "The current DonutModel™️ "
+            "The current DonutModel™️"
         ]
 
         part_10 = [
@@ -3855,7 +5233,7 @@ class Stolen_Donuts(Project):
             day_seed: str,
             system_tile: space.SystemTradeHub
         ) -> str:
-        rng = random.Random(utility.hash_args(day_seed, system_tile.tile_seed()))
+        rng = random.Random(utility.hash_args(day_seed, system_tile.tile_seed(), "completion"))
         cost = cls.get_price_description(day_seed, system_tile)
 
         options = [
@@ -3872,7 +5250,7 @@ class Stolen_Donuts(Project):
             day_seed: str,
             system_tile: space.SystemTradeHub
         ) -> list[tuple[str, int]]:
-        rng = random.Random(utility.hash_args(day_seed, system_tile.tile_seed()))
+        rng = random.Random(utility.hash_args(day_seed, system_tile.tile_seed(), "items"))
 
         amount = rng.randint(10, 20) * 12800
 
@@ -3884,7 +5262,7 @@ class Stolen_Donuts(Project):
             day_seed: str,
             system_tile: space.SystemTradeHub
         ) -> list[tuple[str, int]]:
-        rng = random.Random(utility.hash_args(day_seed, system_tile.tile_seed()))
+        rng = random.Random(utility.hash_args(day_seed, system_tile.tile_seed(), "items"))
 
         amount = rng.randint(10, 20) * 100
 
@@ -3900,7 +5278,7 @@ class Ecosystem_Problem(Project):
             day_seed: str,
             system_tile: space.SystemTradeHub
         ) -> str:
-        rng = random.Random(utility.hash_args(day_seed, system_tile.tile_seed()))
+        rng = random.Random(utility.hash_args(day_seed, system_tile.tile_seed(), "name"))
         
         options = [
             "Ecosystem Problem",
@@ -3916,7 +5294,7 @@ class Ecosystem_Problem(Project):
             day_seed: str,
             system_tile: space.SystemTradeHub
         ) -> str:
-        rng = random.Random(utility.hash_args(day_seed, system_tile.tile_seed()))
+        rng = random.Random(utility.hash_args(day_seed, system_tile.tile_seed(), "description"))
 
         cost = cls.get_price_description(day_seed, system_tile)
         reward = cls.get_reward_description(day_seed, system_tile)
@@ -3993,7 +5371,7 @@ class Ecosystem_Problem(Project):
             day_seed: str,
             system_tile: space.SystemTradeHub
         ) -> str:
-        rng = random.Random(utility.hash_args(day_seed, system_tile.tile_seed()))
+        rng = random.Random(utility.hash_args(day_seed, system_tile.tile_seed(), "completion"))
 
         options = [
             "It worked! The animal population has returned to normal!",
@@ -4009,7 +5387,7 @@ class Ecosystem_Problem(Project):
             day_seed: str,
             system_tile: space.SystemTradeHub
         ) -> list[tuple[str, int]]:
-        rng = random.Random(utility.hash_args(day_seed, system_tile.tile_seed()))
+        rng = random.Random(utility.hash_args(day_seed, system_tile.tile_seed(), "items"))
 
         amount = rng.randint(10, 20) * 12800
 
@@ -4021,7 +5399,7 @@ class Ecosystem_Problem(Project):
             day_seed: str,
             system_tile: space.SystemTradeHub
         ) -> list[tuple[str, int]]:
-        rng = random.Random(utility.hash_args(day_seed, system_tile.tile_seed()))
+        rng = random.Random(utility.hash_args(day_seed, system_tile.tile_seed(), "items"))
 
         amount = rng.randint(10, 20) * 50
 
@@ -4039,7 +5417,7 @@ class Board_Game_Festival(Project):
             day_seed: str,
             system_tile: space.SystemTradeHub
         ) -> str:
-        rng = random.Random(utility.hash_args(day_seed, system_tile.tile_seed()))
+        rng = random.Random(utility.hash_args(day_seed, system_tile.tile_seed(), "name"))
         
         options = [
             "Board Game Festival",
@@ -4055,7 +5433,7 @@ class Board_Game_Festival(Project):
             day_seed: str,
             system_tile: space.SystemTradeHub
         ) -> str:
-        rng = random.Random(utility.hash_args(day_seed, system_tile.tile_seed()))
+        rng = random.Random(utility.hash_args(day_seed, system_tile.tile_seed(), "description"))
 
         cost = cls.get_cost(day_seed, system_tile)[0][1]
         reward = cls.get_reward_description(day_seed, system_tile)
@@ -4138,12 +5516,12 @@ class Board_Game_Festival(Project):
             day_seed: str,
             system_tile: space.SystemTradeHub
         ) -> str:
-        rng = random.Random(utility.hash_args(day_seed, system_tile.tile_seed()))
+        rng = random.Random(utility.hash_args(day_seed, system_tile.tile_seed(), "completion"))
 
         reward = cls.get_reward_description(day_seed, system_tile)
 
         options = [
-            f"Well, that was enough! You earned yourself... a free spot in the next chess tournament! What, you were promised a *reward*? {reward}? Ugh, they weren't fooled again! Ah, just take it already! ",
+            f"Well, that was enough! You earned yourself... a free spot in the next chess tournament! What, you were promised a *reward*? {reward}? Ugh, they weren't fooled again! Ah, just take it already!",
             f"Woo! The Festival is saved! Exactly like every other year! Here's your {reward}!",
             f"You did it! Congratulations! The Board Game festival is up and running! Here's your {reward} as promised!"
         ]
@@ -4156,7 +5534,7 @@ class Board_Game_Festival(Project):
             day_seed: str,
             system_tile: space.SystemTradeHub
         ) -> list[tuple[str, int]]:
-        rng = random.Random(utility.hash_args(day_seed, system_tile.tile_seed()))
+        rng = random.Random(utility.hash_args(day_seed, system_tile.tile_seed(), "items"))
 
         amount = rng.randint(2, 6) * 1024
 
@@ -4168,7 +5546,7 @@ class Board_Game_Festival(Project):
             day_seed: str,
             system_tile: space.SystemTradeHub
         ) -> list[tuple[str, int]]:
-        rng = random.Random(utility.hash_args(day_seed, system_tile.tile_seed()))
+        rng = random.Random(utility.hash_args(day_seed, system_tile.tile_seed(), "items"))
 
         amount = rng.randint(2, 6) * 8
 
@@ -4184,7 +5562,7 @@ class Electrical_Issue(Project):
             day_seed: str,
             system_tile: space.SystemTradeHub
         ) -> str:
-        rng = random.Random(utility.hash_args(day_seed, system_tile.tile_seed()))
+        rng = random.Random(utility.hash_args(day_seed, system_tile.tile_seed(), "name"))
         
         options = [
             "Electrical Issue",
@@ -4200,7 +5578,7 @@ class Electrical_Issue(Project):
             day_seed: str,
             system_tile: space.SystemTradeHub
         ) -> str:
-        rng = random.Random(utility.hash_args(day_seed, system_tile.tile_seed()))
+        rng = random.Random(utility.hash_args(day_seed, system_tile.tile_seed(), "description"))
 
         cost = cls.get_price_description(day_seed, system_tile)
         reward = cls.get_reward_description(day_seed, system_tile)
@@ -4263,7 +5641,7 @@ class Electrical_Issue(Project):
             day_seed: str,
             system_tile: space.SystemTradeHub
         ) -> str:
-        rng = random.Random(utility.hash_args(day_seed, system_tile.tile_seed()))
+        rng = random.Random(utility.hash_args(day_seed, system_tile.tile_seed(), "completion"))
 
         reward = cls.get_reward_description(day_seed, system_tile)
 
@@ -4281,7 +5659,7 @@ class Electrical_Issue(Project):
             day_seed: str,
             system_tile: space.SystemTradeHub
         ) -> list[tuple[str, int]]:
-        rng = random.Random(utility.hash_args(day_seed, system_tile.tile_seed()))
+        rng = random.Random(utility.hash_args(day_seed, system_tile.tile_seed(), "items"))
 
         amount = rng.randint(2, 6) * 256
 
@@ -4293,7 +5671,7 @@ class Electrical_Issue(Project):
             day_seed: str,
             system_tile: space.SystemTradeHub
         ) -> list[tuple[str, int]]:
-        rng = random.Random(utility.hash_args(day_seed, system_tile.tile_seed()))
+        rng = random.Random(utility.hash_args(day_seed, system_tile.tile_seed(), "items"))
 
         amount = rng.randint(2, 6) * 2
 
@@ -4309,7 +5687,7 @@ class Chess_Tournament(Project):
             day_seed: str,
             system_tile: space.SystemTradeHub
         ) -> str:
-        rng = random.Random(utility.hash_args(day_seed, system_tile.tile_seed()))
+        rng = random.Random(utility.hash_args(day_seed, system_tile.tile_seed(), "name"))
         
         options = [
             "Chess Tournament",
@@ -4325,7 +5703,7 @@ class Chess_Tournament(Project):
             day_seed: str,
             system_tile: space.SystemTradeHub
         ) -> str:
-        rng = random.Random(utility.hash_args(day_seed, system_tile.tile_seed()))
+        rng = random.Random(utility.hash_args(day_seed, system_tile.tile_seed(), "description"))
 
         cost = cls.get_cost(day_seed, system_tile)[0][1]
         reward = cls.get_reward_description(day_seed, system_tile)
@@ -4409,7 +5787,7 @@ class Chess_Tournament(Project):
             day_seed: str,
             system_tile: space.SystemTradeHub
         ) -> str:
-        rng = random.Random(utility.hash_args(day_seed, system_tile.tile_seed()))
+        rng = random.Random(utility.hash_args(day_seed, system_tile.tile_seed(), "completion"))
 
         reward = cls.get_reward_description(day_seed, system_tile)
 
@@ -4427,7 +5805,7 @@ class Chess_Tournament(Project):
             day_seed: str,
             system_tile: space.SystemTradeHub
         ) -> list[tuple[str, int]]:
-        rng = random.Random(utility.hash_args(day_seed, system_tile.tile_seed()))
+        rng = random.Random(utility.hash_args(day_seed, system_tile.tile_seed(), "items"))
 
         amount = rng.randint(2,6) * 256
 
@@ -4439,7 +5817,7 @@ class Chess_Tournament(Project):
             day_seed: str,
             system_tile: space.SystemTradeHub
         ) -> list[tuple[str, int]]:
-        rng = random.Random(utility.hash_args(day_seed, system_tile.tile_seed()))
+        rng = random.Random(utility.hash_args(day_seed, system_tile.tile_seed(), "items"))
 
         amount = rng.randint(2, 6) * 2
 
@@ -4455,7 +5833,7 @@ class Diorama_Issue(Project):
             day_seed: str,
             system_tile: space.SystemTradeHub
         ) -> str:
-        rng = random.Random(utility.hash_args(day_seed, system_tile.tile_seed()))
+        rng = random.Random(utility.hash_args(day_seed, system_tile.tile_seed(), "name"))
         
         options = [
             "Diorama Issue",
@@ -4471,7 +5849,7 @@ class Diorama_Issue(Project):
             day_seed: str,
             system_tile: space.SystemTradeHub
         ) -> str:
-        rng = random.Random(utility.hash_args(day_seed, system_tile.tile_seed()))
+        rng = random.Random(utility.hash_args(day_seed, system_tile.tile_seed(), "description"))
 
         cost = cls.get_price_description(day_seed, system_tile)
         reward = cls.get_reward_description(day_seed, system_tile)
@@ -4534,7 +5912,7 @@ class Diorama_Issue(Project):
             day_seed: str,
             system_tile: space.SystemTradeHub
         ) -> str:
-        rng = random.Random(utility.hash_args(day_seed, system_tile.tile_seed()))
+        rng = random.Random(utility.hash_args(day_seed, system_tile.tile_seed(), "completion"))
         reward = cls.get_reward_description(day_seed, system_tile)
 
         options = [
@@ -4551,7 +5929,7 @@ class Diorama_Issue(Project):
             day_seed: str,
             system_tile: space.SystemTradeHub
         ) -> list[tuple[str, int]]:
-        rng = random.Random(utility.hash_args(day_seed, system_tile.tile_seed()))
+        rng = random.Random(utility.hash_args(day_seed, system_tile.tile_seed(), "items"))
 
         amount = rng.randint(2,6) * 256
         return [(values.black_rook.text, amount)]
@@ -4562,7 +5940,7 @@ class Diorama_Issue(Project):
             day_seed: str,
             system_tile: space.SystemTradeHub
         ) -> list[tuple[str, int]]:
-        rng = random.Random(utility.hash_args(day_seed, system_tile.tile_seed()))
+        rng = random.Random(utility.hash_args(day_seed, system_tile.tile_seed(), "items"))
 
         amount = rng.randint(2, 6) * 2
         return [(values.anarchy_black_rook.text, amount)]
@@ -4580,7 +5958,7 @@ class Offering_Ritual_Duplicate(Project):
             day_seed: str,
             system_tile: space.SystemTradeHub
         ) -> str:
-        rng = random.Random(utility.hash_args(day_seed, system_tile.tile_seed()))
+        rng = random.Random(utility.hash_args(day_seed, system_tile.tile_seed(), "name"))
         
         options = [
             "Offering Ritual",
@@ -4596,7 +5974,7 @@ class Offering_Ritual_Duplicate(Project):
             day_seed: str,
             system_tile: space.SystemTradeHub
         ) -> str:
-        rng = random.Random(utility.hash_args(day_seed, system_tile.tile_seed()))
+        rng = random.Random(utility.hash_args(day_seed, system_tile.tile_seed(), "description"))
 
         cost = cls.get_price_description(day_seed, system_tile)
         reward = cls.get_reward_description(day_seed, system_tile)
@@ -4673,7 +6051,7 @@ class Offering_Ritual_Duplicate(Project):
             day_seed: str,
             system_tile: space.SystemTradeHub
         ) -> str:
-        rng = random.Random(utility.hash_args(day_seed, system_tile.tile_seed()))
+        rng = random.Random(utility.hash_args(day_seed, system_tile.tile_seed(), "completion"))
         reward = cls.get_reward_description(day_seed, system_tile)
 
         options = [
@@ -4690,7 +6068,7 @@ class Offering_Ritual_Duplicate(Project):
             day_seed: str,
             system_tile: space.SystemTradeHub
         ) -> list[tuple[str, int]]:
-        rng = random.Random(utility.hash_args(day_seed, system_tile.tile_seed()))
+        rng = random.Random(utility.hash_args(day_seed, system_tile.tile_seed(), "items"))
 
         amount = rng.randint(2,6) * 128
         return [(values.black_queen.text, amount)]
@@ -4701,7 +6079,7 @@ class Offering_Ritual_Duplicate(Project):
             day_seed: str,
             system_tile: space.SystemTradeHub
         ) -> list[tuple[str, int]]:
-        rng = random.Random(utility.hash_args(day_seed, system_tile.tile_seed()))
+        rng = random.Random(utility.hash_args(day_seed, system_tile.tile_seed(), "items"))
 
         amount = rng.randint(2, 6)
         return [(values.anarchy_black_queen.text, amount)]
@@ -4719,7 +6097,7 @@ class Royal_Summit_Duplicate(Project):
             day_seed: str,
             system_tile: space.SystemTradeHub
         ) -> str:
-        rng = random.Random(utility.hash_args(day_seed, system_tile.tile_seed()))
+        rng = random.Random(utility.hash_args(day_seed, system_tile.tile_seed(), "name"))
         
         options = [
             "Royal Summit",
@@ -4735,7 +6113,7 @@ class Royal_Summit_Duplicate(Project):
             day_seed: str,
             system_tile: space.SystemTradeHub
         ) -> str:
-        rng = random.Random(utility.hash_args(day_seed, system_tile.tile_seed()))
+        rng = random.Random(utility.hash_args(day_seed, system_tile.tile_seed(), "description"))
 
         cost = cls.get_price_description(day_seed, system_tile)
         reward = cls.get_reward_description(day_seed, system_tile)
@@ -4826,7 +6204,7 @@ class Royal_Summit_Duplicate(Project):
             day_seed: str,
             system_tile: space.SystemTradeHub
         ) -> str:
-        rng = random.Random(utility.hash_args(day_seed, system_tile.tile_seed()))
+        rng = random.Random(utility.hash_args(day_seed, system_tile.tile_seed(), "completion"))
 
         options = [
             "Bravo! The Trade Hub's council has successfully orchestrated a grand reception for the visiting royalty! Through your collective efforts, the diplomatic mission has flourished, and bonds of friendship have been strengthened between distant realms!",
@@ -4842,7 +6220,7 @@ class Royal_Summit_Duplicate(Project):
             day_seed: str,
             system_tile: space.SystemTradeHub
         ) -> list[tuple[str, int]]:
-        rng = random.Random(utility.hash_args(day_seed, system_tile.tile_seed()))
+        rng = random.Random(utility.hash_args(day_seed, system_tile.tile_seed(), "items"))
 
         amount = rng.randint(2, 6) * 128
         return [(values.black_king.text, amount)]
@@ -4853,7 +6231,7 @@ class Royal_Summit_Duplicate(Project):
             day_seed: str,
             system_tile: space.SystemTradeHub
         ) -> list[tuple[str, int]]:
-        rng = random.Random(utility.hash_args(day_seed, system_tile.tile_seed()))
+        rng = random.Random(utility.hash_args(day_seed, system_tile.tile_seed(), "items"))
 
         amount = rng.randint(2, 6)
         return [(values.anarchy_black_king.text, amount)]
@@ -4873,7 +6251,7 @@ class Board_Game_Festival_Duplicate(Project):
             day_seed: str,
             system_tile: space.SystemTradeHub
         ) -> str:
-        rng = random.Random(utility.hash_args(day_seed, system_tile.tile_seed()))
+        rng = random.Random(utility.hash_args(day_seed, system_tile.tile_seed(), "name"))
         
         options = [
             "Board Game Festival",
@@ -4889,7 +6267,7 @@ class Board_Game_Festival_Duplicate(Project):
             day_seed: str,
             system_tile: space.SystemTradeHub
         ) -> str:
-        rng = random.Random(utility.hash_args(day_seed, system_tile.tile_seed()))
+        rng = random.Random(utility.hash_args(day_seed, system_tile.tile_seed(), "description"))
 
         cost = cls.get_cost(day_seed, system_tile)[0][1]
         reward = cls.get_reward_description(day_seed, system_tile)
@@ -4972,12 +6350,12 @@ class Board_Game_Festival_Duplicate(Project):
             day_seed: str,
             system_tile: space.SystemTradeHub
         ) -> str:
-        rng = random.Random(utility.hash_args(day_seed, system_tile.tile_seed()))
+        rng = random.Random(utility.hash_args(day_seed, system_tile.tile_seed(), "completion"))
 
         reward = cls.get_reward_description(day_seed, system_tile)
 
         options = [
-            f"Well, that was enough! You earned yourself... a free spot in the next chess tournament! What, you were promised a *reward*? {reward}? Ugh, they weren't fooled again! Ah, just take it already! ",
+            f"Well, that was enough! You earned yourself... a free spot in the next chess tournament! What, you were promised a *reward*? {reward}? Ugh, they weren't fooled again! Ah, just take it already!",
             f"Woo! The Festival is saved! Exactly like every other year! Here's your {reward}!",
             f"You did it! Congratulations! The Board Game festival is up and running! Here's your {reward} as promised!"
         ]
@@ -4990,7 +6368,7 @@ class Board_Game_Festival_Duplicate(Project):
             day_seed: str,
             system_tile: space.SystemTradeHub
         ) -> list[tuple[str, int]]:
-        rng = random.Random(utility.hash_args(day_seed, system_tile.tile_seed()))
+        rng = random.Random(utility.hash_args(day_seed, system_tile.tile_seed(), "items"))
 
         amount = rng.randint(2, 6) * 1024
 
@@ -5002,7 +6380,7 @@ class Board_Game_Festival_Duplicate(Project):
             day_seed: str,
             system_tile: space.SystemTradeHub
         ) -> list[tuple[str, int]]:
-        rng = random.Random(utility.hash_args(day_seed, system_tile.tile_seed()))
+        rng = random.Random(utility.hash_args(day_seed, system_tile.tile_seed(), "items"))
 
         amount = rng.randint(2, 6) * 8
 
@@ -5018,7 +6396,7 @@ class Round_Table(Project):
             day_seed: str,
             system_tile: space.SystemTradeHub
         ) -> str:
-        rng = random.Random(utility.hash_args(day_seed, system_tile.tile_seed()))
+        rng = random.Random(utility.hash_args(day_seed, system_tile.tile_seed(), "name"))
         
         options = [
             "The Round Table",
@@ -5034,7 +6412,7 @@ class Round_Table(Project):
             day_seed: str,
             system_tile: space.SystemTradeHub
         ) -> str:
-        rng = random.Random(utility.hash_args(day_seed, system_tile.tile_seed()))
+        rng = random.Random(utility.hash_args(day_seed, system_tile.tile_seed(), "description"))
 
         cost = cls.get_cost(day_seed, system_tile)[0][1]
         reward = cls.get_reward_description(day_seed, system_tile)
@@ -5118,7 +6496,7 @@ class Round_Table(Project):
             day_seed: str,
             system_tile: space.SystemTradeHub
         ) -> str:
-        rng = random.Random(utility.hash_args(day_seed, system_tile.tile_seed()))
+        rng = random.Random(utility.hash_args(day_seed, system_tile.tile_seed(), "completion"))
 
         cost = cls.get_cost(day_seed, system_tile)[0][1]
         reward = cls.get_reward_description(day_seed, system_tile)
@@ -5137,7 +6515,7 @@ class Round_Table(Project):
             day_seed: str,
             system_tile: space.SystemTradeHub
         ) -> list[tuple[str, int]]:
-        rng = random.Random(utility.hash_args(day_seed, system_tile.tile_seed()))
+        rng = random.Random(utility.hash_args(day_seed, system_tile.tile_seed(), "items"))
 
         amount = rng.randint(2,6) * 256
 
@@ -5149,7 +6527,7 @@ class Round_Table(Project):
             day_seed: str,
             system_tile: space.SystemTradeHub
         ) -> list[tuple[str, int]]:
-        rng = random.Random(utility.hash_args(day_seed, system_tile.tile_seed()))
+        rng = random.Random(utility.hash_args(day_seed, system_tile.tile_seed(), "items"))
 
         amount = rng.randint(2, 6) * 2
 
@@ -5165,7 +6543,7 @@ class Stolen_Bishops(Project):
             day_seed: str,
             system_tile: space.SystemTradeHub
         ) -> str:
-        rng = random.Random(utility.hash_args(day_seed, system_tile.tile_seed()))
+        rng = random.Random(utility.hash_args(day_seed, system_tile.tile_seed(), "name"))
         
         options = [
             "Stolen Bishops",
@@ -5181,7 +6559,7 @@ class Stolen_Bishops(Project):
             day_seed: str,
             system_tile: space.SystemTradeHub
         ) -> str:
-        rng = random.Random(utility.hash_args(day_seed, system_tile.tile_seed()))
+        rng = random.Random(utility.hash_args(day_seed, system_tile.tile_seed(), "description"))
 
         cost = cls.get_price_description(day_seed, system_tile)
         reward = cls.get_reward_description(day_seed, system_tile)
@@ -5244,7 +6622,7 @@ class Stolen_Bishops(Project):
             day_seed: str,
             system_tile: space.SystemTradeHub
         ) -> str:
-        rng = random.Random(utility.hash_args(day_seed, system_tile.tile_seed()))
+        rng = random.Random(utility.hash_args(day_seed, system_tile.tile_seed(), "completion"))
 
         reward = cls.get_reward_description(day_seed, system_tile)
 
@@ -5262,7 +6640,7 @@ class Stolen_Bishops(Project):
             day_seed: str,
             system_tile: space.SystemTradeHub
         ) -> list[tuple[str, int]]:
-        rng = random.Random(utility.hash_args(day_seed, system_tile.tile_seed()))
+        rng = random.Random(utility.hash_args(day_seed, system_tile.tile_seed(), "items"))
 
         amount = rng.randint(2,6) * 256
 
@@ -5274,7 +6652,7 @@ class Stolen_Bishops(Project):
             day_seed: str,
             system_tile: space.SystemTradeHub
         ) -> list[tuple[str, int]]:
-        rng = random.Random(utility.hash_args(day_seed, system_tile.tile_seed()))
+        rng = random.Random(utility.hash_args(day_seed, system_tile.tile_seed(), "items"))
 
         amount = rng.randint(2, 6) * 2
 
@@ -5290,7 +6668,7 @@ class Fortress_Building(Project):
             day_seed: str,
             system_tile: space.SystemTradeHub
         ) -> str:
-        rng = random.Random(utility.hash_args(day_seed, system_tile.tile_seed()))
+        rng = random.Random(utility.hash_args(day_seed, system_tile.tile_seed(), "name"))
         
         options = [
             "Fortress Building",
@@ -5306,7 +6684,7 @@ class Fortress_Building(Project):
             day_seed: str,
             system_tile: space.SystemTradeHub
         ) -> str:
-        rng = random.Random(utility.hash_args(day_seed, system_tile.tile_seed()))
+        rng = random.Random(utility.hash_args(day_seed, system_tile.tile_seed(), "description"))
 
         cost = cls.get_price_description(day_seed, system_tile)
         reward = cls.get_reward_description(day_seed, system_tile)
@@ -5376,7 +6754,7 @@ class Fortress_Building(Project):
             day_seed: str,
             system_tile: space.SystemTradeHub
         ) -> str:
-        rng = random.Random(utility.hash_args(day_seed, system_tile.tile_seed()))
+        rng = random.Random(utility.hash_args(day_seed, system_tile.tile_seed(), "completion"))
         reward = cls.get_reward_description(day_seed, system_tile)
 
         options = [
@@ -5393,7 +6771,7 @@ class Fortress_Building(Project):
             day_seed: str,
             system_tile: space.SystemTradeHub
         ) -> list[tuple[str, int]]:
-        rng = random.Random(utility.hash_args(day_seed, system_tile.tile_seed()))
+        rng = random.Random(utility.hash_args(day_seed, system_tile.tile_seed(), "items"))
 
         amount = rng.randint(2,6) * 256
         return [(values.white_rook.text, amount)]
@@ -5404,7 +6782,7 @@ class Fortress_Building(Project):
             day_seed: str,
             system_tile: space.SystemTradeHub
         ) -> list[tuple[str, int]]:
-        rng = random.Random(utility.hash_args(day_seed, system_tile.tile_seed()))
+        rng = random.Random(utility.hash_args(day_seed, system_tile.tile_seed(), "items"))
 
         amount = rng.randint(2, 6) * 2
         return [(values.anarchy_white_rook.text, amount)]
@@ -5419,7 +6797,7 @@ class Offering_Ritual(Project):
             day_seed: str,
             system_tile: space.SystemTradeHub
         ) -> str:
-        rng = random.Random(utility.hash_args(day_seed, system_tile.tile_seed()))
+        rng = random.Random(utility.hash_args(day_seed, system_tile.tile_seed(), "name"))
         
         options = [
             "Offering Ritual",
@@ -5435,7 +6813,7 @@ class Offering_Ritual(Project):
             day_seed: str,
             system_tile: space.SystemTradeHub
         ) -> str:
-        rng = random.Random(utility.hash_args(day_seed, system_tile.tile_seed()))
+        rng = random.Random(utility.hash_args(day_seed, system_tile.tile_seed(), "description"))
 
         cost = cls.get_price_description(day_seed, system_tile)
         reward = cls.get_reward_description(day_seed, system_tile)
@@ -5512,7 +6890,7 @@ class Offering_Ritual(Project):
             day_seed: str,
             system_tile: space.SystemTradeHub
         ) -> str:
-        rng = random.Random(utility.hash_args(day_seed, system_tile.tile_seed()))
+        rng = random.Random(utility.hash_args(day_seed, system_tile.tile_seed(), "completion"))
         reward = cls.get_reward_description(day_seed, system_tile)
 
         options = [
@@ -5529,7 +6907,7 @@ class Offering_Ritual(Project):
             day_seed: str,
             system_tile: space.SystemTradeHub
         ) -> list[tuple[str, int]]:
-        rng = random.Random(utility.hash_args(day_seed, system_tile.tile_seed()))
+        rng = random.Random(utility.hash_args(day_seed, system_tile.tile_seed(), "items"))
 
         amount = rng.randint(2,6) * 128
         return [(values.white_queen.text, amount)]
@@ -5540,7 +6918,7 @@ class Offering_Ritual(Project):
             day_seed: str,
             system_tile: space.SystemTradeHub
         ) -> list[tuple[str, int]]:
-        rng = random.Random(utility.hash_args(day_seed, system_tile.tile_seed()))
+        rng = random.Random(utility.hash_args(day_seed, system_tile.tile_seed(), "items"))
 
         amount = rng.randint(2, 6)
         return [(values.anarchy_white_queen.text, amount)]
@@ -5555,7 +6933,7 @@ class Royal_Summit(Project):
             day_seed: str,
             system_tile: space.SystemTradeHub
         ) -> str:
-        rng = random.Random(utility.hash_args(day_seed, system_tile.tile_seed()))
+        rng = random.Random(utility.hash_args(day_seed, system_tile.tile_seed(), "name"))
         
         options = [
             "Royal Summit",
@@ -5571,7 +6949,7 @@ class Royal_Summit(Project):
             day_seed: str,
             system_tile: space.SystemTradeHub
         ) -> str:
-        rng = random.Random(utility.hash_args(day_seed, system_tile.tile_seed()))
+        rng = random.Random(utility.hash_args(day_seed, system_tile.tile_seed(), "description"))
 
         cost = cls.get_price_description(day_seed, system_tile)
         reward = cls.get_reward_description(day_seed, system_tile)
@@ -5662,7 +7040,7 @@ class Royal_Summit(Project):
             day_seed: str,
             system_tile: space.SystemTradeHub
         ) -> str:
-        rng = random.Random(utility.hash_args(day_seed, system_tile.tile_seed()))
+        rng = random.Random(utility.hash_args(day_seed, system_tile.tile_seed(), "completion"))
 
         options = [
             "Bravo! The Trade Hub's council has successfully orchestrated a grand reception for the visiting royalty! Through your collective efforts, the diplomatic mission has flourished, and bonds of friendship have been strengthened between distant realms!",
@@ -5678,7 +7056,7 @@ class Royal_Summit(Project):
             day_seed: str,
             system_tile: space.SystemTradeHub
         ) -> list[tuple[str, int]]:
-        rng = random.Random(utility.hash_args(day_seed, system_tile.tile_seed()))
+        rng = random.Random(utility.hash_args(day_seed, system_tile.tile_seed(), "items"))
 
         amount = rng.randint(2, 6) * 128
         return [(values.white_king.text, amount)]
@@ -5689,7 +7067,7 @@ class Royal_Summit(Project):
             day_seed: str,
             system_tile: space.SystemTradeHub
         ) -> list[tuple[str, int]]:
-        rng = random.Random(utility.hash_args(day_seed, system_tile.tile_seed()))
+        rng = random.Random(utility.hash_args(day_seed, system_tile.tile_seed(), "items"))
 
         amount = rng.randint(2, 6)
         return [(values.anarchy_white_king.text, amount)]
@@ -5706,7 +7084,7 @@ class Emergency_Fuel(Project):
             day_seed: str,
             system_tile: space.SystemTradeHub
         ) -> str:
-        rng = random.Random(utility.hash_args(day_seed, system_tile.tile_seed()))
+        rng = random.Random(utility.hash_args(day_seed, system_tile.tile_seed(), "name"))
         
         options = [
             "Emergency Fuel",
@@ -5722,7 +7100,7 @@ class Emergency_Fuel(Project):
             day_seed: str,
             system_tile: space.SystemTradeHub
         ) -> str:
-        rng = random.Random(utility.hash_args(day_seed, system_tile.tile_seed()))
+        rng = random.Random(utility.hash_args(day_seed, system_tile.tile_seed(), "description"))
 
         cost = cls.get_price_description(day_seed, system_tile)
         reward = cls.get_reward_description(day_seed, system_tile)
@@ -5771,7 +7149,7 @@ class Emergency_Fuel(Project):
             day_seed: str,
             system_tile: space.SystemTradeHub
         ) -> str:
-        rng = random.Random(utility.hash_args(day_seed, system_tile.tile_seed()))
+        rng = random.Random(utility.hash_args(day_seed, system_tile.tile_seed(), "completion"))
         reward = cls.get_reward_description(day_seed, system_tile)
 
         options = [
@@ -5788,7 +7166,7 @@ class Emergency_Fuel(Project):
             day_seed: str,
             system_tile: space.SystemTradeHub
         ) -> list[tuple[str, int]]:
-        rng = random.Random(utility.hash_args(day_seed, system_tile.tile_seed()))
+        rng = random.Random(utility.hash_args(day_seed, system_tile.tile_seed(), "items"))
 
         amount = rng.randint(4, 8) * 50
 
@@ -5800,7 +7178,7 @@ class Emergency_Fuel(Project):
             day_seed: str,
             system_tile: space.SystemTradeHub
         ) -> list[tuple[str, int]]:
-        rng = random.Random(utility.hash_args(day_seed, system_tile.tile_seed()))
+        rng = random.Random(utility.hash_args(day_seed, system_tile.tile_seed(), "items"))
 
         amount = rng.randint(4, 8) * 40
 
@@ -5816,7 +7194,7 @@ class Gem_Mining(Project):
             day_seed: str,
             system_tile: space.SystemTradeHub
         ) -> str:
-        rng = random.Random(utility.hash_args(day_seed, system_tile.tile_seed()))
+        rng = random.Random(utility.hash_args(day_seed, system_tile.tile_seed(), "name"))
         
         options = [
             "Gem Mining",
@@ -5832,7 +7210,7 @@ class Gem_Mining(Project):
             day_seed: str,
             system_tile: space.SystemTradeHub
         ) -> str:
-        rng = random.Random(utility.hash_args(day_seed, system_tile.tile_seed()))
+        rng = random.Random(utility.hash_args(day_seed, system_tile.tile_seed(), "description"))
 
         cost = cls.get_price_description(day_seed, system_tile)
         reward = cls.get_reward_description(day_seed, system_tile)
@@ -5909,7 +7287,7 @@ class Gem_Mining(Project):
             day_seed: str,
             system_tile: space.SystemTradeHub
         ) -> str:
-        rng = random.Random(utility.hash_args(day_seed, system_tile.tile_seed()))
+        rng = random.Random(utility.hash_args(day_seed, system_tile.tile_seed(), "completion"))
 
         options = [
             "The gems were enough and the mining planet has returned to full efficiency!",
@@ -5925,7 +7303,7 @@ class Gem_Mining(Project):
             day_seed: str,
             system_tile: space.SystemTradeHub
         ) -> list[tuple[str, int]]:
-        rng = random.Random(utility.hash_args(day_seed, system_tile.tile_seed()))
+        rng = random.Random(utility.hash_args(day_seed, system_tile.tile_seed(), "items"))
 
         amount = rng.randint(2, 6) * 20
 
@@ -5937,7 +7315,7 @@ class Gem_Mining(Project):
             day_seed: str,
             system_tile: space.SystemTradeHub
         ) -> list[tuple[str, int]]:
-        rng = random.Random(utility.hash_args(day_seed, system_tile.tile_seed()))
+        rng = random.Random(utility.hash_args(day_seed, system_tile.tile_seed(), "items"))
 
         amount = rng.randint(2, 6) * 40
 
@@ -5953,7 +7331,7 @@ class Jewelry_Store(Project):
             day_seed: str,
             system_tile: space.SystemTradeHub
         ) -> str:
-        rng = random.Random(utility.hash_args(day_seed, system_tile.tile_seed()))
+        rng = random.Random(utility.hash_args(day_seed, system_tile.tile_seed(), "name"))
         
         options = [
             "Jewelry Store",
@@ -5969,7 +7347,7 @@ class Jewelry_Store(Project):
             day_seed: str,
             system_tile: space.SystemTradeHub
         ) -> str:
-        rng = random.Random(utility.hash_args(day_seed, system_tile.tile_seed()))
+        rng = random.Random(utility.hash_args(day_seed, system_tile.tile_seed(), "description"))
 
         cost = cls.get_price_description(day_seed, system_tile)
         reward = cls.get_reward_description(day_seed, system_tile)
@@ -6032,7 +7410,7 @@ class Jewelry_Store(Project):
             day_seed: str,
             system_tile: space.SystemTradeHub
         ) -> str:
-        rng = random.Random(utility.hash_args(day_seed, system_tile.tile_seed()))
+        rng = random.Random(utility.hash_args(day_seed, system_tile.tile_seed(), "completion"))
         reward = cls.get_reward_description(day_seed, system_tile)
 
         options = [
@@ -6049,7 +7427,7 @@ class Jewelry_Store(Project):
             day_seed: str,
             system_tile: space.SystemTradeHub
         ) -> list[tuple[str, int]]:
-        rng = random.Random(utility.hash_args(day_seed, system_tile.tile_seed()))
+        rng = random.Random(utility.hash_args(day_seed, system_tile.tile_seed(), "items"))
 
         amount = rng.randint(2, 6) * 20
 
@@ -6061,7 +7439,7 @@ class Jewelry_Store(Project):
             day_seed: str,
             system_tile: space.SystemTradeHub
         ) -> list[tuple[str, int]]:
-        rng = random.Random(utility.hash_args(day_seed, system_tile.tile_seed()))
+        rng = random.Random(utility.hash_args(day_seed, system_tile.tile_seed(), "items"))
 
         amount = rng.randint(2, 6) * 40
 
@@ -6077,7 +7455,7 @@ class Generator_Breakdown(Project):
             day_seed: str,
             system_tile: space.SystemTradeHub
         ) -> str:
-        rng = random.Random(utility.hash_args(day_seed, system_tile.tile_seed()))
+        rng = random.Random(utility.hash_args(day_seed, system_tile.tile_seed(), "name"))
         
         options = [
             "Generator Breakdown",
@@ -6093,7 +7471,7 @@ class Generator_Breakdown(Project):
             day_seed: str,
             system_tile: space.SystemTradeHub
         ) -> str:
-        rng = random.Random(utility.hash_args(day_seed, system_tile.tile_seed()))
+        rng = random.Random(utility.hash_args(day_seed, system_tile.tile_seed(), "description"))
 
         cost = cls.get_price_description(day_seed, system_tile)
         reward = cls.get_reward_description(day_seed, system_tile)
@@ -6163,7 +7541,7 @@ class Generator_Breakdown(Project):
             day_seed: str,
             system_tile: space.SystemTradeHub
         ) -> str:
-        rng = random.Random(utility.hash_args(day_seed, system_tile.tile_seed()))
+        rng = random.Random(utility.hash_args(day_seed, system_tile.tile_seed(), "completion"))
         reward = cls.get_reward_description(day_seed, system_tile)
 
         options = [
@@ -6180,7 +7558,7 @@ class Generator_Breakdown(Project):
             day_seed: str,
             system_tile: space.SystemTradeHub
         ) -> list[tuple[str, int]]:
-        rng = random.Random(utility.hash_args(day_seed, system_tile.tile_seed()))
+        rng = random.Random(utility.hash_args(day_seed, system_tile.tile_seed(), "items"))
 
         amount = rng.randint(2, 6) * 20
 
@@ -6192,7 +7570,7 @@ class Generator_Breakdown(Project):
             day_seed: str,
             system_tile: space.SystemTradeHub
         ) -> list[tuple[str, int]]:
-        rng = random.Random(utility.hash_args(day_seed, system_tile.tile_seed()))
+        rng = random.Random(utility.hash_args(day_seed, system_tile.tile_seed(), "items"))
 
         amount = rng.randint(2, 6) * 40
 
@@ -6208,7 +7586,7 @@ class Gem_Salesman(Project):
             day_seed: str,
             system_tile: space.SystemTradeHub
         ) -> str:
-        rng = random.Random(utility.hash_args(day_seed, system_tile.tile_seed()))
+        rng = random.Random(utility.hash_args(day_seed, system_tile.tile_seed(), "name"))
         
         options = [
             "Gem Salesman",
@@ -6224,7 +7602,7 @@ class Gem_Salesman(Project):
             day_seed: str,
             system_tile: space.SystemTradeHub
         ) -> str:
-        rng = random.Random(utility.hash_args(day_seed, system_tile.tile_seed()))
+        rng = random.Random(utility.hash_args(day_seed, system_tile.tile_seed(), "description"))
 
         cost = cls.get_price_description(day_seed, system_tile)
         reward = cls.get_reward_description(day_seed, system_tile)
@@ -6308,7 +7686,7 @@ class Gem_Salesman(Project):
             day_seed: str,
             system_tile: space.SystemTradeHub
         ) -> str:
-        rng = random.Random(utility.hash_args(day_seed, system_tile.tile_seed()))
+        rng = random.Random(utility.hash_args(day_seed, system_tile.tile_seed(), "completion"))
         reward = cls.get_reward_description(day_seed, system_tile)
 
         options = [
@@ -6327,7 +7705,7 @@ class Gem_Salesman(Project):
             day_seed: str,
             system_tile: space.SystemTradeHub
         ) -> list[tuple[str, int]]:
-        rng = random.Random(utility.hash_args(day_seed, system_tile.tile_seed()))
+        rng = random.Random(utility.hash_args(day_seed, system_tile.tile_seed(), "items"))
 
         amount = rng.randint(2, 6) * 5
 
@@ -6339,7 +7717,7 @@ class Gem_Salesman(Project):
             day_seed: str,
             system_tile: space.SystemTradeHub
         ) -> list[tuple[str, int]]:
-        rng = random.Random(utility.hash_args(day_seed, system_tile.tile_seed()))
+        rng = random.Random(utility.hash_args(day_seed, system_tile.tile_seed(), "items"))
 
         amount = rng.randint(2, 6) * 40
 
@@ -6357,7 +7735,7 @@ class Omega_Order(Project):
             day_seed: str,
             system_tile: space.SystemTradeHub
         ) -> str:
-        rng = random.Random(utility.hash_args(day_seed, system_tile.tile_seed()))
+        rng = random.Random(utility.hash_args(day_seed, system_tile.tile_seed(), "name"))
         
         options = [
             "Omega Order",
@@ -6373,7 +7751,7 @@ class Omega_Order(Project):
             day_seed: str,
             system_tile: space.SystemTradeHub
         ) -> str:
-        rng = random.Random(utility.hash_args(day_seed, system_tile.tile_seed()))
+        rng = random.Random(utility.hash_args(day_seed, system_tile.tile_seed(), "description"))
 
         cost = cls.get_price_description(day_seed, system_tile)
         reward = cls.get_reward_description(day_seed, system_tile)
@@ -6436,7 +7814,7 @@ class Omega_Order(Project):
             day_seed: str,
             system_tile: space.SystemTradeHub
         ) -> str:
-        rng = random.Random(utility.hash_args(day_seed, system_tile.tile_seed()))
+        rng = random.Random(utility.hash_args(day_seed, system_tile.tile_seed(), "completion"))
         reward = cls.get_reward_description(day_seed, system_tile)
 
         options = [
@@ -6453,7 +7831,7 @@ class Omega_Order(Project):
             day_seed: str,
             system_tile: space.SystemTradeHub
         ) -> list[tuple[str, int]]:
-        rng = random.Random(utility.hash_args(day_seed, system_tile.tile_seed()))
+        rng = random.Random(utility.hash_args(day_seed, system_tile.tile_seed(), "items"))
 
         amount = rng.randint(2, 6)
 
@@ -6465,7 +7843,7 @@ class Omega_Order(Project):
             day_seed: str,
             system_tile: space.SystemTradeHub
         ) -> list[tuple[str, int]]:
-        rng = random.Random(utility.hash_args(day_seed, system_tile.tile_seed()))
+        rng = random.Random(utility.hash_args(day_seed, system_tile.tile_seed(), "items"))
 
         amount = rng.randint(2, 6) * 3
 
@@ -6481,7 +7859,7 @@ class Chessatron_Repair(Project):
             day_seed: str,
             system_tile: space.SystemTradeHub
         ) -> str:
-        rng = random.Random(utility.hash_args(day_seed, system_tile.tile_seed()))
+        rng = random.Random(utility.hash_args(day_seed, system_tile.tile_seed(), "name"))
         
         options = [
             "Chessatron Repair",
@@ -6497,7 +7875,7 @@ class Chessatron_Repair(Project):
             day_seed: str,
             system_tile: space.SystemTradeHub
         ) -> str:
-        rng = random.Random(utility.hash_args(day_seed, system_tile.tile_seed()))
+        rng = random.Random(utility.hash_args(day_seed, system_tile.tile_seed(), "description"))
 
         cost = cls.get_price_description(day_seed, system_tile)
         reward = cls.get_reward_description(day_seed, system_tile)
@@ -6556,7 +7934,7 @@ class Chessatron_Repair(Project):
             day_seed: str,
             system_tile: space.SystemTradeHub
         ) -> str:
-        rng = random.Random(utility.hash_args(day_seed, system_tile.tile_seed()))
+        rng = random.Random(utility.hash_args(day_seed, system_tile.tile_seed(), "completion"))
         reward = cls.get_reward_description(day_seed, system_tile)
 
         options = [
@@ -6573,7 +7951,7 @@ class Chessatron_Repair(Project):
             day_seed: str,
             system_tile: space.SystemTradeHub
         ) -> list[tuple[str, int]]:
-        rng = random.Random(utility.hash_args(day_seed, system_tile.tile_seed()))
+        rng = random.Random(utility.hash_args(day_seed, system_tile.tile_seed(), "items"))
 
         amount = rng.randint(2, 6) * 50 + 100
 
@@ -6585,7 +7963,7 @@ class Chessatron_Repair(Project):
             day_seed: str,
             system_tile: space.SystemTradeHub
         ) -> list[tuple[str, int]]:
-        rng = random.Random(utility.hash_args(day_seed, system_tile.tile_seed()))
+        rng = random.Random(utility.hash_args(day_seed, system_tile.tile_seed(), "items"))
 
         amount = rng.randint(2, 6) * 3
 
