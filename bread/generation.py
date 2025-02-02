@@ -647,9 +647,19 @@ def generate_system(
     asteroid_belt = rng.randint(1, 3) == 1 # 1 in 3 chance of an asteroid belt.
 
     if asteroid_belt:
-        asteroid_belt_distance = rng.randint(2, math.ceil(planet_count ** 0.85) + 1)
+        asteroid_count = max(round(rng.normalvariate(1, 1)), 1)
+        
+        asteroid_belts = []
+        
+        for asteroid_id in range(asteroid_count):
+            if asteroid_belts:
+                minimum = min(asteroid_belts) + 2
+            else:
+                # Not too clsoe to the star.
+                minimum = 2
+            asteroid_belts.append(rng.uniform(minimum, math.ceil(planet_count ** 0.85) + 1))
     else:
-        asteroid_belt_distance = planet_count + 2
+        asteroid_belts = []
 
     for planet_id in range(planet_count):
         planet_rng = random.Random(hashlib.sha256(str(galaxy_seed + str(galaxy_ypos) + str(galaxy_xpos) + "planet" + str(planet_id)).encode()).digest())
@@ -666,7 +676,7 @@ def generate_system(
             sigma = 0.1
         )
 
-        modified_id = planet_id + (1 if planet_id - 1 >= asteroid_belt_distance else 0)
+        modified_id = planet_id + sum([planet_id - 1 >= belt for belt in asteroid_belts])
 
         planet_distance = 2 + (modified_id + 1.5)# ** 1.712 # dont ask why that number lol
 
@@ -783,8 +793,7 @@ def generate_system(
         "wormhole": wormhole_data,
         "radius": math.ceil(largest_distance) + 1,
         "star_type": star_type,
-        "asteroid_belt": asteroid_belt,
-        "asteroid_belt_distance": asteroid_belt_distance,
+        "asteroid_belts": asteroid_belts,
         "planets": planets
     }
 
