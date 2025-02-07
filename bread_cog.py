@@ -1358,7 +1358,8 @@ class Bread_cog(commands.Cog, name="Bread"):
         chess_keywords = ["chess", "chess pieces", "pieces"]
         gambit_keywords = ["gambit", "strategy", "gambit shop", "strategy shop"]
         space_keywords = ["space"]
-        all_keywords = archive_keywords + chess_keywords + gambit_keywords + space_keywords
+        item_keywords = ["item", "items", "inventory"]
+        all_keywords = archive_keywords + chess_keywords + gambit_keywords + space_keywords + item_keywords
 
         if user is not None and modifier is None:
             names = [user.name, user.nick, user.global_name, user.display_name]
@@ -1389,6 +1390,37 @@ class Bread_cog(commands.Cog, name="Bread"):
         # bread stats space
         if (modifier is not None) and modifier.lower() in space_keywords:
             await self.space_stats(ctx, user)
+            return
+
+        # bread stats items
+        if (modifier is not None) and modifier.lower() in item_keywords:
+            output = f"Item stats of {user_account.get_display_name()}:\n\n"
+            
+            if user_account.has(":bread:"):
+                output += f":bread: - {utility.smart_number(user_account.get(':bread:'))}\n"
+
+            display_list = ["special_bread", "rare_bread", "misc_bread", "shiny", "shadow", "misc", "unique" ]
+
+            #iterate through all the display list and print them
+            for item_name in display_list:
+
+                display_items = user_account.get_all_items_with_attribute(item_name)
+
+                for item in display_items:
+                    if not user_account.has(item.text):
+                        continue
+                    
+                    output += f"{utility.smart_number(user_account.get(item.text))} {item.text} , "
+                
+                # Remove the last `, ` if it exists.
+                output = output.removesuffix(", ")
+                
+                # If there isn't a `\n` at the end, add one.
+                # There will be a `\n` at the end if we didn't add anything in this iteration.
+                if not output.endswith("\n"):
+                    output += "\n"
+            
+            await ctx.reply(output)
             return
 
         # bread stats chess
