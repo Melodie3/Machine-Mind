@@ -1240,6 +1240,11 @@ class Bread_cog(commands.Cog, name="Bread"):
             user: typing.Optional[discord.Member] = commands.parameter(description = "The user to get the stats of."),
             archived: typing.Optional[str] = commands.parameter(description = "Use 'archived' to use the archived data.")
             ):
+        items = {}
+        for item in values.all_emotes:
+            items[item.text] = len(item.text)
+        print(items)
+        print(list(sorted(items, key=items.get)))
         #print("stats called for user "+str(user))
 
         check_archive = False
@@ -2295,7 +2300,7 @@ loaf_converter""",
                         potential_addition = roll_messages.pop()
 
                         # check to make sure we don't hit the length limit
-                        if len(compound_message) + len(potential_addition) > 1900:
+                        if len(compound_message) + len(potential_addition) > 1990:
                             # put it back on the list if it would be too long
                             roll_messages.append(potential_addition)
                             continue
