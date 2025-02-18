@@ -6800,8 +6800,10 @@ anarchy - 1000% of your wager.
 
         hub = system.trade_hub
 
-        if hub is not None and hub.get_upgrade_level(projects.Listening_Post) == 0:
-            if not (abs(system_x) <= 1 and abs(system_y) <= 1):
+        # This logic here is a little crap, but I think it works.
+        if hub is None or (hub is not None and hub.get_upgrade_level(projects.Listening_Post) == 0):
+            if not (abs(system_x) <= 1 and abs(system_y) <= 1) \
+                and not (hub is not None and system_x == hub.system_xpos and system_y == hub.system_ypos):
                 await ctx.reply("You are not close enough to a star to create a Trade Hub.")
                 return
         
@@ -6823,7 +6825,7 @@ anarchy - 1000% of your wager.
                     await ctx.reply("Sorry, you don't have the resources to create a Trade Hub.")
                     return
                 
-                print(f"User {ctx.author} creating trade hub in system ({galaxy_x}, {galaxy_y})")
+                print(f"User {ctx.author} creating trade hub in system ({galaxy_x}, {galaxy_y}) on ({system_x}, {system_y})")
                 
                 projects.Trade_Hub.do_purchase(
                     day_seed = day_seed,
