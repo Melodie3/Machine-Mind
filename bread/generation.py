@@ -75,8 +75,14 @@ PLANET_OPTIONS = {
 ### GALAXY GENERATION UTILITIES
 
 def position_check(x: int, y: int) -> bool:
-    """Checks if the given x and y coordinates are in the galaxy at all."""
+    """Checks if the given x and y coordinates are in the galaxy at all.
+    
+    The coordinates are assumed to be betwween -radius and +radius."""
     return (x ** 2 + y ** 2) <= MAP_RADIUS_SQUARED
+
+def square_check(x: int, y: int) -> bool:
+    """Checks if the given x and y coordinates are in the galaxy square."""
+    return not (x < 0 or y < 0 or x >= MAP_SIZE or y >= MAP_SIZE)
 
 def generate_gradients(galaxy_seed: str) -> list:
     """Generates the gradient info for the galaxy.
