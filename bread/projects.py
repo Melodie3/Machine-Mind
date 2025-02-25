@@ -941,7 +941,7 @@ class Offspring_Outlook(Trade_Hub_Upgrade):
 
 class Detection_Array(Trade_Hub_Upgrade):
     internal = "detection_array"
-    max_level = 1
+    max_level = 3
     unlock_level = 1
     
     @classmethod
@@ -958,15 +958,21 @@ class Detection_Array(Trade_Hub_Upgrade):
             day_seed: str,
             system_tile: space.SystemTradeHub
         ) -> str:
-        return "High-powered suite of external sensors, capable of recieving communication network signals from 16 tiles away."
+        new_tier = system_tile.get_upgrade_level(cls) + 1
+        
+        if new_tier >= 2:
+            return f"Version {round(7.2 * (1.2 ** (new_tier - 2)), 1)} of some high-powered external sensors, capable of recieving communication network signals from {8 * (new_tier + 1)} tiles away."
+        
+        return f"High-powered suite of external sensors, capable of recieving communication network signals from {8 * (new_tier + 1)} tiles away."
     
     @classmethod
     def completion(
             cls: typing.Type[typing.Self],
             day_seed: str,
             system_tile: space.SystemTradeHub
-        ) -> str:        
-        return "The sensors are up and running! This Trade Hub can now send and recieve communication network signals up to 16 tiles away!"
+        ) -> str:
+        current_tier = system_tile.get_upgrade_level(cls)
+        return f"The sensors are up and running! This Trade Hub can now send and recieve communication network signals up to {8 * (current_tier + 1)} tiles away!"
     
     @classmethod
     def get_cost(
@@ -974,8 +980,9 @@ class Detection_Array(Trade_Hub_Upgrade):
             day_seed: str,
             system_tile: space.SystemTradeHub
         ) -> list[tuple[str, int]]:
+        current_tier = system_tile.get_upgrade_level(cls)
         return [
-            (values.gem_green.text, 50), (values.gem_gold.text, 10)
+            (values.gem_green.text, 50 + 5000 * current_tier), (values.gem_gold.text, 10 + 1000 * current_tier)
         ]
     
     @classmethod
@@ -984,7 +991,8 @@ class Detection_Array(Trade_Hub_Upgrade):
             day_seed: str,
             system_tile: space.SystemTradeHub
         ) -> str:
-        return "A set of powerful sensors that increases this Trade Hub's range in the communication network."
+        current_tier = system_tile.get_upgrade_level(cls)
+        return f"A set of powerful sensors that increases this Trade Hub's range in the communication network to {8 * (current_tier + 1)} tiles."
    
 class Dimensional_Shrine(Trade_Hub_Upgrade):
     internal = "dimensional_shrine"
