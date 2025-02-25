@@ -2574,7 +2574,7 @@ def has_seen_tile(
     Returns:
         bool: Whether the given tile coordinates has been seen before.
     """
-    if generation.square_check(xpos - MAP_RADIUS, ypos - MAP_RADIUS):
+    if generation.square_check(xpos, ypos):
         return False
     
     if map_data is None:
