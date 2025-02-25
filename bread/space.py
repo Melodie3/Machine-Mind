@@ -1413,6 +1413,9 @@ class GalaxyTile:
             json_interface: bread_cog.JSON_interface,
             map_data: dict = None
         ) -> dict:
+        if generation.square_check(self.xpos - MAP_RADIUS, self.ypos - MAP_RADIUS):
+            return False
+        
         if map_data is None:
             map_data = json_interface.get_space_map_data(
                 ascension_id = self.ascension,
@@ -2571,6 +2574,9 @@ def has_seen_tile(
     Returns:
         bool: Whether the given tile coordinates has been seen before.
     """
+    if generation.square_check(xpos - MAP_RADIUS, ypos - MAP_RADIUS):
+        return False
+    
     if map_data is None:
         map_data = json_interface.get_space_map_data(
             ascension_id = ascension,
@@ -2609,9 +2615,8 @@ def in_nebula_database(
     Returns:
         bool: Whether the given tile coordinates are marked as in a nebula in the database.
     """
-    if xpos < 0 or ypos < 0 or \
-        xpos >= MAP_SIZE or ypos >= MAP_SIZE:
-            return False
+    if generation.square_check(xpos, ypos):
+        return False
         
     if map_data is None:
         map_data = json_interface.get_space_map_data(

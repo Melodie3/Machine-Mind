@@ -7297,13 +7297,22 @@ anarchy - 1000% of your wager.
             auto_map = user_account.get("auto_move_map", False)
 
             if auto_map:
-                await self.handle_map(
-                    ctx = ctx,
-                    map_type = "galaxy",
-                    user_account = user_account,
-                    content = message_content,
-                    reduced_info = True
-                )
+                try:
+                    await self.handle_map(
+                        ctx = ctx,
+                        map_type = "galaxy",
+                        user_account = user_account,
+                        content = message_content,
+                        reduced_info = True
+                    )
+                except Exception as e:
+                    await ctx.reply(message_content + "\n\n*Map generation failed.*")
+                    self.remove_from_interacting(ctx.author.id)
+                    
+                    # This is kind of a weird situation.
+                    # It's sending a message and removing the person from the interacting list,
+                    # but then reraising the exception so it will be sent in machine-configure.
+                    raise e
             else:
                 await ctx.reply(message_content)
 
@@ -7401,13 +7410,22 @@ anarchy - 1000% of your wager.
             auto_map = user_account.get("auto_move_map", False)
 
             if auto_map:
-                await self.handle_map(
-                    ctx = ctx,
-                    map_type = "system", # This is a weird scenario since wormholes move on both maps.
-                    user_account = user_account,
-                    content = message_content,
-                    reduced_info = True
-                )
+                try:
+                    await self.handle_map(
+                        ctx = ctx,
+                        map_type = "system", # This is a weird scenario since wormholes move on both maps.
+                        user_account = user_account,
+                        content = message_content,
+                        reduced_info = True
+                    )
+                except Exception as e:
+                    await ctx.reply(message_content + "\n\n*Map generation failed.*")
+                    self.remove_from_interacting(ctx.author.id)
+                    
+                    # This is kind of a weird situation.
+                    # It's sending a message and removing the person from the interacting list,
+                    # but then reraising the exception so it will be sent in machine-configure.
+                    raise e
             else:
                 await ctx.reply(message_content)
 
@@ -7659,13 +7677,22 @@ anarchy - 1000% of your wager.
         auto_map = user_account.get("auto_move_map", False)
 
         if auto_map:
-            await self.handle_map(
-                ctx = ctx,
-                map_type = move_map,
-                user_account = user_account,
-                content = message_content,
-                reduced_info = True
-            )
+            try:
+                await self.handle_map(
+                    ctx = ctx,
+                    map_type = move_map,
+                    user_account = user_account,
+                    content = message_content,
+                    reduced_info = True
+                )
+            except Exception as e:
+                await ctx.reply(message_content + "\n\n*Map generation failed.*")
+                self.remove_from_interacting(ctx.author.id)
+                
+                # This is kind of a weird situation.
+                # It's sending a message and removing the person from the interacting list,
+                # but then reraising the exception so it will be sent in machine-configure.
+                raise e
         else:
             await ctx.reply(message_content)
 
