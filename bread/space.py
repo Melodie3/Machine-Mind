@@ -449,6 +449,10 @@ class SystemTile:
         self.system_ypos = round(system_ypos)
 
         self.galaxy_tile = None
+        
+        if (self.galaxy_xpos, self.galaxy_ypos) in ALTERNATE_CENTER:
+            self.galaxy_xpos = MAP_RADIUS
+            self.galaxy_ypos = MAP_RADIUS
     
     # Optional for subclasses.
     def __str__(self: typing.Self):
@@ -1101,6 +1105,10 @@ class GalaxyTile:
         
         if isinstance(self.trade_hub, bool):
             self.trade_hub = None
+        
+        if (self.xpos, self.ypos) in ALTERNATE_CENTER:
+            self.xpos = MAP_RADIUS
+            self.ypos = MAP_RADIUS
     
     def __str__(self: typing.Self):
         return f"<GalaxyTile | x: {self.xpos} | y: {self.ypos} | system: {self.system} | in_nebula: {self.in_nebula}>"
@@ -2576,6 +2584,10 @@ def has_seen_tile(
     """
     if not generation.square_check(xpos, ypos):
         return False
+
+    if (xpos, ypos) in ALTERNATE_CENTER:
+        xpos = MAP_RADIUS
+        ypos = MAP_RADIUS
     
     if map_data is None:
         map_data = json_interface.get_space_map_data(
