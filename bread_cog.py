@@ -67,7 +67,6 @@ import traceback
 import re
 import time
 import io
-import copy
 
 from os import getenv
 from dotenv import load_dotenv
@@ -3787,7 +3786,6 @@ anarchy - 1000% of your wager.
         
         before_buyable = self.get_buyable_items(user_account, store.all_store_items)
 
-        user_account.increment("total_dough", -amount) 
         user_account.increment("daily_gambles", 1)
         user_account.increment("lifetime_gambles", 1)
         
@@ -3796,128 +3794,28 @@ anarchy - 1000% of your wager.
         if reply != "":
             await ctx.reply(reply)
             await asyncio.sleep(1)
-
-        # in case we want to troll the user, we can set a percentage chance for only bricks to appear
-        do_brick_troll = user_account.get("brick_troll_percentage") >= random.randint(1,100)
-
-        #
-        result = gamble.gamble(do_brick_troll)
-        #
-
-        winnings = parse_int(amount * result["multiple"])
-        #await ctx.send(f"You got a {result['result'].text} and won {winnings} dough.")
-
-        #make grid
-        grid = list()
-        grid_size = 4
-        for x in range(grid_size):
-            grid.append([None] * grid_size)
-
-        # grid.append([None, None, None])
-        # grid.append([None, None, None])
-        # grid.append([None, None, None])
-
-        winning_x = random.randint(0,grid_size-1)
-        winning_y = random.randint(0,grid_size-1)
-        winning_text = result['result'].text
-
-        # add winning result to grid
-        grid[winning_x][winning_y] = winning_text
-
-        # losing rows/columns that will get deleted
-        rows_to_remove = list(range(grid_size))
-        rows_to_remove.remove(winning_y)
-
-        columns_to_remove = list(range(grid_size))
-        columns_to_remove.remove(winning_x)
-
-        # fill grid with other stuff
-        for i in range(grid_size):
-            for k in range(grid_size):
-                if grid[i][k] is None:
-                    filler = gamble.gamble(do_brick_troll)['result'].text
-                    grid[i][k] = filler
-                    # grid[i][k] = random.choice(gamble.reward_values).text
-        try:  #sometimes we'll get a timeout error and the function will crash, this should allow
-              # the user to be removed from the currently_interacting list
-            message = await ctx.reply(self.show_grid(grid))
-            await asyncio.sleep(2)
-
-
-            #runs as often as rows/columns need to be removed
-            for snips_left in range(grid_size*2 - 2, 0, -1):
-
-                # pick a random row/column
-                what_to_snip = random.randint(0, snips_left - 1)
-
-                if what_to_snip < len(rows_to_remove): #do row
-                    y = rows_to_remove.pop(what_to_snip)
-                    for x in range(grid_size):
-                        grid[x][y] = None
-                    
-                else: #do column
-                    x = columns_to_remove.pop(what_to_snip - len(rows_to_remove))
-                    for y in range(grid_size):
-                        grid[x][y] = None
-                
-                await message.edit(content = self.show_grid(grid))
-                await asyncio.sleep(1.5)
-
-                
-        except: 
-            pass
+            
+        game = gamble.BaseGame(
+            wager = amount,
+            json_interface = self.json_interface,
+            ctx = ctx
+        )
         
-        after_buyable = self.get_buyable_items(user_account, store.all_store_items)
-        append = self.describe_added_shop_items(before_buyable, after_buyable)
+        await game.setup()
         
-        try: #try block because of potential messsage deletion.
-            if result['result'].name == "horsey":
-                await ctx.reply("Sorry, you didn't win anything. Better luck next time." + append)
-            elif result['result'].name in ["brick", "fide_brick", "brick_fide", "brick_gold"]:
-                try: # brick avoidance deterrant
-                    response = "You found a brick. Please hold, delivering reward at high speed."
-                    if result['result'].name == "brick_gold":
-                        response += f" Looks like you'll be able to sell this one for {utility.smart_number(winnings)} dough."
-                    response += append
-                    await ctx.reply(response)
-                    await asyncio.sleep(2)
-                except:
-                    pass 
-                await ctx.invoke(self.bot.get_command('brick'), member=ctx.author)
-            else:
-                await ctx.reply(f"With a {winning_text}, you won {utility.smart_number(winnings)} dough." + append)
+        await asyncio.sleep(2)
         
-            daily_gambles = user_account.get_value_strict("daily_gambles")
-            if daily_gambles == max_gambles:
-                await ctx.reply("That was all the gambling you can do today." + append)
-
-            elif daily_gambles >= max_gambles-3:
-                #await ctx.reply("You can gamble one more time today.")
-                text= "You can gamble "+Bread_cog.write_number_of_times(max_gambles-daily_gambles)+" more today." + append
-                await ctx.reply(text)
-        except:
-            pass #only happens if original message was deleted.
-
+        while game.in_progress:
+            await game.run_tick()
+            
+            await asyncio.sleep(1.5)
 
         user_account = self.json_interface.get_account(ctx.author, guild = ctx.guild.id)
-        user_account.increment("gamble_winnings", winnings - amount)
-        user_account.increment("total_dough", winnings)
-        self.json_interface.set_account(ctx.author, user_account, guild = ctx.guild.id)
+        after_buyable = self.get_buyable_items(user_account, store.all_store_items)
+        
+        await game.finish(self.describe_added_shop_items(before_buyable, after_buyable))
 
         self.remove_from_interacting(ctx.author.id)
-
-
-
-
-        # output = ""
-        # for i in range(len(grid)):
-        #     for k in range(len(grid[i])):
-        #         if grid[i][k] is None:
-        #             output += ":black_medium_square: "
-        #         else:
-        #             output += str(grid[i][k]) + " "
-        #     output += "\n"
-        # await ctx.send(output)
 
 
     def show_grid(
@@ -8702,12 +8600,12 @@ anarchy - 1000% of your wager.
             
         #     self.json_interface.set_custom_file("space", space_data, guild)
 
-        for guild in self.json_interface.all_guilds:
-            for user_account in self.json_interface.get_all_user_accounts(guild=guild):
-                if user_account.get(store.Bling.name) >= 9:
-                    user_account.increment(store.Bling.name, 3) # Account for the space gems being added.
+        # for guild in self.json_interface.all_guilds:
+        #     for user_account in self.json_interface.get_all_user_accounts(guild=guild):
+        #         if user_account.get(store.Bling.name) >= 9:
+        #             user_account.increment(store.Bling.name, 3) # Account for the space gems being added.
                     
-                    self.json_interface.set_account(user_account.user_id, user_account, guild)
+        #             self.json_interface.set_account(user_account.user_id, user_account, guild)
                     
         # When the rocket tiers were shifted and tier 3 was removed this'll correct everyone stats.
         #         space_level = account.get_space_level()
