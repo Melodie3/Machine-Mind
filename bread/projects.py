@@ -21,27 +21,32 @@ class Project:
             cls: typing.Type[typing.Self],
             day_seed: str,
             system_tile: space.SystemTradeHub,
+            show_description: bool = True,
             compress_description: bool = False,
             completed: bool = False,
             item_information: dict = None
         ) -> str:
         """Returns a string that represents this project, it includes the name and description, as well as some text if the project has been completed."""
         name = cls.name(day_seed, system_tile)
-        description = cls.description(day_seed, system_tile)
+        
+        if show_description:
+            description = cls.description(day_seed, system_tile)
 
-        if compress_description:
-            description_use = description[:250]
-            if not description_use.endswith(" "):
-                description_use += description[250:].split(" ")[0]
-            
-            description_use = description_use.strip()
+            if compress_description:
+                description_use = description[:250]
+                if not description_use.endswith(" "):
+                    description_use += description[250:].split(" ")[0]
+                
+                description_use = description_use.strip()
 
-            if description_use.endswith("."):
-                description_use += ".."
+                if description_use.endswith("."):
+                    description_use += ".."
+                else:
+                    description_use += "..."
             else:
-                description_use += "..."
+                description_use = description
         else:
-            description_use = description
+            description_use = ""
 
         completed_prefix = "~~" if completed else ""
         completed_suffix = "~~    COMPLETED" if completed else ""
@@ -62,7 +67,7 @@ class Project:
         else:
             item_info = ""
 
-        return f"   **{completed_prefix}{name}:{completed_suffix}** {item_info}\n{description_use}"
+        return f"   **{completed_prefix}{name}:{completed_suffix}** {item_info}\n{description_use}".removesuffix("\n") # Use .removesuffix in cases where the description is not included.
 
     # Required for subclasses.
     @classmethod

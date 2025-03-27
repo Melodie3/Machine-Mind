@@ -6802,6 +6802,33 @@ anarchy - 1000% of your wager.
         )
         
         ##############################################################################################################
+        
+        if action == "detailed":
+            if len(actions) > 1 and actions[1].lower() in ["on", "off", "yes", "no", "y", "n"]:
+                if actions[1].lower() in ["on", "yes", "y"]:
+                    user_account.set("trade_hub_detailed", True)
+                    
+                    new_state = True
+                else:
+                    user_account.set("trade_hub_detailed", False)
+
+                    new_state = False
+            else:
+                current_state = user_account.get("trade_hub_detailed", True)
+
+                user_account.set("trade_hub_detailed", not current_state)
+                new_state = not current_state
+
+            self.json_interface.set_account(ctx.author, user_account, ctx.guild)
+            
+            if new_state:
+                await ctx.reply("Trade Hub messages will now be more detailed.")
+            else:
+                await ctx.reply("Trade Hub messages will now be less detailed.")
+            
+            return
+            
+        ##############################################################################################################
 
         if action == "contribute":
             await self.trade_hub_contribute(
@@ -6867,6 +6894,8 @@ anarchy - 1000% of your wager.
             return
 
         ##############################################################################################################
+        
+        detailed = user_account.get("trade_hub_detailed", True) # Default to detailed.
 
         level_project = projects.Trade_Hub
         max_level = len(level_project.all_costs())
@@ -6886,13 +6915,18 @@ anarchy - 1000% of your wager.
         message_lines += f"\nTrade Hub network range: {hub.trade_distance}"
         message_lines += f"\nCommunication network range: {hub.communication_distance}"
         message_lines += f"\nGalaxy location: ({hub.galaxy_xpos}, {hub.galaxy_ypos})"
-        message_lines += f"\nSystem location: ({hub.system_xpos}, {hub.system_ypos})"
+        
+        if detailed:
+            message_lines += f"\nSystem location: ({hub.system_xpos}, {hub.system_ypos})"
 
         available_upgrades = hub.get_available_upgrades(day_seed)
         if len(available_upgrades) > 0:
-            message_lines += f"\n\nAvailable upgrades:"
-            for upgrade in available_upgrades:
-                message_lines += f"\n- {upgrade.name(day_seed, hub)}"
+            if detailed:
+                message_lines += f"\n\nAvailable upgrades:"
+                for upgrade in available_upgrades:
+                    message_lines += f"\n- {upgrade.name(day_seed, hub)}"
+            else:
+                message_lines += f"\n\nThere are {utility.write_count(len(available_upgrades), 'available upgrade')}."
         
         if len(available_upgrades) > 0 or len(hub.get_purchased_upgrades()) > 0:
             message_lines += f"\nUse '$bread space hub upgrades' to get more information on available and purchased upgrades."
@@ -6915,15 +6949,21 @@ anarchy - 1000% of your wager.
             message_lines += data.get("project").display_info(
                 day_seed = day_seed,
                 system_tile = hub,
+                show_description = detailed,
                 compress_description = True,
                 completed = data.get("completed", False),
                 item_information = contributions
             )
-            message_lines += "\n\n"
+            
+            # If detailed is True, this is 2, if it's False, this is 1.
+            message_lines += "\n" * (detailed + 1)
 
             if len(message_lines) >= (1900 - len(suffix)):
                 await ctx.reply(old)
                 message_lines = f"Continued:\n{message_lines[len(old):]}"
+        
+        if not detailed:
+            message_lines += "\n"
         
         message_lines += suffix
 
