@@ -274,18 +274,27 @@ recipes = {
     "gem_pink": [
         {
             "cost": [(values.gem_orange, 1), (values.gem_cyan, 1)]
+        },
+        {
+            "cost": [(values.gem_cyan, 3)]
         }
     ],
 
     "gem_orange": [
         {
             "cost": [(values.gem_pink, 1), (values.gem_cyan, 1)]
+        },
+        {
+            "cost": [(values.gem_pink, 3)]
         }
     ],
 
     "gem_cyan": [
         {
             "cost": [(values.gem_pink, 1), (values.gem_orange, 1)]
+        },
+        {
+            "cost": [(values.gem_orange, 3)]
         }
     ],
 
@@ -551,7 +560,7 @@ recipes = {
             "requirement": [("space_level", 1)]
         },
         {
-            "cost": [(values.white_pawn, 250), (values.gem_pink, 3), (values.gem_cyan, 3)],
+            "cost": [(values.white_pawn, 250), (values.gem_pink, 2), (values.gem_orange, 2), (values.gem_cyan, 2)],
             "requirement": [("space_level", 1)]
         }
     ],
@@ -723,7 +732,7 @@ recipes = {
             "requirement": [("space_level", 1)]
         },
         {
-            "cost": [(values.black_pawn, 250), (values.gem_pink, 3), (values.gem_cyan, 3)],
+            "cost": [(values.black_pawn, 250), (values.gem_pink, 2), (values.gem_orange, 2), (values.gem_cyan, 2)],
             "requirement": [("space_level", 1)]
         }
     ],
