@@ -6939,6 +6939,11 @@ anarchy - 1000% of your wager.
         message_lines += "\n\n**# -- Projects --**"
 
         suffix = "To contribute to a project, use '$bread space hub contribute [project number] [amount] [item]'\nYou can get more information about a project with '$bread space hub info [project number]'"
+        
+        if detailed:
+            suffix += "\n\n*Use '$bread hub detailed off' to enable a more condensed version of this message.*"
+        else:
+            suffix += "\n\n*Use '$bread hub detailed on' to enable a more detailed version of this message.*"
 
         for project_id, data in enumerate(hub_projects[:hub.project_count]):
             old = message_lines
