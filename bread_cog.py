@@ -981,11 +981,6 @@ class Bread_cog(commands.Cog, name="Bread"):
             self.reset_internal() # this resets all roll counts to 0
             print("Daily reset called")
             await self.announce("bread_o_clock", "It's Bread O'Clock!")
-        
-        #run at 3am
-        elif time.hour == 3:
-            print("Mid-day space reset called")
-            self.reset_space_all()
 
         # every 6 hours, based around 3pm
         # print (f"Hour +15 %6 is {(time.hour + 15) % 6}")
@@ -8303,7 +8298,7 @@ anarchy - 1000% of your wager.
     
     def reset_space_all(self: typing.Self) -> None:
         """Twice per day space reset for all guilds in the JSON interface."""
-        print("Bread Space: Running twice per day reset on all guilds.")
+        print("Bread Space: Running daily reset on all guilds.")
 
         for guild_id in self.json_interface.get_list_of_all_guilds():
             self.reset_space_guild(guild_id)
