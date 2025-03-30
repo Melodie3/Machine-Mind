@@ -10,7 +10,7 @@ import verification
 class Bootstrap_cog(commands.Cog, name="Bootstrap"):
 
     # these extensions are loaded from outside files of the given name. Works like import.
-    extensions = ['json_cog', 'talk', 'roles', 'bread_cog', 'enforcement', ] #used to include `chess_bot`, add back when migrated from cairosvg's bullshit
+    extensions = ['json_cog', 'talk', 'roles', 'chess_bot', 'bread_cog', 'enforcement', ] #used to include `chess_bot`, add back when migrated from cairosvg's bullshit
 
 
 

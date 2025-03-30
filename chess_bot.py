@@ -6,16 +6,19 @@ import typing
 from datetime import datetime
 import json
 
+import PIL.Image as Image
+import PIL.ImageDraw as ImageDraw
+
 import chess
 
-import chess.svg
+# import chess.svg
 
-import cairosvg
+# import cairosvg
 
 # from svglib.svglib import svg2rlg
 # from svglib import svglib, utils
 # from reportlab.graphics import renderPM
-# import io
+import io
 # import textwrap
 
 from discord.ext import commands
@@ -117,6 +120,149 @@ Each channel has its own dedicated chess board. If people are not actively playi
 """
 
 tempfile_path = "/Volumes/RAM_Disk/"
+
+#####################################################################################################
+
+PIECE_PATH_BLACK = {
+    chess.PAWN: "images/Bpawn.png",
+    chess.KNIGHT: "images/Bknight.png",
+    chess.BISHOP: "images/Bbishop.png",
+    chess.ROOK: "images/Brook.png",
+    chess.QUEEN: "images/Bqueen.png",
+    chess.KING: "images/Bking.png"
+}
+
+PIECE_PATH_WHITE = {
+    chess.PAWN: "images/Wpawn.png",
+    chess.KNIGHT: "images/Wknight.png",
+    chess.BISHOP: "images/Wbishop.png",
+    chess.ROOK: "images/Wrook.png",
+    chess.QUEEN: "images/Wqueen.png",
+    chess.KING: "images/Wking.png",
+}
+
+LAST_MOVE_DARK = "#AAA23B"
+LAST_MOVE_LIGHT = "#CDD16A"
+GRID_SIZE = 75
+
+FONT_SIZE = 25
+LETTERS = "abcdefgh"
+NUMBERS = "87654321" # Starts reversed since the first one is the top row from white's perspective.
+
+EMOJI_IMAGES = {
+    chess.WHITE: {},
+    chess.BLACK: {}
+}
+
+for white, black in zip(PIECE_PATH_WHITE.items(), PIECE_PATH_BLACK.items()):
+    try:
+        EMOJI_IMAGES[chess.WHITE][white[0]] = Image.open(white[1]).resize((GRID_SIZE, GRID_SIZE))
+    except FileNotFoundError:
+        print(f"Bread Space: Map image loading failed for {white[0]} ({white[1]}) as the file does not exist.")
+        
+    try:
+        EMOJI_IMAGES[chess.BLACK][black[0]] = Image.open(black[1]).resize((GRID_SIZE, GRID_SIZE))
+    except FileNotFoundError:
+        print(f"Bread Space: Map image loading failed for {black[0]} ({black[1]}) as the file does not exist.")
+
+BASE_IMAGE = Image.open("images/board_base.png").convert("RGBA")
+OUTER_IMAGE = Image.new("RGBA", (650, 650), "#212121")
+
+def render_board(
+        board: chess.Board,
+        flipped: bool = None
+    ) -> io.BytesIO:
+    """Renders the given Chess board and returns a ByesIO object to send via Discord.
+
+    Args:
+        board (chess.Board): The board to render.
+        flipped (bool, optional): Whether to flip the board to be from black's perspective. If this is None it will default to True if it is black's turn. Defaults to None.
+
+    Returns:
+        io.BytesIO: A BytesIO object that can be sent via Discord.
+    """
+    if flipped is None:
+        flipped = not board.turn
+        
+    if flipped:
+        def convert_file(f):
+            return 7 - f
+        def convert_rank(r):
+            return r
+    else:
+        def convert_file(f):
+            return f
+        def convert_rank(r):
+            return 7 - r
+
+    board_img = BASE_IMAGE.copy()
+    img_draw = ImageDraw.ImageDraw(board_img)
+
+    if board.move_stack:
+        # Show the last played move.
+        last_move = board.peek()
+        
+        from_square = last_move.from_square
+        from_rank = chess.square_rank(from_square)
+        from_file = chess.square_file(from_square)
+        
+        to_square = last_move.to_square
+        to_rank = chess.square_rank(to_square)
+        to_file = chess.square_file(to_square)
+        
+        img_draw.rectangle(
+            [(convert_file(from_file) * GRID_SIZE, convert_rank(from_rank) * GRID_SIZE), ((convert_file(from_file) + 1) * GRID_SIZE - 1, (convert_rank(from_rank) + 1) * GRID_SIZE - 1)],
+            fill = LAST_MOVE_DARK if (convert_file(from_file) + convert_rank(from_rank)) % 2 else LAST_MOVE_LIGHT
+        )
+        img_draw.rectangle(
+            [(convert_file(to_file) * GRID_SIZE, convert_rank(to_rank) * GRID_SIZE), ((convert_file(to_file) + 1) * GRID_SIZE - 1, (convert_rank(to_rank) + 1) * GRID_SIZE - 1)],
+            fill = LAST_MOVE_DARK if (convert_file(to_file) + convert_rank(to_rank)) % 2 else LAST_MOVE_LIGHT
+        )
+
+    for color in chess.COLORS:
+        for piece in chess.PIECE_TYPES:
+            bitboard = board.pieces_mask(piece, color)
+            paste = EMOJI_IMAGES[color][piece]
+            
+            for square in chess.scan_forward(bitboard):
+                board_img.paste(
+                    im = paste,
+                    box = (
+                        convert_file(chess.square_file(square)) * GRID_SIZE,
+                        convert_rank(chess.square_rank(square)) * GRID_SIZE
+                    ),
+                    mask = paste
+                )
+
+    main_img = OUTER_IMAGE.copy()
+    main_img.paste(board_img, (25, 25))
+
+    main_img_draw = ImageDraw.ImageDraw(main_img)
+
+    if flipped:
+        letters = LETTERS[::-1]
+        numbers = NUMBERS[::-1]
+    else:
+        letters = LETTERS
+        numbers = NUMBERS
+
+    for index, character in enumerate(letters):
+        width = main_img_draw.textlength(character, font_size=FONT_SIZE)
+        main_img_draw.text((25 + 75 / 2 + 75 * index - width / 2, -5), text=character, font_size=FONT_SIZE)
+        main_img_draw.text((25 + 75 / 2 + 75 * index - width / 2, 620), text=character, font_size=FONT_SIZE)
+
+    for index, number in enumerate(numbers):
+        width = main_img_draw.textlength(number, font_size=FONT_SIZE)
+        main_img_draw.text((width / 2 - 2, 10 + 75 / 2 + 75 * index), text=number, font_size=FONT_SIZE)
+        main_img_draw.text((625 + width / 2 - 2, 10 + 75 / 2 + 75 * index), text=number, font_size=FONT_SIZE)
+    
+    output = io.BytesIO()
+    main_img.save(output, "png")
+    output.seek(0)
+        
+    return output
+
+#####################################################################################################
 
 # class to track a chess game happening on a channel
 class Chess_game():
@@ -289,27 +435,28 @@ class Chess_game():
             
     #### RENDERING ####
 
-    def get_rendered_board(self: typing.Self) -> str:
-        """Renders the board and returns the file path to it."""
-        svg_code = None
-        last_move = None
-        num_moves = len(self.game_board.move_stack)
-        #output_path = tempfile_path + f"board_{str(self.channel)}_{num_moves}.png"
-        output_path = tempfile_path + f"board_{str(self.channel)}.png"
-        if num_moves != 0:
-            last_move = self.game_board.peek()
+    def get_rendered_board(self: typing.Self) -> io.BytesIO:
+        """Renders the board and returns a BytesIO object for it."""
+        return render_board(self.game_board)
+        # svg_code = None
+        # last_move = None
+        # num_moves = len(self.game_board.move_stack)
+        # #output_path = tempfile_path + f"board_{str(self.channel)}_{num_moves}.png"
+        # output_path = tempfile_path + f"board_{str(self.channel)}.png"
+        # if num_moves != 0:
+        #     last_move = self.game_board.peek()
         
-        svg_code = chess.svg.board(self.game_board, lastmove=last_move, size=600)
+        # svg_code = chess.svg.board(self.game_board, lastmove=last_move, size=600)
 
-        cairosvg.svg2png(bytestring=svg_code,write_to=output_path) #uses not working cairosvg
+        # cairosvg.svg2png(bytestring=svg_code,write_to=output_path) #uses not working cairosvg
 
-        #drawing = svglib.svg2rlg(io.StringIO(textwrap.dedent(svg_code)))
-        #drawing = svglib.svg2rlg(io.StringIO(textwrap.dedent(svg_code)))
-        # drawing = svg2rlg("home.svg")
-        # renderPM.drawToFile(drawing, output_path, fmt="PNG")
-        # print (f"Done rendering board file to {output_path}")
-        return output_path
-        pass
+        # #drawing = svglib.svg2rlg(io.StringIO(textwrap.dedent(svg_code)))
+        # #drawing = svglib.svg2rlg(io.StringIO(textwrap.dedent(svg_code)))
+        # # drawing = svg2rlg("home.svg")
+        # # renderPM.drawToFile(drawing, output_path, fmt="PNG")
+        # # print (f"Done rendering board file to {output_path}")
+        # return output_path
+        # pass
 
     #### MESSAGING ######
 
