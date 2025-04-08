@@ -2,6 +2,7 @@ from discord.ext import commands
 import typing
 import os
 import importlib
+import traceback
 
 import verification
 
@@ -68,7 +69,12 @@ class Bootstrap_cog(commands.Cog, name="Bootstrap"):
         await ctx.send("Done, reloading everything.")
         
         for extension in self.bot_ref.extensions.copy():
-            await self.bot_ref.reload_extension(extension)
+            try:
+                await self.bot_ref.reload_extension(extension)
+            except:
+                error = traceback.format_exc()
+                await ctx.reply(f"Error when reloading {extension}:```\n"+ error + "```")
+                print(error)
         
         await ctx.reply("Done.")
 

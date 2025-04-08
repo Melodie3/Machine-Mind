@@ -986,7 +986,7 @@ class Bread_cog(commands.Cog, name="Bread"):
         # If it's not DST in PST add 1 to the hour.
         # Datetime math is the bane of my existence, but this does seem to work.
         # if not in_dst():
-        if True: # Perma DST until pytz is installed on the server.
+        if False: # Perma DST until pytz is installed on the server.
             print(f"Hourly loop is not currently in DST. Changing {hour} to {hour - 1}")
             hour -= 1
             
