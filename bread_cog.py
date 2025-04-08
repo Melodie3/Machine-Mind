@@ -67,7 +67,7 @@ import traceback
 import re
 import time
 import io
-import pytz
+# import pytz
 
 from os import getenv
 from dotenv import load_dotenv
@@ -978,14 +978,15 @@ class Bread_cog(commands.Cog, name="Bread"):
         
         hour = time.hour # This is in UTC.
         
-        def in_dst():
-            timezone = pytz.timezone("US/Pacific")
-            timezone_aware_date = timezone.localize(time, is_dst=None)
-            return timezone_aware_date.tzinfo._dst.seconds != 0
+        # def in_dst():
+        #     timezone = pytz.timezone("US/Pacific")
+        #     timezone_aware_date = timezone.localize(time, is_dst=None)
+        #     return timezone_aware_date.tzinfo._dst.seconds != 0
         
         # If it's not DST in PST add 1 to the hour.
         # Datetime math is the bane of my existence, but this does seem to work.
-        if not in_dst():
+        # if not in_dst():
+        if True: # Perma DST until pytz is installed on the server.
             print(f"Hourly loop is not currently in DST. Changing {hour} to {hour - 1}")
             hour -= 1
             
