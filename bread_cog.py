@@ -67,6 +67,7 @@ import traceback
 import re
 import time
 import io
+import pytz
 
 from os import getenv
 from dotenv import load_dotenv
@@ -974,18 +975,36 @@ class Bread_cog(commands.Cog, name="Bread"):
         self.synchronize_usernames_internal()
         self.json_interface.internal_save() # Save every hour
         self.currently_interacting.clear() # Clear the list of users currently interacting
+        
+        hour = time.hour # This is in UTC.
+        
+        def in_dst():
+            timezone = pytz.timezone("US/Pacific")
+            timezone_aware_date = timezone.localize(time, is_dst=None)
+            return timezone_aware_date.tzinfo._dst.seconds != 0
+        
+        # If it's not DST in PST add 1 to the hour.
+        # Datetime math is the bane of my existence, but this does seem to work.
+        if not in_dst():
+            print(f"Hourly loop is not currently in DST. Changing {hour} to {hour - 1}")
+            hour -= 1
+            
+        # PST (not PDT) is UTC-8, so subtract 8 to account for the time zone difference.
+        hour -= 7
+        
+        print(f"Current hour in PDT should be {hour}.")
 
         #run at 3pm
-        if time.hour == 15:
+        if hour == 15:
             # self.json_interface.create_backup()
             self.reset_internal() # this resets all roll counts to 0
             print("Daily reset called")
             await self.announce("bread_o_clock", "It's Bread O'Clock!")
 
         # every 6 hours, based around 3pm
-        # print (f"Hour +15 %6 is {(time.hour + 15) % 6}")
-        # print (f"Hour -15 %6 is {(time.hour - 15) % 6}")
-        if (time.hour - 12) % 6 == 0:
+        # print (f"Hour +15 %6 is {(hour + 15) % 6}")
+        # print (f"Hour -15 %6 is {(hour - 15) % 6}")
+        if (hour - 12) % 6 == 0:
             self.space_tick()
 
             print("stonk fluctuate called")
@@ -8621,6 +8640,8 @@ anarchy - 1000% of your wager.
 
         if not await self.await_confirmation(ctx):
             return
+        
+        await self.daily_task()
 
         # self.currently_interacting.clear()
 
