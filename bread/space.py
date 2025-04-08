@@ -69,6 +69,8 @@ MASK_LEFT = sum([(2 ** MAP_RADIUS - 1) << (n * MAP_SIZE) for n in range(MAP_SIZE
 MASK_RIGHT = MASK_LEFT << 128
 CIRCLE_8 = utility.dynamic_circle(8)
 CIRCLE_16 = utility.dynamic_circle(16)
+CIRCLE_24 = utility.dynamic_circle(24)
+CIRCLE_32 = utility.dynamic_circle(32)
 
 BASE_COMMUNICATION_RADIUS = 8
 
@@ -84,8 +86,12 @@ def make_circle_mask(
     
     if radius == 8:
         out = CIRCLE_8
-    else:
+    elif radius == 16:
         out = CIRCLE_16
+    elif radius == 24:
+        out = CIRCLE_24
+    else:
+        out = CIRCLE_32
 
     if x > 0:
         out <<= x
@@ -2475,19 +2481,34 @@ def generate_trade_hub_bubbles(
         guild: typing.Union[discord.Guild, int, str],
     ) -> list[int]:
     ascension_data = json_interface.get_space_ascension(ascension, guild)
+    map_data = json_interface.get_space_map_data(ascension, guild)
     
     # This is all seen Trade Hubs.
     trade_hub_data = ascension_data.get("trade_hubs", {})
     
     all_trade_hubs = []
-    have_increased_range = 0
+    increased_range_tiers = [0 for _ in range(projects.Detection_Array.max_level)]
     
     for key, data in trade_hub_data.items():
-        x, y = key.split(" ")
-        all_trade_hubs.append(int(x) + 256 * int(y))
+        x, y = map(int, key.split(" "))
         
-        if data.get("upgrades", {}).get("detection_array", {}).get("level", 0) > 0:
-            have_increased_range |= 1 << (int(x) + 256 * int(y))
+        if not has_seen_tile(
+                json_interface = json_interface, 
+                guild = guild,
+                ascension = ascension,
+                xpos = x,
+                ypos = y,
+                map_data = map_data
+            ):
+            continue
+        
+        all_trade_hubs.append(x + 256 * y)
+        
+        detection_array_tier = data.get("upgrades", {}).get("detection_array", {}).get("level", 0)
+        if detection_array_tier > 0:
+            # Put the hub location in every range tier for its tier and below.
+            for index in range(detection_array_tier):
+                increased_range_tiers[index] |= 1 << (x + 256 * y)
     
     # # Uncomment to use trade hubs that haven't been found yet, but still generated.
     # # This shouldn't be enabled in-game but can be fun to look at in a testing environment.
@@ -2499,17 +2520,28 @@ def generate_trade_hub_bubbles(
     
     ################################
     
+    def get_radius(key: int) -> int:
+        out = BASE_COMMUNICATION_RADIUS
+        
+        for tier in increased_range_tiers:
+            if not (key & tier):
+                return out
+            
+            out += BASE_COMMUNICATION_RADIUS
+        
+        return out
+    
     groups = []
 
     for key in all_trade_hubs:
         base_x, base_y = index_to_coordinate(key)
-        self_range = BASE_COMMUNICATION_RADIUS + (BASE_COMMUNICATION_RADIUS * bool((1 << key) & have_increased_range))
+        self_range = get_radius(1 << key)
             
         added = []
         for other_index, other_data in enumerate(groups):
             for other_spot in other_data:
                 other_x, other_y = index_to_coordinate(other_spot)
-                other_range = BASE_COMMUNICATION_RADIUS + (BASE_COMMUNICATION_RADIUS * bool((1 << other_spot) & have_increased_range))
+                other_range = get_radius(1 << other_spot)
                 
                 if math.hypot(base_x - other_x, base_y - other_y) <= (self_range + other_range):
                     groups[other_index].append(key)
@@ -2553,7 +2585,7 @@ def generate_trade_hub_bubbles(
         if group is None:
             continue
         
-        group_data[group] |= make_circle_mask(int(base_x), int(base_y), radius=(BASE_COMMUNICATION_RADIUS + (BASE_COMMUNICATION_RADIUS * bool((1 << key) & have_increased_range))))
+        group_data[group] |= make_circle_mask(int(base_x), int(base_y), radius=get_radius(1 << key))
     
     return group_data
     
