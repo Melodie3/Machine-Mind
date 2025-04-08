@@ -989,7 +989,7 @@ class Bread_cog(commands.Cog, name="Bread"):
             print(f"Hourly loop is not currently in DST. Changing {hour} to {hour - 1}")
             hour -= 1
             
-        # PST (not PDT) is UTC-8, so subtract 8 to account for the time zone difference.
+        # Account for the time zone difference between PST and UTC.
         hour -= 7
         
         print(f"Current hour in PDT should be {hour}.")
