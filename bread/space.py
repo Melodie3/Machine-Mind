@@ -1427,7 +1427,7 @@ class GalaxyTile:
             json_interface: bread_cog.JSON_interface,
             map_data: dict = None
         ) -> dict:
-        if generation.square_check(self.xpos - MAP_RADIUS, self.ypos - MAP_RADIUS):
+        if not generation.square_check(self.xpos, self.ypos):
             return False
         
         if map_data is None:
