@@ -2659,7 +2659,7 @@ def in_nebula_database(
     Returns:
         bool: Whether the given tile coordinates are marked as in a nebula in the database.
     """
-    if generation.square_check(xpos, ypos):
+    if not generation.square_check(xpos, ypos):
         return False
         
     if map_data is None:
@@ -2675,7 +2675,7 @@ def in_nebula_database(
     chunk = tile_id // 8192
     
     # Bitwise AND to get the bit on its own.
-    return bool(seen_data[chunk] & 2 ** (tile_id % 8192))
+    return bool(seen_data[chunk] & (1 << (tile_id % 8192)))
 
 def generate_trade_hub_mask(
         json_interface: bread_cog.JSON_interface,
