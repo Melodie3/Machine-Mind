@@ -318,27 +318,27 @@ recipes = {
         {
             "cost": [(values.gem_red, 2)],
             "requirement": [("space_level", 1)],
-            "result": lambda a: round(5 * a.get_fuel_refinement_boost())
+            "result": lambda a: round(5 * a.get_fuel_refinement_boost(), 2)
         },
         {
             "cost": [(values.gem_blue, 2)],
             "requirement": [("space_level", 1), ("fuel_research", 1)],
-            "result": lambda a: round(15 * a.get_fuel_refinement_boost())
+            "result": lambda a: round(15 * a.get_fuel_refinement_boost(), 2)
         },
         {
             "cost": [(values.gem_purple, 2)],
             "requirement": [("space_level", 1), ("fuel_research", 2)],
-            "result": lambda a: round(45 * a.get_fuel_refinement_boost())
+            "result": lambda a: round(45 * a.get_fuel_refinement_boost(), 2)
         },
         {
             "cost": [(values.gem_green, 2)],
             "requirement": [("space_level", 1), ("fuel_research", 3)],
-            "result": lambda a: round(135 * a.get_fuel_refinement_boost())
+            "result": lambda a: round(135 * a.get_fuel_refinement_boost(), 2)
         },
         {
             "cost": [(values.gem_gold, 2)],
             "requirement": [("space_level", 1), ("fuel_research", 4)],
-            "result": lambda a: round(750 * a.get_fuel_refinement_boost())
+            "result": lambda a: round(750 * a.get_fuel_refinement_boost(), 2)
         }
     ],
 

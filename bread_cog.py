@@ -4791,6 +4791,14 @@ anarchy - 1000% of your wager.
                             result_amount = result_amount(user_account)
                         except TypeError:
                             pass
+                
+                        # If it's a float and represents an integer just convert it to an integer.
+                        # If it's already an integer it'll raise an AttributeError, which will be caught.
+                        try:
+                            if result_amount.is_integer():
+                                result_amount = int(result_amount)
+                        except AttributeError:
+                            pass
 
                         recipes_description += f"   **({result_amount}x)**"
 
@@ -4850,6 +4858,14 @@ anarchy - 1000% of your wager.
                     item_multiplier = item_multiplier(user_account)
                 except TypeError:
                     pass
+                
+                # If it's a float and represents an integer just convert it to an integer.
+                # If it's already an integer it'll raise an AttributeError, which will be caught.
+                try:
+                    if item_multiplier.is_integer():
+                        item_multiplier = int(item_multiplier)
+                except AttributeError:
+                    pass
 
             already_confirmed = False
             if confirm is not None:
@@ -4861,10 +4877,10 @@ anarchy - 1000% of your wager.
                 if "result" in recipe:
                     multiplier_text = f"**({item_multiplier}x recipe)** "
 
-                question_text = f"You have chosen to create {utility.smart_number(count * item_multiplier)} {target_emote.text} {multiplier_text}from the following recipe:\n{alchemy.describe_individual_recipe(recipe)}\n\n"
+                question_text = f"You have chosen to create {utility.smart_number(round(count * item_multiplier))} {target_emote.text} {multiplier_text}from the following recipe:\n{alchemy.describe_individual_recipe(recipe)}\n\n"
                 question_text += f"You have the following ingredients:\n"
                 for pair in recipe["cost"]:
-                    question_text += f"{pair[0].text}: {utility.smart_number(user_account.get(pair[0].text))} of {pair[1] * count}\n"
+                    question_text += f"{pair[0].text}: {utility.smart_number(user_account.get(pair[0].text))} of {round(pair[1] * count)}\n"
                         
                 question_text += "\nWould you like to proceed? Yes or No."
                 await ctx.reply(question_text)
