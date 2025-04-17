@@ -48,7 +48,8 @@ class Bread_Account:
         "brick_troll_percentage" : 0,
         "daily_fuel": 100,
         "hub_credits": 2000,
-        "auto_move_map": False
+        "auto_move_map": False,
+        "tron_animation": True
     }
 
 

@@ -2456,6 +2456,10 @@ loaf_converter""",
         # then we send the tron messages
         if trons_to_make == 0:
             return
+        elif not user_account.get("tron_animation"):
+            # If the tron animation is disabled run this instead.
+            output = f"Congratulations! You have made {utility.write_count(trons_to_make, 'chessatron')}! Here is your reward of **{utility.smart_number(total_dough_value)} dough**.\n\n{values.chessatron.text} x {utility.smart_number(trons_to_make)}"
+            await ctx.reply(output)
         elif user_account.get("full_chess_set") <= 5:
             messages_to_send = trons_to_make
             while messages_to_send > 0:
@@ -2538,6 +2542,42 @@ loaf_converter""",
                 await self.do_chessboard_completion(ctx, True, amount = parse_int(arg))
             else:
                 await self.do_chessboard_completion(ctx, True)
+
+    
+
+    ########################################################################################################################
+    #####      BREAD TRON_ANIMATION
+
+    @bread.command(
+        name="tron_animation", 
+        aliases=["chessatron_animation", "animation_tron", "animation_chessatron"],
+        help="Toggles the chessatron animation on and off.",
+        usage="on/off",
+        brief="Toggles the chessatron animation on and off."
+    )
+    async def tron_animation(self, ctx,
+            arg: typing.Optional[str] = commands.parameter(description = "Turn the chessatron animation 'on' or 'off'.")
+            ) -> None:
+        user_account = self.json_interface.get_account(ctx.author, guild = ctx.guild.id)
+
+        if arg is None:
+            arg = ""
+        
+        if arg.lower() == "on":
+            do_enable = True
+        elif arg.lower() == "off":
+            do_enable = False
+        else:
+            do_enable = not user_account.get("tron_animation")
+            
+        if do_enable:
+            user_account.set("tron_animation", True)
+            self.json_interface.set_account(ctx.author, user_account, guild = ctx.guild.id)
+            await ctx.reply(f"The chessatron animation is now enabled.")
+        else:
+            user_account.set("tron_animation", False)
+            self.json_interface.set_account(ctx.author, user_account, guild = ctx.guild.id)
+            await ctx.reply(f"The chessatron animation is now disabled.")
 
         
 
@@ -7764,7 +7804,10 @@ anarchy - 1000% of your wager.
         self.json_interface.set_account(ctx.author, user_account, ctx.guild.id)
 
         # then we send the tron messages
-        if trons_to_make < 3:
+        if not user_account.get("tron_animation"):
+            await ctx.reply(f"Congratuations! You have made {utility.write_count(trons_to_make, 'Anarchy Chessatron')}! For this you have been awarded **{utility.smart_number(total_dough_value)} dough**!\n\n{values.anarchy_chessatron.text} x {utility.smart_number(trons_to_make)}")
+            
+        elif trons_to_make < 3:
             for _ in range(trons_to_make):
                 await ctx.reply(f"You've collected all the anarchy pieces! Congratulations!")
                 await asyncio.sleep(1)
