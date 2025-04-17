@@ -4971,16 +4971,16 @@ anarchy - 1000% of your wager.
             if "provide_no_dough" in recipe and recipe["provide_no_dough"]:
                 override_dough = True # Provide no dough from the recipe, even if the item calls for it. This is set in the recipe, instead of the item.
 
-            for i in range(count):
-                # we remove the ingredients
-                for pair in recipe["cost"]:
-                    user_account.increment(pair[0].text, -pair[1])
+            # for i in range(count):
+            # we remove the ingredients
+            for pair in recipe["cost"]:
+                user_account.increment(pair[0].text, -pair[1] * count)
 
-                # then we add the item
-                
-                user_account.add_item_attributes(target_emote, output_amount)
-                if target_emote.gives_alchemy_award() and not override_dough:
-                    value += user_account.add_dough_intelligent((target_emote.get_alchemy_value() + user_account.get_dough_boost_for_item(target_emote)) * item_multiplier)
+            # then we add the item
+            
+            user_account.add_item_attributes(target_emote, output_amount * count)
+            if target_emote.gives_alchemy_award() and not override_dough:
+                value += user_account.add_dough_intelligent((target_emote.get_alchemy_value() + user_account.get_dough_boost_for_item(target_emote)) * item_multiplier * count)
 
 
             # finally, we save the account
