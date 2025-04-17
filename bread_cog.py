@@ -3555,6 +3555,40 @@ For example, "$bread gift Melodie all chess_pieces" would gift all your chess pi
             await ctx.reply(f"Gifted {utility.write_count(item_amount, 'chess set')} to {receiver_account.get_display_name()}.")
             self.remove_from_interacting(ctx.author.id)
             return
+        elif emoji in {"anarchy_piece_set", "anarchy_set"}:
+            limiting_values = []
+
+            for piece in values.all_anarchy_pieces:
+                limiting_values.append(sender_account.get(piece.text) // values.all_anarchy_pieces_biased.count(piece))
+            
+            maximum_possible = min(limiting_values)
+
+            if maximum_possible == 0:
+                await ctx.reply("Sorry, you don't have any anarchy piece sets to gift.")
+                self.remove_from_interacting(ctx.author.id)
+                return
+            
+            item_amount = min(maximum_possible, amount)
+
+            if do_fraction:
+                item_amount = maximum_possible * fraction_numerator // fraction_denominator
+            
+            # Now, recursively call this function for each item.
+            for item in values.all_anarchy_pieces:
+                gift_amount = item_amount * values.all_anarchy_pieces_biased.count(item)
+                
+                gift(
+                    sender_member = ctx.author,
+                    receiver_member = target,
+                    item = item.text,
+                    amount =gift_amount
+                )
+                await ctx.send(f"{utility.smart_number(gift_amount)} {item.text} has been gifted to {target.mention}.")
+                await asyncio.sleep(1)
+                
+            await ctx.reply(f"Gifted {utility.write_count(item_amount, 'anarchy piece set')} to {receiver_account.get_display_name()}.")
+            self.remove_from_interacting(ctx.author.id)
+            return
 
         if sender_account.has_category(emoji):
             do_category_gift = True
