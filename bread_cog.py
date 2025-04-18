@@ -8740,6 +8740,8 @@ anarchy - 1000% of your wager.
             
             account.set(store.Payment_Bonus.name, 0)
             account.set("active_multirollers", -1)
+            
+            self.json_interface.set_account(account.get("id"), account, ctx.guild.id)
 
         # self.currently_interacting.clear()
 
