@@ -139,20 +139,20 @@ class Bread_Account:
                                 "daily_gambles", "daily_rolls",
                                 "multiroller", "compound_roller", "roll_summarizer", "black_hole", "multiroller_terminal", "multiroller_active",
                                 "investment_profit", "gamble_winnings",
-                                "space_level", "telescope_level", "autopilot_level", "fuel_tank", "fuel_research", "multiroller_terminal", "advanced_exploration", "engine_efficiency",
+                                "space_level", "telescope_level", "autopilot_level", "fuel_tank", "fuel_research", "multiroller_terminal", "advanced_exploration", "engine_efficiency", "payment_bonus",
                                 "galaxy_move_count", "galaxy_xpos", "galaxy_ypos", "system_xpos", "system_ypos", "projects_completed", "trade_hubs_created",
         ]
         untouched =            ["lifetime_earned_dough", "lifetime_dough", "lifetime_gambles","highest_roll", ]
 
         lifetime_stats = [      "total_rolls", "earned_dough", "loaf_converter",
                                 "natural_1", "ten_breads",  
-                                "eleven_breads", "twelve_breads", "thirteen_breads", "fourteen_or_higher",
-                                "special_bread", "rare_bread", "unique", "chess_pieces", "shiny", "anarchy_pieces",
+                                "eleven_breads", "twelve_breads", "thirteen_breads", "fourteen_or_higher", "thirteen_breads", "fourteen_breads", "fifteen_breads", "sixteen_breads", "seventeen_breads", "eighteen_breads", "nineteen_breads",
+                                "special_bread", "rare_bread", "unique", "chess_pieces", "shiny", "anarchy_pieces", "very_shiny", "misc" # misc is corrupted bread
                                 "full_chess_set", "many_of_a_kind", 
                                 "lottery_win",
                                 "projects_completed", "trade_hubs_created", "full_anarchy_set"
-
         ]
+        lifetime_stats.extend([utility.name_amount(n) for n in range(20, 100)])
 
         # convert omegas to shadows
         if self.get(values.omega_chessatron.text) > 0:
@@ -189,6 +189,7 @@ class Bread_Account:
             )
         
         self.set("daily_fuel", self.get_daily_fuel_cap())
+        self.set("active_multirollers", -1)
 
         # reset boosts file
         self.set("dough_boosts", dict())

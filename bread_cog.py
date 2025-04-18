@@ -8734,7 +8734,12 @@ anarchy - 1000% of your wager.
         if not await self.await_confirmation(ctx):
             return
         
-        await self.daily_task()
+        for account in self.json_interface.get_all_user_accounts(ctx.guild.id):
+            if account.get_prestige_level() != 11:
+                continue
+            
+            account.set(store.Payment_Bonus.name, 0)
+            account.set("active_multirollers", -1)
 
         # self.currently_interacting.clear()
 
