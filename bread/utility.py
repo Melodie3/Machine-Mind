@@ -366,6 +366,16 @@ def gen_embed(
     
     return embed
 
+def name_amount(amount: int) -> str:
+    """Takes in a number and generates a stat name for that many breads in a roll."""
+    if amount > 99:
+        return f"{amount}_breads"
+    
+    single = ["", "_one", "_two", "_three", "_four", "_five", "_six", "_seven", "_eight", "_nine"]
+    ten = ["", "", "twenty", "thirty", "forty", "fifty", "sixty", "seventy", "eighty", "ninety"]
+
+    return f"{ten[amount // 10]}{single[amount % 10]}_breads"
+
 #################################################################################################################
 #################################################################################################################
 #################################################################################################################

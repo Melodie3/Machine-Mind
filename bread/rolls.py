@@ -139,15 +139,6 @@ def bread_roll(
 
         # print (f"roll_count: {roll_count}")
 
-        def name_amount(amount: int) -> str:
-            if amount > 99:
-                return f"{amount}_breads"
-            
-            single = ["", "_one", "_two", "_three", "_four", "_five", "_six", "_seven", "_eight", "_nine"]
-            ten = ["", "", "twenty", "thirty", "forty", "fifty", "sixty", "seventy", "eighty", "ninety"]
-
-            return f"{ten[amount // 10]}{single[amount % 10]}_breads"
-
         if loaf_count == 1:
             count_commentary = "Better luck next time."
             output = utility.increment(output, "natural_1", 1)
@@ -200,7 +191,7 @@ def bread_roll(
             output = utility.increment(output, "nineteen_breads", 1)
             output["highest_roll"] = loaf_count
         elif loaf_count > CURRENT_ROLL_RECORD and loaf_count < 100:
-            stat = name_amount(loaf_count)
+            stat = utility.name_amount(loaf_count)
 
             count_commentary = f"Holy crap! That's a new record of {loaf_count} breads!"
             output["highest_roll"] = loaf_count
@@ -208,7 +199,7 @@ def bread_roll(
             output = utility.increment(output, "loaf_records", 1)
             output = utility.increment(output, stat, 1)
         elif loaf_count > 19 and loaf_count < 100:
-            stat = name_amount(loaf_count)
+            stat = utility.name_amount(loaf_count)
 
             count_commentary = f"Holy hell! {loaf_count} breads!"
             output["highest_roll"] = loaf_count

@@ -7988,7 +7988,7 @@ class Chessatron_Repair(Project):
 ##### Item projects. ##################################################################################
 #######################################################################################################
 
-story_projects = [Essential_Oils, Bingobango, Anarchy_Trading, Beta_Minus, Anarchy_Tax_Evasion, Gem_Extraction, Bakery_Encounter, Corruption_Lab, Cafeteria_Kerfuffle, Health_Inspection, Stonk_Exchange]
+story_projects = [Essential_Oils, Bingobango, Anarchy_Trading, Beta_Minus, Anarchy_Tax_Evasion, Gem_Extraction, Bakery_Encounter, Corruption_Lab, Cafeteria_Kerfuffle, Health_Inspection, Stonk_Exchange, Waxillium_Space_Station]
 
 take_special_bread_projects = [Too_Much_Stuffing, Flatbread_Shortage, Appease_The_French, Croissant_Cravings, Beach_Disappearance]
 take_rare_bread_projects = [Ecosystem_Problem, Stolen_Donuts, Waffle_Machine]

@@ -67,7 +67,7 @@ import traceback
 import re
 import time
 import io
-# import pytz
+import pytz
 
 from os import getenv
 from dotenv import load_dotenv
@@ -978,15 +978,14 @@ class Bread_cog(commands.Cog, name="Bread"):
         
         hour = time.hour # This is in UTC.
         
-        # def in_dst():
-        #     timezone = pytz.timezone("US/Pacific")
-        #     timezone_aware_date = timezone.localize(time, is_dst=None)
-        #     return timezone_aware_date.tzinfo._dst.seconds != 0
+        def in_dst():
+            timezone = pytz.timezone("US/Pacific")
+            timezone_aware_date = timezone.localize(time, is_dst=None)
+            return timezone_aware_date.tzinfo._dst.seconds != 0
         
         # If it's not DST in PST add 1 to the hour.
         # Datetime math is the bane of my existence, but this does seem to work.
-        # if not in_dst():
-        if False: # Perma DST until pytz is installed on the server.
+        if not in_dst():
             print(f"Hourly loop is not currently in DST. Changing {hour} to {hour - 1}")
             hour -= 1
             
@@ -2457,6 +2456,10 @@ loaf_converter""",
         # then we send the tron messages
         if trons_to_make == 0:
             return
+        elif not user_account.get("tron_animation"):
+            # If the tron animation is disabled run this instead.
+            output = f"Congratulations! You have made {utility.write_count(trons_to_make, 'chessatron')}! Here is your reward of **{utility.smart_number(total_dough_value)} dough**.\n\n{values.chessatron.text} x {utility.smart_number(trons_to_make)}"
+            await ctx.reply(output)
         elif user_account.get("full_chess_set") <= 5:
             messages_to_send = trons_to_make
             while messages_to_send > 0:
@@ -2539,6 +2542,42 @@ loaf_converter""",
                 await self.do_chessboard_completion(ctx, True, amount = parse_int(arg))
             else:
                 await self.do_chessboard_completion(ctx, True)
+
+    
+
+    ########################################################################################################################
+    #####      BREAD TRON_ANIMATION
+
+    @bread.command(
+        name="tron_animation", 
+        aliases=["chessatron_animation", "animation_tron", "animation_chessatron"],
+        help="Toggles the chessatron animation on and off.",
+        usage="on/off",
+        brief="Toggles the chessatron animation on and off."
+    )
+    async def tron_animation(self, ctx,
+            arg: typing.Optional[str] = commands.parameter(description = "Turn the chessatron animation 'on' or 'off'.")
+            ) -> None:
+        user_account = self.json_interface.get_account(ctx.author, guild = ctx.guild.id)
+
+        if arg is None:
+            arg = ""
+        
+        if arg.lower() == "on":
+            do_enable = True
+        elif arg.lower() == "off":
+            do_enable = False
+        else:
+            do_enable = not user_account.get("tron_animation")
+            
+        if do_enable:
+            user_account.set("tron_animation", True)
+            self.json_interface.set_account(ctx.author, user_account, guild = ctx.guild.id)
+            await ctx.reply(f"The chessatron animation is now enabled.")
+        else:
+            user_account.set("tron_animation", False)
+            self.json_interface.set_account(ctx.author, user_account, guild = ctx.guild.id)
+            await ctx.reply(f"The chessatron animation is now disabled.")
 
         
 
@@ -3514,6 +3553,40 @@ For example, "$bread gift Melodie all chess_pieces" would gift all your chess pi
                 await asyncio.sleep(1)
                 
             await ctx.reply(f"Gifted {utility.write_count(item_amount, 'chess set')} to {receiver_account.get_display_name()}.")
+            self.remove_from_interacting(ctx.author.id)
+            return
+        elif emoji in {"anarchy_piece_set", "anarchy_set"}:
+            limiting_values = []
+
+            for piece in values.all_anarchy_pieces:
+                limiting_values.append(sender_account.get(piece.text) // values.all_anarchy_pieces_biased.count(piece))
+            
+            maximum_possible = min(limiting_values)
+
+            if maximum_possible == 0:
+                await ctx.reply("Sorry, you don't have any anarchy piece sets to gift.")
+                self.remove_from_interacting(ctx.author.id)
+                return
+            
+            item_amount = min(maximum_possible, amount)
+
+            if do_fraction:
+                item_amount = maximum_possible * fraction_numerator // fraction_denominator
+            
+            # Now, recursively call this function for each item.
+            for item in values.all_anarchy_pieces:
+                gift_amount = item_amount * values.all_anarchy_pieces_biased.count(item)
+                
+                gift(
+                    sender_member = ctx.author,
+                    receiver_member = target,
+                    item = item.text,
+                    amount =gift_amount
+                )
+                await ctx.send(f"{utility.smart_number(gift_amount)} {item.text} has been gifted to {target.mention}.")
+                await asyncio.sleep(1)
+                
+            await ctx.reply(f"Gifted {utility.write_count(item_amount, 'anarchy piece set')} to {receiver_account.get_display_name()}.")
             self.remove_from_interacting(ctx.author.id)
             return
 
@@ -4792,6 +4865,14 @@ anarchy - 1000% of your wager.
                             result_amount = result_amount(user_account)
                         except TypeError:
                             pass
+                
+                        # If it's a float and represents an integer just convert it to an integer.
+                        # If it's already an integer it'll raise an AttributeError, which will be caught.
+                        try:
+                            if result_amount.is_integer():
+                                result_amount = int(result_amount)
+                        except AttributeError:
+                            pass
 
                         recipes_description += f"   **({result_amount}x)**"
 
@@ -4851,6 +4932,14 @@ anarchy - 1000% of your wager.
                     item_multiplier = item_multiplier(user_account)
                 except TypeError:
                     pass
+                
+                # If it's a float and represents an integer just convert it to an integer.
+                # If it's already an integer it'll raise an AttributeError, which will be caught.
+                try:
+                    if item_multiplier.is_integer():
+                        item_multiplier = int(item_multiplier)
+                except AttributeError:
+                    pass
 
             already_confirmed = False
             if confirm is not None:
@@ -4862,10 +4951,10 @@ anarchy - 1000% of your wager.
                 if "result" in recipe:
                     multiplier_text = f"**({item_multiplier}x recipe)** "
 
-                question_text = f"You have chosen to create {utility.smart_number(count * item_multiplier)} {target_emote.text} {multiplier_text}from the following recipe:\n{alchemy.describe_individual_recipe(recipe)}\n\n"
+                question_text = f"You have chosen to create {utility.smart_number(round(count * item_multiplier))} {target_emote.text} {multiplier_text}from the following recipe:\n{alchemy.describe_individual_recipe(recipe)}\n\n"
                 question_text += f"You have the following ingredients:\n"
                 for pair in recipe["cost"]:
-                    question_text += f"{pair[0].text}: {utility.smart_number(user_account.get(pair[0].text))} of {pair[1] * count}\n"
+                    question_text += f"{pair[0].text}: {utility.smart_number(user_account.get(pair[0].text))} of {round(pair[1] * count)}\n"
                         
                 question_text += "\nWould you like to proceed? Yes or No."
                 await ctx.reply(question_text)
@@ -4916,16 +5005,16 @@ anarchy - 1000% of your wager.
             if "provide_no_dough" in recipe and recipe["provide_no_dough"]:
                 override_dough = True # Provide no dough from the recipe, even if the item calls for it. This is set in the recipe, instead of the item.
 
-            for i in range(count):
-                # we remove the ingredients
-                for pair in recipe["cost"]:
-                    user_account.increment(pair[0].text, -pair[1])
+            # for i in range(count):
+            # we remove the ingredients
+            for pair in recipe["cost"]:
+                user_account.increment(pair[0].text, -pair[1] * count)
 
-                # then we add the item
-                
-                user_account.add_item_attributes(target_emote, output_amount)
-                if target_emote.gives_alchemy_award() and not override_dough:
-                    value += user_account.add_dough_intelligent((target_emote.get_alchemy_value() + user_account.get_dough_boost_for_item(target_emote)) * item_multiplier)
+            # then we add the item
+            
+            user_account.add_item_attributes(target_emote, output_amount * count)
+            if target_emote.gives_alchemy_award() and not override_dough:
+                value += user_account.add_dough_intelligent((target_emote.get_alchemy_value() + user_account.get_dough_boost_for_item(target_emote)) * item_multiplier * count)
 
 
             # finally, we save the account
@@ -7749,7 +7838,10 @@ anarchy - 1000% of your wager.
         self.json_interface.set_account(ctx.author, user_account, ctx.guild.id)
 
         # then we send the tron messages
-        if trons_to_make < 3:
+        if not user_account.get("tron_animation"):
+            await ctx.reply(f"Congratuations! You have made {utility.write_count(trons_to_make, 'Anarchy Chessatron')}! For this you have been awarded **{utility.smart_number(total_dough_value)} dough**!\n\n{values.anarchy_chessatron.text} x {utility.smart_number(trons_to_make)}")
+            
+        elif trons_to_make < 3:
             for _ in range(trons_to_make):
                 await ctx.reply(f"You've collected all the anarchy pieces! Congratulations!")
                 await asyncio.sleep(1)
@@ -8642,7 +8734,12 @@ anarchy - 1000% of your wager.
         if not await self.await_confirmation(ctx):
             return
         
-        await self.daily_task()
+        for account in self.json_interface.get_all_user_accounts(ctx.guild.id):
+            if account.get_prestige_level() != 11:
+                continue
+            
+            account.set(store.Payment_Bonus.name, 0)
+            account.set("active_multirollers", -1)
 
         # self.currently_interacting.clear()
 
