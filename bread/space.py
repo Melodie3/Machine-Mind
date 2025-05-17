@@ -222,7 +222,7 @@ PLANET_COLORS = {
     "Bknightanarchy": (0, 23, 60),
     "Bbishopanarchy": (0, 23, 60),
     "Brookanarchy": (0, 23, 60),
-    "Buqeenanarchy": (0, 23, 60),
+    "Bqueenanarchy": (0, 23, 60),
     "Bkinganarchy": (0, 23, 60),
 
     "Wpawnanarchy": (255, 156, 174),
