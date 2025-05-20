@@ -37,13 +37,25 @@ def bread_roll(
 
     output["individual_values"] = list()
     output["first_catch_found"] = list()
+    
+    ######################
+    # Ephemeral booleans.
+    
+    disable_lotteries = False # Pathfinder.
+    swap_moak_booster_usage = False # Phoenix.
+    disable_gem_rr = False # Ingenuity.
 
     ##### Static values.
     # These are values that are static across all rolls in a multiroll.
 
     moak_rarity_multiplier = round(user_account.get("max_daily_rolls") / 10)
     gem_boost = user_account.get_shadow_gold_gem_boost_count()
+    white_piece_chance = store.chess_piece_distribution_levels[user_account.get("chess_piece_equalizer")]
+    moak_booster_multiplier = store.moak_booster_multipliers[user_account.get("moak_booster")]
 
+    lottery_chance = 4096
+    lottery_luck_multiplier = 4
+    
     lc_booster = user_account.get("LC_booster")
     if lc_booster > 0:
         lc_boost = 2 ** lc_booster
@@ -104,6 +116,47 @@ def bread_roll(
         rare_bread_multiplier = 1
         special_bread_multiplier = 1
 
+    if user_account.get_ephemeral_upgrade(store.Viking.name):
+        print("[Rolls]: Viking activated.")
+        # Viking: Increase luck by 10% but MoaKs become unrollable.
+        roll_luck = round(roll_luck * 1.1)
+        moak_multiplier = 0
+
+    if user_account.get_ephemeral_upgrade(store.Pathfinder.name):
+        print("[Rolls]: Viking activated.")
+        # Pathfinder: Doubles your maximum daily rolls, but you can no longer roll any lotteries.
+        # The maximum daily roll doubling part is implemented in bread_cog.py.
+        disable_lotteries = True
+
+    if user_account.get_ephemeral_upgrade(store.Sojourner.name):
+        print("[Rolls]: Sojourner activated.")
+        # Sojourner: You get 50% more anarchy pieces, but Chess Piece Equalizer is effectively 2 levels lower. (With 20% and 15% below 0.)
+        anarchy_piece_multiplier *= 1.5
+        white_piece_chance = ([15, 20] + store.chess_piece_distribution_levels)[user_account.get("chess_piece_equalizer")]
+
+    if user_account.get_ephemeral_upgrade(store.Curiosity.name):
+        print("[Rolls]: Curiosity activated.")
+        # Curiosity: Doubles the chance of rolling a lottery, but removes the 4x luck multiplier inside of them.
+        lottery_chance = 2048
+        lottery_luck_multiplier = 1
+
+    if user_account.get_ephemeral_upgrade(store.Phoenix.name):
+        print("[Rolls]: Phoenix activated.")
+        # Phoenix: MoaK Booster affects gems instead of MoaKs.
+        swap_moak_booster_usage = True
+        space_gem_luck = round(space_gem_luck * moak_booster_multiplier)
+
+    if user_account.get_ephemeral_upgrade(store.Perseverance.name):
+        print("[Rolls]: Perseverance activated.")
+        # Perseverance: Doubles the chance of rolling space gems, but cuts the chance of rolling Anarchy Pieces in half.
+        anarchy_piece_multiplier /= 2
+        space_gem_multiplier *= 2
+
+    if user_account.get_ephemeral_upgrade(store.Ingenuity.name):
+        print("[Rolls]: Ingenuity activated.")
+        # Ingenuity: Increase your MoaK chance by 25%, but Recipe Refinement no longer applies to gems.
+        moak_multiplier *= 1.25
+        disable_gem_rr = True
 
 
     # what we'll do, is we'll have one commentary message, and a bunch of roll messages
@@ -120,15 +173,15 @@ def bread_roll(
         out_luck = roll_luck
         lottery = False
 
-        if random.randint(1,4096) == 1: #lottery win
+        if (not disable_lotteries) and random.randint(1, lottery_chance) == 1: #lottery win
             # if you have more than 100 max daily rolls, you'll get extra rolls on the lottery
             loaf_count = max(100, user_account.get("max_daily_rolls"))
             # but the base profit goes down to compensate
             profit = max(0, 1000-loaf_count)
-            out_luck = max(roll_luck*4, 16) # extra lucky
+            out_luck = max(roll_luck*lottery_luck_multiplier, 16) # extra lucky
             count_commentary = "You won the lottery!!!! Congratulations!!!"
             output = utility.increment(output, "lottery_win", 1)
-            lottery = True\
+            lottery = True
             #lottery
         
         # this section does 11 and higher breads
@@ -217,12 +270,18 @@ def bread_roll(
         ### Roll-only values:
         # These are values that are the same for each loaf in this roll, but may change on a different roll.        
 
-        moak_luck = round(out_luck * store.moak_booster_multipliers[ user_account.get("moak_booster")])
-        gem_luck = out_luck + gem_boost
+        if swap_moak_booster_usage:
+            moak_luck = out_luck
+            gem_luck = round(out_luck + gem_boost * moak_booster_multiplier)
+        else:
+            moak_luck = round(out_luck * moak_booster_multiplier)
+            gem_luck = out_luck + gem_boost
 
         if lc_booster > 0:
-            out_luck = (out_luck - 1) * lc_boost + 1 
-            gem_luck = (gem_luck - 1) * lc_boost + 1
+            out_luck = (out_luck - 1) * lc_boost + 1
+            
+            if not disable_gem_rr:
+                gem_luck = (gem_luck - 1) * lc_boost + 1
 
         for i in range(1,loaf_count+1):
 
@@ -233,6 +292,8 @@ def bread_roll(
             roll = loaf_roll(
                 luck = out_luck,
                 user_account = user_account,
+                
+                white_piece_chance = white_piece_chance,
 
                 moak_rarity_multiplier = moak_rarity_multiplier,
                 moak_luck = moak_luck,
@@ -383,6 +444,8 @@ def bread_roll(
 def loaf_roll(
         luck: int = 1,
         user_account: account.Bread_Account = None,
+        
+        white_piece_chance: int = 25,
 
         moak_rarity_multiplier: int = 1,
         moak_luck: int = 32768,
@@ -417,9 +480,8 @@ def loaf_roll(
             output["emote"] = values.corrupted_bread
         else:
             # anarchy piece
-            white_piece_chances = store.chess_piece_distribution_levels[user_account.get("chess_piece_equalizer")]
 
-            if random.randint(1, 100) <= white_piece_chances:
+            if random.randint(1, 100) <= white_piece_chance:
                 # White anarchy piece
                 output["emote"] = random.choice(values.anarchy_pieces_white_biased)
                 output["commentary"] = "Your Karma has been increased by 20 points."
@@ -489,9 +551,7 @@ def loaf_roll(
         #chess piece
         # user_chess_pieces = user_account.get_all_items_with_attribute_unrolled("chess_pieces")
 
-        white_piece_chances = store.chess_piece_distribution_levels[user_account.get("chess_piece_equalizer")]
-
-        if random.randint(1,100) <= white_piece_chances: # white pieces
+        if random.randint(1,100) <= white_piece_chance: # white pieces
             # unfound_white_pieces = utility.array_subtract(values.chess_pieces_white_biased, user_chess_pieces)
             # if len(unfound_white_pieces) > 0:
             #     awarded_piece = random.choice(unfound_white_pieces)

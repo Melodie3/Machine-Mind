@@ -1,14 +1,21 @@
 """
-HOW TO UNRESTRICT SPACE TO a9:
-- Go to Bread_cog.space_shop and remove the if that's "if user_account.get_prestige_level() < 9:"
+Patch 30:
+- Added a new Trade Hub upgrade unlocked at tier 5.
+- Added `$bread reset_account` if you want to reset your account for some reason.
+- Fuel is now shown in the item section of the space stats.
+- High Roller Table has been moved from the Hidden Bakery to the regular Bread Shop. Everyone who purchased it in the past has recieved a refund.
+- The gambit shop items will now, in their descriptions, show how much dough the item will be worth if you were to buy it.
+- The :gem_white: gambit shop item has been removed.
+- Standardized category naming scheme in the planet analysis.
+- Fixed systems with :Bqueenanarchy: planets not being viewable on the full map.
+- Fixed being able to spam `$bread hub contribute level full y` to level up a Trade Hub to tier 6, which would completely break it and both the galaxy and system map in the area.
+- The code behind all the shops is now standardized, meaning all the shops should be formatted the same way. This will cause some slight differences from before in regards to line breaks, but everything else should be the same. Let me know if you find any issues.
+- Other small internal changes, there should be no visual differences.
 
-Patch 27.11:
-- Projects and planet rolling odds now refresh twice per day. Once at bread o' clock and once 12 hours later.
-- Some internal changes have been made with how the map works, nothing should be different except the galaxy map should be generated slightly faster now with higher telescope levels.
-- It will now say how long it took the map to generate. This was originally just for development but Lilly wanted it to be kept.
-- You can now use `$bread hub contribute <project> all <item>` to contribute as much as you can to a project.
-- Fixed bug where running `$bread hub contribute` without any parameters would break.
-- Slightly changed planet rolling odds math.
+Internal changes:
+- Gambit shop upgrades can now have multiple tiers, with each tier adding another `1 * bonus` dough to the item rolled, with the cost increading in the same way.
+- Added a `Static_Cost_Mixin` class to `bread/store.py`, to be used in cases where the shop item uses `cost` to get the cost instead of `get_costs`. In these cases `get_cost_types` will not function properly. If the `Static_Cost_Mixin` is used in these shop item classes it will overwrite `get_cost_types` to work properly. Note that this will only work if the shop item uses `cost` and does not have the type of items change.)
+- `account.Bread_Account` objects are now passed the JSON interface when being initialized.
 
 
 (todo) test reply ping
@@ -443,7 +450,7 @@ class JSON_interface:
 
         # if index in self.accounts:
         #     return self.accounts[index]
-        account_raw = account.Bread_Account.from_dict(index, self.get_file_for_user(user, guild_id))
+        account_raw = account.Bread_Account.from_dict(index, self.get_file_for_user(user, guild_id), self)
         # self.accounts[index] = account_raw
         return account_raw
         
@@ -883,6 +890,13 @@ class Bread_cog(commands.Cog, name="Bread"):
             after: list | set
         ) -> str:
         """Gives a description of added shop items based on a list of available shop items prior to something happening and a list for after it happened."""
+        # Becuase of how the Ephemeral Upgrades work their can_be_purchased will toggle when any are purchased,
+        # resulting in the text "*The .*" being added to the buy message. While is this absolutely hilarious it
+        # is unfortunately not intended, will likely cause confusion, and should not be in the game. These two
+        # filters will clear out any ephemeral upgrades that are in the before or after lists.
+        before = filter(lambda i: not issubclass(i, store.Ephemeral_Upgrade), before)
+        after = filter(lambda i: not issubclass(i, store.Ephemeral_Upgrade), after)
+        
         difference = list(set(after) - set(before)) # What's in the end but not the start.
         
         added = ""
@@ -894,7 +908,8 @@ class Bread_cog(commands.Cog, name="Bread"):
                 "Bread Shop": [],
                 "Hidden Bakery": [],
                 "Gambit Shop": [],
-                "Space Shop": []
+                "Space Shop": [],
+                "Salvage Shop": []
             }
             
             for item in difference:
@@ -906,17 +921,8 @@ class Bread_cog(commands.Cog, name="Bread"):
                     shop_data["Gambit Shop"].append(item)
                 elif item in store.space_shop_items:
                     shop_data["Space Shop"].append(item)
-            
-            def list_items(items: list) -> str:
-                joined = ", ".join([item.display_name for item in items])
-                
-                last_comma = joined.rsplit(",", 1)
-                
-                # Include the Oxford comma if the amount of items is not 2.
-                if len(items) == 2:
-                    return " and".join(last_comma)
-                else:
-                    return ", and".join(last_comma)
+                elif item in store.all_salvage_shop_items:
+                    shop_data["Salvage Shop"].append(item)
 
             filtered = {name: contents for name, contents in shop_data.items() if contents}
 
@@ -932,7 +938,7 @@ class Bread_cog(commands.Cog, name="Bread"):
                     else:
                         added += ", the "
                 
-                added += list_items(items)
+                added += utility.list_items([item.display_name for item in items])
                 
                 if shop_index == 0:
                     added += " shop"
@@ -1500,16 +1506,16 @@ class Bread_cog(commands.Cog, name="Bread"):
             output += f"With your {user_account.write_count(values.omega_chessatron.text, 'Omega Chessatron')}, each new chessatron is worth {sn(user_account.get_chessatron_dough_amount(True))} dough.\n"
         if user_account.has("multiroller"):
             output += f"With your {user_account.write_count('multiroller', 'Multiroller')}, you roll {utility.write_number_of_times(2 ** user_account.get('multiroller'))} with each command. "
-        if user_account.has("compound_roller"):
-            output += f"You also get {utility.write_count(2 ** user_account.get('compound_roller'), 'roll')} per message with your {user_account.write_count('compound_roller', 'Compound Roller')}.\n"
-        else:
-            output += "\n"
+            if user_account.has("compound_roller"):
+                output += f"You also get {utility.write_count(2 ** user_account.get('compound_roller'), 'roll')} per message with your {user_account.write_count('compound_roller', 'Compound Roller')}.\n"
+            else:
+                output += "\n"
+        if user_account.has("gamble_level"):
+            output += f"You have level {user_account.get('gamble_level')} of the High Roller Table.\n"
 
         # ascension/prestige shop items
         if user_account.has("prestige_level", 1):
             output += "\n"
-            if user_account.has("gamble_level"):
-                output += f"You have level {user_account.get('gamble_level')} of the High Roller Table.\n"
             if user_account.has("max_daily_rolls_discount"):
                 output += f"You have {utility.write_count(user_account.get('max_daily_rolls_discount'), 'Daily Discount Card')}.\n"
             if user_account.has("loaf_converter_discount"):
@@ -2109,9 +2115,12 @@ loaf_converter""",
         #     return
         
         user_luck = user_account.get("loaf_converter") + 1
-
         
-        rolls_remaining = user_account.get("max_daily_rolls") - user_account.get("daily_rolls")
+        roll_multiplier = 1
+        if user_account.get_ephemeral_upgrade(store.Pathfinder.name):
+            roll_multiplier = 2
+        
+        rolls_remaining = (user_account.get("max_daily_rolls") * roll_multiplier) - user_account.get("daily_rolls")
         #if ctx.channel.name in earnable_channels:
         if get_channel_permission_level(ctx) == PERMISSION_LEVEL_MAX:
             multirollers = user_account.get_active_multirollers()
@@ -2816,6 +2825,50 @@ loaf_converter""",
 
 
     ########################################################################################################################
+    #####      BREAD RESET ACCOUNT
+
+    @bread.command(
+        name="reset_account"
+    )
+    async def bread_reset_accound(self, ctx):
+        user_account = self.json_interface.get_account(ctx.author, guild = ctx.guild.id)
+        
+        await ctx.reply("Are you *sure* you want to reset your account?\nThis cannot be undone, and it will reset *all* of your lifetime stats.\n\nIf you are sure you want to reset your account, please send your Loaf Converter amount.")
+
+        def check(m: discord.Message):  # m = discord.Message.
+            return m.author.id == ctx.author.id and m.channel.id == ctx.channel.id
+        
+        try:
+            msg = await self.bot.wait_for('message', check = check, timeout = 60.0)
+        except asyncio.TimeoutError: 
+            await ctx.reply("You have taken too long to answer, please start over.")
+            return 
+        
+        lc_amount = str(user_account.get(store.Loaf_Converter.name))
+        formatted_lc_amount = utility.smart_number(user_account.get(store.Loaf_Converter.name))
+        
+        if not(msg.content == lc_amount or msg.content == formatted_lc_amount):
+            if lc_amount in msg.content or formatted_lc_amount in msg.content:
+                await ctx.reply("I can find your Loaf Converter amount in that message, however to be sure you want to reset your account, please start over and send only the amount of Loaf Converters you have, nothing else.")
+                return
+            await ctx.reply("I cannot find your Loaf Converter amount in your message, please start over.")
+            return
+        
+        file_text = json.dumps(user_account.values, indent=4)
+
+        fake_file = io.StringIO(file_text)
+        final_file = discord.File(fake_file, filename="export.json")
+        
+        # o7
+        
+        user_account.reset_to_default()
+        self.json_interface.set_account(ctx.author.id, user_account, ctx.guild)
+        
+        await ctx.reply("Success, your account has been reset.\n\nFor archival purposes, here are your stats prior to being reset:", file=final_file)
+        
+
+
+    ########################################################################################################################
     #####      BREAD ASCEND
 
     @bread.command(
@@ -2920,6 +2973,107 @@ loaf_converter""",
 
         # and save the account
         self.json_interface.set_account(ctx.author, user_account, guild = ctx.guild.id)
+        
+    ########################################################################################################################
+    #####      SHOP HELPER
+    
+    async def shop_helper(
+            self: typing.Self,
+            ctx: commands.Context | utility.CustomContext,
+            user_account: account.Bread_Account,
+            buyable_list: list[type[store.Store_Item]],
+            shop_name: str,
+            prefix: str = None,
+            suffix: str = None,
+            suffix_line_break: bool = True
+        ) -> discord.Message:
+        """Helper method to run every shop in the game.
+        This handles the generation of the message content, as well as the actual sending of the message itself.
+        This does mean that the shops are standardized.
+
+        Args:
+            ctx (commands.Context | utility.CustomContext): The discord.py context.
+            user_account (account.Bread_Account): The user account of the user requesting the shop.
+            buyable_list (list[type[store.Store_Item]]): The list of items that will populate this shop.
+            shop_name (str): The name of the shop, to be inserted at the start of the message.
+            prefix (str, optional): A prefix to put directly after the shop introduction. Defaults to None.
+            suffix (str, optional): A suffix to put at the end of the message. Defaults to None.
+            suffix_line_break (bool, optional): Whether to add a line break between the "To buy an item, just type "$bread buy [item name]"." message and the suffix. This does nothing if the suffix is None. Defaults to None.
+
+        Returns:
+            discord.Message: The sent message.
+        """
+
+        # now we get the list of items
+        items = self.get_buyable_items(user_account, buyable_list)
+
+        # Get list of non-purchasable items.
+        purchasable_set = set(items)
+        item_list = buyable_list
+        non_purchasable_items = set(item_list) - purchasable_set # type: set[store.Salvage_Shop_Item]
+
+        output = ""
+        if prefix:
+            prefix = f"\n{prefix}"
+        else:
+            prefix = ""
+        output += f"Welcome to the {shop_name}!{prefix}\nHere are the items available for purchase:\n\n"
+
+        displayed_items = 0
+        
+        # The length of the "you've already bought everything here" message is 59, but I rounded it up to 65 just to be careful.
+        output_suffix_length = 65 + (len(suffix) if suffix else 0)
+
+        for item in item_list:
+            requirement_given = False
+            requirement = None
+
+            if item in non_purchasable_items:
+                try:
+                    if user_account.get(item.name) >= item.max_level(user_account):
+                        continue
+                except TypeError:
+                    # If the output from item.max_level is None then a TypeError will be raised.
+                    pass
+
+                requirement = item.get_requirement(user_account)
+
+                if requirement is None:
+                    continue    
+
+                requirement_given = True
+                
+
+            if item in purchasable_set or requirement_given:
+                old_output = output
+
+                add = ""
+
+                add += f"\t**{item.display_name}** - {item.get_price_description(user_account)}\n{item.description(user_account)}\n"
+
+                if requirement_given:
+                    add += f"*Not purchasable right now. {requirement}*\n"
+                    
+                add += "\n"
+
+                displayed_items += 1
+
+                output += add
+
+                if len(output) + output_suffix_length > 1900:
+                    await ctx.reply(old_output)
+                    output = f"Continued shop:\n\n{add}"
+        
+        if displayed_items == 0:
+            output += "**It looks like you've bought everything here. Well done.**"
+        else:
+            output += 'To buy an item, just type "$bread buy [item name]".'
+            
+        if suffix:
+            output += "\n" + ('\n' if suffix_line_break else '') + suffix
+
+        return await ctx.reply(output)
+        
 
     ########################################################################################################################
     #####      BREAD SHOP / BREAD STORE
@@ -2941,28 +3095,21 @@ loaf_converter""",
         
         # we get the account of the user who called it
         user_account = self.json_interface.get_account(ctx.author, guild = ctx.guild.id)
-
-        # now we get the list of items
-        items = self.get_buyable_items(user_account, store.normal_store_items)
-
-        output = ""
-        output += f"Welcome to the store! You have **{utility.smart_number(user_account.get('total_dough'))} dough**.\n\*Prices subject to change.\nHere are the items available for purchase:\n\n"
-        for item in items:
-            output += f"\t**{item.display_name}** - {item.get_price_description(user_account)}\n{item.description(user_account)}\n\n"
         
-        if len(items) == 0:
-            output += "Sorry, but you can't buy anything right now. Please try again later."
-        else:
-            output += 'To buy an item, just type "$bread buy [item name]".'
-
-        output += "\n\nDon't forget to check out the **gambit shop**. Find it with \"$bread gambit_shop\"." #
+        suffix = "Don't forget to check out the **gambit shop**. Find it with \"$bread gambit_shop\"." #
 
         if user_account.get_prestige_level() >= 1:
-            output += "\nYou can also buy items from the **hidden bakery**. Find it with \"$bread hidden_bakery\"."
-            output += "\nYou're also able to purchase stuff from the **space shop**. Find it with \"$bread space shop\"."
-
-        await ctx.reply(output)
-        return
+            suffix += "\nYou can also buy items from the **hidden bakery**. Find it with \"$bread hidden_bakery\"."
+            suffix += "\nYou're also able to purchase stuff from the **space shop**. Find it with \"$bread space shop\"."
+        
+        await self.shop_helper(
+            ctx = ctx,
+            user_account = user_account,
+            buyable_list = store.normal_store_items,
+            shop_name = "the store",
+            prefix = f"You have **{utility.smart_number(user_account.get('total_dough'))} dough**.\n\*Prices subject to change.",
+            suffix = suffix
+        )
 
     ########################################################################################################################
     #####      BREAD ASCENSION_SHOP / BREAD HIDDEN_BAKERY
@@ -2974,52 +3121,27 @@ loaf_converter""",
     )
     async def hidden_bakery(self, ctx):
             
-            # first we make sure this is a valid channel
-            #if ctx.channel.name not in earnable_channels:
-            if get_channel_permission_level(ctx) < PERMISSION_LEVEL_ACTIVITIES:
-                await ctx.reply(f"Hi! Thanks for visiting the hidden bakery. You can find us in {self.json_interface.get_rolling_channel(ctx.guild.id)}.")
-                return
-            
-            # we get the account of the user who called it
-            user_account = self.json_interface.get_account(ctx.author, guild = ctx.guild.id)
-    
-            if user_account.get_prestige_level() < 1:
-                await ctx.reply("The door to this shop seems to be locked.")
-                return
-
-            # now we get the list of items
-            items = self.get_buyable_items(user_account, store.prestige_store_items)
-    
-            displayed_items = 0
-            output = ""
-            output += f"Welcome to the hidden bakery! All upgrades in this shop are permanent, and persist through ascensions. You have **{utility.smart_number(user_account.get(values.ascension_token.text))} {values.ascension_token.text}**.\n\*Prices subject to change.\nHere are the items available for purchase:\n\n"
-            for item in items:
-                output += f"\t**{item.display_name}** - {item.get_price_description(user_account)}\n{item.description(user_account)}\n\n"
-                displayed_items += 1
-
-            # Add lines for non-purchasable items that have a requirement if the item isn't at the max level.
-            purchasable_set = set(items)
-            item_set = set(store.prestige_store_items)
-            non_purchasable_items = item_set - purchasable_set # type: set[store.Prestige_Store_Item]
-
-            for item in list(non_purchasable_items):
-                if user_account.get(item.name) >= item.max_level(user_account):
-                    continue
-
-                requirement = item.get_requirement(user_account)
-
-                if requirement is None:
-                    continue
-
-                output += f"*{item.display_name}: {requirement}*\n\n"
-            
-            if displayed_items == 0:
-                output += "**It looks like you've bought everything here. Well done.**"
-            else:
-                output += 'To buy an item, just type "$bread buy [item name]".'
-    
-            await ctx.reply(output)
+        # first we make sure this is a valid channel
+        #if ctx.channel.name not in earnable_channels:
+        if get_channel_permission_level(ctx) < PERMISSION_LEVEL_ACTIVITIES:
+            await ctx.reply(f"Hi! Thanks for visiting the hidden bakery. You can find us in {self.json_interface.get_rolling_channel(ctx.guild.id)}.")
             return
+        
+        # we get the account of the user who called it
+        user_account = self.json_interface.get_account(ctx.author, guild = ctx.guild.id)
+
+        if user_account.get_prestige_level() < 1:
+            await ctx.reply("The door to this shop seems to be locked.")
+            return
+        
+    
+        await self.shop_helper(
+            ctx = ctx,
+            user_account = user_account,
+            buyable_list = store.prestige_store_items,
+            shop_name = "Hidden Bakery",
+            prefix = f"All upgrades in this shop are permanent, and persist through ascensions. You have **{utility.smart_number(user_account.get(values.ascension_token.text))} {values.ascension_token.text}**."
+        )
 
     ########################################################################################################################
     #####      BREAD GAMBIT_SHOP
@@ -3040,32 +3162,148 @@ loaf_converter""",
         
         # we get the account of the user who called it
         user_account = self.json_interface.get_account(ctx.author, guild = ctx.guild.id)
-
-        # now we get the list of items
-        items = self.get_buyable_items(user_account, store.gambit_shop_items)
-
-        output = ""
-        output += f"Welcome to the gambit shop! Here are the items available for purchase:\n\n"
-        for item in items:
-            addition = f"\t**{item.display_name}** - {item.get_price_description(user_account)}\n{item.description(user_account)}\n\n"
-            if len(output) + len(addition) > 1800:
-                await ctx.reply(output)
-                output = "Shop Continued:\n\n"
-            output += addition
-            # if len(output) > 1800:
-            #     await ctx.reply(output)
-            #     output = "Shop Continued:\n\n"
         
-        if len(items) == 0:
-            output += "**It looks like you've bought everything here. Well done.**"
-        else:
-            output += 'To buy an item, just type "$bread buy [item name]".'
-
-        await ctx.reply(output)
-        return
+        await self.shop_helper(
+            ctx = ctx,
+            user_account = user_account,
+            buyable_list = store.gambit_shop_items,
+            shop_name = "Gambit Shop"
+        )
 
     ########################################################################################################################
     #####      BREAD BUY
+    
+    async def buy_confirmation_catalyst(
+            self: typing.Self,
+            ctx: commands.Context | utility.CustomContext,
+            user_account: account.Bread_Account,
+            item: type[store.Store_Item]
+        ) -> bool:
+        """Purchase confirmation for catalysts.
+
+        Args:
+            ctx (commands.Context | utility.CustomContext): The command context.
+            user_account (account.Bread_Account): The user running the command.
+            item (type[store.Store_Item]): The item to be purchased.
+
+        Returns:
+            bool: Whether to allow the purchase to complete.
+        """
+        active = store.find_catalyst(user_account.get("active_catalyst"))
+        remaining = user_account.get("catalyst_remaining")
+        
+        if active is None:
+            return True
+        
+        if remaining <= 0:
+            return True
+        
+        if ctx.author.id in self.currently_interacting:
+            return False
+        
+        # If it gets here we need to prompt the user to make sure they
+        # want to overwrite their existing catalyst with the new one.
+        
+        def check(m: discord.Message):  # m = discord.Message.
+            return m.author.id == ctx.author.id and m.channel.id == ctx.channel.id
+        
+        await ctx.reply(f"You already have a catalyst active, **{active.display_name}**, with **{utility.write_count(remaining, 'salvage')}** remaining."
+                        f"\nAre you sure you want to purchase the **{item.display_name}** catalyst and overwrite your existing one? Yes or no.")
+        
+        self.currently_interacting.append(ctx.author.id)
+        
+        try:
+            msg = await self.bot.wait_for('message', check = check, timeout = 60.0)
+        except asyncio.TimeoutError: 
+            await ctx.reply("I'm sorry, but you have taken too long to answer and I must attend to the next customer.")
+            self.remove_from_interacting(ctx.author.id)
+            return False
+                
+        confirm_text = ["yes", "y", "confirm"]
+        cancel_text = ["no", "n", "cancel"]
+                
+        if msg.content.lower() in cancel_text:
+            await ctx.reply("Very well, come back when you would like to purchase a Catalyst.")
+
+            self.remove_from_interacting(ctx.author.id)
+            return False
+        elif msg.content.lower() not in confirm_text:
+            await ctx.reply("I'm not entirely sure what that is, please try again.")
+
+            self.remove_from_interacting(ctx.author.id)
+            return False
+        
+        self.remove_from_interacting(ctx.author.id)
+        
+        return True
+        
+    ##############################################################################
+    
+    async def buy_confirmation_ephemeral(
+            self: typing.Self,
+            ctx: commands.Context | utility.CustomContext,
+            user_account: account.Bread_Account,
+            item: type[store.Store_Item]
+        ) -> bool:
+        """Purchase confirmation for ephemeral upgrades.
+
+        Args:
+            ctx (commands.Context | utility.CustomContext): The command context.
+            user_account (account.Bread_Account): The user running the command.
+            item (type[store.Store_Item]): The item to be purchased.
+
+        Returns:
+            bool: Whether to allow the purchase to complete.
+        """
+        max_amount = user_account.get_max_ephemeral_count()
+        upgrade_file = user_account.get_ephemeral_file()
+        
+        if len(upgrade_file) < max_amount:
+            return True
+
+        if ctx.author.id in self.currently_interacting:
+            return False
+        
+        if item.name in upgrade_file:
+            await ctx.reply("You already have that Ephemeral Upgrade purchased.")
+            return False
+        
+        def check(m: discord.Message):  # m = discord.Message.
+            return m.author.id == ctx.author.id and m.channel.id == ctx.channel.id
+        
+        await ctx.reply(self.get_active_ephemeral_list(user_account) \
+            + f"\nPurchasing the **{item.display_name}** Ephemeral Upgrade will replace **{store.find_ephemeral_upgrade(upgrade_file[-1]).display_name}**." \
+            + "\nAre you sure you want to continue? Yes or no." \
+            + ("\n*You can cancel an upgrade you currently have with '$bread ephemeral cancel [upgrade name]'*" if max_amount >= 2 else ""))
+        
+        self.currently_interacting.append(ctx.author.id)
+        
+        try:
+            msg = await self.bot.wait_for('message', check = check, timeout = 60.0)
+        except asyncio.TimeoutError: 
+            await ctx.reply("I'm sorry, but you have taken too long to answer and I must attend to the next customer.")
+            self.remove_from_interacting(ctx.author.id)
+            return False
+                
+        confirm_text = ["yes", "y", "confirm"]
+        cancel_text = ["no", "n", "cancel"]
+                
+        if msg.content.lower() in cancel_text:
+            await ctx.reply("Very well, come back when you would like to purchase an Ephemeral Upgrade.")
+
+            self.remove_from_interacting(ctx.author.id)
+            return False
+        elif msg.content.lower() not in confirm_text:
+            await ctx.reply("I'm not entirely sure what that is, please try again.")
+
+            self.remove_from_interacting(ctx.author.id)
+            return False
+        
+        self.remove_from_interacting(ctx.author.id)
+        
+        return True
+        
+    ##############################################################################
 
     # this lets us purchase items we see in the store
     @bread.command(
@@ -3172,7 +3410,43 @@ loaf_converter""",
             return cost_text
 
         text = None
+        
+        ################################################################
+        
+        if issubclass(item, store.Catalyst):
+            result = await self.buy_confirmation_catalyst(
+                ctx = ctx,
+                user_account = user_account,
+                item = item
+            )
+            
+            if not result:
+                # If it returns false silently return, since the function
+                # will likely have already sent a message to the player.
+                return
+            
+            # Set the amount of items being bought to 1.
+            item_count = 1
 
+        ################################################################
+        
+        if issubclass(item, store.Ephemeral_Upgrade):
+            result = await self.buy_confirmation_ephemeral(
+                ctx = ctx,
+                user_account = user_account,
+                item = item
+            )
+            
+            if not result:
+                # If it returns false silently return, since the function
+                # will likely have already sent a message to the player.
+                return
+            
+            # Set the amount of items being bought to 1.
+            item_count = 1
+        
+        ################################################################
+        
         if item_count == 1:
 
             # if it exists but can't be bought, we say so
@@ -5129,13 +5403,13 @@ anarchy - 1000% of your wager.
         if user is None:
             user = ctx.author
         
-        account = self.json_interface.get_account(user, guild = ctx.guild.id)
+        user_account = self.json_interface.get_account(user, guild = ctx.guild.id)
 
-        if account.get_space_level() < 1:
+        if user_account.get_space_level() < 1:
             if user == ctx.author:
                 await ctx.reply("You do not yet have any space stats.")
             else:
-                await ctx.reply(f"{account.get_display_name()} does not yet have any space stats.")
+                await ctx.reply(f"{user_account.get_display_name()} does not yet have any space stats.")
             return
         
         sn = utility.smart_number
@@ -5143,23 +5417,23 @@ anarchy - 1000% of your wager.
         output = []
 
         # The items in the output list get joined with a new line in the middle, so only a single \n is required here.
-        output.append(f"Space stats for: {account.get_display_name()}:\n")
+        output.append(f"Space stats for: {user_account.get_display_name()}:\n")
 
-        output.append(f"You have a tier {sn(account.get_space_level())} Bread Rocket.")
-        output.append(f"Your location in the galaxy is currently {account.get_galaxy_location(self.json_interface)}.")
+        output.append(f"You have a tier {sn(user_account.get_space_level())} Bread Rocket.")
+        output.append(f"Your location in the galaxy is currently {user_account.get_galaxy_location(self.json_interface)}.")
 
-        daily_fuel_cap = account.get_daily_fuel_cap()
-        project_credits_cap = account.get_projects_credits_cap()
-        output.append(f"Out of your {sn(daily_fuel_cap)} {values.daily_fuel.text} you have {sn(account.get('daily_fuel'))} remaining.")
-        output.append(f"From your {sn(project_credits_cap)} daily {values.project_credits.text} you have {sn(account.get('hub_credits'))} remaining.")
+        daily_fuel_cap = user_account.get_daily_fuel_cap()
+        project_credits_cap = user_account.get_projects_credits_cap()
+        output.append(f"Out of your {sn(daily_fuel_cap)} {values.daily_fuel.text} you have {sn(user_account.get('daily_fuel'))} remaining.")
+        output.append(f"From your {sn(project_credits_cap)} daily {values.project_credits.text} you have {sn(user_account.get('hub_credits'))} remaining.")
 
-        output.append(f"With {utility.write_count(account.get(values.anarchy_omega_chessatron.text), 'Anarchy Omega Chessatron')} you get {sn(account.get_anarchy_chessatron_dough_amount(True))} for each new anarchy chessatron.")
+        output.append(f"With {utility.write_count(user_account.get(values.anarchy_omega_chessatron.text), 'Anarchy Omega Chessatron')} you get {sn(user_account.get_anarchy_chessatron_dough_amount(True))} for each new anarchy chessatron.")
 
 
         output.append("")
 
-        if account.has(store.Upgraded_Autopilot.name):
-            autopilot_level = account.get(store.Upgraded_Autopilot.name)
+        if user_account.has(store.Upgraded_Autopilot.name):
+            autopilot_level = user_account.get(store.Upgraded_Autopilot.name)
 
             messages = [
                 "",
@@ -5180,44 +5454,57 @@ anarchy - 1000% of your wager.
 
             output.append(f"With a level {sn(autopilot_level)} autopilot you can {message}.")
 
-        if account.has("fuel_tank"):
-            level = account.get('fuel_tank')
+        if user_account.has("fuel_tank"):
+            level = user_account.get('fuel_tank')
             output.append(f"Your {values.daily_fuel.text} cap is increased by {sn(level * store.Fuel_Tank.multiplier)} with {utility.write_count(level, 'Fuel Tank level')}.")
 
-        if account.has("fuel_research"):
-            output.append(f"By having {account.write_count('fuel_research', 'level')} of fuel research, you can use {store.Fuel_Research.highest_gem[account.get('fuel_research')]} or any lower gem for making fuel.")
+        if user_account.has("fuel_research"):
+            output.append(f"By having {user_account.write_count('fuel_research', 'level')} of fuel research, you can use {store.Fuel_Research.highest_gem[user_account.get('fuel_research')]} or any lower gem for making fuel.")
 
-        if account.has("telescope_level"):
-            output.append(f"With {account.write_count('telescope_level', 'telescope level')}, you can see in a {sn(account.get('telescope_level') * 2 + 5)} tile diameter area.")
+        if user_account.has("telescope_level"):
+            output.append(f"With {user_account.write_count('telescope_level', 'telescope level')}, you can see in a {sn(user_account.get('telescope_level') * 2 + 5)} tile diameter area.")
 
-        if account.has("advanced_exploration"):
-            rr = account.get_recipe_refinement_multiplier()
-            lcs = account.get(store.Loaf_Converter.name)
-            multiplier = store.Advanced_Exploration.get_contribution(account.get(store.Advanced_Exploration.name))
-            amount_pieces = account.get_anarchy_piece_luck((lcs + 1) * rr) - 1
-            amount_gems = account.get_space_gem_luck((lcs + 1) * rr) - 1
-            output.append(f"With {account.write_count('advanced_exploration', 'level')} of Advanced Exploration you have the following:")
+        if user_account.has("advanced_exploration"):
+            rr = user_account.get_recipe_refinement_multiplier()
+            lcs = user_account.get(store.Loaf_Converter.name)
+            multiplier = store.Advanced_Exploration.get_contribution(user_account.get(store.Advanced_Exploration.name))
+            amount_pieces = user_account.get_anarchy_piece_luck((lcs + 1) * rr) - 1
+            amount_gems = user_account.get_space_gem_luck((lcs + 1) * rr) - 1
+            output.append(f"With {user_account.write_count('advanced_exploration', 'level')} of Advanced Exploration you have the following:")
             output.append(f"   {round(amount_pieces)} ({round(amount_pieces, 5)}, {round(multiplier * 100, 4)}%) of your Loaf Converters are used to find anarchy pieces.")
             output.append(f"   {utility.smart_number(round(amount_gems))} ({utility.smart_number(round(amount_gems, 5))}, {round(multiplier * 2500, 4)}%) of your Loaf Converters are used to find space gems.")
 
-        if account.has("engine_efficiency"):
-            level = account.get('engine_efficiency')
-            output.append(f"You use {round((1 - store.Engine_Efficiency.consumption_multipliers[level]) * 100)}% less fuel with {account.write_count('engine_efficiency', 'level')} of Engine Efficiency.")
+        if user_account.has("engine_efficiency"):
+            level = user_account.get('engine_efficiency')
+            output.append(f"You use {round((1 - store.Engine_Efficiency.consumption_multipliers[level]) * 100)}% less fuel with {user_account.write_count('engine_efficiency', 'level')} of Engine Efficiency.")
 
-        if account.has("payment_bonus"):
-            level = account.get('payment_bonus')
+        if user_account.has("payment_bonus"):
+            level = user_account.get('payment_bonus')
             output.append(f"You've recieved {utility.write_count(level, 'dubious bonus', 'e')} so far, and that gets you {utility.smart_number(int(level * store.Payment_Bonus.per_level))} more {values.project_credits.text} per day.")
+            
+        active_catalyst = store.find_catalyst(user_account.get("active_catalyst"))
+        active_ephemerals = user_account.get_ephemeral_file()
+        
+        if active_catalyst is not None \
+            or active_ephemerals \
+            or user_account.get("lifetime_salvages") >= 1:
+                output.extend([
+                    "",
+                    f"You can salvage items {user_account.write_count('salvage_remaining', 'more time')} today.",
+                    f"You currently have the {active_catalyst.display_name} catalyst active for another {utility.write_count(user_account.get('catalyst_remaining'), 'salvage')}." if active_catalyst is not None else "You currently do not have a catalyst active.",
+                    self.get_active_ephemeral_list(user_account)
+                ])
         
         output.append("")
-        output.append(f"Throughout your time in space you've created {utility.write_count(account.get('trade_hubs_created'), 'Trade Hub')} and helped contribute to {utility.write_count(account.get('projects_completed'), 'completed project')}.")
+        output.append(f"Throughout your time in space you've created {utility.write_count(user_account.get('trade_hubs_created'), 'Trade Hub')} and helped contribute to {utility.write_count(user_account.get('projects_completed'), 'completed project')}.")
 
         # Add item amount information.
-        item_list = [values.corrupted_bread, values.anarchy_chessatron, values.anarchy_omega_chessatron] + values.all_very_shinies
+        item_list = [values.fuel, values.corrupted_bread, values.anarchy_chessatron, values.anarchy_omega_chessatron] + values.all_very_shinies
 
         item_line = []
         for item in item_list:
-            if account.has(item.text):
-                item_line.append(f"{account.get(item.text)} {item.text}")
+            if user_account.has(item.text):
+                item_line.append(f"{user_account.get(item.text)} {item.text}")
         
         # Only show the item amount information if there is any information to show.
         if len(item_line) > 0:
@@ -5226,7 +5513,7 @@ anarchy - 1000% of your wager.
             output.append(" , ".join(item_line))
 
         # Anarchy pieces.
-        formatted_anarchy_pieces = self.format_anarchy_pieces(account.values).strip(" \n")
+        formatted_anarchy_pieces = self.format_anarchy_pieces(user_account.values).strip(" \n")
 
         if len("\n".join(output)) + len(formatted_anarchy_pieces) + 4 > 1900:
             await ctx.reply("\n".join(output))
@@ -5283,62 +5570,13 @@ anarchy - 1000% of your wager.
         # if user_account.get_prestige_level() < 9:
         #     await ctx.reply("Currently the Space Shop is only available on the 9th ascension. When that ascension ends it will be available from the first ascension onwards.")
         #     return
-
-        # now we get the list of items
-        items = self.get_buyable_items(user_account, store.space_shop_items)
-
-        # Get list of non-purchasable items.
-        purchasable_set = set(items)
-        item_list = store.space_shop_items
-        non_purchasable_items = set(item_list) - purchasable_set # type: set[store.Space_Shop_Item]
-
-        output = ""
-        output += f"Welcome to the Space Shop!\nHere are the items available for purchase:\n\n"
-
-        displayed_items = 0
-
-        for item in item_list:
-            requirement_given = False
-            requirement = None
-
-            if item in non_purchasable_items:
-                if user_account.get(item.name) >= item.max_level(user_account):
-                    continue
-
-                requirement = item.get_requirement(user_account)
-
-                if requirement is None:
-                    continue    
-
-                requirement_given = True
-                
-
-            if item in purchasable_set or requirement_given:
-                old_output = output
-
-                add = ""
-
-                add += f"\t**{item.display_name}** - {item.get_price_description(user_account)}\n{item.description(user_account)}\n"
-
-                if requirement_given:
-                    add += f"*Not purchasable right now. {requirement}*\n"
-                    
-                add += "\n"
-
-                displayed_items += 1
-
-                output += add
-
-                if len(output) > 1900:
-                    await ctx.reply(old_output)
-                    output = f"Continued shop:\n\n{add}"
         
-        if displayed_items == 0:
-            output += "**It looks like you've bought everything here. Well done.**"
-        else:
-            output += 'To buy an item, just type "$bread buy [item name]".'
-
-        await ctx.reply(output)
+        await self.shop_helper(
+            ctx = ctx,
+            user_account = user_account,
+            buyable_list = store.space_shop_items,
+            shop_name = "Space Shop"
+        )
         
     ########################################################################################################################
     #####      BREAD SPACE MAP
@@ -5452,6 +5690,7 @@ anarchy - 1000% of your wager.
         ###############################
 
         corruption_chance = round(user_account.get_corruption_chance(json_interface=self.json_interface) * 100, 2)
+        apiece_corruption_chance = round(user_account.get_anarchy_corruption_chance(json_interface=self.json_interface) * 100, 2)
 
         suffix = ""
 
@@ -5528,7 +5767,7 @@ anarchy - 1000% of your wager.
                 suffix = "Use '$bread space map full <galaxy x> <galaxy y>' to view a specific system.\nUse '$bread space map full guide' to see a color guide."
         else:
             prefix = "System map:"
-            middle = f"Your current galaxy location: {user_account.get_galaxy_location(json_interface=self.json_interface)}.\nYour current system location: {user_account.get_system_location()}.\nYour corruption chance: {corruption_chance}%."
+            middle = f"Your current galaxy location: {user_account.get_galaxy_location(json_interface=self.json_interface)}.\nYour current system location: {user_account.get_system_location()}.\nYour corruption chance: {corruption_chance}%.\nAnarchy Piece corruption chance: {apiece_corruption_chance}%."
             
             if not reduced_info:
                 suffix = "You can use '$bread space map galaxy' to view the galaxy map.\n\nUse '$bread space move system' to move around on this map.\nUse '$bread space analyze' to get more information about somewhere."
@@ -5809,6 +6048,7 @@ anarchy - 1000% of your wager.
                 progress_data = level_progress
             )
             
+            self.currently_interacting.append(ctx.author.id)
             # Item is the confirmation, so treat it as such.
             if not item:
                 message = [f"To level up the Trade Hub, you have the following items out of what is needed:\n"]
@@ -5817,8 +6057,6 @@ anarchy - 1000% of your wager.
                     message.append(f"{item_iter}: {utility.smart_number(user_account.get(item_iter))}/{utility.smart_number(amount)}")
                 
                 message.append("\nWould you like to contribute all of these items to level up the Trade Hub? Yes or no.")
-                
-                self.currently_interacting.append(ctx.author.id)
                 
                 confirm_text = ["yes", "y", "confirm"]
                 cancel_text = ["no", "n", "cancel"]
@@ -5845,31 +6083,35 @@ anarchy - 1000% of your wager.
 
                     self.remove_from_interacting(ctx.author.id)
                     return
-                
-                self.remove_from_interacting(ctx.author.id)
             
             # If it gets to this point that means it's time to attempt to level up the Trade Hub.
             
             for item_iter, amount in remaining.items():
                 if user_account.get(item_iter) < amount:
                     await ctx.reply(f"You do not have enough {item_iter} to level up the Trade Hub.")
+                    self.remove_from_interacting(ctx.author.id)
                     return
 
                 user_account.increment(item_iter, -amount)
                 
-            self.json_interface.set_account(ctx.author, user_account, guild = ctx.guild.id)
-
-            await ctx.reply("You have contributed {used} to level up the Trade Hub.\nYou now have {remaining} remaining.".format(
-                used = required_description,
-                remaining = " , ".join([f"**{utility.smart_number(user_account.get(item_iter))}** {item_iter}" for item_iter in remaining.keys()])
-            ))
-            
             existing = self.json_interface.get_trade_hub_data(
                 guild = ctx.guild.id,
                 ascension = user_account.get_prestige_level(),
                 galaxy_x = galaxy_x,
                 galaxy_y = galaxy_y
             )
+            
+            if existing.get("level", 0) >= 5:
+                await ctx.reply("This Trade Hub is already at the max level!")
+                self.remove_from_interacting(ctx.author.id)
+                return
+            
+            self.json_interface.set_account(ctx.author, user_account, guild = ctx.guild.id)
+
+            await ctx.reply("You have contributed {used} to level up the Trade Hub.\nYou now have {remaining} remaining.".format(
+                used = required_description,
+                remaining = " , ".join([f"**{utility.smart_number(user_account.get(item_iter))}** {item_iter}" for item_iter in remaining.keys()])
+            ))
 
             if "level" in existing:
                 existing["level"] += 1
@@ -5901,10 +6143,12 @@ anarchy - 1000% of your wager.
             await asyncio.sleep(1)
 
             await ctx.send(send_lines)
+            self.remove_from_interacting(ctx.author.id)
             return
     
         if item.text not in remaining:
             await ctx.reply("We don't need any more of that to level up the Trade Hub.")
+            self.remove_from_interacting(ctx.author.id)
             return
         
         if amount == "all":
@@ -5947,6 +6191,7 @@ anarchy - 1000% of your wager.
 
         if len(remaining) != 0:
             # No completion :(
+            self.remove_from_interacting(ctx.author.id)
             return
 
         existing = self.json_interface.get_trade_hub_data(
@@ -7744,6 +7989,550 @@ anarchy - 1000% of your wager.
             await ctx.reply(message_content)
 
         self.remove_from_interacting(ctx.author.id)
+        
+
+
+
+
+        
+
+    
+        
+    ########################################################################################################################
+    #####      EPHEMERAL UTILITY
+    
+    def get_active_ephemeral_list(
+            self: typing.Self,
+            user_account: account.Bread_Account
+        ) -> str:
+        """Generates the text for a player's active ephemeral upgrades, to be put in a message.
+
+        Args:
+            user_account (account.Bread_Account): The player to generate the text for.
+
+        Returns:
+            str: The generated text.
+        """    
+        active_ephemerals = user_account.get_ephemeral_file()
+        active_ephemerals = filter(user_account.get_ephemeral_upgrade, active_ephemerals)
+        active_ephemerals = list(map(lambda h: "**" + store.find_ephemeral_upgrade(h).display_name + "**", active_ephemerals))
+        
+        return (f"You currently have the {utility.list_items(active_ephemerals)} Ephemeral Upgrade{'s' if len(active_ephemerals) != 1 else ''} active." if active_ephemerals else "You do not have an active Ephemeral Upgrade.")
+            
+    ########################################################################################################################
+    #####      BREAD SALVAGE    
+
+    @bread.group(
+        name="salvage", 
+        help="Salvage your items in a salvage machine.",
+        brief="Salvage your items in a salvage machine.",
+        invoke_without_command = True,
+        pass_context = True
+    )
+    async def salvage(self, ctx,
+            item: typing.Optional[str] = commands.parameter(description = "The item to salvage.")
+        ):
+        if ctx.invoked_subcommand is not None:
+            # If a subcommand was invoked, do nothing.
+            return
+
+        # first we make sure this is a valid channel
+        if get_channel_permission_level(ctx) < PERMISSION_LEVEL_ACTIVITIES:
+            await ctx.reply(f"Hello! Thanks for trying to salvage your items. The nearest Salvage Machine access port is in {self.json_interface.get_rolling_channel(ctx.guild.id)}.")
+            return
+        
+        user_account = self.json_interface.get_account(ctx.author, guild = ctx.guild.id)
+
+        if user_account.get_space_level() < 1:
+            await ctx.reply("You do not yet have a rocket that can access Trade Hubs. You can purchase a Bread Rocket from the Space Shop.")
+            return
+        
+        if not user_account.can_use_salvage():
+            await ctx.reply("You are not currently on a Trade Hub with the Salvage Works upgrade.")
+            return
+        
+        # The player can use the salvage machine.
+        
+        item = values.get_emote(item)
+        
+        system_tile = user_account.get_system_tile(self.json_interface)
+        salvage_level = system_tile.get_upgrade_level(projects.Salvage_Works)
+        salvage_addition = (salvage_level - 1) * 5
+        
+        if item is None:
+            active_catalyst = store.find_catalyst(user_account.get("active_catalyst"))
+            remaining = max(user_account.get("salvage_remaining") + salvage_addition, 0)
+            # remaining = user_account.write_count('salvage_remaining', '**more time')
+            
+            
+            lines = [
+                "Welcome to the Salvage Machine!",
+                "Here you are able to salvage your items into other items.",
+                "Use \"$bread salvage [item]\" to salvage that item.",
+                "",
+                f"You can salvage items **{utility.write_count(remaining, '**more time')} today.", # The formatting here is a little odd, but it's because write_count adds a space after the number automatically.
+                f"You currently have the **{active_catalyst.display_name}** catalyst active for another **{utility.write_count(user_account.get('catalyst_remaining'), 'salvage')}**." if active_catalyst is not None else "You currently do not have a catalyst active.",
+                self.get_active_ephemeral_list(user_account),
+                "",
+                "To view the Salvage Shop, use \"$bread salvage shop\"",
+                "To look at the Ephemeral Shop, use \"$bread salvage ephemeral\"",
+                "To see what catalysts you can make, use \"$bread salvage catalyst\""
+            ]
+            await ctx.reply("\n".join(lines))
+            return
+        
+        # Check if the player is in the interacting list.
+        if ctx.author.id in self.currently_interacting:
+            return
+        
+        # Add the player to the interacting list.
+        self.currently_interacting.append(ctx.author.id)
+        
+        # Time to actually run the salvage machine.
+        print(f"{ctx.author} is requesting to salvage {item}, they have {user_account.get(item.text)} of it.")
+        
+        if item not in gamble.salvage_options:
+            await ctx.reply("It doesn't seem like the Salvage Machine will accept that item.")
+
+            self.remove_from_interacting(ctx.author.id)
+            return
+        
+        if user_account.get(item.text) <= 0:
+            await ctx.reply("You don't have enough of that item to salvage.")
+
+            self.remove_from_interacting(ctx.author.id)
+            return
+        
+        if user_account.get("salvage_remaining") + salvage_addition <= 0:
+            await ctx.reply(f"Sorry, you can only salvage {salvage_level * 5} times today.")
+
+            self.remove_from_interacting(ctx.author.id)
+            return
+
+        user_account.increment("salvage_remaining", -1)
+        user_account.increment("lifetime_salvages", 1)
+        
+        self.json_interface.set_account(ctx.author, user_account, ctx.guild.id)
+        
+        try:
+            active_catalyst = user_account.get_active_catalyst().name
+        except:
+            active_catalyst = None
+            
+        if active_catalyst == store.Hydra.name and random.randint(1, 4) == 1:
+            # Double time.
+            
+            game_1 = gamble.LasersGame(
+                wager = item,
+                json_interface = self.json_interface,
+                ctx = ctx
+            )
+            game_2 = gamble.LasersGame(
+                wager = item,
+                json_interface = self.json_interface,
+                ctx = ctx
+            )
+            game_1.run_finish = False
+            game_2.run_finish = False
+            
+            # This is an error handling mess, but that's because
+            # if either game fails the other one needs to continue.
+            
+            try:
+                await game_1.setup()
+            except:
+                game_1.run_finish = True
+                await game_1.finish()
+                
+            await asyncio.sleep(1)
+            
+            try:
+                await game_2.setup()
+            except:
+                game_2.run_finish = True
+                await game_2.finish()
+            
+            # Account for the fact that when Hydra activates it shouldn't consume 2 wager items.
+            user_account = self.json_interface.get_account(ctx.author.id, ctx.guild.id) # type: account.Bread_Account
+            user_account.increment(item, 1)
+            self.json_interface.set_account(ctx.author.id, user_account, ctx.guild.id)
+                    
+            await asyncio.sleep(2)
+            
+            tick = 0
+            
+            while game_1.in_progress or game_2.in_progress:
+                options = [g for g in (game_1, game_2) if g.in_progress]
+                
+                chosen = options[tick % len(options)]
+                
+                try:
+                    await chosen.run_tick()
+                except:
+                    chosen.run_finish = True
+                    await chosen.finish()
+                
+                await asyncio.sleep(1.5)
+                
+                tick += 1
+            
+            if not game_1.run_finish:
+                await game_1.finish()
+                
+                if not game_2.run_finish:
+                    await asyncio.sleep(2)
+                
+            if not game_2.run_finish:
+                await game_2.finish()
+
+            self.remove_from_interacting(ctx.author.id)
+        else:
+            game = gamble.LasersGame(
+                wager = item,
+                json_interface = self.json_interface,
+                ctx = ctx
+            )
+        
+            try:
+                await game.setup()
+                    
+                await asyncio.sleep(2)
+            
+                while game.in_progress:
+                    await game.run_tick()
+                    
+                    await asyncio.sleep(1.5)
+            finally:
+                # Even if the game fails, at least run the `.finish()` method.
+                await game.finish()
+                
+                if active_catalyst == store.Sagitta.name and random.randint(1, 2) == 1:
+                    # Wait! It isn't dead! Salvage suprise!
+                    # There's another ahead, and items likewise
+                    # But you can do `$bread space stats`
+                    
+                    item = game.winning_item
+                    
+                    # This is kind of a weird way of keeping the won item in limbo.
+                    user_account = self.json_interface.get_account(ctx.author, guild = ctx.guild.id)
+                    user_account.increment(item.text, -1)
+                    self.json_interface.set_account(ctx.author, user_account, ctx.guild.id)
+                    
+                    await asyncio.sleep(2)
+                    
+                    message = "The Salvage Machine appears to be running again, with the output from the previous salvage as the input!\nMust be that catalyst you're using..."
+                    
+                    if random.randint(1, 100) == 1:
+                        message += "\n\nOr, in other words. Wait! It isn't dead! Salvage suprise!"
+                    
+                    await ctx.reply(message)
+                    
+                    await asyncio.sleep(2)
+                    
+                    user_account = self.json_interface.get_account(ctx.author, guild = ctx.guild.id)
+                    user_account.increment(item.text, 1)
+                    self.json_interface.set_account(ctx.author, user_account, ctx.guild.id)
+                    
+                    game = gamble.LasersGame(
+                        wager = item,
+                        json_interface = self.json_interface,
+                        ctx = ctx
+                    )
+                
+                    try:
+                        await game.setup()
+
+                        await asyncio.sleep(2)
+                    
+                        while game.in_progress:
+                            await game.run_tick()
+                            
+                            await asyncio.sleep(1.5)
+                    finally:
+                        # Even if the game fails, at least run the `.finish()` method.
+                        await game.finish()
+
+                self.remove_from_interacting(ctx.author.id)
+            
+        if user_account.get("catalyst_remaining") > 0:
+            user_account = self.json_interface.get_account(ctx.author, guild = ctx.guild.id)
+            
+            user_account.increment("catalyst_remaining", -1)
+            
+            if user_account.get("catalyst_remaining") == 0:
+                user_account.set("active_catalyst", None)
+            
+            self.json_interface.set_account(ctx.author, user_account, ctx.guild.id)
+                
+
+
+
+
+
+
+        
+        
+        
+    ########################################################################################################################
+    #####      BREAD SALVAGE SHOP
+
+    @bread.command(
+        name = "salvage_shop",
+        brief = "The Salvage Shop.",
+        description = "Shortcut to '$bread salvage shop'.",
+        aliases = ["salvage_store"],
+        hidden = True
+    )
+    async def salvage_shop_shortcut(self, ctx):
+        await ctx.invoke(self.salvage_shop)
+
+    @salvage.command(
+        name = "shop",
+        brief = "The Salvage Shop.",
+        aliases = ["store"]
+    )
+    async def salvage_shop(self, ctx):
+
+        # first we make sure this is a valid channel
+        if get_channel_permission_level(ctx) < PERMISSION_LEVEL_ACTIVITIES:
+            await ctx.reply(f"Hello! Thanks for trying to access the Salvage Shop. The nearest Salvage Machine access port is in {self.json_interface.get_rolling_channel(ctx.guild.id)}.")
+            return
+        
+        # we get the account of the user who called it
+        user_account = self.json_interface.get_account(ctx.author, guild = ctx.guild.id)
+
+        # Make sure the player is able to interact with the shop.
+        if not user_account.can_use_salvage():
+            await ctx.reply("The entrace to this shop appears to require a Trade Hub that has a Salvage Machine.")
+            return
+        
+        await self.shop_helper(
+            ctx = ctx,
+            user_account = user_account,
+            buyable_list = store.all_salvage_shop_items,
+            shop_name = "Salvage Shop"
+        )
+
+
+
+
+
+
+        
+        
+        
+    ########################################################################################################################
+    #####      BREAD EPHEMERAL SHOP
+
+    @bread.group(
+        name = "ephemeral",
+        brief = "The Ephemeral Shop.",
+        description = "Shortcut to '$bread salvage ephemeral'.",
+        aliases = ["ephemeral_shop", "ephemeral_store"],
+        hidden = True,
+        pass_context = True,
+        invoke_without_command = True
+    )
+    async def ephemeral_shop_shortcut(self, ctx):
+        if ctx.invoked_subcommand is not None:
+            return
+        
+        await ctx.invoke(self.ephemeral_shop)
+    
+    @ephemeral_shop_shortcut.command(
+        name = "cancel",
+        brief = "Cancels an ephemeral upgrade.",
+        description = "Cancels an ephemeral upgrade.",
+        aliases = ["remove", "clear"]
+    )
+    async def ephemeral_cancel_shortcut(self, ctx,
+            upgrade: typing.Optional[str] = commands.parameter(description = "The name of the upgrade to cancel."),
+            confirmation: typing.Optional[str] = commands.parameter(description = "Whether to skip the confirmation.")
+        ):
+        await ctx.invoke(self.ephemeral_cancel, upgrade=upgrade, confirmation=confirmation)
+
+    @salvage.group(
+        name = "ephemeral",
+        brief = "The Ephemeral Shop.",
+        aliases = ["ephemeral_shop", "ephemeral_store"],
+        pass_context = True,
+        invoke_without_command = True
+    )
+    async def ephemeral_shop(self, ctx):
+        if ctx.invoked_subcommand is not None:
+            return
+
+        # first we make sure this is a valid channel
+        if get_channel_permission_level(ctx) < PERMISSION_LEVEL_ACTIVITIES:
+            await ctx.reply(f"Hello! Thanks for trying to access the Ephemeral Shop. The nearest Salvage Machine access port is in {self.json_interface.get_rolling_channel(ctx.guild.id)}.")
+            return
+        
+        # we get the account of the user who called it
+        user_account = self.json_interface.get_account(ctx.author, guild = ctx.guild.id)
+
+        # Make sure the player is able to interact with the shop.
+        if not user_account.can_use_salvage():
+            await ctx.reply("The entrace to this shop appears to require a Trade Hub that has a Salvage Machine.")
+            return
+        
+        await self.shop_helper(
+            ctx = ctx,
+            user_account = user_account,
+            buyable_list = store.all_ephemeral_upgrades,
+            shop_name = "Ephemeral Shop",
+            prefix = f"You have **{utility.smart_number(user_account.get(values.ephemeral_token.text))} {values.ephemeral_token.text}**." \
+                + "\nAll upgrades in this shop will last until another one is purchased, or when you ascend.\n" \
+                + self.get_active_ephemeral_list(user_account),
+            suffix = "You can use '$bread salvage ephemeral cancel [upgrade name]' to cancel an upgrade you already have.",
+            suffix_line_break = False
+        )
+    
+    @ephemeral_shop.command(
+        name = "cancel",
+        brief = "Cancels an ephemeral upgrade.",
+        description = "Cancels an ephemeral upgrade.",
+        aliases = ["remove", "clear"]
+    )
+    async def ephemeral_cancel(self, ctx,
+            upgrade: typing.Optional[str] = commands.parameter(description = "The name of the upgrade to cancel."),
+            confirmation: typing.Optional[str] = commands.parameter(description = "Whether to skip the confirmation.")
+        ):
+
+        # first we make sure this is a valid channel
+        if get_channel_permission_level(ctx) < PERMISSION_LEVEL_ACTIVITIES:
+            await ctx.reply(f"Hello! Thanks for trying to cancel your Ephemeral Upgrade, the nearest cancel terminal is over in {self.json_interface.get_rolling_channel(ctx.guild.id)}.")
+            return
+        
+        if upgrade is None:
+            await ctx.reply("Please provide the name of the upgrade you want to cancel.")
+            return
+        
+        if confirmation is None:
+            confirmation = ""
+        
+        user_account = self.json_interface.get_account(ctx.author, guild = ctx.guild.id)
+        upgrade_file = user_account.get_ephemeral_file()
+        
+        if not upgrade_file: # If the list is empty.
+            await ctx.reply("You do not have any Ephemeral Upgrades.")
+            return
+        
+        found_upgrade = store.find_ephemeral_upgrade(upgrade)
+        
+        if not found_upgrade:
+            await ctx.reply("I don't recognize that Ephemeral Upgrade.")
+            return
+        
+        if found_upgrade.name not in upgrade_file:
+            await ctx.reply("You don't currently have that upgrade.")
+            return
+                
+        confirm_text = ["yes", "y", "confirm"]
+        cancel_text = ["no", "n", "cancel"]
+        
+        if confirmation.lower() in cancel_text:
+            await ctx.reply("You are planning to c- No? Uh, okay, I guess.")
+            return
+        elif confirmation.lower() not in confirm_text:
+            if ctx.author.id in self.currently_interacting:
+                return
+            
+            # If it gets here we need to prompt the user to make sure they
+            # want to overwrite their existing catalyst with the new one.
+            
+            def check(m: discord.Message):  # m = discord.Message.
+                return m.author.id == ctx.author.id and m.channel.id == ctx.channel.id
+            
+            await ctx.reply(f"You are planning to cancel the **{found_upgrade.display_name}** Ephemeral Upgrade." \
+                            + "\nThis action is irreversable, so if you would like to have it again you will need to purchase it again." \
+                            + f"\nAre you sure you want to proceed? Yes or no.")
+            
+            self.currently_interacting.append(ctx.author.id)
+            
+            try:
+                msg = await self.bot.wait_for('message', check = check, timeout = 60.0)
+            except asyncio.TimeoutError: 
+                await ctx.reply("I'm sorry, but you have taken too long, please start over.")
+                self.remove_from_interacting(ctx.author.id)
+                return
+
+            if msg.content.lower() in cancel_text:
+                await ctx.reply("Very well, come back later if you would like to cancel an Ephemeral Upgrade.")
+
+                self.remove_from_interacting(ctx.author.id)
+                return
+            elif msg.content.lower() not in confirm_text:
+                await ctx.reply("I'm not entirely sure what that is, please try again.")
+
+                self.remove_from_interacting(ctx.author.id)
+                return
+            
+            self.remove_from_interacting(ctx.author.id)
+        
+        upgrade_file.remove(found_upgrade.name)
+        user_account.set("ephemeral_upgrades", upgrade_file)
+        self.json_interface.set_account(ctx.author.id, user_account, ctx.guild.id)
+        
+        await ctx.reply(f"You have cancelled the **{found_upgrade.display_name}** Ephemeral Upgrade.\nYou can visit the Ephemeral Shop to purchase it again or to purchase another upgrade.")
+        
+        
+
+        
+        
+
+
+
+
+
+
+        
+        
+        
+    ########################################################################################################################
+    #####      BREAD SALVAGE SHOP
+
+    @bread.command(
+        name = "catalyst",
+        brief = "Create catalysts.",
+        description = "Shortcut to '$bread salvage catalyst'.",
+        aliases = ["catalyst_shop", "catalyst_store", "catalysts", "catalysts_shop", "catalysts_store",
+                   "enzyme", "enzyme_shop", "enzyme_store", "enzymes", "enzymes_shop", "enzymes_store"],
+        hidden = True
+    )
+    async def catalyst_shop_shortcut(self, ctx):
+        await ctx.invoke(self.catalyst_shop)
+
+    @salvage.command(
+        name = "catalyst",
+        brief = "Create catalysts.",
+        aliases = ["catalyst_shop", "catalyst_store", "catalysts", "catalysts_shop", "catalysts_store",
+                   "enzyme", "enzyme_shop", "enzyme_store", "enzymes", "enzymes_shop", "enzymes_store"]
+    )
+    async def catalyst_shop(self, ctx):
+
+        # first we make sure this is a valid channel
+        if get_channel_permission_level(ctx) < PERMISSION_LEVEL_ACTIVITIES:
+            await ctx.reply(f"Hello! Thanks for trying to access the Catalyst Shop. The nearest Salvage Machine access port is in {self.json_interface.get_rolling_channel(ctx.guild.id)}.")
+            return
+        
+        # we get the account of the user who called it
+        user_account = self.json_interface.get_account(ctx.author, guild = ctx.guild.id)
+
+        # Make sure the player is able to interact with the shop.
+        if not user_account.can_use_salvage():
+            await ctx.reply("The catalyst creation machine appears to be a part of a Salvage Machine within a Trade Hub.")
+            return
+            
+        await self.shop_helper(
+            ctx = ctx,
+            user_account = user_account,
+            buyable_list = store.all_catalysts,
+            shop_name = "Catalyst Store",
+            prefix = f"Catalysts temporary upgrades that improve the Salvage Machine in some way.\nEach catalyst lasts for **{user_account.get_catalyst_length()}** salvages."
+        )
+            
+            
+        
 
 
 
@@ -8122,7 +8911,7 @@ anarchy - 1000% of your wager.
         origin_account = self.json_interface.get_account(origin_user, guild = ctx.guild.id)
         
         # hacky copy operation
-        target_account = account.Bread_Account.from_dict(str(target_user.id), origin_account.to_dict())
+        target_account = account.Bread_Account.from_dict(str(target_user.id), origin_account.to_dict(), self.json_interface)
         # self.json_interface.set_account(target_user, target_account)
         
         # target_account = self.json_interface.get_account(target_user)
@@ -8622,13 +9411,19 @@ anarchy - 1000% of your wager.
         items.append(values.omega_chessatron)
         items.append(values.anarchy_omega_chessatron)
         items.append(values.fuel)
+        items.append(values.gem_white)
+        items.append(values.ephemeral_token)
 
         for shop_item in store.all_store_items:
+            if issubclass(shop_item, (store.Ephemeral_Upgrade, store.Catalyst)):
+                continue
+                
             if shop_item.max_level(account) is None:
                 continue
             
             if issubclass(shop_item, store.Gambit_shop_Item):
-                shop_item.do_purchase(account)
+                for _ in shop_item.levels_required:
+                    shop_item.do_purchase(account)
             else:
                 account.set(shop_item.name, shop_item.max_level(account))
 
@@ -8734,14 +9529,16 @@ anarchy - 1000% of your wager.
         if not await self.await_confirmation(ctx):
             return
         
-        for account in self.json_interface.get_all_user_accounts(ctx.guild.id):
-            if account.get_prestige_level() != 11:
-                continue
-            
-            account.set(store.Payment_Bonus.name, 0)
-            account.set("active_multirollers", -1)
-            
-            self.json_interface.set_account(account.get("id"), account, ctx.guild.id)
+        # Go through all accounts in the database and set any instance of High Roller Table to 0.
+        # Then add ascension tokens equal to the level of High Roller Table.
+        for guild in self.json_interface.all_guilds:
+            for user_account in self.json_interface.get_all_user_accounts(guild):
+                if user_account.get("gamble_level") > 0:
+                    level = user_account.get("gamble_level")
+                    user_account.set("gamble_level", 0)
+                    user_account.increment(values.ascension_token.text, level)
+                    self.json_interface.set_account(user_account.user_id, user_account, guild)
+                    
 
         # self.currently_interacting.clear()
 

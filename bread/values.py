@@ -1025,6 +1025,13 @@ ascension_token = Emote(
     name = "ascension_token",
     attributes = ["misc"],
     giftable = False
+
+)
+
+ephemeral_token = Emote(
+    text = "<:ephemeral_token:1362854706115772479>",
+    name = "ephemeral_token",
+    attributes = ["misc"]
 )
 
 fuel = Emote(
@@ -1050,7 +1057,7 @@ project_credits = Emote(
 
 all_bricks = [brick, brick_gold, fide_brick, brick_fide]
 all_bricks_weighted = [brick] * 10 + [brick_gold] * 1 + [fide_brick] * 5 + [brick_fide] * 5
-misc_emotes = [ascension_token, middle_finger, cherry, brick, brick_gold, fide_brick, brick_fide, lemon, grapes, rigged, bcapy, wcapy, corrupted_bread, fuel, gem_white] # gem_white is here so it won't get included in projects
+misc_emotes = [ascension_token, middle_finger, cherry, brick, brick_gold, fide_brick, brick_fide, lemon, grapes, rigged, bcapy, wcapy, corrupted_bread, fuel, gem_white, ephemeral_token] # gem_white is here so it won't get included in projects
 
 ##################### CODE
 

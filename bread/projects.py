@@ -379,7 +379,9 @@ class Trade_Hub(Project):
             "It was recently discovered by Trade Hub officials that an individual by the name of Meta had the permissions required to access many of the internal Trade Hub rooms, including very high security rooms, despite being a regular Trade Hub employee.",
             "The Trade Hub's power recently cut for a few minutes, causing widespread panic. After a minute, engineers discovered a critical flaw in a supply and demand calculation, which was somehow getting this weird number '60' after calculating 59 + 1.",
             "A fight broke out in the Trade Hub cafeteria in the early hours of the day after one member of the Trade Hub staff got tricked. The incident report stated 'Juno was mad, he knew he'd been had.'",
-            "Reports of a mysterious Timothy \"Cheater Cheater Lightbulb Eater\" Sands fellow appearing at random times around the Trade Hub is very concerning, but local LED consumption experts are confident that it's a good omen."
+            "Reports of a mysterious Timothy \"Cheater Cheater Lightbulb Eater\" Sands fellow appearing at random times around the Trade Hub is very concerning, but local LED consumption experts are confident that it's a good omen.",
+            "There is an excess of boinge in the Trade Hub.",
+            "The entire Trade Hub went offline temporarily after someone yelled a little too loud about seeing the number 37 show up.",
         ]
 
         out = "\n"
@@ -966,9 +968,9 @@ class Detection_Array(Trade_Hub_Upgrade):
         new_tier = system_tile.get_upgrade_level(cls) + 1
         
         if new_tier >= 2:
-            return f"Version {round(7.2 * (1.2 ** (new_tier - 2)), 1)} of some high-powered external sensors, capable of recieving communication network signals from {8 * (new_tier + 1)} tiles away."
+            return f"Version {round(7.2 * (1.2 ** (new_tier - 2)), 1)} of some high-powered external sensors, capable of receiving communication network signals from {8 * (new_tier + 1)} tiles away."
         
-        return f"High-powered suite of external sensors, capable of recieving communication network signals from {8 * (new_tier + 1)} tiles away."
+        return f"High-powered suite of external sensors, capable of receiving communication network signals from {8 * (new_tier + 1)} tiles away."
     
     @classmethod
     def completion(
@@ -998,7 +1000,7 @@ class Detection_Array(Trade_Hub_Upgrade):
         ) -> str:
         current_tier = system_tile.get_upgrade_level(cls)
         return f"A set of powerful sensors that increases this Trade Hub's range in the communication network to {8 * (current_tier + 1)} tiles."
-   
+ 
 class Dimensional_Shrine(Trade_Hub_Upgrade):
     internal = "dimensional_shrine"
     max_level = 1
@@ -1057,10 +1059,70 @@ class Dimensional_Shrine(Trade_Hub_Upgrade):
         
         # This one is only purchasable if the hub has any level of Offpsing Outlook.
         return bool(system_tile.get_upgrade_level(Offspring_Outlook))
+ 
+class Salvage_Works(Trade_Hub_Upgrade):
+    internal = "salvage_works"
+    max_level = 3
+    unlock_level = 5
     
+    per_level = 5
+    
+    @classmethod
+    def name(
+            cls,
+            day_seed: str,
+            system_tile: space.SystemTradeHub
+        ) -> str:
+        return "Salvage Works"
+
+    @classmethod
+    def description(
+            cls,
+            day_seed: str,
+            system_tile: space.SystemTradeHub
+        ) -> str:
+        existing_level = system_tile.get_upgrade_level(cls)
+        if existing_level == 0:
+            return "An advanced Salvage Machine capable of converting junk into useful resources."
+        
+        return f"An upgraded Salvage Machine that's able to salvage {5 + cls.per_level * existing_level} items per day before stopping."
+    
+    @classmethod
+    def completion(
+            cls: typing.Type[typing.Self],
+            day_seed: str,
+            system_tile: space.SystemTradeHub
+        ) -> str:        
+        return "The Salvage Machine is up and running! You can now use '$bread salvage' to interact with it."
+    
+    @classmethod
+    def get_cost(
+            cls,
+            day_seed: str,
+            system_tile: space.SystemTradeHub
+        ) -> list[tuple[str, int]]:
+        mult = system_tile.get_upgrade_level(cls) + 1
+        return [
+            (values.gem_cyan.text, 200 * mult), (values.gem_orange.text, 200 * mult), (values.gem_pink.text, 200 * mult),
+            (values.chessatron.text, 250 * mult), (values.anarchy_chessatron.text, 5 * mult)
+        ]
+    
+    @classmethod
+    def purchased_description(
+            cls: typing.Type[typing.Self],
+            day_seed: str,
+            system_tile: space.SystemTradeHub
+        ) -> str:
+        existing_level = system_tile.get_upgrade_level(cls)
+        
+        if existing_level == 1:
+            return "A Salvage Machine that can convert junk into useful resources."
+
+        return f"A Salvage Machine that can convert junk into useful resources, upgraded to salvage {5 + cls.per_level * (existing_level - 1)} items per day."
+ 
 all_trade_hub_upgrades = [Listening_Post, Nebula_Refinery, Quantum_Catapult, Hyperlane_Registrar, Shroud_Beacon,
     Dark_Matter_Resonance_Chamber, Black_Hole_Observatory, Storm_Repulsion_Array, Offspring_Outlook, Detection_Array,
-    Dimensional_Shrine
+    Dimensional_Shrine, Salvage_Works
 ] # type: list[Trade_Hub_Upgrade]
 
 #######################################################################################################
