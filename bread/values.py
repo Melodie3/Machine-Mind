@@ -1029,7 +1029,7 @@ ascension_token = Emote(
 )
 
 ephemeral_token = Emote(
-    text = "<:ephemeral_token:1362854706115772479>",
+    text = "<:ephemeral_token:1374514224662843453>",
     name = "ephemeral_token",
     attributes = ["misc"]
 )

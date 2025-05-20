@@ -3,7 +3,7 @@ Patch 30:
 - Added a new Trade Hub upgrade unlocked at tier 5.
 - Added `$bread reset_account` if you want to reset your account for some reason.
 - Fuel is now shown in the item section of the space stats.
-- High Roller Table has been moved from the Hidden Bakery to the regular Bread Shop. Everyone who purchased it in the past has recieved a refund.
+- High Roller Table has been moved from the Hidden Bakery to the regular Bread Shop. Everyone who purchased it in the past has received a refund.
 - The gambit shop items will now, in their descriptions, show how much dough the item will be worth if you were to buy it.
 - The :gem_white: gambit shop item has been removed.
 - Standardized category naming scheme in the planet analysis.

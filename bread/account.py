@@ -145,7 +145,7 @@ class Bread_Account:
         entries_to_remove = [   "total_dough",
                                 "bling", "LC_booster", "gambit_shop_level",
                                 "daily_gambles", "daily_rolls",
-                                "multiroller", "compound_roller", "roll_summarizer", "black_hole", "multiroller_terminal", "multiroller_active",
+                                "multiroller", "compound_roller", "roll_summarizer", "black_hole", "multiroller_terminal", "multiroller_active", "high_roller_table",
                                 "investment_profit", "gamble_winnings",
                                 "space_level", "telescope_level", "autopilot_level", "fuel_tank", "fuel_research", "multiroller_terminal", "advanced_exploration", "engine_efficiency", "payment_bonus",
                                 "ephemeral_light_beam", "bread_enzymes", "hyper_catalyst", "strategy_steps",
