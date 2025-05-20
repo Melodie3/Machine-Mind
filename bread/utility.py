@@ -63,6 +63,22 @@ def write_count(
         word =  word + delimiter + "s"
     output = smart_number(number) + " " + word
     return output
+            
+def list_items(items: list) -> str:
+    if len(items) == 1:
+        return items[0]
+    if len(items) == 0:
+        return ""
+    
+    joined = ", ".join(items)
+    
+    last_comma = joined.rsplit(",", 1)
+    
+    # Include the Oxford comma if the amount of items is not 2.
+    if len(items) == 2:
+        return " and".join(last_comma)
+    else:
+        return ", and".join(last_comma)
 
 def array_subtract(
         array1: list,

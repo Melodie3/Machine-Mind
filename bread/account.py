@@ -49,15 +49,20 @@ class Bread_Account:
         "daily_fuel": 100,
         "hub_credits": 2000,
         "auto_move_map": False,
-        "tron_animation": True
+        "tron_animation": True,
+        "salvage_remaining": 5,
+        "catalyst_remaining": 0,
+        "active_catalyst": None
     }
 
 
     def __init__(
             self: typing.Self,
-            user_id: str
+            user_id: str,
+            json_interface: bread_cog.JSON_interface
         ) -> None:
         self.user_id = user_id
+        self.json_interface = json_interface
 
     def reset_to_default(self: typing.Self) -> None:
         """Resets the account to default values."""
@@ -105,6 +110,7 @@ class Bread_Account:
         
         self.set("daily_fuel", self.get_daily_fuel_cap())
         self.set("hub_credits", self.get_projects_credits_cap())
+        self.set("salvage_remaining", 5)
 
     def increase_prestige_level(self: typing.Self) -> None:
         """Increases this account's prestige level by 1."""
@@ -132,6 +138,8 @@ class Bread_Account:
         emotes_to_remove.append(values.anarchy_chess)
         emotes_to_remove.append(values.fuel)
         emotes_to_remove.append(values.corrupted_bread)
+        emotes_to_remove.append(values.ephemeral_token)
+        emotes_to_remove.append(values.gem_white)
         # we're keeping OoaKs
 
         entries_to_remove = [   "total_dough",
@@ -140,9 +148,10 @@ class Bread_Account:
                                 "multiroller", "compound_roller", "roll_summarizer", "black_hole", "multiroller_terminal", "multiroller_active",
                                 "investment_profit", "gamble_winnings",
                                 "space_level", "telescope_level", "autopilot_level", "fuel_tank", "fuel_research", "multiroller_terminal", "advanced_exploration", "engine_efficiency", "payment_bonus",
+                                "ephemeral_light_beam", "bread_enzymes", "hyper_catalyst", "strategy_steps",
                                 "galaxy_move_count", "galaxy_xpos", "galaxy_ypos", "system_xpos", "system_ypos", "projects_completed", "trade_hubs_created",
         ]
-        untouched =            ["lifetime_earned_dough", "lifetime_dough", "lifetime_gambles","highest_roll", ]
+        untouched =            ["lifetime_earned_dough", "lifetime_dough", "lifetime_gambles","highest_roll", "lifetime_salvages"]
 
         lifetime_stats = [      "total_rolls", "earned_dough", "loaf_converter",
                                 "natural_1", "ten_breads",  
@@ -191,8 +200,9 @@ class Bread_Account:
         self.set("daily_fuel", self.get_daily_fuel_cap())
         self.set("active_multirollers", -1)
 
-        # reset boosts file
+        # reset boosts files
         self.set("dough_boosts", dict())
+        self.set("ephemeral_upgrades", dict())
 
     def increase_prestige_to_goal(
             self: typing.Self, 
@@ -516,6 +526,46 @@ class Bread_Account:
     def get_maximum_daily_rolls(self: typing.Self) -> int:
         """Calculates the maximum amount of daily rolls this player can have, equal to 1000 + prestige_level * 100."""
         return 1000 + self.get_prestige_level() * 100
+    
+    def get_max_ephemeral_count(self: typing.Self) -> int:
+        return self.get(store.Ephemeral_Light_Beam.name) + 1
+    
+    def can_use_salvage(self: typing.Self) -> bool:
+        """Determines whether this player is able to interact with salvage stuff right now. This is not whether they have in the past."""
+        system_tile = self.get_system_tile(self.json_interface)
+        return (system_tile.type == "trade_hub") and (system_tile.get_upgrade_level(projects.Salvage_Works) >= 1)
+    
+    def get_catalyst_length(self: typing.Self) -> int:
+        return 10 + self.get(store.Bread_Enzymes.name)
+    
+    def get_active_catalyst(self: typing.Self) -> store.Catalyst | None:
+        return store.find_catalyst(self.get("active_catalyst"))
+
+    def get_ephemeral_upgrade(
+            self: typing.Self,
+            upgrade: str
+        ) -> int:
+        """Returns the amount of extra dough this player gets from the Gambit Shop for the given item."""
+        upgrades_file = self.get_ephemeral_file()
+        return upgrade in upgrades_file
+
+    def add_ephemeral_upgrade(
+            self: typing.Self,
+            upgrade: str
+        ) -> None:
+        """Sets an item's dough boost for this player to the given value."""
+        upgrades_file = self.get_ephemeral_file()
+        upgrades_file.insert(0, upgrade)
+        
+        max_amount = self.get_max_ephemeral_count()
+        
+        while len(upgrades_file) > max_amount:
+            upgrades_file.pop()
+            
+        self.set("ephemeral_upgrades", upgrades_file)
+    
+    def get_ephemeral_file(self: typing.Self) -> list[str]:
+        return self.get("ephemeral_upgrades", list())
 
     def get_dough_boost_for_item(
             self: typing.Self,
@@ -546,9 +596,16 @@ class Bread_Account:
         amount = values.chessatron.value
         # then we add omegas
         amount += (self.get(values.omega_chessatron.text) * 100) * self.get_shadowmega_boost_amount()
+        
+        if self.get_ephemeral_upgrade(store.Spirit.name):
+            amount *= 0.9
+        elif self.get_ephemeral_upgrade(store.Opportunity.name):
+            amount *= 1.1
+        
         if include_prestige_boost:
             prestige_mult = self.get_prestige_multiplier()
-            amount = round(amount * prestige_mult)  
+            amount = round(amount * prestige_mult)
+        
         return round(amount)
     
     def get_anarchy_chessatron_dough_amount(
@@ -803,12 +860,14 @@ class Bread_Account:
     ##############################################################
     ######  INPUT / OUTPUT
 
+    # Technically due to how this is used it should be a classmethod, but it doesn't really matter all that much.
     def from_dict(
             account_id: str,
-            entry: dict
+            entry: dict,
+            json_interface: bread_cog.JSON_interface
         ) -> Bread_Account:
         """Converts a dictionary and account id into a new Bread_Account object and returns said object."""
-        account = Bread_Account(account_id)
+        account = Bread_Account(account_id, json_interface)
         account.values = entry.copy()
         #if "lifetime_dough" not in account.values.keys() \
         #        and "total_dough" in account.values.keys():

@@ -222,7 +222,7 @@ PLANET_COLORS = {
     "Bknightanarchy": (0, 23, 60),
     "Bbishopanarchy": (0, 23, 60),
     "Brookanarchy": (0, 23, 60),
-    "Buqeenanarchy": (0, 23, 60),
+    "Bqueenanarchy": (0, 23, 60),
     "Bkinganarchy": (0, 23, 60),
 
     "Wpawnanarchy": (255, 156, 174),
@@ -865,17 +865,17 @@ class SystemPlanet(SystemTile):
         )
 
         categories = {
-            "Special Bread": values.croissant,
-            "Rare Bread": values.bagel,
-            "Chess Piece": values.black_pawn,
+            "Special Breads": values.croissant,
+            "Rare Breads": values.bagel,
+            "Chess Pieces": values.black_pawn,
             "Red Gems": values.gem_red,
             "Blue Gems": values.gem_blue,
             "Purple Gems": values.gem_purple,
             "Green Gems": values.gem_green,
             "Gold Gems": values.gem_gold,
-            "Many of a Kind": values.anarchy_chess,
-            "Anarchy Piece": values.anarchy_black_pawn,
-            "Space gem": values.gem_pink
+            "Many of a Kinds": values.anarchy_chess,
+            "Anarchy Pieces": values.anarchy_black_pawn,
+            "Space Gems": values.gem_pink
         }
         deviation = self.planet_deviation
         
