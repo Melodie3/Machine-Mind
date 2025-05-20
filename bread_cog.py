@@ -7280,7 +7280,10 @@ anarchy - 1000% of your wager.
                 for upgrade in available_upgrades:
                     message_lines += f"\n- {upgrade.name(day_seed, hub)}"
             else:
-                message_lines += f"\n\nThere are {utility.write_count(len(available_upgrades), 'available upgrade')}."
+                if len(available_upgrades) == 1:
+                    message_lines += "\n\nThere is 1 available upgrade."
+                else:
+                    message_lines += f"\n\nThere are {utility.smart_number(len(available_upgrades))} available upgrades."
         
         if len(available_upgrades) > 0 or len(hub.get_purchased_upgrades()) > 0:
             message_lines += f"\nUse '$bread space hub upgrades' to get more information on available and purchased upgrades."
