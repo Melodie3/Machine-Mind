@@ -89,7 +89,10 @@ class Bread_Account:
         # first calculate what the max numbber of stored rolls is
         minimum_daily_rolls = -self.get_maximum_stored_rolls()
         # then remove one day of rolls from our counter
-        new_daily_rolls = self.get("daily_rolls") - self.get("max_daily_rolls")
+        if self.get("daily_rolls") < self.get("max_daily_rolls"):
+            new_daily_rolls = self.get("daily_rolls") - self.get("max_daily_rolls")
+        else:
+            new_daily_rolls = 0
         # then make sure that we aren't exceeding our maximum
         new_daily_rolls = max(minimum_daily_rolls, new_daily_rolls)
         # then set the new value
