@@ -120,6 +120,8 @@ def bread_roll(
         print("[Rolls]: Viking activated.")
         # Viking: Increase luck by 10% but MoaKs become unrollable.
         roll_luck = round(roll_luck * 1.1)
+        anarchy_piece_luck = round(anarchy_piece_luck * 1.1)
+        space_gem_luck = round(space_gem_luck * 1.1)
         moak_multiplier = 0
 
     if user_account.get_ephemeral_upgrade(store.Pathfinder.name):
