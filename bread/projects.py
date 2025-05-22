@@ -4312,6 +4312,239 @@ class Waxillium_Space_Station(Project):
             (values.anarchy_chessatron.text, amount_1)
         ]
 
+class Gem_Pressure(Project):
+    """Written by Duck."""
+    internal = "gem_pressure"
+
+    @classmethod
+    def name(
+            cls,
+            day_seed: str,
+            system_tile: space.SystemTradeHub
+         ) -> str:
+        rng = random.Random(utility.hash_args(day_seed, system_tile.tile_seed(), "name"))
+
+        options = [
+            "Gem Pressure",
+            "Pressure Cooking",
+            "Gem Creation"
+        ]
+
+
+        return rng.choice(options)
+
+    @classmethod
+    def description(
+            cls,
+            day_seed: str,
+            system_tile: space.SystemTradeHub
+        ) -> str:
+        rng = random.Random(utility.hash_args(day_seed, system_tile.tile_seed(), "description"))
+
+        cost = cls.get_price_description(day_seed, system_tile)
+        reward = cls.get_reward_description(day_seed, system_tile)
+
+        part_1 = [
+            "Surely they're joking...",
+            "There's no way they're actually considering this...",
+            "This must be a joke..."
+        ]
+
+
+        part_2 = [
+            "For *some* reason, the Trade Hub scientists",
+            "For whatever reason the Trade Hub's scientists",
+            "The Trade Hub scientists"
+        ]
+
+
+        part_3 = [
+            "(who should actually be called the Trade Hub crackheads)",
+            "(who should probably be called the Trade Hub lunatics)",
+            "(although calling them the Trade Hub psychotics would be more accurate)"
+        ]
+
+
+        part_4 = [
+            "are planning to try and make a new gem for some reason.",
+            "are going to try to make a new gem for a reason nobody knows.",
+            "are about to, and this is unfortunately not a joke, make new gems."
+        ]
+
+
+        part_5 = [
+            "This is not a good idea.",
+            "This is a bad idea.",
+            "This is a terrible idea.",
+            "This sure is one of the ideas of all time.",
+            "This is just a stupid idea.",
+            "This cannot be a good idea."
+        ]
+
+
+        part_6 = [
+            "You may have heard of their other idea for making gems, ",
+            "They've done something similar before,",
+            "In the past they've tried something similar,"
+        ]
+
+
+        part_7 = [
+            "which was extracting gems out of gold gems and bread.",
+            "which involved getting gems out of gold gems and bread.",
+            "which revolved around somehow being able to extract a new gem out of a collection of gold gems and bread."
+        ]
+
+
+        part_8 = [
+            "That idea, however, was actually good.",
+            "That one actually worked.",
+            "It's still unknown how that one worked, but it did."
+        ]
+
+
+        part_9 = [
+            "Their idea this time is pretty crazy.",
+            "This idea they have is bound to fail.",
+            "This time, however, it's even worse."
+        ]
+
+
+        part_10 = [
+            "They're going to put all the gems in a small space,",
+            "They're planning on putting all the gems into a small space,",
+            "The plan states that they're going to put all the gems in a small space,"
+        ]
+
+
+        part_11 = [
+            "heat the space to about 1,600° C,",
+            "heat up the gems to roughly 1,600° C,",
+            "increase the temperature of the gems to 1,600° C,"
+        ]
+
+
+        part_12 = [
+            "put a ton of pressure onto the gems,",
+            "put a ton of pressure into the system,",
+            "put a bunch of pressure on the gems,"
+        ]
+
+
+        part_13 = [
+            "pray that it doesn't explode,",
+            "hope it doesn't explode,",
+            "cross their fingers it won't explode,"
+        ]
+
+
+        part_14 = [
+            f"and try to make {reward}.",
+            f"and attempt to make {reward}.",
+            f"and somehow make {reward}."
+        ]
+
+
+        part_15 = [
+            "Now, you might ask, what's the chance of this working?",
+            "You might wonder what the chance of this working is.",
+            "You might be curious as to what the chance is that this works."
+        ]
+
+
+        part_16 = [
+            "About 0%.",
+            "0%.",
+            "Nothing higher than 0%."
+        ]
+
+
+        part_17 = [
+            "And yet, for some reason, they're still requesting people help them.",
+            "And still, they're asking people to contribute resources to help.",
+            "Despite this they're requesting help getting the resources required."
+        ]
+
+
+        part_18 = [
+            f"It's also crazy what they're asking for: {cost}.",
+            f"What they're asking for is also insane: {cost}.",
+            f"They've lost their minds with what they need: {cost}."
+        ]
+
+        return " ".join([
+            rng.choice(part_1),
+            rng.choice(part_2),
+            rng.choice(part_3),
+            rng.choice(part_4),
+            rng.choice(part_5),
+            rng.choice(part_6),
+            rng.choice(part_7),
+            rng.choice(part_8),
+            rng.choice(part_9),
+            rng.choice(part_10),
+            rng.choice(part_11),
+            rng.choice(part_12),
+            rng.choice(part_13),
+            rng.choice(part_14),
+            rng.choice(part_15),
+            rng.choice(part_16),
+            rng.choice(part_17),
+            rng.choice(part_18),
+        ])
+
+    @classmethod
+    def completion(
+            cls: typing.Type[typing.Self],
+            day_seed: str,
+            system_tile: space.SystemTradeHub
+        ) -> str:
+        rng = random.Random(utility.hash_args(day_seed, system_tile.tile_seed(), "completion"))
+        reward = cls.get_reward_description(day_seed, system_tile)
+
+        options = [
+            f"I don't know how it worked, but it somehow did. They're about to give out the {reward}, but they really should not be trying to make new gems.",
+            f"Somehow it worked, that's crazy. I hope they don't try any more methods in the future, but at least they're giving out the {reward}.",
+            f"I've heard that they're giving out the {reward}. That's odd, I thought the experiment was bound to fail."
+        ]
+
+        return rng.choice(options)
+    
+    @classmethod
+    def get_cost(
+            cls,
+            day_seed: str,
+            system_tile: space.SystemTradeHub
+        ) -> list[tuple[str, int]]:
+        rng = random.Random(utility.hash_args(day_seed, system_tile.tile_seed(), "items"))
+
+        amount_1 = rng.randint(1, 2)
+
+        return [
+            (values.gem_cyan.text, amount_1 * 200),
+            (values.gem_orange.text, amount_1 * 200),
+            (values.gem_pink.text, amount_1 * 200),
+            (values.gem_gold.text, amount_1 * 400),
+            (values.gem_green.text, amount_1 * 800),
+            (values.gem_purple.text, amount_1 * 1600),
+            (values.gem_blue.text, amount_1 * 2400),
+            (values.gem_red.text, amount_1 * 4800)
+        ]
+    
+    @classmethod
+    def get_reward(
+            cls,
+            day_seed: str,
+            system_tile: space.SystemTradeHub
+        ) -> list[tuple[str, int]]:
+        rng = random.Random(utility.hash_args(day_seed, system_tile.tile_seed(), "items"))
+
+        amount_1 = rng.randint(1, 2)
+
+        return [
+            (values.gem_white.text, amount_1)
+        ]
+
 #######################################################################################################
 ##### Take item projects. #############################################################################
 #######################################################################################################
@@ -8050,7 +8283,10 @@ class Chessatron_Repair(Project):
 ##### Item projects. ##################################################################################
 #######################################################################################################
 
-story_projects = [Essential_Oils, Bingobango, Anarchy_Trading, Beta_Minus, Anarchy_Tax_Evasion, Gem_Extraction, Bakery_Encounter, Corruption_Lab, Cafeteria_Kerfuffle, Health_Inspection, Stonk_Exchange, Waxillium_Space_Station]
+story_projects = [
+    Essential_Oils, Bingobango, Anarchy_Trading, Beta_Minus, Anarchy_Tax_Evasion, Gem_Extraction, Bakery_Encounter, Corruption_Lab, Cafeteria_Kerfuffle,
+    Health_Inspection, Stonk_Exchange, Waxillium_Space_Station, Gem_Pressure
+]
 
 take_special_bread_projects = [Too_Much_Stuffing, Flatbread_Shortage, Appease_The_French, Croissant_Cravings, Beach_Disappearance]
 take_rare_bread_projects = [Ecosystem_Problem, Stolen_Donuts, Waffle_Machine]
