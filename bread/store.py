@@ -2287,7 +2287,7 @@ class Gambit_shop_Item(Custom_price_item):
 
     @classmethod
     def description(cls, user_account: account.Bread_Account) -> str:
-        return f"Boosts the dough you gain from a {cls.boost_item.text} by {utility.smart_number(cls.boost_amount)}, to {utility.smart_number(cls.boost_amount * (1 + cls.get_account_level(user_account)) + cls.boost_item.value)}."
+        return f"Boosts the dough you gain from a {cls.boost_item.text} by {utility.smart_number(cls.boost_amount)}, to {utility.smart_number(cls.boost_amount * (1 + cls.get_account_level(user_account)) + cls.boost_item.value)} in total."
     
     @classmethod
     def get_cost_types(cls, user_account: account.Bread_Account, level: int = None):
