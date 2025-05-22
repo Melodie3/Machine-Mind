@@ -8378,13 +8378,15 @@ anarchy - 1000% of your wager.
             await ctx.reply("The entrace to this shop appears to require a Trade Hub that has a Salvage Machine.")
             return
         
+        max_ephemeral_upgrades = user_account.get(store.Ephemeral_Light_Beam.name) + 1
+        
         await self.shop_helper(
             ctx = ctx,
             user_account = user_account,
             buyable_list = store.all_ephemeral_upgrades,
             shop_name = "Ephemeral Shop",
             prefix = f"You have **{utility.smart_number(user_account.get(values.ephemeral_token.text))} {values.ephemeral_token.text}**." \
-                + "\nAll upgrades in this shop will last until another one is purchased, or when you ascend.\n" \
+                + ("\nAll upgrades in this shop will last until another one is purchased, or when you ascend.\n" if max_ephemeral_upgrades == 1 else f"\nAll upgrades in this shop will last until {max_ephemeral_upgrades} are purchased after it, or when you ascend.\n") \
                 + self.get_active_ephemeral_list(user_account),
             suffix = "You can use '$bread salvage ephemeral cancel [upgrade name]' to cancel an upgrade you already have.",
             suffix_line_break = False
