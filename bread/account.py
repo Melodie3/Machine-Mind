@@ -205,7 +205,7 @@ class Bread_Account:
 
         # reset boosts files
         self.set("dough_boosts", dict())
-        self.set("ephemeral_upgrades", dict())
+        self.set("ephemeral_upgrades", list())
 
     def increase_prestige_to_goal(
             self: typing.Self, 
