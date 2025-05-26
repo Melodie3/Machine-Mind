@@ -9536,12 +9536,13 @@ anarchy - 1000% of your wager.
         
         # Go through all accounts in the database and set any instance of High Roller Table to 0.
         # Then add ascension tokens equal to the level of High Roller Table.
+        # user_account = self.json_interface.get_account(702477000941502494, 958392331671830579)
+        # user_account.set("ephemeral_upgrades", list())
+        # self.json_interface.set_account(702477000941502494, user_account, 958392331671830579)
         for guild in self.json_interface.all_guilds:
             for user_account in self.json_interface.get_all_user_accounts(guild):
-                if user_account.get("gamble_level") > 0:
-                    level = user_account.get("gamble_level")
-                    user_account.set("gamble_level", 0)
-                    user_account.increment(values.ascension_token.text, level)
+                if isinstance(user_account.get("ephemeral_upgrades", list()), dict):
+                    user_account.set("ephemeral_upgrades", list())
                     self.json_interface.set_account(user_account.user_id, user_account, guild)
                     
 
