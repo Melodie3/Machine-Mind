@@ -8,6 +8,9 @@ import typing
 import importlib
 import asyncio
 import random
+import json
+import io
+import copy
 
 import verification
 import bread.utility as utility
@@ -259,6 +262,56 @@ async def unbrick(ctx, member: typing.Optional[discord.Member]):
         await ctx.send(f"{member.mention} has been unbricked.")
     else:
         await brick(ctx, None)
+
+@commands.command(
+    brief = "Copy brick stats from one member to another.",
+    help = "Copy brick stats from one member to another.",
+    hidden=True
+)
+@commands.is_owner()
+async def brick_copy_stats(ctx, source: typing.Optional[discord.Member], target: typing.Optional[discord.Member]):
+    if source is None:
+        await ctx.reply("Please provide the member to copy from.")
+        return
+    
+    if target is None:
+        await ctx.reply("Please provide the member to copy to.")
+        return
+    
+    JSON_cog = bot_ref.get_cog("JSON")
+    cabinet = JSON_cog.get_filing_cabinet("enforcement", guild = ctx.guild.id, create_if_nonexistent=False)
+    
+    source_stats = copy.deepcopy(cabinet.get(str(source.id)))
+    
+    if source_stats is None:
+        await ctx.reply("That source member does not have any brick stats.")
+        return
+    
+    source_stats["username"] = target.name
+    source_stats["display_name"] = target.display_name
+    
+    cabinet[str(target.id)] = source_stats
+    
+    JSON_cog.set_filing_cabinet("enforcement", cabinet = cabinet, guild = ctx.guild.id)
+    
+    await ctx.reply("Copy complete.")
+
+@commands.command(
+    brief="Dumps all of the brick data.",
+    help = "Dumps all of the brick data.",
+    hidden=True
+)
+@commands.is_owner()
+async def dump_brick_data(ctx):
+    JSON_cog = bot_ref.get_cog("JSON")
+    data = JSON_cog.get_filing_cabinet("enforcement", guild = ctx.guild.id, create_if_nonexistent=False)
+    file_text = json.dumps(data, indent=4)
+
+    fake_file = io.StringIO(file_text)
+    final_file = discord.File(fake_file, filename="export.json")
+
+    await ctx.reply(file=final_file)
+    
     
 
 @commands.command(
@@ -509,5 +562,7 @@ async def setup(bot: commands.Bot):
     #bot.add_command(timeout)
     bot.add_command(brick)
     bot.add_command(unbrick)
+    bot.add_command(brick_copy_stats)
+    bot.add_command(dump_brick_data)
     global bot_ref
     bot_ref = bot
