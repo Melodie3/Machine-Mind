@@ -2830,7 +2830,7 @@ loaf_converter""",
     @bread.command(
         name="reset_account"
     )
-    async def bread_reset_accound(self, ctx):
+    async def bread_reset_account(self, ctx):
         user_account = self.json_interface.get_account(ctx.author, guild = ctx.guild.id)
         
         await ctx.reply("Are you *sure* you want to reset your account?\nThis cannot be undone, and it will reset *all* of your lifetime stats.\n\nIf you are sure you want to reset your account, please send your Loaf Converter amount.")
@@ -3778,6 +3778,26 @@ For example, "$bread gift Melodie all chess_pieces" would gift all your chess pi
                 self.remove_from_interacting(ctx.author.id)
                 return
 
+        if ctx.author.id == target.id:
+            await ctx.reply("You can't gift bread to yourself, silly.")
+            print(f"rejecting self gift request from {target.display_name} for amount {amount}.")
+            self.remove_from_interacting(ctx.author.id)
+            
+            return
+
+        if (amount < 0):
+            print(f"Rejecting steal request from {ctx.author.display_name}")
+            await ctx.reply("Trying to steal bread? Mum won't be very happy about that.")
+            await ctx.invoke(self.bot.get_command('brick'), member=ctx.author)
+            self.remove_from_interacting(ctx.author.id)
+            return
+        
+        if (amount == 0):
+            print(f"Rejecting 0 bread request from {ctx.author.display_name}")
+            await ctx.reply("That's not much of a gift.")
+            self.remove_from_interacting(ctx.author.id)
+            return
+
         def gift(
                 sender_member: discord.Member,
                 receiver_member: discord.Member,
@@ -3923,26 +3943,6 @@ For example, "$bread gift Melodie all chess_pieces" would gift all your chess pi
                 base_amount = sender_account.get(item)
 
             amount = base_amount * fraction_numerator // fraction_denominator
-
-        if ctx.author.id == target.id:
-            await ctx.reply("You can't gift bread to yourself, silly.")
-            print(f"rejecting self gift request from {target.display_name} for amount {amount}.")
-            self.remove_from_interacting(ctx.author.id)
-            
-            return
-
-        if (amount < 0):
-            print(f"Rejecting steal request from {ctx.author.display_name}")
-            await ctx.reply("Trying to steal bread? Mum won't be very happy about that.")
-            await ctx.invoke(self.bot.get_command('brick'), member=ctx.author)
-            self.remove_from_interacting(ctx.author.id)
-            return
-        
-        if (amount == 0):
-            print(f"Rejecting 0 bread request from {ctx.author.display_name}")
-            await ctx.reply("That's not much of a gift.")
-            self.remove_from_interacting(ctx.author.id)
-            return
 
 
         # enforce maxumum gift amount to players of lower prestige level
@@ -9534,16 +9534,7 @@ anarchy - 1000% of your wager.
         if not await self.await_confirmation(ctx):
             return
         
-        # Go through all accounts in the database and set any instance of High Roller Table to 0.
-        # Then add ascension tokens equal to the level of High Roller Table.
-        # user_account = self.json_interface.get_account(702477000941502494, 958392331671830579)
-        # user_account.set("ephemeral_upgrades", list())
-        # self.json_interface.set_account(702477000941502494, user_account, 958392331671830579)
-        for guild in self.json_interface.all_guilds:
-            for user_account in self.json_interface.get_all_user_accounts(guild):
-                if isinstance(user_account.get("ephemeral_upgrades", list()), dict):
-                    user_account.set("ephemeral_upgrades", list())
-                    self.json_interface.set_account(user_account.user_id, user_account, guild)
+        await self.daily_task()
                     
 
         # self.currently_interacting.clear()
