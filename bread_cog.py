@@ -985,6 +985,7 @@ class Bread_cog(commands.Cog, name="Bread"):
         hour = time.hour # This is in UTC.
         
         def in_dst():
+            return True
             timezone = pytz.timezone("US/Pacific")
             timezone_aware_date = timezone.localize(time, is_dst=None)
             return timezone_aware_date.tzinfo._dst.seconds != 0
