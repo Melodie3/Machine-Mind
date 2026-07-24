@@ -562,7 +562,7 @@ class Random_Chess_Piece(Store_Item):
         limit = user_account.get("max_random_chess_pieces_per_day")
         purchased = user_account.get("random_chess_piece_bought")
         
-        return f"Purchase a random chess piece which you do not currently have.\n{utility.smart_number(limit - purchased)} remaining today."
+        return f"Purchase a random chess piece which you do not currently have.\n*{utility.smart_number(limit - purchased)} remaining today.*"
     
     @classmethod
     def find_max_purchasable_count(cls, user_account: account.Bread_Account) -> int:
@@ -776,7 +776,7 @@ class Special_Bread_Pack(Store_Item):
         limit = user_account.get("max_special_bread_packs_per_day")
         purchased = user_account.get("special_bread_pack_bought")
 
-        return f"A pack of 100 random special and rare breads.\n{utility.smart_number(limit - purchased)} remaining today."
+        return f"A pack of 100 random special and rare breads.\n*{utility.smart_number(limit - purchased)} remaining today.*"
 
     @classmethod
     def find_max_purchasable_count(cls, user_account: account.Bread_Account) -> int:
