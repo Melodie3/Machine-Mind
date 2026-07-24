@@ -539,13 +539,12 @@ class Bread_Account:
     
     def can_use_salvage(self: typing.Self) -> bool:
         """Determines whether this player is able to interact with salvage stuff right now. This is not whether they have in the past."""
-        # if self.get_space_level() == 0:
-        #     return False
+        if self.get_space_level() == 0:
+            return False
         
         if self._can_salvage_cache is not None:
-            print("Reading cache.")
             return self._can_salvage_cache
-        print("Setting cache.")
+        
         system_tile = self.get_system_tile(self.json_interface)
         self._can_salvage_cache = (system_tile.type == "trade_hub") and (system_tile.get_upgrade_level(projects.Salvage_Works) >= 1)
         return self._can_salvage_cache
