@@ -24,6 +24,8 @@ class Bread_Account:
     items = None
     achievements = None
     logistics = None
+    
+    _can_salvage_cache: bool
 
     default_values = {
         "total_dough" : 0,
@@ -63,6 +65,7 @@ class Bread_Account:
         ) -> None:
         self.user_id = user_id
         self.json_interface = json_interface
+        self._can_salvage_cache = None
 
     def reset_to_default(self: typing.Self) -> None:
         """Resets the account to default values."""
@@ -536,8 +539,16 @@ class Bread_Account:
     
     def can_use_salvage(self: typing.Self) -> bool:
         """Determines whether this player is able to interact with salvage stuff right now. This is not whether they have in the past."""
+        # if self.get_space_level() == 0:
+        #     return False
+        
+        if self._can_salvage_cache is not None:
+            print("Reading cache.")
+            return self._can_salvage_cache
+        print("Setting cache.")
         system_tile = self.get_system_tile(self.json_interface)
-        return (system_tile.type == "trade_hub") and (system_tile.get_upgrade_level(projects.Salvage_Works) >= 1)
+        self._can_salvage_cache = (system_tile.type == "trade_hub") and (system_tile.get_upgrade_level(projects.Salvage_Works) >= 1)
+        return self._can_salvage_cache
     
     def get_catalyst_length(self: typing.Self) -> int:
         return 10 + self.get(store.Bread_Enzymes.name)
