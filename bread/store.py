@@ -562,7 +562,7 @@ class Random_Chess_Piece(Store_Item):
         limit = user_account.get("max_random_chess_pieces_per_day")
         purchased = user_account.get("random_chess_piece_bought")
         
-        return f"Purchase a random chess piece which you do not currently have.\n{utility.smart_number(limit - purchased)} remaining today."
+        return f"Purchase a random chess piece which you do not currently have.\n*{utility.smart_number(limit - purchased)} remaining today.*"
     
     @classmethod
     def find_max_purchasable_count(cls, user_account: account.Bread_Account) -> int:
@@ -576,6 +576,13 @@ class Random_Chess_Piece(Store_Item):
         purchased_limit = max(limit - purchased, 0)
 
         return min(dough_limit, purchased_limit)
+
+    @classmethod
+    def can_be_purchased(cls, user_account: account.Bread_Account):
+        if user_account.get("chess_pieces") < 10:
+            return False
+        
+        return super().can_be_purchased(user_account)
 
     @classmethod
     def do_purchase(cls, user_account: account.Bread_Account, amount: int = 1):
@@ -769,7 +776,7 @@ class Special_Bread_Pack(Store_Item):
         limit = user_account.get("max_special_bread_packs_per_day")
         purchased = user_account.get("special_bread_pack_bought")
 
-        return f"A pack of 100 random special and rare breads.\n{utility.smart_number(limit - purchased)} remaining today."
+        return f"A pack of 100 random special and rare breads.\n*{utility.smart_number(limit - purchased)} remaining today.*"
 
     @classmethod
     def find_max_purchasable_count(cls, user_account: account.Bread_Account) -> int:
@@ -781,6 +788,13 @@ class Special_Bread_Pack(Store_Item):
         purchased_limit = max(limit - purchased, 0)
 
         return min(dough_limit, purchased_limit)
+
+    @classmethod
+    def can_be_purchased(cls, user_account: account.Bread_Account):
+        if user_account.get("special_bread") + user_account.get("rare_bread") < 25:
+            return False
+        
+        return super().can_be_purchased(user_account)
 
     @classmethod
     def do_purchase(cls, user_account: account.Bread_Account, amount = 1):
@@ -891,7 +905,7 @@ class Extra_Gamble(Store_Item):
     @classmethod
     def can_be_purchased(cls, user_account: account.Bread_Account) -> bool:
         lifetime_gambles = user_account.get("lifetime_gambles")
-        if lifetime_gambles < 10:
+        if lifetime_gambles < 20:
             return False
         return True
 
@@ -1054,6 +1068,9 @@ class Bling(Custom_price_item):
         if not super().can_be_purchased(user_account):
             return False
         
+        if user_account.get("shiny") < 2:
+            return False
+        
         level = user_account.get(cls.name) + 1
 
         # Space related bling items.
@@ -1180,6 +1197,13 @@ class High_Roller_Table(Static_Cost_Mixin, Custom_price_item):
     def do_purchase(cls, user_account: account.Bread_Account):
         super().do_purchase(user_account)
         return f"You bought your way into the high roller table. Congratulations!"
+
+    @classmethod
+    def can_be_purchased(cls, user_account: account.Bread_Account):
+        if user_account.get("lifetime_gambles") < 50:
+            return False
+        
+        return super().can_be_purchased(user_account)
 
 
 

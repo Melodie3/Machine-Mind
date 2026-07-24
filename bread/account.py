@@ -24,6 +24,8 @@ class Bread_Account:
     items = None
     achievements = None
     logistics = None
+    
+    _can_salvage_cache: bool
 
     default_values = {
         "total_dough" : 0,
@@ -63,6 +65,7 @@ class Bread_Account:
         ) -> None:
         self.user_id = user_id
         self.json_interface = json_interface
+        self._can_salvage_cache = None
 
     def reset_to_default(self: typing.Self) -> None:
         """Resets the account to default values."""
@@ -143,12 +146,13 @@ class Bread_Account:
         emotes_to_remove.append(values.corrupted_bread)
         emotes_to_remove.append(values.ephemeral_token)
         emotes_to_remove.append(values.gem_white)
+        emotes_to_remove.append(values.hotdog)
         # we're keeping OoaKs
 
         entries_to_remove = [   "total_dough",
                                 "bling", "LC_booster", "gambit_shop_level",
                                 "daily_gambles", "daily_rolls",
-                                "multiroller", "compound_roller", "roll_summarizer", "black_hole", "multiroller_terminal", "multiroller_active", "high_roller_table",
+                                "multiroller", "compound_roller", "roll_summarizer", "black_hole", "multiroller_terminal", "multiroller_active", "gamble_level",
                                 "investment_profit", "gamble_winnings",
                                 "space_level", "telescope_level", "autopilot_level", "fuel_tank", "fuel_research", "multiroller_terminal", "advanced_exploration", "engine_efficiency", "payment_bonus",
                                 "ephemeral_light_beam", "bread_enzymes", "hyper_catalyst", "strategy_steps",
@@ -535,8 +539,15 @@ class Bread_Account:
     
     def can_use_salvage(self: typing.Self) -> bool:
         """Determines whether this player is able to interact with salvage stuff right now. This is not whether they have in the past."""
+        if self.get_space_level() == 0:
+            return False
+        
+        if self._can_salvage_cache is not None:
+            return self._can_salvage_cache
+        
         system_tile = self.get_system_tile(self.json_interface)
-        return (system_tile.type == "trade_hub") and (system_tile.get_upgrade_level(projects.Salvage_Works) >= 1)
+        self._can_salvage_cache = (system_tile.type == "trade_hub") and (system_tile.get_upgrade_level(projects.Salvage_Works) >= 1)
+        return self._can_salvage_cache
     
     def get_catalyst_length(self: typing.Self) -> int:
         return 10 + self.get(store.Bread_Enzymes.name)
