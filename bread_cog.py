@@ -1046,6 +1046,41 @@ class Bread_cog(commands.Cog, name="Bread"):
         
         print("Finished Bread cog hourly loop waiting at {}.".format(datetime.now()))
     
+    async def output_error(
+        self: typing.Self,
+        ctx: commands.Context | None,
+        error: typing.Type[Exception],
+        also_print: bool = True
+    ) -> None:
+        output = "\n".join(traceback.format_exception(error))
+        
+        if also_print:
+            print(output)
+        
+        try:
+            # Attempt to fetch the error log channel, if the bot doesn't have access then discord.errors.Forbidden will be raised.
+            channel = await self.bot.fetch_channel(error_channel)
+        except discord.errors.Forbidden:
+            # If this happened that means it doesn't have access to the error channel, so don't make another error by trying to send the log anyway.
+            print("Unable to send error message to output channel, no access.")
+            return
+        
+        try:
+            jump_url = f"[Trigger message.](<{ctx.message.jump_url}>)"
+        except AttributeError:
+            jump_url = "Likely an internal error."
+
+        # Format the error in an embed to supress pings and make it a little nicer to see while panicking.
+        embed = discord.Embed(
+            title = "Machine-Mind error",
+            description = f"{jump_url}\n```{output}```",
+            color=8884479,
+        )
+        
+        # Send the actual message with the generated embed.
+        await channel.send(embed=embed)
+        
+    
     @commands.Cog.listener()
     async def on_command_error(
             self: typing.Self,
@@ -1065,27 +1100,11 @@ class Bread_cog(commands.Cog, name="Bread"):
         if isinstance(error, commands.errors.ArgumentParsingError):
             return
         
-        output = "\n".join(traceback.format_exception(error))
-
-        # Print the error to the terminal so it can be seen.
-        print(output)
-
-        try:
-            # Attempt to fetch the error log channel, if the bot doesn't have access then discord.errors.Forbidden will be raised.
-            channel = await self.bot.fetch_channel(error_channel)
-        except discord.errors.Forbidden:
-            # If this happened that means it doesn't have access to the error channel, so don't make another error by trying to send the log anyway.
-            return
-
-        # Format the error in an embed to supress pings and make it a little nicer to see while panicking.
-        embed = discord.Embed(
-            title = "Machine-Mind error",
-            description = f"[Trigger message.](<{ctx.message.jump_url}>)\n```{output}```",
-            color=8884479,
+        await self.output_error(
+            ctx = ctx,
+            error = error,
+            also_print = True
         )
-        
-        # Send the actual message with the generated embed.
-        await channel.send(embed=embed)
 
     
     ########################################################################################################################
@@ -2102,303 +2121,313 @@ loaf_converter""",
         #otherwise we add them to the list
         self.currently_interacting.append(ctx.author.id)
 
-        user_account = self.json_interface.get_account(ctx.author, guild=ctx.guild.id)
-        if not user_account.boolean_is("allowed", default=True):
-            await ctx.reply("Sorry, you are not allowed to roll.")
-            self.remove_from_interacting(ctx.author.id)
-            return
-
-        
-
-        # if user_account.has("daily_rolls", user_account.get("max_daily_rolls")) and ctx.channel.name in earnable_channels:
-        #     await ctx.reply("Sorry, but that's all the rolls you can do here for today. New rolls are available each day at <t:1653429922:t>.")
-        #     return
-        
-        user_luck = user_account.get("loaf_converter") + 1
-        
-        roll_multiplier = 1
-        if user_account.get_ephemeral_upgrade(store.Pathfinder.name):
-            roll_multiplier = 2
-        
-        rolls_remaining = (user_account.get("max_daily_rolls") * roll_multiplier) - user_account.get("daily_rolls")
-        #if ctx.channel.name in earnable_channels:
-        if get_channel_permission_level(ctx) == PERMISSION_LEVEL_MAX:
-            multirollers = user_account.get_active_multirollers()
-            user_multiroll = 2 ** (multirollers) # 2 to power of multiroller
-            user_multiroll = min(user_multiroll, rolls_remaining) 
-            # kick user out if they're out of rolls
-            if rolls_remaining == 0:
-                await ctx.reply( "Sorry, but that's all the rolls you can do here for today. New rolls are available each day at <t:1653429922:t>.")
-                self.remove_from_interacting(ctx.author.id)
-                return
-        else:
-            user_multiroll = 1
-
-        #for stored rolls, they are any amount of daily rolls below zero
-        # so we get our daily rolls and add our user_multiroll to it
-        # and then we check if it's less than zero
-        stored_rolls_remaining = -(user_account.get("daily_rolls") + user_multiroll)
-        if stored_rolls_remaining < 0:
-            stored_rolls_remaining = 0
-        
-        before_buyable = self.get_buyable_items(user_account, store.all_store_items)
-        
-        ######
-        ############################################################
-
-        result = rolls.bread_roll(
-            roll_luck= user_luck, 
-            roll_count= user_multiroll,
-            user_account=user_account,
-            json_interface=self.json_interface
-        )
-
-        ############################################################
-        ######
-
-
-        ###########################################################################
-        # now we make sure that it's a place they're allowed to roll
-        record = False
-        allowed_commentary = None
-
-        #check if it's their first ever roll
-        if user_account.get("total_rolls") == 0 and get_channel_permission_level(ctx) < PERMISSION_LEVEL_MAX:
-            record = True
-            allowed_commentary = f"Thank you for rolling some bread! Just a note, please move any future rolls over to {self.json_interface.get_rolling_channel(ctx.guild.id)}."
-        
-         #check if it's just not a place to roll at all. We'll give first-timers a pass.
-        elif get_channel_permission_level(ctx) == PERMISSION_LEVEL_NONE:
-            await ctx.reply(f"Sorry, but you cannot roll bread here. Feel free to do so in {self.json_interface.get_rolling_channel(ctx.guild.id)}.")
-            self.remove_from_interacting(ctx.author.id)
-            return
-        
-        #can be rolled but not recorded
-        elif get_channel_permission_level(ctx) < PERMISSION_LEVEL_MAX:
-            if user_account.get("daily_rolls") <= 0:
-                allowed_commentary = f"Thank you for rolling. Remember, any new rolls will only be saved in {self.json_interface.get_rolling_channel(ctx.guild.id)}."
-                record = True
-            else:
-                allowed_commentary = f"Thank you for rolling. Remember, stats are only saved in {self.json_interface.get_rolling_channel(ctx.guild.id)}."
-                record = False
-
-        #can be rolled plenty
-        elif get_channel_permission_level(ctx) == PERMISSION_LEVEL_MAX:
-
-            record = True
-        
-        # in neutral land -- NOTE-May not be reached
-        else:
-            if user_account.get("daily_rolls") == 0:
-                allowed_commentary = f"Thank you for rolling. Please remember to roll in {self.json_interface.get_rolling_channel(ctx.guild.id)}."
-                record = True
-            else:
-                await ctx.reply(f"Sorry, you can't roll here. Feel free to do so in {self.json_interface.get_rolling_channel(ctx.guild.id)}.")
-                self.remove_from_interacting(ctx.author.id)
-                return
-
-        ###########################################################################
-
-        count_commentary = None
-
-        # check how many rolls we have left, reject if none remain
-        if get_channel_permission_level(ctx) == PERMISSION_LEVEL_MAX:
-            amount_remaining = rolls_remaining - user_multiroll
-            # amount_remaining =  user_account.get("max_daily_rolls") - user_account.get("daily_rolls")
-            if amount_remaining < 0:
-                await ctx.reply( "Sorry, but that's all the rolls you can do here for today. New rolls are available each day at <t:1653429922:t>.")
-                self.remove_from_interacting(ctx.author.id)
-                return
-            # we tell them how many stored rolls they have left
-            elif stored_rolls_remaining > 0:
-                count_commentary = f"You have {utility.smart_number(stored_rolls_remaining)} stored rolls and a total of {utility.smart_number(amount_remaining)} more rolls today."
-            #we remove 1 because this check happens *before* the increment, but talks about what happens *after* the increment.
-
-            elif amount_remaining == 0:
-                count_commentary = f"That was your last roll for the day."
-                # add a special message for new players
-                if user_account.get("max_daily_rolls") == 10:
-                    count_commentary += '\n\nWould you like to stop by the shop and see what you can get? Check it out with "$bread shop".'
-            elif amount_remaining == 1:
-                count_commentary = f"You have one more roll today."
-            elif amount_remaining <= 3 or user_account.get('roll_summarizer') == 1:
-                count_commentary = f"You have {amount_remaining} more rolls today."
-
-        ###########################################################################
-        #now we record the roll
-        
-        summarizer_commentary = None
-
-        if record:
-
-            first_catch_remaining = user_account.get("first_catch_remaining")
-            result["value"] = 0
-
-            # save the stats
-            for key in result.keys():
-                if key not in ["commentary", "emote_text", "highest_roll", "roll_messages", "value", "individual_values", "first_catch_found"]:
-                    # this will increase lifetime dough, total dough, and any special values
-                    user_account.increment(key,result[key])
-
-                    # #first catch boost
-                    # if first_catch_remaining > 0 and key != values.normal_bread.text and key != values.corrupted_bread.text:
-                    #     emote = values.get_emote(key)
-                    #     if emote is not None:
-                    #         new_value = (emote.value + user_account.get_dough_boost_for_item(emote)) * 3
-                    #         if result.get("gambit_shop_bonus", 0) > 0:
-                    #             result["gambit_shop_bonus"] += user_account.get_dough_boost_for_item(emote) * 3
-                    #         # new_value = min(new_value, 100)
-                    #         result["value"] += user_account.add_dough_intelligent(new_value)
-                    #         first_catch_remaining -= 1
-                    #         print(f"first catch remaining: {first_catch_remaining}, emote: {emote.name}")
-            
-            for item, value in result.get("first_catch_found", []):
-                result["value"] += user_account.add_dough_intelligent(value)
-                first_catch_remaining -= 1
-
-                print(f"first catch remaining: {first_catch_remaining}, emote: {item.name}")
-                            
-            user_account.set("first_catch_remaining", first_catch_remaining)
-            
-            # update the values in the account
-            user_account.increment("daily_rolls", user_multiroll)
-            user_account.increment("total_rolls", user_multiroll)
-
-            total_value = 0
-            for individual_value in result["individual_values"]:
-                total_value += user_account.add_dough_intelligent(individual_value)
-            #value = user_account.add_dough_intelligent(result["value"])
-            result["value"] += total_value # this is for the summarizer
-            
-            if "gambit_shop_bonus" in result:
-                result["gambit_shop_bonus"] *= user_account.get_prestige_multiplier()
-                result["gambit_shop_bonus"] = int(result["gambit_shop_bonus"])
-
-            #track highest roll separately
-            prev_highest_roll = user_account.get("highest_roll")
-            if "highest_roll" in result.keys():
-                if result["highest_roll"] > prev_highest_roll:
-                    user_account.set_value("highest_roll", result["highest_roll"])
-                
-            self.json_interface.set_account(ctx.author,user_account, guild = ctx.guild.id)
-
-            if get_channel_permission_level(ctx) == PERMISSION_LEVEL_MAX and user_account.has("roll_summarizer"):
-                summarizer_commentary = rolls.summarize_roll(result, user_account)
-            
-
-            print (f"{ctx.author.name} rolled {total_value} dough.")
-
-        compound_rolls = 2 ** user_account.get("compound_roller")
-        #compound_rolls = 100
-
-        roll_messages = result["roll_messages"]
-
-        # if black hole is active
-        if user_account.get("black_hole") == 2 and get_channel_permission_level(ctx) == PERMISSION_LEVEL_MAX:
-            # we clear out any "unimportant" rolls
-            new_roll_messages = []
-            conditions = user_account.get("black_hole_conditions")
-            for message in roll_messages:
-                if any(item in message for item in conditions) or \
-                   (("14+" in conditions) and len(message.split()) >= 14 and len(message.split()) < 50) or \
-                   ((("lottery_win" in conditions) or (":fingers_crossed:" in conditions)) and len(message.split()) >= 50):
-                    new_roll_messages.append(message)
-            roll_messages = new_roll_messages
-
-
-        # for a non-compound roll, the output is just the input
-        if compound_rolls == 1:
-            output_messages = roll_messages
-
-        # for a compound roll, we start building the messages up into groups
-        elif compound_rolls > 1:
-            output_messages = []
-
-            # for as long as we have messages to output
-            while len(roll_messages) > 0:
-                compound_message = ""
-                for i in range(compound_rolls):
-                    if len(roll_messages) > 0:
-                        potential_addition = roll_messages.pop()
-
-                        # check to make sure we don't hit the length limit
-                        if len(compound_message) + len(potential_addition) > 1990:
-                            # put it back on the list if it would be too long
-                            roll_messages.append(potential_addition)
-                            continue
-
-                        compound_message += potential_addition
-
-                        # if there's still messages left, add a space
-                        if len(roll_messages) > 0:
-                            #if len(compound_message) + len (roll_messages[-1]) < 1900: #getting at -1 is peek function
-                            if i < compound_rolls - 1: # if there's still space to go
-                                compound_message += "\n---\n"
-                output_messages.append(compound_message)
-            
-        # check if black hole is activated and if we're in #bread-rolls
-        if user_account.get("black_hole") == 2 and get_channel_permission_level(ctx) == PERMISSION_LEVEL_MAX:
-            await ctx.reply(":cyclone:")
-        
-        # black hole is not activated, send messages normally
-        for roll in output_messages:
-            await ctx.reply(roll)
-            if len(output_messages) > 1:
-                await asyncio.sleep(.75)
-                
-        output_commentary = ""
-
-        roll_commentary = result["commentary"]
-        if roll_commentary is not None:
-            
-            output_commentary += roll_commentary
-
-        #add the last bit on
-        if allowed_commentary is not None:
-            output_commentary += "\n\n" + allowed_commentary
-
-
-        if count_commentary is not None:
-            output_commentary += "\n\n" + count_commentary
-
-        if summarizer_commentary is not None:
-            output_commentary += "\n\n" + summarizer_commentary
-        
-        after_buyable = self.get_buyable_items(user_account, store.all_store_items)
-        output_commentary += self.describe_added_shop_items(before_buyable, after_buyable)
-
         try:
-            if output_commentary != "" and not output_commentary.isspace():
-                messages = [output_commentary]
-                if len(output_commentary) > 1900:
-                    messages = []
-                    split = output_commentary.split("\n")
+            user_account = self.json_interface.get_account(ctx.author, guild=ctx.guild.id)
+            if not user_account.boolean_is("allowed", default=True):
+                await ctx.reply("Sorry, you are not allowed to roll.")
+                self.remove_from_interacting(ctx.author.id)
+                return
 
-                    add = []
+            
 
-                    for split_item in split:
-                        if len("\n".join(add + [split_item])) > 1900:
-                            messages.append("\n".join(add))
-                            add = ["Summary continued:", split_item]
-                        else:
-                            add.append(split_item)
+            # if user_account.has("daily_rolls", user_account.get("max_daily_rolls")) and ctx.channel.name in earnable_channels:
+            #     await ctx.reply("Sorry, but that's all the rolls you can do here for today. New rolls are available each day at <t:1653429922:t>.")
+            #     return
+            
+            user_luck = user_account.get("loaf_converter") + 1
+            
+            roll_multiplier = 1
+            if user_account.get_ephemeral_upgrade(store.Pathfinder.name):
+                roll_multiplier = 2
+            
+            rolls_remaining = (user_account.get("max_daily_rolls") * roll_multiplier) - user_account.get("daily_rolls")
+            #if ctx.channel.name in earnable_channels:
+            if get_channel_permission_level(ctx) == PERMISSION_LEVEL_MAX:
+                multirollers = user_account.get_active_multirollers()
+                user_multiroll = 2 ** (multirollers) # 2 to power of multiroller
+                user_multiroll = min(user_multiroll, rolls_remaining) 
+                # kick user out if they're out of rolls
+                if rolls_remaining == 0:
+                    await ctx.reply( "Sorry, but that's all the rolls you can do here for today. New rolls are available each day at <t:1653429922:t>.")
+                    self.remove_from_interacting(ctx.author.id)
+                    return
+            else:
+                user_multiroll = 1
+
+            #for stored rolls, they are any amount of daily rolls below zero
+            # so we get our daily rolls and add our user_multiroll to it
+            # and then we check if it's less than zero
+            stored_rolls_remaining = -(user_account.get("daily_rolls") + user_multiroll)
+            if stored_rolls_remaining < 0:
+                stored_rolls_remaining = 0
+            
+            before_buyable = self.get_buyable_items(user_account, store.all_store_items)
+            
+            ######
+            ############################################################
+
+            result = rolls.bread_roll(
+                roll_luck= user_luck, 
+                roll_count= user_multiroll,
+                user_account=user_account,
+                json_interface=self.json_interface
+            )
+
+            ############################################################
+            ######
+
+
+            ###########################################################################
+            # now we make sure that it's a place they're allowed to roll
+            record = False
+            allowed_commentary = None
+
+            #check if it's their first ever roll
+            if user_account.get("total_rolls") == 0 and get_channel_permission_level(ctx) < PERMISSION_LEVEL_MAX:
+                record = True
+                allowed_commentary = f"Thank you for rolling some bread! Just a note, please move any future rolls over to {self.json_interface.get_rolling_channel(ctx.guild.id)}."
+            
+            #check if it's just not a place to roll at all. We'll give first-timers a pass.
+            elif get_channel_permission_level(ctx) == PERMISSION_LEVEL_NONE:
+                await ctx.reply(f"Sorry, but you cannot roll bread here. Feel free to do so in {self.json_interface.get_rolling_channel(ctx.guild.id)}.")
+                self.remove_from_interacting(ctx.author.id)
+                return
+            
+            #can be rolled but not recorded
+            elif get_channel_permission_level(ctx) < PERMISSION_LEVEL_MAX:
+                if user_account.get("daily_rolls") <= 0:
+                    allowed_commentary = f"Thank you for rolling. Remember, any new rolls will only be saved in {self.json_interface.get_rolling_channel(ctx.guild.id)}."
+                    record = True
+                else:
+                    allowed_commentary = f"Thank you for rolling. Remember, stats are only saved in {self.json_interface.get_rolling_channel(ctx.guild.id)}."
+                    record = False
+
+            #can be rolled plenty
+            elif get_channel_permission_level(ctx) == PERMISSION_LEVEL_MAX:
+
+                record = True
+            
+            # in neutral land -- NOTE-May not be reached
+            else:
+                if user_account.get("daily_rolls") == 0:
+                    allowed_commentary = f"Thank you for rolling. Please remember to roll in {self.json_interface.get_rolling_channel(ctx.guild.id)}."
+                    record = True
+                else:
+                    await ctx.reply(f"Sorry, you can't roll here. Feel free to do so in {self.json_interface.get_rolling_channel(ctx.guild.id)}.")
+                    self.remove_from_interacting(ctx.author.id)
+                    return
+
+            ###########################################################################
+
+            count_commentary = None
+
+            # check how many rolls we have left, reject if none remain
+            if get_channel_permission_level(ctx) == PERMISSION_LEVEL_MAX:
+                amount_remaining = rolls_remaining - user_multiroll
+                # amount_remaining =  user_account.get("max_daily_rolls") - user_account.get("daily_rolls")
+                if amount_remaining < 0:
+                    await ctx.reply( "Sorry, but that's all the rolls you can do here for today. New rolls are available each day at <t:1653429922:t>.")
+                    self.remove_from_interacting(ctx.author.id)
+                    return
+                # we tell them how many stored rolls they have left
+                elif stored_rolls_remaining > 0:
+                    count_commentary = f"You have {utility.smart_number(stored_rolls_remaining)} stored rolls and a total of {utility.smart_number(amount_remaining)} more rolls today."
+                #we remove 1 because this check happens *before* the increment, but talks about what happens *after* the increment.
+
+                elif amount_remaining == 0:
+                    count_commentary = f"That was your last roll for the day."
+                    # add a special message for new players
+                    if user_account.get("max_daily_rolls") == 10:
+                        count_commentary += '\n\nWould you like to stop by the shop and see what you can get? Check it out with "$bread shop".'
+                elif amount_remaining == 1:
+                    count_commentary = f"You have one more roll today."
+                elif amount_remaining <= 3 or user_account.get('roll_summarizer') == 1:
+                    count_commentary = f"You have {amount_remaining} more rolls today."
+
+            ###########################################################################
+            #now we record the roll
+            
+            summarizer_commentary = None
+
+            if record:
+
+                first_catch_remaining = user_account.get("first_catch_remaining")
+                result["value"] = 0
+
+                # save the stats
+                for key in result.keys():
+                    if key not in ["commentary", "emote_text", "highest_roll", "roll_messages", "value", "individual_values", "first_catch_found"]:
+                        # this will increase lifetime dough, total dough, and any special values
+                        user_account.increment(key,result[key])
+
+                        # #first catch boost
+                        # if first_catch_remaining > 0 and key != values.normal_bread.text and key != values.corrupted_bread.text:
+                        #     emote = values.get_emote(key)
+                        #     if emote is not None:
+                        #         new_value = (emote.value + user_account.get_dough_boost_for_item(emote)) * 3
+                        #         if result.get("gambit_shop_bonus", 0) > 0:
+                        #             result["gambit_shop_bonus"] += user_account.get_dough_boost_for_item(emote) * 3
+                        #         # new_value = min(new_value, 100)
+                        #         result["value"] += user_account.add_dough_intelligent(new_value)
+                        #         first_catch_remaining -= 1
+                        #         print(f"first catch remaining: {first_catch_remaining}, emote: {emote.name}")
+                
+                for item, value in result.get("first_catch_found", []):
+                    result["value"] += user_account.add_dough_intelligent(value)
+                    first_catch_remaining -= 1
+
+                    print(f"first catch remaining: {first_catch_remaining}, emote: {item.name}")
+                                
+                user_account.set("first_catch_remaining", first_catch_remaining)
+                
+                # update the values in the account
+                user_account.increment("daily_rolls", user_multiroll)
+                user_account.increment("total_rolls", user_multiroll)
+
+                total_value = 0
+                for individual_value in result["individual_values"]:
+                    total_value += user_account.add_dough_intelligent(individual_value)
+                #value = user_account.add_dough_intelligent(result["value"])
+                result["value"] += total_value # this is for the summarizer
+                
+                if "gambit_shop_bonus" in result:
+                    result["gambit_shop_bonus"] *= user_account.get_prestige_multiplier()
+                    result["gambit_shop_bonus"] = int(result["gambit_shop_bonus"])
+
+                #track highest roll separately
+                prev_highest_roll = user_account.get("highest_roll")
+                if "highest_roll" in result.keys():
+                    if result["highest_roll"] > prev_highest_roll:
+                        user_account.set_value("highest_roll", result["highest_roll"])
                     
-                    if len(add) > 0:
-                        messages.append("\n".join(add))
+                self.json_interface.set_account(ctx.author,user_account, guild = ctx.guild.id)
+
+                if get_channel_permission_level(ctx) == PERMISSION_LEVEL_MAX and user_account.has("roll_summarizer"):
+                    summarizer_commentary = rolls.summarize_roll(result, user_account)
                 
-                for message in messages:
-                    await ctx.reply(message)
+
+                print (f"{ctx.author.name} rolled {total_value} dough.")
+
+            compound_rolls = 2 ** user_account.get("compound_roller")
+            #compound_rolls = 100
+
+            roll_messages = result["roll_messages"]
+
+            # if black hole is active
+            if user_account.get("black_hole") == 2 and get_channel_permission_level(ctx) == PERMISSION_LEVEL_MAX:
+                # we clear out any "unimportant" rolls
+                new_roll_messages = []
+                conditions = user_account.get("black_hole_conditions")
+                for message in roll_messages:
+                    if any(item in message for item in conditions) or \
+                    (("14+" in conditions) and len(message.split()) >= 14 and len(message.split()) < 50) or \
+                    ((("lottery_win" in conditions) or (":fingers_crossed:" in conditions)) and len(message.split()) >= 50):
+                        new_roll_messages.append(message)
+                roll_messages = new_roll_messages
+
+
+            # for a non-compound roll, the output is just the input
+            if compound_rolls == 1:
+                output_messages = roll_messages
+
+            # for a compound roll, we start building the messages up into groups
+            elif compound_rolls > 1:
+                output_messages = []
+
+                # for as long as we have messages to output
+                while len(roll_messages) > 0:
+                    compound_message = ""
+                    for i in range(compound_rolls):
+                        if len(roll_messages) > 0:
+                            potential_addition = roll_messages.pop()
+
+                            # check to make sure we don't hit the length limit
+                            if len(compound_message) + len(potential_addition) > 1990:
+                                # put it back on the list if it would be too long
+                                roll_messages.append(potential_addition)
+                                continue
+
+                            compound_message += potential_addition
+
+                            # if there's still messages left, add a space
+                            if len(roll_messages) > 0:
+                                #if len(compound_message) + len (roll_messages[-1]) < 1900: #getting at -1 is peek function
+                                if i < compound_rolls - 1: # if there's still space to go
+                                    compound_message += "\n---\n"
+                    output_messages.append(compound_message)
                 
-        except:
-            print(traceback.format_exc())
+            # check if black hole is activated and if we're in #bread-rolls
+            if user_account.get("black_hole") == 2 and get_channel_permission_level(ctx) == PERMISSION_LEVEL_MAX:
+                await ctx.reply(":cyclone:")
+            
+            # black hole is not activated, send messages normally
+            try:
+                for roll in output_messages:
+                    await ctx.reply(roll)
+                    if len(output_messages) > 1:
+                        await asyncio.sleep(.75)
+            except Exception as e:
+                await self.output_error(
+                    ctx = ctx,
+                    error = e,
+                    also_print = True
+                )
+                    
+            output_commentary = ""
 
-        await self.do_chessboard_completion(ctx)
-        await self.anarchy_chessatron_completion(ctx)
+            roll_commentary = result["commentary"]
+            if roll_commentary is not None:
+                
+                output_commentary += roll_commentary
 
-        # self.json_interface.set_account(ctx.author, user_account, ctx.guild.id)
+            #add the last bit on
+            if allowed_commentary is not None:
+                output_commentary += "\n\n" + allowed_commentary
 
-        #now we remove them from the list of rollers, this allows them to roll again without spamming
-        self.remove_from_interacting(ctx.author.id)
+
+            if count_commentary is not None:
+                output_commentary += "\n\n" + count_commentary
+
+            if summarizer_commentary is not None:
+                output_commentary += "\n\n" + summarizer_commentary
+            
+            after_buyable = self.get_buyable_items(user_account, store.all_store_items)
+            output_commentary += self.describe_added_shop_items(before_buyable, after_buyable)
+
+            try:
+                if output_commentary != "" and not output_commentary.isspace():
+                    messages = [output_commentary]
+                    if len(output_commentary) > 1900:
+                        messages = []
+                        split = output_commentary.split("\n")
+
+                        add = []
+
+                        for split_item in split:
+                            if len("\n".join(add + [split_item])) > 1900:
+                                messages.append("\n".join(add))
+                                add = ["Summary continued:", split_item]
+                            else:
+                                add.append(split_item)
+                        
+                        if len(add) > 0:
+                            messages.append("\n".join(add))
+                    
+                    for message in messages:
+                        await ctx.reply(message)
+                    
+            except:
+                await self.output_error(
+                    ctx = ctx,
+                    error = e,
+                    also_print = True
+                )
+
+            await self.do_chessboard_completion(ctx)
+            await self.anarchy_chessatron_completion(ctx)
+        finally:
+            #now we remove them from the list of rollers, this allows them to roll again without spamming
+            self.remove_from_interacting(ctx.author.id)
 
     ########################################################################################################################
     #####      do CHESSBOARD COMPLETION
