@@ -80,8 +80,6 @@ def bread_roll(
         rarity_modifiers = space.get_planet_modifiers(
             user_account = user_account,
             json_interface = json_interface,
-            ascension = user_account.get_prestige_level(),
-            guild = user_account.get("guild_id"),
             day_seed = day_seed,
             tile = system_tile
         )

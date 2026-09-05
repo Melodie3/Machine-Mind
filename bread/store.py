@@ -2172,7 +2172,7 @@ class Payment_Bonus(Space_Shop_Item):
 
         # If the amount of completed projects is not enough, say so.
         if user_account.get("projects_completed") < required_projects:
-            return f"Complete {utility.smart_number(required_projects)} projects."
+            return f"Complete {utility.smart_number(required_projects - user_account.get('projects_completed'))} more projects."
         
         # If all else fails, return None.
         return None

@@ -1502,7 +1502,15 @@ class Bread_cog(commands.Cog, name="Bread"):
             output += f"You've bread rolled {user_account.write_number_of_times('total_rolls')} overall.\n"
         
         if user_account.has("lifetime_gambles"):
-            output += f"You've gambled your dough {user_account.write_number_of_times('lifetime_gambles')}.\n"
+            output += f"You've gambled your dough {user_account.write_number_of_times('lifetime_gambles')}. "
+            output += f"You've wagered {sn(user_account.get('dough_gambled'))} dough so far, and have "
+            
+            winnings = user_account.get("gamble_winnings")
+            if winnings < 0:
+                output += f"lost {sn(abs(winnings))} in the process.\n"
+            else:
+                output += f"won {sn(abs(winnings))} in the process.\n"
+            
         if user_account.has("max_daily_rolls"):
             if user_account.get('daily_rolls') < 0:
                 output += f"You have {sn(-user_account.get('daily_rolls'))} stored rolls, plus a maximum of {sn(user_account.get('max_daily_rolls'))} daily rolls.\n"
@@ -1647,10 +1655,23 @@ class Bread_cog(commands.Cog, name="Bread"):
 
         if user_account.has("lottery_win"):
             output_3 += f"You've won the lottery {user_account.write_number_of_times('lottery_win')}!\n"
+        
+        found_types = []
+        
         if user_account.has("chess_pieces"):
-            output_3 += f"You have {user_account.write_count('chess_pieces', 'Chess Piece')}.\n"
+            found_types.append(user_account.write_count('chess_pieces', 'Chess Piece'))
         if user_account.has("special_bread"):
-            output_3 += f"You have {user_account.write_count('special_bread', 'Special Bread')}.\n"
+            found_types.append(user_account.write_count('special_bread', 'Special Bread'))
+        if user_account.has("rare_bread"):
+            found_types.append(user_account.write_count('rare_bread', 'Rare Bread'))
+        if user_account.has("shiny"):
+            found_types.append(user_account.write_count('shiny', 'Gem'))
+        if user_account.has("very_shiny"):
+            found_types.append(user_account.write_count('very_shiny', 'Space Gem'))
+        
+        if len(found_types) > 0:
+            print(found_types)
+            output_3 += f"You've found {utility.list_items(found_types)}.\n"
         
         if len(output) + len(output_2) + len(output_3) < 1900:
             await ctx.reply(output + output_2 + output_3)
@@ -2340,9 +2361,16 @@ loaf_converter""",
                     for i in range(compound_rolls):
                         if len(roll_messages) > 0:
                             potential_addition = roll_messages.pop()
+                            potential_emojis = potential_addition.count(":") // 2
+                            current_emojis = compound_message.count(":") // 2
 
                             # check to make sure we don't hit the length limit
-                            if len(compound_message) + len(potential_addition) > 1990:
+                            if len(compound_message) + len(potential_addition) > 1950:
+                                # put it back on the list if it would be too long
+                                roll_messages.append(potential_addition)
+                                continue
+                            
+                            if current_emojis + potential_emojis >= 200:
                                 # put it back on the list if it would be too long
                                 roll_messages.append(potential_addition)
                                 continue
@@ -5631,9 +5659,13 @@ anarchy - 1000% of your wager.
             
         # Check to make sure the player is able to get the full map.
         if map_type == "full" or map_type == "f":
-            hub_tile = user_account.get_system_tile(json_interface=self.json_interface) # type: space.SystemTradeHub
+            galaxy_tile = user_account.get_galaxy_tile(self.json_interface, True)
+            hub_tile = galaxy_tile.trade_hub
+            system_location = user_account.get_system_location()
 
-            if hub_tile.type != "trade_hub":
+            if hub_tile is None or \
+                (hub_tile.system_xpos != system_location[0] and hub_tile.system_ypos != system_location and \
+                    hub_tile.get_upgrade_level(projects.Listening_Post.internal) == 0):
                 return await ctx.reply("You currently do not have the ability to read and analyze map data from the communication network.\nBeing on a Trade Hub with the Offspring Outlook upgrade will allow you to read and analyze the data.")
             
             if hub_tile.get_upgrade_level(projects.Offspring_Outlook) < 1:
@@ -7020,7 +7052,212 @@ anarchy - 1000% of your wager.
             available_configuration.append("beacon")
         
         await ctx.reply(f"To configure a specific section of the Trade Hub, use '$bread space hub configure <section> <settings>'\nList of available sections: {', '.join(available_configuration)}")
+
+    
+    async def trade_hub_voidlure(
+            self: typing.Self,
+            ctx: commands.Context,
+            user_account: account.Bread_Account,
+            day_seed: str,
+            hub_projects: list[dict],
+            hub: space.SystemTradeHub,
+            actions: tuple[str]
+        ) -> None:
+            if ctx.author.id in self.currently_interacting:
+                return
             
+            # Add the player to the interacting list.
+            self.currently_interacting.append(ctx.author.id)
+            try:
+                
+                level = hub.get_upgrade_level(projects.Voidlure.internal)
+                
+                if level == 0:
+                    await ctx.reply("This Trade Hub has no Voidlure.")
+                    return
+                
+                # Remove "voidlure" from the actions list.
+                actions = actions[1:]
+
+                if len(actions) == 0:
+                    
+                    message = "Welcome to the Voidlure.\nHere you can search "
+                    
+                    if level == 1:
+                        message += "this hub's system"
+                    elif level == 2:
+                        message += "this hub's communication radius"
+                    elif level == 3:
+                        message += "the Trade Hub network"
+                    
+                    message += " for planets with specific rolling odds.\n\nTo use it, run '$bread space hub voidlure' followed by the items you want to search for.\n"
+                    message += "You can include multiple items separated by spaces and it will average the results, but only one from each category.\n"
+                    message += "You will need to sacrifice each item you're searching for, so be warned."
+                    
+                    if level == 3:
+                        message += "\n\nThis version of the Voidlure comes with additional configuration:\n"
+                        message += "   The ability to search within a specific Chebyshev distance via providing a number.\n"
+                        message += "   The ability to filter out very large black holes via including 'ignore'."
+                    
+                    await ctx.reply(message)
+                    return
+                
+                # Ready to start reading the provided arguments.
+                
+                categories = [
+                    (values.all_special_breads, "Special Breads"),
+                    (values.all_rare_breads, "Rare Breads"),
+                    (values.all_chess_pieces, "Chess Pieces"),
+                    ([values.gem_red], "Red Gems"),
+                    ([values.gem_blue], "Blue Gems"),
+                    ([values.gem_purple], "Purple Gems"),
+                    ([values.gem_green], "Green Gems"),
+                    ([values.gem_gold], "Gold Gems"),
+                    ([values.anarchy_chess], "MoaKs"),
+                    (values.all_anarchy_pieces, "Anarchy Pieces"),
+                    (values.all_very_shinies, "Space Gems")
+                ]
+                
+                def to_category(item: values.Item):
+                    for category, title in categories:
+                        if item in category:
+                            return title
+                    return None
+                
+
+                confirm_text = ["yes", "y", "confirm"]
+                cancel_text = ["no", "n", "cancel"]
+                
+                provided_items = []
+                found_categories = []
+                ignore_center = False
+                max_distance = 512
+                skip_confirmation = False
+                
+                for action in actions:
+                    if level == 3:
+                        if action.lower() == "ignore":
+                            ignore_center = True
+                            continue
+                        
+                        try:
+                            max_distance = parse_int(action)
+                            continue
+                        except ValueError:
+                            pass
+                    
+                    if action.lower() in confirm_text:
+                        skip_confirmation = True
+                        continue
+                    
+                    item = values.get_emote(action)
+                    
+                    if item is None:
+                        await ctx.reply(f"The Voidlure fails to recognize an item with the name '{utility.sanitize_ping(action)}'.")
+                        return
+                    
+                    category = to_category(item)
+                    
+                    if category is None:
+                        await ctx.reply(f"The Voidlure does not recognize {item.text} as a searchable item.")
+                        return
+                    
+                    if category in found_categories:
+                        await ctx.reply("The Voidlure detects a duplicate category, it is displeased with this.")
+                        return
+                    
+                    found_categories.append(category)
+                    provided_items.append(item)
+                
+                # Just in case.
+                if len(provided_items) == 0:
+                    await ctx.reply("The Voidlure requires an item to search for.")
+                    return
+                
+                if not skip_confirmation:
+                    message = f"You are preparing to sacrifice one of each of the following to the Voidlure:\n"
+                    
+                    item_texts = []
+                    item_amounts = []
+                    provided_categories = []
+                    for item in provided_items:
+                        item_texts.append(item.text)
+                        provided_categories.append(to_category(item).replace("_", " ").title())
+                        item_amounts.append(f"{item.text}: {utility.smart_number(user_account.get(item.text))}")
+                    
+                    message += ", ".join(item_texts)
+                    message += "\n\nYou have the following:\n"
+                    message += "\n".join(item_amounts)
+                    message += "\n\nFor this sacrifice the Voidlure will attempt to search for planets with the following odds:\n"
+                    message += ", ".join(provided_categories)
+                    message += "\n\nWould you like to proceed? Yes or No."
+                    
+                    await ctx.reply(message)
+                    
+                    def check(m: discord.Message):
+                        return m.author.id == ctx.author.id and m.channel.id == ctx.channel.id 
+                    
+                    try:
+                        msg = await self.bot.wait_for('message', check = check, timeout = 60.0)
+                    except asyncio.TimeoutError: 
+                        # at this point, the check didn't become True, let's handle it.
+                        await ctx.reply(f"The Voidlure must attend to other customers, return once you have made up your mind.")
+                        return
+                    
+                    if msg.content.lower() in cancel_text:
+                        await ctx.reply("The Voidlure respects your decision and requests that you return another time.")
+                        return
+                    elif msg.content.lower() not in confirm_text:
+                        await ctx.reply("The Voidlure does not understand what you mean and requests that you start over from the beginning.")
+                        return
+                        
+                # Now check if the player has the items required.
+                for item in provided_items:
+                    if user_account.get(item.text) <= 0:
+                        await ctx.reply(f"The Voidlure notes that you do not have the sacrificial {item.text}.\nIt requests that you return once you obtain one.")
+                        return
+                
+                # Fetch the user account again to be careful.
+                user_account = self.json_interface.get_account(ctx.author, guild = ctx.guild.id)
+                        
+                new_amounts = []
+                # Now actually remove the items.
+                for item in provided_items:
+                    user_account.increment(item.text, -1)
+                    new_amounts.append(f"{utility.smart_number(user_account.get(item.text))} {item.text}")
+                
+                self.json_interface.set_account(
+                    user = ctx.author,
+                    user_account = user_account,
+                    guild = ctx.guild
+                )   
+                
+                # We should have everything we need at this point.
+                # So let's call a helper function to get things running.
+                search_results = space.find_planet_modifiers(
+                    items = provided_items,
+                    user_account = user_account,
+                    json_interface = self.json_interface,
+                    day_seed = day_seed,
+                    center_hub = hub,
+                    galaxy_seed = self.json_interface.get_ascension_seed(user_account.get_prestige_level(), ctx.guild.id),
+                    ignore_center = ignore_center,
+                    max_distance = max_distance
+                )
+                
+                results_sorted = list(sorted(search_results, key=lambda i: i[1], reverse=True))
+                
+                message = "The Voidlure thinks for a minute, and then outputs the following:\n\n"
+                
+                for planet, score in results_sorted[:10]:
+                    message += f"\"{round(score, 3)}: {planet.galaxy_xpos} {planet.galaxy_ypos} {planet.system_xpos} {planet.system_ypos}\"\n"
+                
+                message += f"\nYou now have {utility.list_items(new_amounts)} remaining."
+                
+                
+                await ctx.reply(message)
+            finally:
+                self.remove_from_interacting(ctx.author.id)
         
 
     ########################################################################################################################
@@ -7072,7 +7309,7 @@ anarchy - 1000% of your wager.
         
         system_x, system_y = user_account.get_system_location()
         
-        system.load_system_data(json_interface=self.json_interface, guild=ctx.guild.id, get_wormholes=False)
+        system.load_system_data(json_interface=self.json_interface, guild=ctx.guild.id, load_wormhole=False)
 
         hub = system.trade_hub
 
@@ -7265,8 +7502,21 @@ anarchy - 1000% of your wager.
         
         ##############################################################################################################
 
-        if action == "configure" or action == "configuration":
+        if action == "configure" or action == "configuration" or action == "config" or action == "settings" or action == "setting":
             await self.trade_hub_configure(
+                ctx = ctx,
+                user_account = user_account,
+                day_seed = day_seed,
+                hub_projects = hub_projects,
+                hub = hub,
+                actions = actions
+            )
+            return
+        
+        ##############################################################################################################
+
+        if action == "voidlure":
+            await self.trade_hub_voidlure(
                 ctx = ctx,
                 user_account = user_account,
                 day_seed = day_seed,

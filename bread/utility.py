@@ -70,15 +70,15 @@ def list_items(items: list) -> str:
     if len(items) == 0:
         return ""
     
-    joined = ", ".join(items)
+    joined = ", ".join(items[:-1])
     
-    last_comma = joined.rsplit(",", 1)
+    last_item = items[-1]
     
     # Include the Oxford comma if the amount of items is not 2.
     if len(items) == 2:
-        return " and".join(last_comma)
+        return joined + " and " + last_item
     else:
-        return ", and".join(last_comma)
+        return joined + ", and " + last_item
 
 def array_subtract(
         array1: list,

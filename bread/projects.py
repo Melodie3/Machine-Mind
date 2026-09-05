@@ -1119,10 +1119,104 @@ class Salvage_Works(Trade_Hub_Upgrade):
             return "A Salvage Machine that can convert junk into useful resources."
 
         return f"A Salvage Machine that can convert junk into useful resources, upgraded to salvage {5 + cls.per_level * (existing_level - 1)} items per day."
- 
+
+class Voidlure(Trade_Hub_Upgrade):
+    internal = "voidlure"
+    max_level = 3
+    unlock_level = 3
+    
+    @classmethod
+    def name(
+            cls,
+            day_seed: str,
+            system_tile: space.SystemTradeHub
+        ) -> str:
+        return "Voidlure"
+
+    @classmethod
+    def description(
+            cls,
+            day_seed: str,
+            system_tile: space.SystemTradeHub
+        ) -> str:
+        existing_level = system_tile.get_upgrade_level(cls)
+        if existing_level == 1:
+            return "An upgraded quantum device from the same entrepreneur, supposedly able to search planets within this Trade Hub's communication radius!"
+        elif existing_level == 2:
+            return "An upgraded quantum device from the now tech CEO with their boldest claim yet: the ability to search for planets within the entire Trade Hub network!"
+        
+        return "A weird subscription-based quantum device a shady entrepreneur is selling with the claim of it searching for planets with specific rolling odds within the system."
+    
+    @classmethod
+    def completion(
+            cls: typing.Type[typing.Self],
+            day_seed: str,
+            system_tile: space.SystemTradeHub
+        ) -> str:
+        now_level = system_tile.get_upgrade_level(cls)
+        
+        if now_level == 1:
+            return f"The device is here now and at least {random.randint(2, 7)} people have mysteriously gone missing since its installation, so that's odd.\nAnyway, the device seems to work, you can use it with '$bread hub voidlure', for a cost."
+        
+        status = "entrepreneur" if now_level == 2 else "CEO"
+        
+        message = f"The upgraded device has been installed and luckily it appears nobody has vanished since its installation.\nThe {status} has reassured the hub that all that's different is that it's more powerful, and that you can still use it with '$bread hub voidlure'\nThere are a few weird cameras on this version that you didn't see on the old one, but it's probably fine."
+        
+        if now_level == 3:
+            message += "\nIt comes with an interesting sticker: 'New in version 3: Additional system filtering methods!'"
+            
+        return message
+    
+    @classmethod
+    def get_cost(
+            cls,
+            day_seed: str,
+            system_tile: space.SystemTradeHub
+        ) -> list[tuple[str, int]]:
+        current_level = system_tile.get_upgrade_level(cls)
+        costs = [
+            # Level 1: (Trade Hub's system)
+            [
+                (values.normal_bread.text, 5000), (values.chessatron.text, 200),
+                (random.Random(system_tile.tile_seed() + "_" + str(current_level)).choice(values.anarchy_pieces_black).text, 10), (random.Random(system_tile.tile_seed() + "_" + str(current_level)).choice(values.anarchy_pieces_white).text, 10),
+                (values.anarchy_chessatron.text, 1),
+            ],
+            
+            # Level 2: (Communication radius)
+            [
+                (values.normal_bread.text, 10000), (values.chessatron.text, 1000),
+                (random.Random(system_tile.tile_seed() + "_" + str(current_level)).choice(values.anarchy_pieces_black).text, 45), (random.Random(system_tile.tile_seed() + "_" + str(current_level)).choice(values.anarchy_pieces_white).text, 45),
+                (values.anarchy_chessatron.text, 5), (random.Random(system_tile.tile_seed() + "_" + str(current_level)).choice(values.all_very_shinies).text, 5)
+            ],
+            
+            # Level 3: (Trade Hub network)
+            [
+                (values.normal_bread.text, 15000), (values.chessatron.text, 2000),
+                (random.Random(system_tile.tile_seed() + "_" + str(current_level)).choice(values.anarchy_pieces_black).text, 75), (random.Random(system_tile.tile_seed() + "_" + str(current_level)).choice(values.anarchy_pieces_white).text, 75),
+                (values.anarchy_chessatron.text, 10), (random.Random(system_tile.tile_seed() + "_" + str(current_level)).choice(values.all_very_shinies).text, 50), (values.ephemeral_token.text, 4)
+            ]
+        ]
+        
+        return costs[current_level]
+    
+    @classmethod
+    def purchased_description(
+            cls: typing.Type[typing.Self],
+            day_seed: str,
+            system_tile: space.SystemTradeHub
+        ) -> str:
+        existing_level = system_tile.get_upgrade_level(cls)
+        
+        if existing_level == 1:
+            return "An odd quantum box capable of searching the system's planets for specific rolling odds."
+        elif existing_level == 2:
+            return "An odd quantum box capable of searching the hub's communication radius for specific rolling odds."
+        else:
+            return "An odd quantum box capable of searching the Trade Hub network's systems for specific rolling odds."
+
 all_trade_hub_upgrades = [Listening_Post, Nebula_Refinery, Quantum_Catapult, Hyperlane_Registrar, Shroud_Beacon,
     Dark_Matter_Resonance_Chamber, Black_Hole_Observatory, Storm_Repulsion_Array, Offspring_Outlook, Detection_Array,
-    Dimensional_Shrine, Salvage_Works
+    Dimensional_Shrine, Salvage_Works, Voidlure
 ] # type: list[Trade_Hub_Upgrade]
 
 #######################################################################################################

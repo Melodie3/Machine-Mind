@@ -293,6 +293,7 @@ class BaseGame(Game):
         
         user_account = self.json_interface.get_account(self.ctx.author.id, self.ctx.guild.id) # type: account.Bread_Account
         user_account.increment("total_dough", -self.wager)
+        user_account.increment("dough_gambled", self.wager)
         self.json_interface.set_account(self.ctx.author.id, user_account, self.ctx.guild.id)
         
         brick_troll = user_account.get("brick_troll_percentage") >= random.randint(1,100)
