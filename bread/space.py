@@ -2228,7 +2228,7 @@ def full_map_galaxy(
             draw.rectangle(
                 [
                     ((127 - left) * size_multiplier, (127 - bottom) * size_multiplier),
-                    ((128 - left) * size_multiplier, (128 - bottom) * size_multiplier),
+                    ((129 - left) * size_multiplier - text_multiplier - 1, (129 - bottom) * size_multiplier - text_multiplier - 1),
                 ],
                 img.getpixel(((127 - left) * size_multiplier, (127 - bottom) * size_multiplier))
             )
@@ -2278,6 +2278,16 @@ def full_map_galaxy(
     
     draw = ImageDraw.Draw(img_text)
     
+    if (home_x == 128 and home_y == 128) \
+        or (home_x == 127 and home_y == 128) \
+        or (home_x == 127 and home_y == 127) \
+        or (home_x == 128 and home_y == 127):
+            here_size_mult = 2
+            home_x = 127
+            home_y = 127
+    else:
+        here_size_mult = 1
+        
     top_x = offset + size_multiplier * (home_x - left)
     top_y = offset + size_multiplier * (home_y - bottom)
     
@@ -2287,7 +2297,7 @@ def full_map_galaxy(
     draw.rectangle(
         [
             (top_x - base_width, top_y - base_width),
-            (top_x + size_multiplier + base_width - size_multiplier // 10 - 1, top_y + size_multiplier + base_width - size_multiplier // 10 - 1)
+            (top_x + size_multiplier * here_size_mult + base_width - size_multiplier // 10 - 1, top_y + size_multiplier * here_size_mult + base_width - size_multiplier // 10 - 1)
         ],
         fill = None,
         outline = GRID_COLOR,
@@ -2297,7 +2307,7 @@ def full_map_galaxy(
     draw.rectangle(
         [
             (top_x - base_width + quarter, top_y - base_width + quarter),
-            (top_x + size_multiplier + base_width - quarter - size_multiplier // 10 - 1, top_y + size_multiplier + base_width - quarter - size_multiplier // 10 - 1)
+            (top_x + size_multiplier * here_size_mult + base_width - quarter - size_multiplier // 10 - 1, top_y + size_multiplier * here_size_mult + base_width - quarter - size_multiplier // 10 - 1)
         ],
         fill = None,
         outline = (255, 0, 0),
