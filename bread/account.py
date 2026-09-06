@@ -546,7 +546,16 @@ class Bread_Account:
             return self._can_salvage_cache
         
         system_tile = self.get_system_tile(self.json_interface)
-        self._can_salvage_cache = (system_tile.type == "trade_hub") and (system_tile.get_upgrade_level(projects.Salvage_Works) >= 1)
+        galaxy_tile = self.get_galaxy_tile(self.json_interface, load_data=False)
+        galaxy_tile.smart_load(self.json_interface, self.get("guild_id"), False, False, True, False, False, False) # Just load the Trade Hub
+        
+        result = False
+        
+        if galaxy_tile.trade_hub is not None and galaxy_tile.trade_hub.get_upgrade_level(projects.Salvage_Works) >= 1:
+            if galaxy_tile.trade_hub.get_upgrade_level(projects.Listening_Post) >= 1 or (system_tile.type == "trade_hub"):
+                result = True
+            
+        self._can_salvage_cache = result
         return self._can_salvage_cache
     
     def get_catalyst_length(self: typing.Self) -> int:

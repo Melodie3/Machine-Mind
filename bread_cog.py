@@ -2444,7 +2444,7 @@ loaf_converter""",
                     for message in messages:
                         await ctx.reply(message)
                     
-            except:
+            except Exception as e:
                 await self.output_error(
                     ctx = ctx,
                     error = e,
@@ -8337,8 +8337,8 @@ anarchy - 1000% of your wager.
         
         item = values.get_emote(item)
         
-        system_tile = user_account.get_system_tile(self.json_interface)
-        salvage_level = system_tile.get_upgrade_level(projects.Salvage_Works)
+        hub_tile = user_account.get_galaxy_tile(self.json_interface, True).trade_hub
+        salvage_level = hub_tile.get_upgrade_level(projects.Salvage_Works)
         salvage_addition = (salvage_level - 1) * 5
         
         if item is None:

@@ -7,6 +7,7 @@ import typing
 import random
 import io
 import sys
+import traceback
 
 # pip3 install pillow
 import PIL.Image as Image
@@ -2157,6 +2158,8 @@ def full_map_galaxy(
         
         return None
 
+    center_shown = False
+
     for tile_key, info in map_data.get("system_data").items():
         index = int(tile_key)
         code = 1 << index
@@ -2168,10 +2171,14 @@ def full_map_galaxy(
         
         # Account for the 2x2 system.
         if x_coord == 128 and y_coord == 128:
+            center_shown = True
+            
             # The 2x2 system always spawns with a hub, so always use that color.
-            img.putpixel((127, 127), STAR_COLORS_WITH_HUB["supermassive_black_hole"])
-            img.putpixel((127, 128), STAR_COLORS_WITH_HUB["supermassive_black_hole"])
-            img.putpixel((128, 127), STAR_COLORS_WITH_HUB["supermassive_black_hole"])
+            center_color = find_hub_color(1 << (128 + 128 * MAP_SIZE))
+            print("center color:", center_color)
+            img.putpixel((127, 127), HUB_RGB_BLACK_HOLE[center_color])
+            img.putpixel((127, 128), HUB_RGB_BLACK_HOLE[center_color])
+            img.putpixel((128, 127), HUB_RGB_BLACK_HOLE[center_color])
         
         star_type = info.get("star_type", "star1")
         
@@ -2215,6 +2222,19 @@ def full_map_galaxy(
         
         for y_coordinate in range(top - bottom):
             draw.line([(0, y_coordinate * size_multiplier + (size_multiplier - 1) - (text_multiplier // 2)), (img.size[0], y_coordinate * size_multiplier + (size_multiplier - 1) - (text_multiplier // 2))], GRID_COLOR, width=text_multiplier)
+    
+    if center_shown:
+        try:
+            draw.rectangle(
+                [
+                    ((127 - left) * size_multiplier, (127 - bottom) * size_multiplier),
+                    ((128 - left) * size_multiplier, (128 - bottom) * size_multiplier),
+                ],
+                img.getpixel(((127 - left) * size_multiplier, (127 - bottom) * size_multiplier))
+            )
+        except:
+            print(traceback.format_exc())
+            pass
             
     ######################################
     # Render text.
@@ -2810,7 +2830,13 @@ def generate_trade_hub_mask(
         
         point = 1 << (int(hub_x) + 256 * int(hub_y))
         out |= point
-        color_masks[hub_data.get("color_id", HUB_RED)] |= point
+        
+        color = hub_data.get("color_id", HUB_RED)
+        color_masks[color] |= point
+        
+        if color != 0:
+            color_masks[0] |= point
+            color_masks[0] ^= point
         
     return out, color_masks
         
