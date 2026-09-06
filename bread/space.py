@@ -2420,14 +2420,15 @@ def full_map_system(
         # Trade hub.
         if system_data.get("trade_hub", {}).get("exists", False) or trade_hub_data.get(f"{galaxy_x} {galaxy_y}", {}).get("level", 0) > 0:
             hub_color = HUB_RED
-            if system_data.get("trade_hub", {}).get("exists", False):
-                trade_hub_x = system_data.get("trade_hub", {}).get("xpos", False)
-                trade_hub_y = system_data.get("trade_hub", {}).get("ypos", False)
-            else:
+            
+            if trade_hub_data.get(f"{galaxy_x} {galaxy_y}") is not None:
                 actual_hub_data = trade_hub_data.get(f"{galaxy_x} {galaxy_y}", {})
                 trade_hub_x, trade_hub_y = actual_hub_data.get("location", 0)
                 hub_color = actual_hub_data.get("color_id", HUB_RED)
-                
+            else:
+                trade_hub_x = system_data.get("trade_hub", {}).get("xpos", False)
+                trade_hub_y = system_data.get("trade_hub", {}).get("ypos", False)
+            
             img.putpixel((trade_hub_x + radius, trade_hub_y + radius), HUB_RGB_NORMAL[hub_color])
             hub_coordinates = (trade_hub_x + radius, trade_hub_y + radius)
             has_hub = True
